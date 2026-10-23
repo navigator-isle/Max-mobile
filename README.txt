@@ -1,21 +1,20 @@
-MAX TWO-SECTION APP UPDATE
+MAX VOICE + NOTES EDITOR UPDATE
 
-This update redesigns Max into two sections:
-1) HOME / MAX: large animated speaking circle, greeting on open (browser may block automatic audio until the user interacts), voice input controls, and answer area.
-2) NOTES / SECOND BRAIN: Obsidian-inspired dark notes interface with searchable note list, Markdown-friendly editor, categories, dictation, saved note analysis, and Ask Max action.
+Changes:
+- Attempts to select an installed English male-sounding text-to-speech voice and uses a lower pitch. The exact voice depends on Android/browser installed voices; set the preferred male English voice in Android Text-to-speech settings if needed.
+- Removes the old chat response panel from the visible home screen so the duplicated "YOUhelloMAX..." legacy messages should no longer show.
+- Keeps the home page focused on Max's animated circle and voice controls.
+- Notes page shows the saved notes list with a + New note button at the bottom.
+- New note opens a separate blank editor with title, category, tags, bold/italic/underline, text color, highlight, headings/paragraph/quote/code, bullets, numbered list, dictation, save, and separate AI analysis.
 
-INSTALL
-- Back up the current Max-mobile GitHub repository first.
-- Replace the repo's index.html with this index.html.
-- Update the existing Cloudflare Worker with worker.js so /api/analyze-note is available.
-- Keep the GEMINI_API_KEY as a Cloudflare Worker secret; never add it to GitHub.
-- Set ALLOWED_ORIGIN to https://navigator-isle.github.io (origin only, no /Max-mobile path).
-- Re-enter the Worker URL in Max connection settings if required.
+INSTALL:
+1. Back up the current Max-mobile repo.
+2. Replace index.html with this version.
+3. Keep/update the Cloudflare Worker with worker.js (the current Worker file is included).
+4. Keep GEMINI_API_KEY as a Cloudflare secret.
+5. Open the deployed app and test. If speech is silent on launch, tap the screen or Max circle once: Android browsers often block autoplay speech until the first user interaction.
+6. The AI backend must be connected for actual AI answers and note analysis. Notes save in local browser storage and do not sync across devices yet.
 
-IMPORTANT TECHNICAL NOTES
-- This is an early UI prototype. Test voice input/output on your target Android browser.
-- Browsers commonly block speech on page load until the user has interacted with the page. If Max doesn't speak on first open, tap the Max circle once; then audio may work in later sessions depending on browser behavior.
-- Notes are stored locally in this browser/device only; cloud synchronization and robust persistent memory across devices are not included yet.
-- AI note analysis requires a deployed Worker and valid Gemini API key.
-- The visual shell hides the original UI but retains it as a hidden engine. Voice wiring can differ by browser and may need adjustment after testing on the live deployment.
-- Use ship SMS and official regulations for safety-critical maritime decisions.
+IMPORTANT:
+- This prototype uses browser speech recognition and speech synthesis. Male voice choice is best-effort and depends on installed voices; a Filipino-accented male voice is not guaranteed by the web app alone.
+- The editor uses browser rich-text editing commands. Test on your target Android browser before relying on it for important notes.

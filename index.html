@@ -12,6 +12,28 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}.b
 @keyframes pulse{0%,100%{transform:scale(.97);opacity:.45}50%{transform:scale(1.04);opacity:1}}
 .panel{background:#0b1928dd;border:1px solid var(--line);border-radius:18px;overflow:hidden}.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid var(--line);font-size:.82rem;letter-spacing:.08em;color:var(--cyan)}.chat{height:34vh;min-height:230px;max-height:400px;overflow:auto;padding:13px;display:flex;flex-direction:column;gap:10px}.msg{max-width:94%;padding:11px 13px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45;font-size:.94rem}.assistant{background:#10263a;border:1px solid #1e4761;align-self:flex-start}.user{background:var(--user);border:1px solid #246083;align-self:flex-end}.msg small{display:block;color:var(--muted);font-size:.68rem;margin-bottom:4px}.controls{display:flex;gap:7px;padding:11px;border-top:1px solid var(--line)}.talkbar{padding:14px;border-bottom:1px solid var(--line);display:grid;gap:8px}.talkbtn{width:100%;padding:16px 12px;font-size:1.05rem;border-radius:16px;letter-spacing:.02em}.talkhint{color:var(--muted);font-size:.78rem;text-align:center}.voiceprefs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.voiceprefs select{min-width:0;width:100%;background:#071421;color:var(--text);border:1px solid #24465d;border-radius:10px;padding:9px;font:inherit;font-size:.82rem}input,textarea{min-width:0;background:#071421;color:var(--text);border:1px solid #24465d;border-radius:12px;padding:12px;font:inherit;outline:none}input:focus,textarea:focus{border-color:var(--cyan)}#prompt{flex:1}button{border:1px solid #2a7898;background:#103149;color:var(--text);border-radius:12px;padding:10px 12px;font:inherit;font-weight:650;cursor:pointer}button:disabled{opacity:.45}button.primary{background:linear-gradient(135deg,#12658a,#12415e);border-color:#42c8ef}.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}.tool{background:#0c1b2b;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;min-height:68px}.tool b{display:block;color:var(--cyan);font-size:.9rem}.tool span{display:block;color:var(--muted);font-size:.76rem;margin-top:3px;font-weight:400}.below{margin-top:12px}.memory-list,.results{padding:12px 14px;color:var(--muted);font-size:.86rem}.memory-item,.result{padding:9px 0;border-bottom:1px solid #173249;display:flex;gap:8px;align-items:start}.memory-item span{flex:1;overflow-wrap:anywhere}.small-btn{padding:5px 8px;font-size:.75rem}.hint{color:var(--muted);font-size:.78rem;line-height:1.5;margin:12px 3px}.toast{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);background:#14364b;border:1px solid #3185a6;border-radius:10px;padding:10px 14px;display:none;max-width:90%;z-index:4}.result a{color:var(--cyan);font-weight:650;text-decoration:none}.result p{margin:4px 0 0;line-height:1.4}.settings{display:grid;gap:10px;padding:14px}.settings label{font-size:.82rem;color:var(--muted)}.settings input{width:100%;margin-top:5px}.checkline{display:flex;gap:9px;align-items:center;padding:0 14px 12px;color:var(--muted);font-size:.82rem}.checkline input{width:auto}.note-card{border:1px solid #1b3b55;border-radius:12px;padding:11px;margin:8px 0;background:#091827}.note-card h3{margin:0 0 5px;color:var(--cyan);font-size:.95rem}.note-card p{margin:4px 0;color:var(--muted);font-size:.82rem;line-height:1.4}.note-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.analysis-block{white-space:pre-wrap;line-height:1.5;background:#071421;border:1px solid #1b3b55;border-radius:10px;padding:10px;font-size:.86rem}
 @media(min-width:600px){.chat{height:390px}.tools{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+.note-list-page{flex:1;max-height:none;overflow:auto;padding:8px 0 14px}
+.add-note-bottom{position:sticky;bottom:8px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;border:1px solid #3d6d8c;border-radius:16px;background:#bcecff;color:#062033;font:inherit;font-weight:700;box-shadow:0 8px 24px #0005}
+.add-note-bottom span{font-size:1.4rem}
+.note-row{background:#0b1a2b;border:1px solid #1c344c}
+.editor-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.editor-meta input,.editor-meta select{background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:9px;padding:10px;font:inherit;min-width:0}
+.format-toolbar{display:flex;gap:6px;flex-wrap:wrap;border:1px solid var(--max-line);border-radius:10px;background:#081625;padding:8px}
+.format-toolbar button,.format-toolbar select,.color-tool{background:#132b40;color:var(--max-text);border:1px solid #2b4a63;border-radius:7px;padding:7px 9px;font:inherit}
+.format-toolbar button{min-width:36px}
+.format-toolbar select{max-width:140px}
+.color-tool{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.color-tool input{width:22px;height:22px;border:0;padding:0;background:transparent}
+.rich-editor{min-height:42vh;max-height:55vh;overflow:auto;outline:none;background:#071421;border:1px solid #24465d;border-radius:10px;padding:14px;font:inherit;line-height:1.7;color:var(--max-text)}
+.rich-editor:empty:before{content:attr(data-placeholder);color:#718ba2;pointer-events:none}
+.rich-editor h1,.rich-editor h2,.rich-editor h3{color:#bcecff}
+.rich-editor blockquote{border-left:3px solid #77d7ff;padding-left:12px;color:#9db4c8;margin-left:0}
+.editor-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.save-note-button{padding:12px 24px;border-radius:12px}
+#editorScreen{padding:12px 0;gap:12px}
+.full-editor{flex:1}
+@media(max-width:420px){.editor-meta{grid-template-columns:1fr}.format-toolbar select{max-width:100%}.editor-bottom{align-items:stretch}.save-note-button{width:100%}}
 </style><style>
 /* MAX two-section layout */
 :root{--max-bg:#07111e;--max-panel:#0b1a2b;--max-line:#1c344c;--max-accent:#77d7ff;--max-text:#e8f3ff;--max-muted:#8fa8c0}
@@ -68,6 +90,28 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
 .notes-analysis{background:#071421;border:1px solid var(--max-line);border-radius:10px;padding:10px;white-space:pre-wrap;font-size:.86rem;line-height:1.55;color:#b8cfe2}
 .notes-tip{color:var(--max-muted);font-size:.78rem;line-height:1.4;margin:0}
 @media(min-width:720px){.note-layout{grid-template-columns:280px minmax(0,1fr)}.note-list{max-height:58vh}}
+
+.note-list-page{flex:1;max-height:none;overflow:auto;padding:8px 0 14px}
+.add-note-bottom{position:sticky;bottom:8px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;border:1px solid #3d6d8c;border-radius:16px;background:#bcecff;color:#062033;font:inherit;font-weight:700;box-shadow:0 8px 24px #0005}
+.add-note-bottom span{font-size:1.4rem}
+.note-row{background:#0b1a2b;border:1px solid #1c344c}
+.editor-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.editor-meta input,.editor-meta select{background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:9px;padding:10px;font:inherit;min-width:0}
+.format-toolbar{display:flex;gap:6px;flex-wrap:wrap;border:1px solid var(--max-line);border-radius:10px;background:#081625;padding:8px}
+.format-toolbar button,.format-toolbar select,.color-tool{background:#132b40;color:var(--max-text);border:1px solid #2b4a63;border-radius:7px;padding:7px 9px;font:inherit}
+.format-toolbar button{min-width:36px}
+.format-toolbar select{max-width:140px}
+.color-tool{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.color-tool input{width:22px;height:22px;border:0;padding:0;background:transparent}
+.rich-editor{min-height:42vh;max-height:55vh;overflow:auto;outline:none;background:#071421;border:1px solid #24465d;border-radius:10px;padding:14px;font:inherit;line-height:1.7;color:var(--max-text)}
+.rich-editor:empty:before{content:attr(data-placeholder);color:#718ba2;pointer-events:none}
+.rich-editor h1,.rich-editor h2,.rich-editor h3{color:#bcecff}
+.rich-editor blockquote{border-left:3px solid #77d7ff;padding-left:12px;color:#9db4c8;margin-left:0}
+.editor-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.save-note-button{padding:12px 24px;border-radius:12px}
+#editorScreen{padding:12px 0;gap:12px}
+.full-editor{flex:1}
+@media(max-width:420px){.editor-meta{grid-template-columns:1fr}.format-toolbar select{max-width:100%}.editor-bottom{align-items:stretch}.save-note-button{width:100%}}
 </style></head>
 <body>
 <div class="app-shell">
@@ -93,36 +137,46 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
 
   <main id="notesScreen" class="section-screen">
     <div class="notes-header">
-      <div><h1>Second Brain</h1><p>Your notes, connected with Max</p></div>
-      <button id="newNote" class="home-mic primary">＋ New note</button>
+      <div><h1>Notes</h1><p>Your personal knowledge library</p></div>
+      <input id="notesSearch" placeholder="Search notes…" style="max-width:46%;padding:10px;background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:10px">
     </div>
-    <div class="note-layout">
-      <aside class="notes-sidebar">
-        <input id="notesSearch" placeholder="Search notes…">
-        <div class="notes-sidebar-head"><button id="notesNew">＋ New</button><button id="notesAnalyzeAll">Analyze pending</button></div>
-        <div id="noteList" class="note-list"></div>
-        <p class="notes-tip">Notes are saved in this browser on this device for now. Back up important information.</p>
-      </aside>
-      <section class="notes-editor">
-        <input id="editorTitle" placeholder="Untitled note" aria-label="Note title">
-        <div class="notes-toolbar">
-          <select id="editorCategory" aria-label="Note category" style="width:auto;flex:1;min-width:120px">
-            <option>Maritime</option><option>Work procedures</option><option>Learning</option><option>Personal</option><option>Ideas</option><option>Reference</option><option>Unsorted</option>
-          </select>
-          <button id="editorSave" class="accent">Save note</button>
-          <button id="editorAnalyze">Analyze</button>
-          <button id="editorAsk">Ask Max</button>
-          <button id="editorDelete">Delete</button>
-        </div>
-        <textarea id="editorBody" placeholder="Write freely. Use Markdown for headings, lists, links, and code. Max will analyze this note after you save it." aria-label="Note content"></textarea>
+    <div id="noteList" class="note-list note-list-page"></div>
+    <button id="newNote" class="add-note-bottom"><span>＋</span> New note</button>
+  </main>
+  <main id="editorScreen" class="section-screen">
+    <div class="notes-header">
+      <button id="editorBack" class="home-mic">← Notes</button>
+      <div><h1 id="editorPageHeading">New note</h1><p>Write it your way</p></div>
+    </div>
+    <section class="notes-editor full-editor">
+      <input id="editorTitle" placeholder="Title" aria-label="Note title">
+      <div class="editor-meta">
+        <select id="editorCategory" aria-label="Note category">
+          <option>Unsorted</option><option>Maritime</option><option>Work procedures</option><option>Learning</option><option>Personal</option><option>Ideas</option><option>Reference</option>
+        </select>
+        <input id="editorTags" placeholder="Tags, separated by commas">
+      </div>
+      <div class="format-toolbar" role="toolbar" aria-label="Text formatting">
+        <button data-cmd="bold" title="Bold"><b>B</b></button>
+        <button data-cmd="italic" title="Italic"><i>I</i></button>
+        <button data-cmd="underline" title="Underline"><u>U</u></button>
+        <button data-cmd="insertUnorderedList" title="Bulleted list">• List</button>
+        <button data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+        <select id="formatBlock" title="Paragraph format"><option value="p">Paragraph</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option><option value="pre">Code</option></select>
+        <label class="color-tool" title="Text color">A <input type="color" id="textColor" value="#dcecff" aria-label="Text color"></label>
+        <label class="color-tool" title="Highlight color">▰ <input type="color" id="highlightColor" value="#385777" aria-label="Highlight color"></label>
+      </div>
+      <div id="editorBody" class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Start writing your note…"></div>
+      <div class="editor-bottom">
         <div class="notes-toolbar">
           <button id="editorDictate">🎙 Dictate</button>
-          <button id="editorInsertDate">Insert date</button>
+          <button id="editorAnalyze">Analyze with Max</button>
         </div>
-        <div><strong style="font-size:.9rem">Max's analysis</strong><p class="notes-tip">Analysis is stored separately; Max never silently rewrites your original note.</p></div>
-        <div id="editorAnalysis" class="notes-analysis">Select a note or create a new one. Save it to keep it in your library.</div>
-      </section>
-    </div>
+        <button id="editorSave" class="accent save-note-button">Save note</button>
+      </div>
+      <div><strong style="font-size:.9rem">Max's analysis</strong><p class="notes-tip">Max's summary and key facts are stored separately from your original note.</p></div>
+      <div id="editorAnalysis" class="notes-analysis">Save your note to keep it in your library.</div>
+    </section>
   </main>
 </div>
 <nav class="bottom-nav" aria-label="Main sections">
@@ -286,119 +340,124 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 </script>
 </div>
 <script>
-/* New two-screen shell and note library */
 (function(){
- const $=id=>document.getElementById(id);
- const KEY='max_notes_v2';
- let activeNoteId=null, dirty=false, recognition=null, autoGreetingDone=false;
+ const $=id=>document.getElementById(id), KEY='max_notes_v3';
+ let activeNoteId=null, dirty=false, recognition=null, greetingDone=false, voicesReady=false;
  const getNotes=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return []}};
  const putNotes=items=>localStorage.setItem(KEY,JSON.stringify(items));
- const toastMsg=m=>{const el=$('homeStatus');if(el)el.textContent=m;};
+ const legacy=id=>document.querySelector('#legacyEngine #'+id);
+ const status=m=>{$('homeStatus').textContent=m};
  function setSection(name){
-   const home=name==='home';$('homeScreen').classList.toggle('active',home);$('notesScreen').classList.toggle('active',!home);
-   $('navHome').classList.toggle('active',home);$('navNotes').classList.toggle('active',!home);
-   if(!home)renderList();
+  ['homeScreen','notesScreen','editorScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
+  $('navHome').classList.toggle('active',name==='home');$('navNotes').classList.toggle('active',name!=='home');
+  if(name==='notes')renderList();
  }
  $('navHome').onclick=()=>setSection('home');$('navNotes').onclick=()=>setSection('notes');
- function safe(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
  function renderList(){
-   const list=$('noteList'),q=$('notesSearch').value.toLowerCase().trim(),notes=getNotes().sort((a,b)=>b.updatedAt-a.updatedAt);
-   list.innerHTML='';
-   const matches=notes.filter(n=>(n.title+' '+n.body+' '+n.category+' '+(n.analysis?.summary||'')).toLowerCase().includes(q));
-   if(!matches.length){const p=document.createElement('p');p.className='notes-tip';p.textContent=notes.length?'No matching notes.':'No notes yet. Create your first note.';list.append(p);return}
-   matches.forEach(n=>{const row=document.createElement('div');row.className='note-row'+(n.id===activeNoteId?' active':'');row.tabIndex=0;
-     const title=document.createElement('strong');title.textContent=n.title||'Untitled note';
-     const meta=document.createElement('small');meta.textContent=(n.category||'Unsorted')+' · '+new Date(n.updatedAt).toLocaleDateString();
-     const excerpt=document.createElement('p');excerpt.textContent=n.analysis?.summary||n.body.slice(0,100);
-     row.append(title,meta,excerpt);row.onclick=()=>loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')loadNote(n.id)};list.append(row);
-   });
+  const list=$('noteList'),q=$('notesSearch').value.toLowerCase().trim(),notes=getNotes().sort((a,b)=>b.updatedAt-a.updatedAt);
+  list.replaceChildren();
+  const found=notes.filter(n=>(n.title+' '+n.body+' '+n.category+' '+(n.tags||[]).join(' ')+' '+(n.analysis?.summary||'')).toLowerCase().includes(q));
+  if(!found.length){const p=document.createElement('p');p.className='notes-tip';p.style.padding='18px';p.textContent=notes.length?'No matching notes.':'No notes yet. Tap + New note below to begin.';list.append(p);return}
+  found.forEach(n=>{
+   const row=document.createElement('div');row.className='note-row';row.tabIndex=0;
+   const t=document.createElement('strong');t.textContent=n.title||'Untitled note';
+   const m=document.createElement('small');m.textContent=(n.category||'Unsorted')+' · '+new Date(n.updatedAt).toLocaleDateString()+(n.analysis?' · analyzed':'');
+   const excerpt=document.createElement('p');excerpt.textContent=(n.analysis?.summary||n.body.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ')).slice(0,180);
+   row.append(t,m,excerpt);row.onclick=()=>loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')loadNote(n.id)};list.append(row);
+  });
  }
  function clearEditor(){
-   activeNoteId=null;$('editorTitle').value='';$('editorCategory').value='Unsorted';$('editorBody').value='';$('editorAnalysis').textContent='New note. Write your content and save it.';dirty=false;renderList();
+  activeNoteId=null;$('editorTitle').value='';$('editorCategory').value='Unsorted';$('editorTags').value='';$('editorBody').innerHTML='';$('editorAnalysis').textContent='Write your note, then save. Max can analyze it separately.';$('editorPageHeading').textContent='New note';dirty=false;
  }
  function loadNote(id){
-   const n=getNotes().find(n=>n.id===id);if(!n)return;
-   activeNoteId=id;$('editorTitle').value=n.title||'';$('editorCategory').value=n.category||'Unsorted';$('editorBody').value=n.body||'';
-   $('editorAnalysis').textContent=n.analysis?.fullText||'This note has not been analyzed yet. Select Analyze to ask Max to study it.';
-   dirty=false;renderList();
+  const n=getNotes().find(x=>x.id===id);if(!n)return;
+  activeNoteId=id;$('editorTitle').value=n.title||'';$('editorCategory').value=n.category||'Unsorted';$('editorTags').value=(n.tags||[]).join(', ');$('editorBody').innerHTML=n.body||'';
+  $('editorAnalysis').textContent=n.analysis?.fullText||'Not analyzed yet. Tap Analyze with Max to analyze this note.';$('editorPageHeading').textContent=n.title||'Edit note';dirty=false;setSection('editor');
  }
- function saveCurrent(autoAnalyze=false){
-   const body=$('editorBody').value.trim();if(!body){toastMsg('Write something in your note first.');return null}
-   let notes=getNotes(),n=notes.find(n=>n.id===activeNoteId);
-   if(!n){n={id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),createdAt:Date.now(),analysis:null};notes.push(n);activeNoteId=n.id}
-   n.title=$('editorTitle').value.trim()||body.split('\n')[0].slice(0,80)||'Untitled note';n.category=$('editorCategory').value||'Unsorted';n.body=body;n.updatedAt=Date.now();
-   putNotes(notes);dirty=false;renderList();toastMsg('Note saved.');
-   if(autoAnalyze && !n.analysis) analyze(n);
-   return n;
+ function saveCurrent(){
+  const body=$('editorBody').innerHTML.trim();if(!body||body==='<br>'){status('Write something in your note first.');return null}
+  const notes=getNotes();let n=notes.find(x=>x.id===activeNoteId);
+  if(!n){n={id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),createdAt:Date.now(),analysis:null};notes.push(n);activeNoteId=n.id}
+  n.title=$('editorTitle').value.trim()||$('editorBody').innerText.split('\n')[0].slice(0,80)||'Untitled note';n.category=$('editorCategory').value||'Unsorted';n.tags=$('editorTags').value.split(',').map(x=>x.trim()).filter(Boolean);n.body=body;n.updatedAt=Date.now();
+  putNotes(notes);dirty=false;$('editorPageHeading').textContent=n.title;renderList();status('Note saved.');return n;
  }
  async function analyze(n){
-   const base=typeof apiBase==='function'?apiBase():'';
-   if(!base){$('editorAnalysis').textContent='Note saved locally. Connect Max’s Cloudflare Worker to enable automatic AI analysis.';return}
-   $('editorAnalysis').textContent='Max is analyzing this note…';
-   try{
-     const r=await fetch(base+'/api/analyze-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:n.title,category:n.category,text:n.body})});
-     const data=await r.json();if(!r.ok)throw new Error(data.error||'Analysis failed');
-     n.analysis={summary:data.summary||'',fullText:data.analysis||data.summary||'',tags:data.tags||[],related:data.related||[],questions:data.questions||[]};
-     putNotes(getNotes().map(x=>x.id===n.id?n:x));$('editorAnalysis').textContent=n.analysis.fullText||n.analysis.summary||'Analysis completed.';renderList();toastMsg('Analysis complete. Original note preserved.');
-   }catch(e){$('editorAnalysis').textContent='Analysis failed: '+e.message;toastMsg('Note remains saved. Analysis failed.')}
+  const base=typeof apiBase==='function'?apiBase():'';
+  if(!base){$('editorAnalysis').textContent='Saved locally. Connect Max’s Cloudflare Worker to enable AI analysis.';return}
+  $('editorAnalysis').textContent='Max is analyzing your note…';
+  try{
+   const plain=document.createElement('div');plain.innerHTML=n.body;
+   const r=await fetch(base+'/api/analyze-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:n.title,category:n.category,text:plain.innerText})});
+   const data=await r.json();if(!r.ok)throw new Error(data.error||'Analysis failed');
+   n.analysis={summary:data.summary||'',fullText:data.analysis||data.summary||'',tags:data.tags||[],related:data.related||[],questions:data.questions||[]};
+   putNotes(getNotes().map(x=>x.id===n.id?n:x));$('editorAnalysis').textContent=n.analysis.fullText||n.analysis.summary;renderList();status('Analysis complete. Your original note is unchanged.');
+  }catch(e){$('editorAnalysis').textContent='Analysis failed: '+e.message;status('Note is saved, but analysis failed.')}
  }
- $('newNote').onclick=$('notesNew').onclick=()=>{setSection('notes');clearEditor();$('editorTitle').focus()};
- $('editorSave').onclick=()=>saveCurrent(false);
- $('editorAnalyze').onclick=()=>{const n=saveCurrent(false);if(n)analyze(n)};
- $('editorAsk').onclick=()=>{
-   const n=saveCurrent(false);if(!n)return;
-   const prompt=$('legacyEngine').querySelector('#prompt');
-   if(prompt){prompt.value='Use this note as one helpful source, but also use general knowledge and other sources when relevant. Be honest if the note is incomplete or wrong.\\nTitle: '+n.title+'\\nCategory: '+n.category+'\\nNote: '+n.body+'\\nAnalysis: '+(n.analysis?.fullText||'not analyzed yet');setSection('home');prompt.focus();prompt.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));}
-   else {setSection('home');$('homeAnswer').textContent='Note selected: '+n.title+'. Ask Max about it from the home screen.'}
- };
- $('editorDelete').onclick=()=>{if(!activeNoteId){clearEditor();return}if(confirm('Delete this note from this browser?')){putNotes(getNotes().filter(n=>n.id!==activeNoteId));clearEditor();toastMsg('Note deleted.')}};
+ const createNewNote=()=>{clearEditor();setSection('editor');$('editorTitle').focus()}; $('newNote').onclick=createNewNote;
+ $('editorBack').onclick=()=>{if(dirty&&!confirm('You have unsaved changes. Leave without saving?'))return;setSection('notes')};
+ $('editorSave').onclick=()=>{const n=saveCurrent();if(n)status('Saved successfully.')};
+ $('editorAnalyze').onclick=()=>{const n=saveCurrent();if(n)analyze(n)};
+ $('editorDelete').onclick=()=>{if(!activeNoteId)return;if(confirm('Delete this note?')){putNotes(getNotes().filter(n=>n.id!==activeNoteId));clearEditor();setSection('notes');status('Note deleted.')}};
  $('notesSearch').oninput=renderList;
- $('editorBody').oninput=$('editorTitle').oninput=()=>dirty=true;
- $('editorInsertDate').onclick=()=>{$('editorBody').value+=($('editorBody').value?'\\n':'')+new Date().toLocaleString();dirty=true};
+ ['editorBody','editorTitle','editorTags','editorCategory'].forEach(id=>$(id).addEventListener('input',()=>dirty=true));
+ document.querySelectorAll('.format-toolbar [data-cmd]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.cmd,false,null);$('editorBody').focus();dirty=true});
+ $('formatBlock').onchange=()=>{document.execCommand('formatBlock',false,$('formatBlock').value);$('editorBody').focus();dirty=true};
+ $('textColor').oninput=()=>{document.execCommand('foreColor',false,$('textColor').value);$('editorBody').focus();dirty=true};
+ $('highlightColor').oninput=()=>{document.execCommand('hiliteColor',false,$('highlightColor').value);$('editorBody').focus();dirty=true};
  $('editorDictate').onclick=()=>{
-   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toastMsg('Dictation is not supported in this browser. Try Chrome.');return}
-   recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;
-   recognition.onresult=e=>{$('editorBody').value+=($('editorBody').value?' ':'')+e.results[0][0].transcript;dirty=true};
-   recognition.onerror=e=>toastMsg('Dictation error: '+e.error);recognition.start();toastMsg('Listening for your note…');
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){status('Dictation is not supported in this browser. Try Chrome.');return}
+  recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;
+  recognition.onresult=e=>{document.execCommand('insertText',false,e.results[0][0].transcript);dirty=true};
+  recognition.onerror=e=>status('Dictation error: '+e.error);recognition.start();status('Listening for your note…');
  };
- $('notesAnalyzeAll').onclick=async()=>{const pending=getNotes().filter(n=>!n.analysis);if(!pending.length){toastMsg('All saved notes already have analysis.');return}for(const n of pending)await analyze(n);};
- // Home orb calls existing voice and chat functions while keeping the visible home uncluttered.
- function findLegacy(...ids){for(const id of ids){const e=$('legacyEngine').querySelector('#'+id);if(e)return e}return null}
+ $('editorAnalyze').insertAdjacentText('afterend','');
+ $('notesSearch').addEventListener('input',renderList);
+
+ // Voice selection: prefer installed English male voices, then any male voice, then a default English voice.
+ function chooseMaleVoice(){
+  if(!('speechSynthesis' in window))return null;
+  const vs=window.speechSynthesis.getVoices()||[];
+  const maleHints=/male|man|david|daniel|george|james|guy|aaron|oliver|fred|alex|tom|rishi|arthur|liam|matthew/i;
+  const en=vs.filter(v=>/^en(-|_|$)/i.test(v.lang));
+  return en.find(v=>maleHints.test(v.name))||vs.find(v=>maleHints.test(v.name))||en.find(v=>/enhanced|natural|neural/i.test(v.name))||en[0]||vs[0]||null;
+ }
+ function speak(text){
+  if(!('speechSynthesis' in window)){status('Text-to-speech is not available in this browser.');return}
+  window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=chooseMaleVoice();if(v)u.voice=v;u.lang=v?.lang||'en-PH';u.rate=.92;u.pitch=.78;
+  u.onstart=()=>{$('maxOrb').classList.add('speaking');status('Max is speaking…')};
+  u.onend=()=>{$('maxOrb').classList.remove('speaking');status('Ready')};
+  window.speechSynthesis.speak(u);
+ }
+ if('speechSynthesis' in window)window.speechSynthesis.onvoiceschanged=()=>{voicesReady=true};
+ function showAnswer(text){$('homeAnswer').textContent=text;$('maxOrb').classList.remove('processing','listening');speak(text)}
  function startTalk(){
-   const mic=findLegacy('mic','voice','talk','startVoice');
-   if(mic){mic.click();$('maxOrb').classList.add('listening');toastMsg('Listening… speak naturally.');return}
-   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-   if(!SR){toastMsg('Voice input is unavailable in this browser. You can enable speech support or use typed input in a future update.');return}
-   if(recognition){try{recognition.stop()}catch{}}
-   recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;
-   recognition.onresult=e=>{
-     const transcript=e.results[0][0].transcript;
-     const prompt=findLegacy('prompt');if(prompt){prompt.value=transcript;const send=findLegacy('send');if(send)send.click();}
-     $('homeAnswer').textContent='You: '+transcript;$('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');toastMsg('Thinking…');
-   };
-   recognition.onerror=e=>{toastMsg('I could not hear that clearly. Tap the circle and try again.');$('maxOrb').classList.remove('listening')};
-   recognition.onend=()=>$('maxOrb').classList.remove('listening');
-   try{recognition.start();$('maxOrb').classList.add('listening');toastMsg('Listening…')}catch(e){toastMsg('Voice input could not start.')}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){status('Voice input is not supported by this browser.');return}
+  if(recognition)try{recognition.stop()}catch{}
+  recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;recognition.maxAlternatives=1;
+  recognition.onresult=async e=>{
+   const q=e.results[0][0].transcript;$('homeAnswer').textContent='You: '+q;$('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
+   const base=typeof apiBase==='function'?apiBase():'';
+   if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.');return}
+   try{
+    const r=await fetch(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,history:[],memory:[]})});
+    const data=await r.json();if(!r.ok)throw new Error(data.error||'AI request failed');
+    showAnswer(data.reply||data.response||data.text||'I could not generate a response.');
+   }catch(err){showAnswer('I could not reach my AI service. '+err.message)}
+  };
+  recognition.onerror=e=>{status('I could not hear that clearly. Tap the circle and try again.');$('maxOrb').classList.remove('listening')};
+  recognition.onend=()=>{$('maxOrb').classList.remove('listening')};
+  try{recognition.start();$('maxOrb').classList.add('listening');status('Listening… speak naturally.')}catch(e){status('Voice input could not start.')}
  }
  $('maxOrb').onclick=startTalk;$('homeTalk').onclick=startTalk;
- $('homeStop').onclick=()=>{if(recognition)try{recognition.stop()}catch{};if(window.speechSynthesis)window.speechSynthesis.cancel();$('maxOrb').classList.remove('listening','speaking','processing');toastMsg('Stopped.')};
- // Relay legacy response text into the visible home screen and hide legacy chat controls.
- const legacyAnswer=findLegacy('messages','chat','conversation','response');
- if(legacyAnswer){const obs=new MutationObserver(()=>{$('homeAnswer').textContent=legacyAnswer.innerText||legacyAnswer.textContent||'';$('maxOrb').classList.remove('processing');});obs.observe(legacyAnswer,{childList:true,subtree:true,characterData:true});}
- // Try to make Max greet the user once on app open; browser audio policies may require a tap.
+ $('homeStop').onclick=()=>{if(recognition)try{recognition.stop()}catch{};if(window.speechSynthesis)window.speechSynthesis.cancel();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
+ // One greeting on launch; Android browsers may require a first tap before they allow audio.
  function greet(){
-   if(autoGreetingDone)return;autoGreetingDone=true;
-   const msg='Good day. I’m Max. I’m ready when you are. What would you like to work on?';
-   $('homeStatus').textContent='Ready';
-   if('speechSynthesis' in window){
-     const u=new SpeechSynthesisUtterance(msg);u.lang='en-PH';u.rate=.92;u.pitch=.85;
-     u.onstart=()=>$('maxOrb').classList.add('speaking');u.onend=()=>$('maxOrb').classList.remove('speaking');
-     try{window.speechSynthesis.speak(u)}catch{}
-   }
+  if(greetingDone)return;greetingDone=true;const msg='Good day. I’m Max. I’m ready when you are. What would you like to work on?';
+  status('Ready');
+  if('speechSynthesis' in window){try{const u=new SpeechSynthesisUtterance(msg),v=chooseMaleVoice();if(v)u.voice=v;u.lang=v?.lang||'en-PH';u.rate=.92;u.pitch=.78;u.onstart=()=>$('maxOrb').classList.add('speaking');u.onend=()=>$('maxOrb').classList.remove('speaking');window.speechSynthesis.speak(u)}catch{}}
  }
- window.addEventListener('load',()=>{renderList();greet();});
- // Avoid losing a draft by warning before tab switch if there is unsaved content.
- $('navNotes').addEventListener('click',()=>{if(dirty)toastMsg('You have unsaved edits. Press Save note before leaving.');});
+ window.addEventListener('load',()=>{renderList();greet()});
 })();
 </script>
 </body></html></body>
