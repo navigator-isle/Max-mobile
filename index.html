@@ -429,7 +429,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   putNotes(notes);dirty=false;$('editorPageHeading').textContent=n.title;renderList();status('Note saved.');return n;
  }
  async function analyze(n){
-  const base=typeof apiBase==='function'?apiBase():'';
+  const base=workerBase();
   if(!base){$('editorAnalysis').textContent='Saved locally. Connect Max’s Cloudflare Worker to enable AI analysis.';return}
   $('editorAnalysis').textContent='Max is analyzing your note…';
   try{
@@ -444,7 +444,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('editorBack').onclick=()=>{if(dirty&&!confirm('You have unsaved changes. Leave without saving?'))return;setSection('notes')};
  $('editorSave').onclick=()=>{const n=saveCurrent();if(n)status('Saved successfully.')};
  $('editorAnalyze').onclick=()=>{const n=saveCurrent();if(n)analyze(n)};
- $('editorDelete').onclick=()=>{if(!activeNoteId)return;if(confirm('Delete this note?')){putNotes(getNotes().filter(n=>n.id!==activeNoteId));clearEditor();setSection('notes');status('Note deleted.')}};
+ if($('editorDelete')) $('editorDelete').onclick=()=>{if(!activeNoteId)return;if(confirm('Delete this note?')){putNotes(getNotes().filter(n=>n.id!==activeNoteId));clearEditor();setSection('notes');status('Note deleted.')}};
  $('notesSearch').oninput=renderList;
  ['editorBody','editorTitle','editorTags','editorCategory'].forEach(id=>$(id).addEventListener('input',()=>dirty=true));
  document.querySelectorAll('.format-toolbar [data-cmd]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.cmd,false,null);$('editorBody').focus();dirty=true});
@@ -484,7 +484,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;recognition.maxAlternatives=1;
   recognition.onresult=async e=>{
    const q=e.results[0][0].transcript;$('homeAnswer').textContent='You: '+q;$('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
-   const base=typeof apiBase==='function'?apiBase():'';
+   const base=workerBase();
    if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.');return}
    try{
     const r=await fetch(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,history:[],memory:[]})});
@@ -504,7 +504,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   status('Ready');
   if('speechSynthesis' in window){try{const u=new SpeechSynthesisUtterance(msg),v=chooseMaleVoice();if(v)u.voice=v;u.lang=v?.lang||'en-PH';u.rate=.92;u.pitch=.78;u.onstart=()=>$('maxOrb').classList.add('speaking');u.onend=()=>$('maxOrb').classList.remove('speaking');window.speechSynthesis.speak(u)}catch{}}
  }
- window.addEventListener('load',()=>{renderList();refreshConnectionLabel();greet()});
+ window.addEventListener('load',()=>{try{renderList();refreshConnectionLabel();greet();status('Ready')}catch(e){status('App startup error: '+(e?.message||'unknown error'));console.error('Max startup error',e)}});
 })();
 </script>
 </body></html></body>
