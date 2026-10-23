@@ -1,30 +1,21 @@
-MAX SECOND BRAIN UPDATE (Android/GitHub Pages + Cloudflare Worker)
+MAX TWO-SECTION APP UPDATE
 
-WHAT'S NEW
-- Built-in Notes & Second Brain panel inside Max.
-- Type, paste, or dictate a note.
-- Save & analyze automatically: summary, key facts, details, tags, related topics, and questions.
-- Search saved notes, open/edit notes, re-analyze, or put a note into the chat to ask Max about it.
-- Original note text is preserved; analysis is stored separately.
-- Notes are currently saved in this browser/device's localStorage. They do not sync between devices yet.
+This update redesigns Max into two sections:
+1) HOME / MAX: large animated speaking circle, greeting on open (browser may block automatic audio until the user interacts), voice input controls, and answer area.
+2) NOTES / SECOND BRAIN: Obsidian-inspired dark notes interface with searchable note list, Markdown-friendly editor, categories, dictation, saved note analysis, and Ask Max action.
 
 INSTALL
-1. Back up your current GitHub repository files first.
-2. Replace the repository's index.html with this package's index.html.
-3. Update the Cloudflare Worker code with this package's worker.js.
-4. Keep your existing GEMINI_API_KEY secret in Cloudflare. Do NOT put the key in GitHub.
-5. Keep ALLOWED_ORIGIN set to your exact GitHub Pages origin, e.g. https://navigator-isle.github.io
-6. If your Worker has a GEMINI_MODEL variable, gemini-2.5-flash is a suitable starting value; otherwise the code uses that default.
-7. Deploy the Worker, then open Max > Connection settings and enter the Worker URL.
-8. Open Notes & Second Brain and save a test note.
+- Back up the current Max-mobile GitHub repository first.
+- Replace the repo's index.html with this index.html.
+- Update the existing Cloudflare Worker with worker.js so /api/analyze-note is available.
+- Keep the GEMINI_API_KEY as a Cloudflare Worker secret; never add it to GitHub.
+- Set ALLOWED_ORIGIN to https://navigator-isle.github.io (origin only, no /Max-mobile path).
+- Re-enter the Worker URL in Max connection settings if required.
 
-SAFETY / LIMITS
-- AI analysis needs a configured Worker and valid Gemini API key.
-- Without a backend, notes still save locally but automatic AI analysis cannot run.
-- Browser localStorage can be lost if site data is cleared and does not automatically sync. Export/backup or add cloud database sync before relying on it as the only copy.
-- Max's analysis is a helpful organization aid, not verification of maritime regulations. Check critical procedures against official sources and ship SMS.
-- This Worker update adds /api/analyze-note and preserves existing /api/chat and /api/search routes.
-
-
-MAX BEHAVIOR PRINCIPLES
-The Worker prompt is updated so Max is general-purpose, not note-dependent. Notes are optional context; Max can answer from general model knowledge and should use external research when available and needed. He should be honest about uncertainty, never invent sources or claim actions he did not perform, correct mistakes openly, and distinguish user-taught procedures from verified facts or regulations. This prompt does not itself create permanent cross-device memory or automatic live web browsing; those require additional storage and search integrations.
+IMPORTANT TECHNICAL NOTES
+- This is an early UI prototype. Test voice input/output on your target Android browser.
+- Browsers commonly block speech on page load until the user has interacted with the page. If Max doesn't speak on first open, tap the Max circle once; then audio may work in later sessions depending on browser behavior.
+- Notes are stored locally in this browser/device only; cloud synchronization and robust persistent memory across devices are not included yet.
+- AI note analysis requires a deployed Worker and valid Gemini API key.
+- The visual shell hides the original UI but retains it as a hidden engine. Voice wiring can differ by browser and may need adjustment after testing on the live deployment.
+- Use ship SMS and official regulations for safety-critical maritime decisions.
