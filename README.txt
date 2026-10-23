@@ -18,3 +18,9 @@ INSTALL:
 IMPORTANT:
 - This prototype uses browser speech recognition and speech synthesis. Male voice choice is best-effort and depends on installed voices; a Filipino-accented male voice is not guaranteed by the web app alone.
 - The editor uses browser rich-text editing commands. Test on your target Android browser before relying on it for important notes.
+
+
+TROUBLESHOOTING UPDATE
+- A visible ⚙ button is now present in the app header. Use it to enter/save the Cloudflare Worker URL and run a /health test.
+- If the test fails, read the displayed error. Common causes: Worker not deployed, wrong Worker URL, missing GEMINI_API_KEY secret, or ALLOWED_ORIGIN not exactly https://navigator-isle.github.io.
+- The health test confirms the Worker URL is reachable; to verify AI calls, ask Max a test question after the health check passes.

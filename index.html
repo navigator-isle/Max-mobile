@@ -34,6 +34,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}.b
 #editorScreen{padding:12px 0;gap:12px}
 .full-editor{flex:1}
 @media(max-width:420px){.editor-meta{grid-template-columns:1fr}.format-toolbar select{max-width:100%}.editor-bottom{align-items:stretch}.save-note-button{width:100%}}
+
+#connectionModal.open{display:flex!important}
+#connectionModal[hidden]{display:none!important}
 </style><style>
 /* MAX two-section layout */
 :root{--max-bg:#07111e;--max-panel:#0b1a2b;--max-line:#1c344c;--max-accent:#77d7ff;--max-text:#e8f3ff;--max-muted:#8fa8c0}
@@ -112,12 +115,15 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
 #editorScreen{padding:12px 0;gap:12px}
 .full-editor{flex:1}
 @media(max-width:420px){.editor-meta{grid-template-columns:1fr}.format-toolbar select{max-width:100%}.editor-bottom{align-items:stretch}.save-note-button{width:100%}}
+
+#connectionModal.open{display:flex!important}
+#connectionModal[hidden]{display:none!important}
 </style></head>
 <body>
 <div class="app-shell">
   <header class="topbar">
     <div class="brand">MAX</div>
-    <div class="top-status" id="globalStatus">Your personal assistant</div>
+    <div style="display:flex;align-items:center;gap:10px"><div class="top-status" id="globalStatus">Local mode</div><button id="openConnection" aria-label="Connection settings" title="Connection settings" style="border:1px solid #294861;background:#10273b;color:#bcecff;border-radius:10px;padding:8px 10px;font:inherit">⚙</button></div>
   </header>
   <main id="homeScreen" class="section-screen active">
     <div class="max-greeting">
@@ -178,6 +184,21 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
       <div id="editorAnalysis" class="notes-analysis">Save your note to keep it in your library.</div>
     </section>
   </main>
+</div>
+
+<div id="connectionModal" hidden style="position:fixed;inset:0;z-index:100;background:#020914eF;display:none;align-items:center;justify-content:center;padding:18px">
+  <section style="width:min(100%,520px);background:#0b1a2b;border:1px solid #294861;border-radius:18px;padding:18px;box-shadow:0 20px 60px #0009">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2 style="margin:0;font-size:1.2rem">Connect Max's AI</h2><button id="closeConnection" class="home-mic">Close</button></div>
+    <p style="color:#9db4c8;line-height:1.5">Max needs a Cloudflare Worker URL to send your question to the AI model securely. The Worker keeps your Gemini API key off this website.</p>
+    <label for="workerUrl" style="display:block;margin:12px 0 6px">Cloudflare Worker URL</label>
+    <input id="workerUrl" placeholder="https://your-worker.your-subdomain.workers.dev" style="width:100%;box-sizing:border-box;background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:12px;font:inherit">
+    <p class="notes-tip">Enter only the Worker base URL. Do not enter your Gemini API key here.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button id="saveWorkerUrl" class="home-mic primary">Save URL</button><button id="testWorkerUrl" class="home-mic">Test connection</button></div>
+    <p id="connectionResult" style="white-space:pre-wrap;color:#bcecff;line-height:1.5"></p>
+    <details style="color:#9db4c8;font-size:.88rem;line-height:1.5"><summary>What must be set up in Cloudflare?</summary>
+      <ol><li>A deployed Worker containing the Max backend code.</li><li>A Worker secret named <code>GEMINI_API_KEY</code>.</li><li>A plain-text variable named <code>ALLOWED_ORIGIN</code> set to <code>https://navigator-isle.github.io</code>.</li><li>Then save the Worker URL here and test it.</li></ol>
+    </details>
+  </section>
 </div>
 <nav class="bottom-nav" aria-label="Main sections">
   <button id="navHome" class="active"><span>◉</span> Max</button>
@@ -346,7 +367,33 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const getNotes=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return []}};
  const putNotes=items=>localStorage.setItem(KEY,JSON.stringify(items));
  const legacy=id=>document.querySelector('#legacyEngine #'+id);
+
  const status=m=>{$('homeStatus').textContent=m};
+ const API_KEY='jarvis_api_base_v2';
+ function workerBase(){return (localStorage.getItem(API_KEY)||'').trim().replace(/\/+$/,'')}
+ function refreshConnectionLabel(){$('globalStatus').textContent=workerBase()?'Worker URL saved':'Local mode'}
+ function openConnection(){ $('workerUrl').value=workerBase();$('connectionResult').textContent='';$('connectionModal').hidden=false;$('connectionModal').classList.add('open'); }
+ function closeConnection(){ $('connectionModal').classList.remove('open');$('connectionModal').hidden=true; }
+ $('openConnection').onclick=openConnection;$('closeConnection').onclick=closeConnection;
+ $('saveWorkerUrl').onclick=()=>{
+   const v=$('workerUrl').value.trim().replace(/\/+$/,'');
+   if(v && !/^https:\/\/[a-z0-9.-]+(?::\d+)?$/i.test(v)){ $('connectionResult').textContent='Please enter the HTTPS Worker base URL only, without a path or trailing slash.';return; }
+   if(v)localStorage.setItem(API_KEY,v);else localStorage.removeItem(API_KEY);
+   refreshConnectionLabel();$('connectionResult').textContent=v?'Worker URL saved on this device. Now tap Test connection.':'Worker URL cleared. Max is in local mode.';
+ };
+ $('testWorkerUrl').onclick=async()=>{
+   const v=$('workerUrl').value.trim().replace(/\/+$/,'');
+   if(!v){$('connectionResult').textContent='Enter your Worker URL first.';return}
+   $('connectionResult').textContent='Checking /health…';
+   try{
+     const r=await fetch(v+'/health',{method:'GET'});
+     const data=await r.json().catch(()=>({}));
+     if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+     if(data.ok){localStorage.setItem(API_KEY,v);refreshConnectionLabel();$('connectionResult').textContent='SUCCESS: Max can reach the Worker. Service: '+(data.service||'Max backend')+'. Model: '+(data.model||'configured')+'. Next, ask Max a test question.'}
+     else throw new Error('The URL responded, but it did not look like the Max Worker health endpoint.');
+   }catch(e){$('connectionResult').textContent='CONNECTION FAILED\\n'+e.message+'\\n\\nCheck that the Worker is deployed, the URL is correct, and ALLOWED_ORIGIN equals https://navigator-isle.github.io.'}
+ };
+
  function setSection(name){
   ['homeScreen','notesScreen','editorScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
   $('navHome').classList.toggle('active',name==='home');$('navNotes').classList.toggle('active',name!=='home');
@@ -457,7 +504,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   status('Ready');
   if('speechSynthesis' in window){try{const u=new SpeechSynthesisUtterance(msg),v=chooseMaleVoice();if(v)u.voice=v;u.lang=v?.lang||'en-PH';u.rate=.92;u.pitch=.78;u.onstart=()=>$('maxOrb').classList.add('speaking');u.onend=()=>$('maxOrb').classList.remove('speaking');window.speechSynthesis.speak(u)}catch{}}
  }
- window.addEventListener('load',()=>{renderList();greet()});
+ window.addEventListener('load',()=>{renderList();refreshConnectionLabel();greet()});
 })();
 </script>
 </body></html></body>
