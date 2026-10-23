@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07111f"><title>JARVIS Mobile</title>
+<meta name="theme-color" content="#07111f"><title>Max — Personal Butler</title>
 <style>
 :root{--bg:#07111f;--panel:#0d1b2b;--line:#1b3b55;--cyan:#53dfff;--text:#e8f7ff;--muted:#8eafc2;--user:#12334a}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#123957 0%,var(--bg) 55%);color:var(--text);font:16px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
@@ -10,22 +10,43 @@
 header{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:800;letter-spacing:.16em;color:var(--cyan);font-size:1.05rem}.status{font-size:.75rem;color:#87e7b1;border:1px solid #28654e;padding:5px 9px;border-radius:99px}
 .hero{text-align:center;padding:20px 0 16px}.orb{width:112px;height:112px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#173c59 0%,#0c2238 53%,#07111f 70%);border:1px solid #2c8aaa;box-shadow:0 0 30px #25bfe833,inset 0 0 25px #35d6ff20;position:relative}.orb:before,.orb:after{content:"";position:absolute;inset:-8px;border:1px solid #2e9fc966;border-radius:50%;animation:pulse 3s infinite}.orb:after{inset:-17px;animation-delay:1.5s}.orb span{font-size:2rem;color:var(--cyan);text-shadow:0 0 18px #53dfff}.hero h1{font-size:1.2rem;margin:4px 0}.hero p{color:var(--muted);font-size:.83rem;margin:5px 0}
 @keyframes pulse{0%,100%{transform:scale(.97);opacity:.45}50%{transform:scale(1.04);opacity:1}}
-.panel{background:#0b1928dd;border:1px solid var(--line);border-radius:18px;overflow:hidden}.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid var(--line);font-size:.82rem;letter-spacing:.08em;color:var(--cyan)}.chat{height:34vh;min-height:230px;max-height:400px;overflow:auto;padding:13px;display:flex;flex-direction:column;gap:10px}.msg{max-width:94%;padding:11px 13px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45;font-size:.94rem}.assistant{background:#10263a;border:1px solid #1e4761;align-self:flex-start}.user{background:var(--user);border:1px solid #246083;align-self:flex-end}.msg small{display:block;color:var(--muted);font-size:.68rem;margin-bottom:4px}.controls{display:flex;gap:7px;padding:11px;border-top:1px solid var(--line)}input,textarea{min-width:0;background:#071421;color:var(--text);border:1px solid #24465d;border-radius:12px;padding:12px;font:inherit;outline:none}input:focus,textarea:focus{border-color:var(--cyan)}#prompt{flex:1}button{border:1px solid #2a7898;background:#103149;color:var(--text);border-radius:12px;padding:10px 12px;font:inherit;font-weight:650;cursor:pointer}button:disabled{opacity:.45}button.primary{background:linear-gradient(135deg,#12658a,#12415e);border-color:#42c8ef}.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}.tool{background:#0c1b2b;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;min-height:68px}.tool b{display:block;color:var(--cyan);font-size:.9rem}.tool span{display:block;color:var(--muted);font-size:.76rem;margin-top:3px;font-weight:400}.below{margin-top:12px}.memory-list,.results{padding:12px 14px;color:var(--muted);font-size:.86rem}.memory-item,.result{padding:9px 0;border-bottom:1px solid #173249;display:flex;gap:8px;align-items:start}.memory-item span{flex:1;overflow-wrap:anywhere}.small-btn{padding:5px 8px;font-size:.75rem}.hint{color:var(--muted);font-size:.78rem;line-height:1.5;margin:12px 3px}.toast{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);background:#14364b;border:1px solid #3185a6;border-radius:10px;padding:10px 14px;display:none;max-width:90%;z-index:4}.result a{color:var(--cyan);font-weight:650;text-decoration:none}.result p{margin:4px 0 0;line-height:1.4}.settings{display:grid;gap:10px;padding:14px}.settings label{font-size:.82rem;color:var(--muted)}.settings input{width:100%;margin-top:5px}.checkline{display:flex;gap:9px;align-items:center;padding:0 14px 12px;color:var(--muted);font-size:.82rem}.checkline input{width:auto}
+.panel{background:#0b1928dd;border:1px solid var(--line);border-radius:18px;overflow:hidden}.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid var(--line);font-size:.82rem;letter-spacing:.08em;color:var(--cyan)}.chat{height:34vh;min-height:230px;max-height:400px;overflow:auto;padding:13px;display:flex;flex-direction:column;gap:10px}.msg{max-width:94%;padding:11px 13px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45;font-size:.94rem}.assistant{background:#10263a;border:1px solid #1e4761;align-self:flex-start}.user{background:var(--user);border:1px solid #246083;align-self:flex-end}.msg small{display:block;color:var(--muted);font-size:.68rem;margin-bottom:4px}.controls{display:flex;gap:7px;padding:11px;border-top:1px solid var(--line)}.talkbar{padding:14px;border-bottom:1px solid var(--line);display:grid;gap:8px}.talkbtn{width:100%;padding:16px 12px;font-size:1.05rem;border-radius:16px;letter-spacing:.02em}.talkhint{color:var(--muted);font-size:.78rem;text-align:center}.voiceprefs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.voiceprefs select{min-width:0;width:100%;background:#071421;color:var(--text);border:1px solid #24465d;border-radius:10px;padding:9px;font:inherit;font-size:.82rem}input,textarea{min-width:0;background:#071421;color:var(--text);border:1px solid #24465d;border-radius:12px;padding:12px;font:inherit;outline:none}input:focus,textarea:focus{border-color:var(--cyan)}#prompt{flex:1}button{border:1px solid #2a7898;background:#103149;color:var(--text);border-radius:12px;padding:10px 12px;font:inherit;font-weight:650;cursor:pointer}button:disabled{opacity:.45}button.primary{background:linear-gradient(135deg,#12658a,#12415e);border-color:#42c8ef}.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}.tool{background:#0c1b2b;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;min-height:68px}.tool b{display:block;color:var(--cyan);font-size:.9rem}.tool span{display:block;color:var(--muted);font-size:.76rem;margin-top:3px;font-weight:400}.below{margin-top:12px}.memory-list,.results{padding:12px 14px;color:var(--muted);font-size:.86rem}.memory-item,.result{padding:9px 0;border-bottom:1px solid #173249;display:flex;gap:8px;align-items:start}.memory-item span{flex:1;overflow-wrap:anywhere}.small-btn{padding:5px 8px;font-size:.75rem}.hint{color:var(--muted);font-size:.78rem;line-height:1.5;margin:12px 3px}.toast{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);background:#14364b;border:1px solid #3185a6;border-radius:10px;padding:10px 14px;display:none;max-width:90%;z-index:4}.result a{color:var(--cyan);font-weight:650;text-decoration:none}.result p{margin:4px 0 0;line-height:1.4}.settings{display:grid;gap:10px;padding:14px}.settings label{font-size:.82rem;color:var(--muted)}.settings input{width:100%;margin-top:5px}.checkline{display:flex;gap:9px;align-items:center;padding:0 14px 12px;color:var(--muted);font-size:.82rem}.checkline input{width:auto}.note-card{border:1px solid #1b3b55;border-radius:12px;padding:11px;margin:8px 0;background:#091827}.note-card h3{margin:0 0 5px;color:var(--cyan);font-size:.95rem}.note-card p{margin:4px 0;color:var(--muted);font-size:.82rem;line-height:1.4}.note-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.analysis-block{white-space:pre-wrap;line-height:1.5;background:#071421;border:1px solid #1b3b55;border-radius:10px;padding:10px;font-size:.86rem}
 @media(min-width:600px){.chat{height:390px}.tools{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style></head>
 <body><div class="app">
-<header><div class="brand">J.A.R.V.I.S.</div><div class="status" id="status">● LOCAL MODE</div></header>
-<section class="hero"><div class="orb"><span>✳</span></div><h1>Just A Rather Very Intelligent System</h1><p>Android prototype · AI · Search · User-controlled memory</p></section>
+<header><div class="brand">MAX</div><div class="status" id="status">● LOCAL MODE</div></header>
+<section class="hero"><div class="orb"><span>✳</span></div><h1>Your Personal AI Butler</h1><p>Android prototype · AI · Search · User-controlled memory</p></section>
 <section class="panel"><div class="section-head"><span>CONVERSATION</span><button class="small-btn" id="clearChat">Clear chat</button></div><div class="chat" id="chat" aria-live="polite"></div>
+<div class="talkbar"><button class="primary talkbtn" id="talk">🎙 Talk to Max</button><div class="talkhint" id="talkHint">Speak English, Filipino, or Taglish. Max will follow your language and show text after speaking.</div><div class="voiceprefs"><div><label for="voiceSelect" class="talkhint">Butler voice (English / Filipino)</label><select id="voiceSelect" aria-label="Voice selection"></select></div><div><label for="voiceRate" class="talkhint">Speaking pace</label><select id="voiceRate"><option value="0.82">Slow & composed</option><option value="0.9" selected>Butler pace</option><option value="1">Normal</option></select></div></div></div>
 <label class="checkline"><input type="checkbox" id="includeMemory"> Include saved memories in AI requests (optional)</label>
-<div class="controls"><input id="prompt" autocomplete="off" placeholder="Ask JARVIS something…" aria-label="Message"><button id="mic" title="Speak">🎙</button><button id="send" class="primary">Send</button></div></section>
+<div class="controls"><input id="prompt" autocomplete="off" placeholder="Ask Max something…" aria-label="Message"><button id="mic" title="Speak">🎙</button><button id="send" class="primary">Send</button></div></section>
 <div class="tools">
-<button class="tool" id="web"><b>⌕ Web search</b><span>Search results in JARVIS or browser</span></button>
+<button class="tool" id="web"><b>⌕ Web search</b><span>Search results in Max or browser</span></button>
 <button class="tool" id="voice"><b>♫ Voice replies</b><span id="voiceState">Enabled</span></button>
 <button class="tool" id="remember"><b>＋ Save memory</b><span>Save a fact you choose</span></button>
 <button class="tool" id="memories"><b>▤ Memory vault</b><span>Review or delete saved facts</span></button>
 <button class="tool" id="settings"><b>⚙ Connection settings</b><span>Set your private backend URL</span></button>
+<button class="tool" id="notes"><b>▤ Notes & Second Brain</b><span>Save notes and let Max analyze them</span></button>
 </div>
+
+<section class="panel below" id="notesPanel" hidden>
+  <div class="section-head"><span>MAX NOTES · SECOND BRAIN</span><button class="small-btn" id="closeNotes">Close</button></div>
+  <div class="settings">
+    <label for="noteTitle">Note title</label>
+    <input id="noteTitle" placeholder="e.g. Ballast operation procedure">
+    <label for="noteCategory">Category</label>
+    <select id="noteCategory" style="width:100%;background:#071421;color:var(--text);border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit">
+      <option>Maritime</option><option>Work procedures</option><option>Learning</option><option>Personal</option><option>Ideas</option><option>Reference</option><option>Unsorted</option>
+    </select>
+    <label for="noteBody">Your note (type or dictate)</label>
+    <textarea id="noteBody" rows="6" placeholder="Write or paste your note here. Max will analyze it when you save." style="width:100%;resize:vertical"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="saveNote">Save & analyze</button><button id="dictateNote">🎙 Dictate note</button><button id="clearNoteForm">Clear form</button></div>
+    <p class="hint">Automatic analysis: summary, key facts, tags, related topics, and questions to review. The original note stays unchanged. AI analysis requires your Cloudflare Worker connection; without it, notes still save locally.</p>
+  </div>
+  <div class="section-head"><span>YOUR NOTES</span><span id="noteCount">0 notes</span></div>
+  <div class="settings"><input id="noteSearch" placeholder="Search your notes…"><div id="notesList" class="memory-list"></div></div>
+  <div id="noteDetail" class="settings" hidden></div>
+</section>
 <section class="panel below" id="memoryPanel" hidden><div class="section-head"><span>LOCAL MEMORY VAULT</span><button class="small-btn" id="closeMemory">Close</button></div><div class="memory-list" id="memoryList"></div></section>
 <section class="panel below" id="searchPanel" hidden><div class="section-head"><span>WEB SEARCH RESULTS</span><button class="small-btn" id="closeSearch">Close</button></div><div class="results" id="searchResults"></div></section>
 <section class="panel below" id="settingsPanel" hidden><div class="section-head"><span>CONNECTION SETTINGS</span><button class="small-btn" id="closeSettings">Close</button></div><div class="settings"><div><label for="apiBase">Cloudflare Worker URL (no trailing slash)</label><input id="apiBase" placeholder="https://your-worker.your-subdomain.workers.dev"></div><button class="primary" id="saveSettings">Save connection</button><p class="hint">This URL is not a secret. Your Gemini API key must only be stored as a Cloudflare Worker secret, never in this page or GitHub.</p></div></section>
@@ -34,7 +55,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}.b
 </div><div class="toast" id="toast"></div>
 <script>
 const $=id=>document.getElementById(id);
-const CHAT_KEY='jarvis_chat_v2',MEM_KEY='jarvis_mem_v2',VOICE_KEY='jarvis_voice_v2',API_KEY='jarvis_api_base_v2';
+const CHAT_KEY='jarvis_chat_v2',MEM_KEY='jarvis_mem_v2',VOICE_KEY='jarvis_voice_v2',API_KEY='jarvis_api_base_v2',NOTES_KEY='max_notes_v1';
 let voiceOn=localStorage.getItem(VOICE_KEY)!=='off', busy=false;
 function apiBase(){return (localStorage.getItem(API_KEY)||'').trim().replace(/\/+$/,'')}
 function toast(s){const t=$('toast');t.textContent=s;t.style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.style.display='none',3000)}
@@ -42,25 +63,107 @@ function read(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fa
 function memories(){return read(MEM_KEY,[])}
 function getChat(){return read(CHAT_KEY,[])}
 function saveChat(){localStorage.setItem(CHAT_KEY,JSON.stringify(getChat().slice(-60)))}
-function addMsg(who,text,speak=false,save=true){const el=document.createElement('div');el.className='msg '+who;const tag=document.createElement('small');tag.textContent=who==='user'?'YOU':'JARVIS';const body=document.createElement('div');body.textContent=text;el.append(tag,body);$('chat').append(el);$('chat').scrollTop=$('chat').scrollHeight;if(save){const c=getChat();c.push({who,text});localStorage.setItem(CHAT_KEY,JSON.stringify(c.slice(-60)))}if(speak&&voiceOn&&'speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=1.02;u.pitch=.92;speechSynthesis.speak(u)}}
-function renderChat(){ $('chat').replaceChildren();getChat().forEach(m=>addMsg(m.who,m.text,false,false));if(!$('chat').children.length)addMsg('assistant','JARVIS is online in local mode. Add your backend URL in Connection settings after deployment, then I can answer using an AI model.',false,false)}
+function answerLang(text){
+  const t=(text||'').toLowerCase();
+  const filipinoWords=/\b(ako|ikaw|siya|kami|tayo|kayo|sila|hindi|oo|opo|salamat|kumusta|kamusta|paano|bakit|saan|kailan|ano|ito|iyan|iyon|naman|lang|kasi|pero|kaya|po|ba|na|ng|mga|para|gusto|kailangan|pwede|puwede|magandang|umaga|gabi|sir|kuya|ate)\b/;
+  if(filipinoWords.test(t)) return /\b(the|and|you|what|how|please|thanks|can|could|would|should|hello|good|morning|evening|sir)\b/.test(t) ? 'taglish' : 'fil';
+  return 'en';
+}
+function pickVoice(text=''){
+  if(!('speechSynthesis'in window))return null;
+  const list=speechSynthesis.getVoices(); const chosen=$('voiceSelect')?.value;
+  const lang=answerLang(text);
+  const matches=v=>lang==='fil' ? /^(fil|tl)(-|$)/i.test(v.lang) : lang==='taglish' ? /^(en-GB|en-PH|fil|tl)/i.test(v.lang) : /^en-GB/i.test(v.lang);
+  return list.find(v=>v.name===chosen)||list.find(v=>matches(v)&&/male|daniel|george|oliver|arthur|ryan|alfie/i.test(v.name))||list.find(matches)||list.find(v=>/^en/i.test(v.lang))||null;
+}
+function loadVoices(){if(!('speechSynthesis'in window))return;const sel=$('voiceSelect');if(!sel)return;const old=sel.value;const list=speechSynthesis.getVoices();sel.replaceChildren();const preferred=list.filter(v=>/^(en|fil|tl)/i.test(v.lang));(preferred.length?preferred:list).forEach(v=>{const o=document.createElement('option');o.value=v.name;o.textContent=v.name+' ('+v.lang+')';sel.append(o)});if([...sel.options].some(o=>o.value===old))sel.value=old;else{const best=preferred.find(v=>/en-GB/i.test(v.lang)&&/male|daniel|george|oliver|arthur|ryan|alfie/i.test(v.name))||preferred.find(v=>/en-GB/i.test(v.lang))||preferred[0];if(best)sel.value=best.name}}
+function addMsg(who,text,speak=false,save=true){if(who==='assistant'&&speak&&voiceOn&&'speechSynthesis'in window){const u=new SpeechSynthesisUtterance(text);const v=pickVoice(text);if(v)u.voice=v;u.lang=v?.lang||(answerLang(text)==='fil'?'fil-PH':'en-GB');u.rate=Number($('voiceRate')?.value||0.9);u.pitch=0.82;u.volume=1;const show=()=>appendMessage(who,text,save);u.onend=show;u.onerror=show;speechSynthesis.cancel();$('talkHint').textContent='Max is speaking…';u.onend=()=>{show();$('talkHint').textContent='Speak English, Filipino, or Taglish. Max will follow your language and show text after speaking.'};u.onerror=()=>{show();$('talkHint').textContent='Speak English, Filipino, or Taglish. Max will follow your language and show text after speaking.'};speechSynthesis.speak(u);return}appendMessage(who,text,save)}
+function appendMessage(who,text,save){const el=document.createElement('div');el.className='msg '+who;const tag=document.createElement('small');tag.textContent=who==='user'?'YOU':'MAX';const body=document.createElement('div');body.textContent=text;el.append(tag,body);$('chat').append(el);$('chat').scrollTop=$('chat').scrollHeight;if(save){const c=getChat();c.push({who,text});localStorage.setItem(CHAT_KEY,JSON.stringify(c.slice(-60)))}}
+function renderChat(){ $('chat').replaceChildren();getChat().forEach(m=>addMsg(m.who,m.text,false,false));if(!$('chat').children.length)addMsg('assistant','Max is online in local mode. Add your backend URL in Connection settings after deployment, then I can answer using an AI model.',false,false)}
 function renderMemories(){const list=$('memoryList');list.replaceChildren();const m=memories();if(!m.length){list.textContent='No saved memories yet. Use “Save memory” to add one.';return}m.forEach((item,i)=>{const row=document.createElement('div');row.className='memory-item';const span=document.createElement('span');span.textContent=item;const del=document.createElement('button');del.className='small-btn';del.textContent='Delete';del.onclick=()=>{const now=memories();now.splice(i,1);localStorage.setItem(MEM_KEY,JSON.stringify(now));renderMemories();toast('Memory deleted from this browser')};row.append(span,del);list.append(row)})}
 function updateStatus(){ $('status').textContent=apiBase()?'● BACKEND CONFIGURED':'● LOCAL MODE'}
 async function send(){if(busy)return;const q=$('prompt').value.trim();if(!q)return;$('prompt').value='';addMsg('user',q);const base=apiBase();if(!base){addMsg('assistant','Your message is saved locally, but the AI backend is not connected yet. Deploy the Cloudflare Worker, then add its URL in Connection settings. For now, use Web search to look up information.',true);return}
 busy=true;$('send').disabled=true;
-try{const history=getChat().filter(m=>m.who==='user'||m.who==='assistant').slice(-12).map(m=>({role:m.who==='assistant'?'model':'user',text:m.text}));history.pop();const body={message:q,history,includeMemory:$('includeMemory').checked,memories:$('includeMemory').checked?memories():[]};const r=await fetch(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();if(!r.ok)throw new Error(data.error||'Backend request failed');addMsg('assistant',data.reply||'No response returned.',true)}catch(e){addMsg('assistant','Connection error: '+e.message+'. Check the Worker URL and backend setup.',false)}finally{busy=false;$('send').disabled=false}}
+try{const history=getChat().filter(m=>m.who==='user'||m.who==='assistant').slice(-12).map(m=>({role:m.who==='assistant'?'model':'user',text:m.text}));history.pop();const body={message:q,languagePreference:'Match the user’s language: reply in English when they use English, Filipino when they use Filipino, and natural Taglish when they mix both. Keep the butler personality calm, polished, warm, and concise. Do not force English if the user speaks Filipino.',history,includeMemory:$('includeMemory').checked,memories:$('includeMemory').checked?memories():[]};const r=await fetch(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();if(!r.ok)throw new Error(data.error||'Backend request failed');addMsg('assistant',data.reply||'No response returned.',true)}catch(e){addMsg('assistant','Connection error: '+e.message+'. Check the Worker URL and backend setup.',false)}finally{busy=false;$('send').disabled=false}}
 async function searchWeb(){const q=$('prompt').value.trim()||prompt('What do you want to search for?');if(!q)return;const base=apiBase();$('searchPanel').hidden=false;$('searchResults').textContent='Searching…';$('searchPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
 if(!base){window.open('https://duckduckgo.com/?q='+encodeURIComponent(q),'_blank','noopener');$('searchResults').textContent='Opened DuckDuckGo in a new tab. Connect the backend to show search results here.';return}
 try{const r=await fetch(base+'/api/search?q='+encodeURIComponent(q));const data=await r.json();if(!r.ok)throw new Error(data.error||'Search failed');const box=$('searchResults');box.replaceChildren();if(!data.results?.length){box.textContent='No results returned. Try opening DuckDuckGo directly.';return}data.results.forEach(item=>{const div=document.createElement('div');div.className='result';const inner=document.createElement('div');const a=document.createElement('a');a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=item.title||item.url;const p=document.createElement('p');p.textContent=item.snippet||'';inner.append(a,p);div.append(inner);box.append(div)})}catch(e){$('searchResults').textContent='Search error: '+e.message+'. Opening DuckDuckGo instead.';window.open('https://duckduckgo.com/?q='+encodeURIComponent(q),'_blank','noopener')}}
+
+function allNotes(){return read(NOTES_KEY,[])}
+function saveNotes(items){localStorage.setItem(NOTES_KEY,JSON.stringify(items));}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderNotes(){
+  const list=$('notesList'), q=($('noteSearch').value||'').trim().toLowerCase(), items=allNotes().slice().sort((a,b)=>b.updatedAt-a.updatedAt);
+  list.replaceChildren(); $('noteCount').textContent=items.length+' note'+(items.length===1?'':'s');
+  const filtered=items.filter(n=>(n.title+' '+n.body+' '+n.category+' '+(n.analysis?.summary||'')).toLowerCase().includes(q));
+  if(!filtered.length){list.textContent=items.length?'No matching notes.':'No notes yet. Add your first note above.';return}
+  filtered.forEach(n=>{
+    const card=document.createElement('div');card.className='note-card';
+    const title=document.createElement('h3');title.textContent=n.title||'Untitled note';
+    const meta=document.createElement('p');meta.textContent=(n.category||'Unsorted')+' · '+new Date(n.updatedAt).toLocaleString()+(n.analysis?.summary?' · analyzed':' · analysis pending');
+    const summary=document.createElement('p');summary.textContent=n.analysis?.summary||n.body.slice(0,150);
+    const actions=document.createElement('div');actions.className='note-actions';
+    const open=document.createElement('button');open.className='small-btn';open.textContent='Open / edit';open.onclick=()=>openNote(n.id);
+    const ask=document.createElement('button');ask.className='small-btn';ask.textContent='Ask Max about this';ask.onclick=()=>{$('prompt').value='Using my saved note titled "'+n.title+'", help me with it. Note content: '+n.body+'\\nMax analysis: '+(n.analysis?.fullText||'not analyzed yet');$('prompt').focus();$('notesPanel').hidden=true;$('prompt').scrollIntoView({behavior:'smooth',block:'center'})};
+    const del=document.createElement('button');del.className='small-btn';del.textContent='Delete';del.onclick=()=>{if(confirm('Delete this note from this browser?')){saveNotes(allNotes().filter(x=>x.id!==n.id));$('noteDetail').hidden=true;renderNotes();toast('Note deleted')}};actions.append(open,ask,del);card.append(title,meta,summary,actions);list.append(card);
+  });
+}
+function openNote(id){
+  const n=allNotes().find(x=>x.id===id);if(!n)return;
+  $('noteDetail').hidden=false;$('noteDetail').replaceChildren();
+  const heading=document.createElement('h3');heading.textContent='Open note · '+n.title;
+  const title=document.createElement('input');title.value=n.title;title.placeholder='Note title';
+  const category=document.createElement('input');category.value=n.category||'Unsorted';category.placeholder='Category';
+  const body=document.createElement('textarea');body.rows=7;body.value=n.body;body.style.width='100%';
+  const save=document.createElement('button');save.className='primary';save.textContent='Save changes & re-analyze';save.onclick=()=>{n.title=title.value.trim()||'Untitled note';n.category=category.value.trim()||'Unsorted';n.body=body.value.trim();n.updatedAt=Date.now();n.analysis=null;saveNotes(allNotes().map(x=>x.id===id?n:x));renderNotes();analyzeNote(n).catch(()=>{});};
+  const originalLabel=document.createElement('p');originalLabel.textContent='Max analysis (does not overwrite your original note):';
+  const analysis=document.createElement('div');analysis.className='analysis-block';analysis.textContent=n.analysis?.fullText||'Not analyzed yet. Save & analyze when connected to Max’s AI backend.';
+  const reanalyze=document.createElement('button');reanalyze.textContent='Analyze again';reanalyze.onclick=()=>analyzeNote(n);
+  $('noteDetail').append(heading,title,category,body,save,originalLabel,analysis,reanalyze);
+}
+async function analyzeNote(note){
+  const base=apiBase();
+  if(!base){toast('Note saved locally. Connect Max’s Worker to analyze it with AI.');return}
+  toast('Max is analyzing your note…');
+  try{
+    const r=await fetch(base+'/api/analyze-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:note.title,category:note.category,text:note.body})});
+    const data=await r.json();if(!r.ok)throw new Error(data.error||'Analysis failed');
+    note.analysis={summary:data.summary||'',fullText:data.analysis||data.summary||'',tags:data.tags||[],related:data.related||[],questions:data.questions||[]};
+    note.updatedAt=Date.now();saveNotes(allNotes().map(n=>n.id===note.id?note:n));renderNotes();
+    if(!$('noteDetail').hidden)openNote(note.id);
+    toast('Analysis saved. Original note preserved.');
+  }catch(e){toast('Saved note, but analysis failed: '+e.message)}
+}
+$('notes').onclick=()=>{$('notesPanel').hidden=false;renderNotes();$('notesPanel').scrollIntoView({behavior:'smooth',block:'start'})};
+$('closeNotes').onclick=()=>$('notesPanel').hidden=true;
+$('saveNote').onclick=async()=>{
+  const body=$('noteBody').value.trim();if(!body){toast('Write or dictate a note first.');return}
+  const title=$('noteTitle').value.trim()||body.split(/\\n/)[0].slice(0,70)||'Untitled note';
+  const n={id:'note_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),title,category:$('noteCategory').value,body,createdAt:Date.now(),updatedAt:Date.now(),analysis:null};
+  const items=allNotes();items.push(n);saveNotes(items);$('noteTitle').value='';$('noteBody').value='';renderNotes();toast('Note saved. Starting automatic analysis…');await analyzeNote(n);
+};
+$('clearNoteForm').onclick=()=>{$('noteTitle').value='';$('noteBody').value='';};
+$('noteSearch').addEventListener('input',renderNotes);
+$('dictateNote').onclick=()=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Dictation is not supported in this browser. Try Chrome or type your note.');return}
+  const rec=new SR();rec.lang='en-PH';rec.interimResults=false;rec.maxAlternatives=1;
+  $('dictateNote').disabled=true;rec.onresult=e=>{$('noteBody').value=($('noteBody').value?$('noteBody').value+' ':'')+e.results[0][0].transcript};
+  rec.onerror=e=>toast('Dictation error: '+e.error);rec.onend=()=>$('dictateNote').disabled=false;
+  try{rec.start()}catch(e){$('dictateNote').disabled=false;toast('Could not start dictation.')}
+};
+
 $('send').onclick=send;$('prompt').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
 $('clearChat').onclick=()=>{if(confirm('Clear saved chat history from this browser?')){localStorage.removeItem(CHAT_KEY);renderChat();toast('Chat cleared')}};
 $('web').onclick=searchWeb;
 $('voice').onclick=()=>{voiceOn=!voiceOn;localStorage.setItem(VOICE_KEY,voiceOn?'on':'off');$('voiceState').textContent=voiceOn?'Replies enabled':'Replies muted';toast(voiceOn?'Voice replies enabled':'Voice replies muted')};
-$('remember').onclick=()=>{const value=prompt('What should JARVIS remember? Avoid passwords or sensitive information.');if(!value||!value.trim())return;const m=memories();m.push(value.trim());localStorage.setItem(MEM_KEY,JSON.stringify(m.slice(-100)));renderMemories();toast('Saved on this device')};
+$('remember').onclick=()=>{const value=prompt('What should Max remember? Avoid passwords or sensitive information.');if(!value||!value.trim())return;const m=memories();m.push(value.trim());localStorage.setItem(MEM_KEY,JSON.stringify(m.slice(-100)));renderMemories();toast('Saved on this device')};
 $('memories').onclick=()=>{$('memoryPanel').hidden=false;renderMemories();$('memoryPanel').scrollIntoView({behavior:'smooth',block:'nearest'})};$('closeMemory').onclick=()=>$('memoryPanel').hidden=true;
 $('settings').onclick=()=>{$('settingsPanel').hidden=false;$('apiBase').value=apiBase();$('settingsPanel').scrollIntoView({behavior:'smooth',block:'nearest'})};$('closeSettings').onclick=()=>$('settingsPanel').hidden=true;
 $('saveSettings').onclick=()=>{let v=$('apiBase').value.trim().replace(/\/+$/,'');if(v&&!/^https:\/\/[a-z0-9.-]+(?::\d+)?$/i.test(v)){toast('Enter the HTTPS Worker origin only, without a path');return}localStorage.setItem(API_KEY,v);updateStatus();$('settingsPanel').hidden=true;toast(v?'Backend URL saved':'Backend disconnected')};
 $('closeSearch').onclick=()=>$('searchPanel').hidden=true;
-$('mic').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Speech recognition is not supported here. Try Chrome or type instead.');return}const rec=new SR();rec.lang=navigator.language||'en-GB';rec.interimResults=false;rec.maxAlternatives=1;$('mic').disabled=true;toast('Listening…');rec.onresult=e=>{$('prompt').value=e.results[0][0].transcript;send()};rec.onerror=e=>toast('Microphone: '+e.error);rec.onend=()=>$('mic').disabled=false;try{rec.start()}catch(e){$('mic').disabled=false;toast('Could not start microphone. Check browser permissions.')}};
+function startListening(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Speech recognition is not supported here. Try Chrome or type instead.');return}const rec=new SR();rec.lang='en-PH';rec.interimResults=false;rec.maxAlternatives=1;$('mic').disabled=true;$('talk').disabled=true;$('talkHint').textContent='Listening… speak in English, Filipino, or Taglish';toast('Listening…');rec.onresult=e=>{$('prompt').value=e.results[0][0].transcript;$('talkHint').textContent='You said: '+$('prompt').value;send()};rec.onerror=e=>{toast('Microphone: '+e.error);$('talkHint').textContent='Microphone issue. Check browser permissions.'};rec.onend=()=>{$('mic').disabled=false;$('talk').disabled=false};try{rec.start()}catch(e){$('mic').disabled=false;$('talk').disabled=false;toast('Could not start microphone. Check browser permissions.')}}
+$('mic').onclick=startListening;$('talk').onclick=startListening;
+if('speechSynthesis'in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
 renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies muted';updateStatus();
 </script></body></html>
