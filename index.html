@@ -478,7 +478,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  if('speechSynthesis' in window)window.speechSynthesis.onvoiceschanged=()=>{voicesReady=true};
  function cleanMaxText(text){
-  return String(text || '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '');
+  return String(text || '').replace(/\*/g, '').replace(/`/g, '');
+}
 }
  function showAnswer(text){
   const cleanText = cleanMaxText(text);
