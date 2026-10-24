@@ -477,7 +477,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   window.speechSynthesis.speak(u);
  }
  if('speechSynthesis' in window)window.speechSynthesis.onvoiceschanged=()=>{voicesReady=true};
- function showAnswer(text){$('homeAnswer').textContent=text;$('maxOrb').classList.remove('processing','listening');speak(text)}
+ function cleanMaxText(text){
+  return String(text || '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '');
+}
+ function showAnswer(text){
+  const cleanText = cleanMaxText(text);
+  $('homeAnswer').textContent = cleanText;
+  $('maxOrb').classList.remove('processing','listening');
+  speak(cleanText);
+}
  function startTalk(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){status('Voice input is not supported by this browser.');return}
