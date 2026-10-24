@@ -477,27 +477,159 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  if('speechSynthesis' in window)window.speechSynthesis.onvoiceschanged=()=>{voicesReady=true};
  function showAnswer(text){$('homeAnswer').textContent=text;$('maxOrb').classList.remove('processing','listening');speak(text)}
- function startTalk(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){status('Voice input is not supported by this browser.');return}
-  if(recognition)try{recognition.stop()}catch{}
-  recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;recognition.maxAlternatives=1;
-  recognition.onresult=async e=>{
-   const q=e.results[0][0].transcript;$('homeAnswer').textContent='You: '+q;$('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
-   const base=workerBase();
-   if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.');return}
-   try{
-    const r=await fetch(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,history:[],memory:[]})});
-    const data=await r.json();if(!r.ok)throw new Error(data.error||'AI request failed');
-    showAnswer(data.reply||data.response||data.text||'I could not generate a response.');
-   }catch(err){showAnswer('I could not reach my AI service. '+err.message)}
+let maxVoiceTimer = null;
+let maxVoiceText = '';
+let maxVoiceCancelled = false;
+let maxVoiceSending = false;
+let maxVoiceSession = 0;
+
+function startTalk(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if(!SR){
+    status('Voice input is not supported by this browser.');
+    return;
+  }
+
+  // Invalidate any previous recording before starting another.
+  maxVoiceSession++;
+  const session = maxVoiceSession;
+
+  clearTimeout(maxVoiceTimer);
+  if(recognition){
+    try{ recognition.stop(); }catch{}
+  }
+
+  maxVoiceText = '';
+  maxVoiceCancelled = false;
+  maxVoiceSending = false;
+
+  const currentRecognition = new SR();
+  recognition = currentRecognition;
+  currentRecognition.lang = 'en-PH';
+  currentRecognition.interimResults = true;
+  currentRecognition.maxAlternatives = 1;
+
+  currentRecognition.onresult = e => {
+    if(session !== maxVoiceSession || maxVoiceCancelled) return;
+
+    let finalText = '';
+    let interimText = '';
+
+    // Rebuild the transcript from all results so earlier words are retained.
+    for(let i = 0; i < e.results.length; i++){
+      const result = e.results[i];
+      const transcript = result[0].transcript.trim();
+      if(!transcript) continue;
+
+      if(result.isFinal) finalText += transcript + ' ';
+      else interimText += transcript + ' ';
+    }
+
+    maxVoiceText = finalText.trim();
+
+    const displayText = (maxVoiceText + ' ' + interimText).trim();
+    if(displayText) $('homeAnswer').textContent = 'You: ' + displayText;
+
+    // Wait briefly after the last speech result before stopping recognition.
+    clearTimeout(maxVoiceTimer);
+    maxVoiceTimer = setTimeout(() => {
+      if(session === maxVoiceSession && !maxVoiceCancelled){
+        try{ currentRecognition.stop(); }catch{}
+      }
+    }, 1500);
   };
-  recognition.onerror=e=>{status('I could not hear that clearly. Tap the circle and try again.');$('maxOrb').classList.remove('listening')};
-  recognition.onend=()=>{$('maxOrb').classList.remove('listening')};
-  try{recognition.start();$('maxOrb').classList.add('listening');status('Listening… speak naturally.')}catch(e){status('Voice input could not start.')}
- }
- $('maxOrb').onclick=startTalk;$('homeTalk').onclick=startTalk;
- $('homeStop').onclick=()=>{if(recognition)try{recognition.stop()}catch{};if(window.speechSynthesis)window.speechSynthesis.cancel();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
+
+  currentRecognition.onerror = e => {
+    if(session !== maxVoiceSession) return;
+
+    clearTimeout(maxVoiceTimer);
+    maxVoiceCancelled = true;
+    $('maxOrb').classList.remove('listening');
+
+    if(e.error !== 'aborted'){
+      status('I could not hear that clearly. Tap the circle and try again.');
+    }
+  };
+
+  currentRecognition.onend = async () => {
+    if(session !== maxVoiceSession) return;
+
+    clearTimeout(maxVoiceTimer);
+    $('maxOrb').classList.remove('listening');
+
+    if(maxVoiceCancelled || maxVoiceSending || !maxVoiceText.trim()){
+      if(!maxVoiceCancelled) status('Ready');
+      return;
+    }
+
+    maxVoiceSending = true;
+    const q = maxVoiceText.trim();
+
+    $('homeAnswer').textContent = 'You: ' + q;
+    $('maxOrb').classList.add('processing');
+    status('Thinking…');
+
+    const base = workerBase();
+
+    if(!base){
+      showAnswer('I heard you say: ' + q + '. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.');
+      return;
+    }
+
+    try{
+      const r = await fetch(base + '/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({message:q, history:[], memory:[]})
+      });
+
+      const data = await r.json();
+      if(!r.ok) throw new Error(data.error || 'AI request failed');
+
+      // Ignore a response if the user has since cancelled or started again.
+      if(session !== maxVoiceSession || maxVoiceCancelled) return;
+
+      showAnswer(data.reply || data.response || data.text || 'I could not generate a response.');
+    }catch(err){
+      if(session !== maxVoiceSession || maxVoiceCancelled) return;
+      showAnswer('I could not reach my AI service. ' + err.message);
+    }
+  };
+
+  try{
+    currentRecognition.start();
+    $('maxOrb').classList.add('listening');
+    $('maxOrb').classList.remove('processing');
+    status('Listening… speak naturally.');
+  }catch(e){
+    maxVoiceCancelled = true;
+    $('maxOrb').classList.remove('listening');
+    status('Voice input could not start.');
+  }
+}
+
+$('maxOrb').onclick = startTalk;
+$('homeTalk').onclick = startTalk;
+
+$('homeStop').onclick = () => {
+  // Invalidate the recording so its onend handler cannot submit it.
+  maxVoiceSession++;
+  maxVoiceCancelled = true;
+  maxVoiceSending = false;
+  maxVoiceText = '';
+  clearTimeout(maxVoiceTimer);
+
+  if(recognition){
+    try{ recognition.stop(); }catch{}
+  }
+
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+
+  $('maxOrb').classList.remove('listening','speaking','processing');
+  status('Stopped.');
+};
+
  // One greeting on launch; Android browsers may require a first tap before they allow audio.
  function greet(){
   if(greetingDone)return;greetingDone=true;const msg='Good day. I’m Max. I’m ready when you are. What would you like to work on?';
