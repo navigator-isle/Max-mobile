@@ -118,8 +118,43 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
 
 #connectionModal.open{display:flex!important}
 #connectionModal[hidden]{display:none!important}
+.mem-row{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #173249;font-size:.88rem;color:#c8d9e9}
+.mem-row span{flex:1;overflow-wrap:anywhere}
+.mem-row button{padding:5px 9px;font-size:.75rem;border-radius:8px}
+.danger-btn{border-color:#7a3b45!important;color:#ffc9cf!important}
 </style></head>
 <body>
+<script>
+// Max boot guard (runs first): shows any startup problem on screen instead of a frozen app,
+// and adds the passcode to calls going to Max's own Worker. The passcode stays on this phone.
+(function(){
+  var DEFAULT_WORKER='https://max-ai-backend.mjgaly-mg.workers.dev';
+  window.__maxErrors=[];
+  window.maxShowProblem=function(msg){
+    window.__maxErrors.push(msg);
+    var s=document.getElementById('homeStatus');
+    if(s)s.textContent='⚠ '+msg;
+  };
+  window.addEventListener('error',function(e){window.maxShowProblem('Problem: '+(e.message||'script error')+(e.lineno?' (line '+e.lineno+')':''))});
+  window.addEventListener('unhandledrejection',function(e){var r=e.reason;window.maxShowProblem('Problem: '+(r&&r.message?r.message:String(r)))});
+  try{localStorage.setItem('__max_test','1');localStorage.removeItem('__max_test')}
+  catch(e){window.maxShowProblem('This browser is blocking storage, so notes cannot be saved here. Open Max in normal Chrome (not Incognito).')}
+  window.maxPass=function(){try{return localStorage.getItem('max_pass')||''}catch(e){return ''}};
+  window.maxWorker=function(){try{return (localStorage.getItem('jarvis_api_base_v2')||localStorage.getItem('max_worker_url')||DEFAULT_WORKER).trim().replace(/\/+$/,'')}catch(e){return DEFAULT_WORKER}};
+  var nativeFetch=window.fetch.bind(window);
+  window.fetch=function(input,init){
+    var url=typeof input==='string'?input:(input&&input.url)||'';
+    var base=window.maxWorker(),pass=window.maxPass();
+    if(pass&&base&&url.indexOf(base+'/')===0){
+      init=Object.assign({},init||{});
+      var h=new Headers(init.headers||(typeof input!=='string'&&input.headers)||{});
+      if(!h.has('X-Max-Pass'))h.set('X-Max-Pass',pass);
+      init.headers=h;
+    }
+    return nativeFetch(input,init);
+  };
+})();
+</script>
 <div class="app-shell">
   <header class="topbar">
     <div class="brand">MAX</div>
@@ -177,6 +212,7 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
         <div class="notes-toolbar">
           <button id="editorDictate">🎙 Dictate</button>
           <button id="editorAnalyze">Analyze with Max</button>
+          <button id="editorDelete" class="danger-btn">Delete</button>
         </div>
         <button id="editorSave" class="accent save-note-button">Save note</button>
       </div>
@@ -193,10 +229,19 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
     <label for="workerUrl" style="display:block;margin:12px 0 6px">Cloudflare Worker URL</label>
     <input id="workerUrl" placeholder="https://your-worker.your-subdomain.workers.dev" style="width:100%;box-sizing:border-box;background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:12px;font:inherit">
     <p class="notes-tip">Enter only the Worker base URL. Do not enter your Gemini API key here.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button id="saveWorkerUrl" class="home-mic primary">Save URL</button><button id="testWorkerUrl" class="home-mic">Test connection</button></div>
+    <label for="maxPassInput" style="display:block;margin:12px 0 6px">Max passcode</label>
+    <input id="maxPassInput" type="password" autocomplete="current-password" placeholder="Same as MAX_PASSCODE in Cloudflare" style="width:100%;box-sizing:border-box;background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:12px;font:inherit">
+    <p class="notes-tip">Needed for cloud memory and notes sync. Saved on this phone only. This is not the Gemini key.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button id="saveWorkerUrl" class="home-mic primary">Save</button><button id="testWorkerUrl" class="home-mic">Test connection</button></div>
     <p id="connectionResult" style="white-space:pre-wrap;color:#bcecff;line-height:1.5"></p>
+    <div id="memorySection" hidden style="border-top:1px solid #294861;margin-top:10px;padding-top:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong>Max's long-term memory</strong><button id="memRefresh" class="home-mic" style="padding:6px 12px">Refresh</button></div>
+      <p class="notes-tip">Tip: say “Max, remember that …” and it is saved here. Avoid passwords or bank details.</p>
+      <div style="display:flex;gap:8px;margin:8px 0"><input id="memAddText" placeholder="Add something Max should remember" style="flex:1;min-width:0;background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit"><button id="memAdd" class="home-mic primary" style="padding:8px 14px">Add</button></div>
+      <div id="memList" style="max-height:34vh;overflow:auto"></div>
+    </div>
     <details style="color:#9db4c8;font-size:.88rem;line-height:1.5"><summary>What must be set up in Cloudflare?</summary>
-      <ol><li>A deployed Worker containing the Max backend code.</li><li>A Worker secret named <code>GEMINI_API_KEY</code>.</li><li>A plain-text variable named <code>ALLOWED_ORIGIN</code> set to <code>https://navigator-isle.github.io</code>.</li><li>Then save the Worker URL here and test it.</li></ol>
+      <ol><li>A deployed Worker containing the Max backend code.</li><li>A Worker secret named <code>GEMINI_API_KEY</code>.</li><li>A plain-text variable named <code>ALLOWED_ORIGIN</code> set to <code>https://navigator-isle.github.io</code>.</li><li>For memory: a D1 binding named <code>MAX_MEMORY</code> and a secret named <code>MAX_PASSCODE</code>.</li><li>Then save the Worker URL and passcode here and test it.</li></ol>
     </details>
   </section>
 </div>
@@ -365,40 +410,162 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 (function(){
  const $=id=>document.getElementById(id), KEY='max_notes_v3';
  let activeNoteId=null, dirty=false, recognition=null, greetingDone=false, voicesReady=false;
- const getNotes=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return []}};
- const putNotes=items=>localStorage.setItem(KEY,JSON.stringify(items));
+ // Cloud state comes from /health. memory=true only when passcode accepted AND database ready.
+ const cloud={state:'checking',memory:false,detail:''};
+ const talkHistory=[]; // this session's voice conversation, so Max can follow up
+
+ // ---------- notes storage (deleted notes are kept as hidden markers so sync can remove them everywhere) ----------
+ function normNote(n){
+  if(!n||typeof n!=='object')return null;
+  const t=Number(n.updatedAt)||Number(n.createdAt)||Date.now();
+  return {...n,id:String(n.id||('n_'+t+'_'+Math.random().toString(36).slice(2,8))),title:String(n.title||''),category:String(n.category||'Unsorted'),
+   tags:Array.isArray(n.tags)?n.tags.map(String):[],body:typeof n.body==='string'?n.body:'',analysis:n.analysis&&typeof n.analysis==='object'?n.analysis:null,
+   createdAt:Number(n.createdAt)||t,updatedAt:t,deleted:!!n.deleted};
+ }
+ const loadAll=()=>{try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v.map(normNote).filter(Boolean):[]}catch{return []}};
+ const getNotes=()=>loadAll().filter(n=>!n.deleted);
+ const putNotes=items=>{localStorage.setItem(KEY,JSON.stringify(items));scheduleSync()};
  const legacy=id=>document.querySelector('#legacyEngine #'+id);
+ const escHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+ // Older notes saved by the previous Notes screen (max_notes_v1) are copied in once, so nothing looks lost.
+ function migrateOldNotes(){
+  if(localStorage.getItem('max_notes_migrated_v1'))return;
+  let old=[];try{old=JSON.parse(localStorage.getItem('max_notes_v1')||'[]')}catch{}
+  if(Array.isArray(old)&&old.length){
+   const all=loadAll(),ids=new Set(all.map(n=>n.id));
+   old.forEach(o=>{if(!o||ids.has(o.id))return;const n=normNote({...o,body:escHtml(o.body||'').replace(/\n/g,'<br>')});if(n)all.push(n)});
+   localStorage.setItem(KEY,JSON.stringify(all));
+  }
+  localStorage.setItem('max_notes_migrated_v1','1');
+ }
 
  const status=m=>{$('homeStatus').textContent=m};
  const API_KEY='jarvis_api_base_v2';
- function workerBase(){return (localStorage.getItem(API_KEY)||localStorage.getItem('max_worker_url')||'https://max-ai-backend.mjgaly-mg.workers.dev').trim().replace(/\/+$/,'')}
- function refreshConnectionLabel(){$('globalStatus').textContent=workerBase()?'Worker URL saved':'Local mode'}
- function openConnection(){ $('workerUrl').value=workerBase();$('connectionResult').textContent='';$('connectionModal').hidden=false;$('connectionModal').classList.add('open'); }
+ function workerBase(){return window.maxWorker()}
+ function refreshConnectionLabel(){
+  const labels={checking:'Connecting…',online:'Connected',memory:'Connected · memory on',needpass:'Connected · passcode needed',offline:'Offline',local:'Local mode'};
+  $('globalStatus').textContent=labels[cloud.memory?'memory':cloud.state]||'Local mode';
+ }
+ async function fetchJson(url,opts={},ms=15000){
+  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),ms);
+  try{const r=await fetch(url,{...opts,signal:ctl.signal});const data=await r.json().catch(()=>({}));return {r,data}}
+  catch(e){throw new Error(e.name==='AbortError'?'No answer from the Worker (timed out). Check your internet connection.':e.message)}
+  finally{clearTimeout(timer)}
+ }
+ // Checks the Worker and decides if cloud memory can be used. Never blocks the app from starting.
+ async function checkCloud(){
+  const base=workerBase();
+  if(!base){cloud.state='local';cloud.memory=false;refreshConnectionLabel();return cloud}
+  cloud.state='checking';refreshConnectionLabel();
+  try{
+   const pass=window.maxPass();
+   const {r,data}=await fetchJson(base+'/health',{method:'GET',headers:pass?{'X-Max-Pass':pass}:{}},8000);
+   if(!r.ok||!data.ok)throw new Error(data.error||('HTTP '+r.status));
+   cloud.health=data;
+   cloud.state=data.passcodeRequired&&data.passcode!=='accepted'?'needpass':'online';
+   cloud.memory=data.passcode==='accepted'&&data.database==='ready';
+   cloud.detail=data.database||'';
+  }catch(e){cloud.state='offline';cloud.memory=false;cloud.detail=e.message}
+  refreshConnectionLabel();return cloud;
+ }
+
+ // ---------- notes cloud sync ----------
+ let syncTimer=null,syncing=false;
+ function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNotes().catch(()=>{}),1500)}
+ async function syncNotes(){
+  if(!cloud.memory||syncing)return false;
+  syncing=true;
+  try{
+   const {r,data}=await fetchJson(workerBase()+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes:loadAll()})},20000);
+   if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+   const merged=new Map(loadAll().map(n=>[n.id,n]));
+   (data.notes||[]).map(normNote).filter(Boolean).forEach(s=>{const l=merged.get(s.id);if(!l||s.updatedAt>l.updatedAt)merged.set(s.id,s)});
+   localStorage.setItem(KEY,JSON.stringify([...merged.values()]));
+   localStorage.setItem('max_last_sync',String(Date.now()));
+   if($('notesScreen').classList.contains('active'))renderList();
+   return true;
+  }catch(e){console.warn('Max notes sync failed',e);return false}
+  finally{syncing=false}
+ }
+
+ // ---------- long-term memory list (in ⚙ settings) ----------
+ async function renderMemory(){
+  const box=$('memList');$('memorySection').hidden=!cloud.memory;
+  if(!cloud.memory)return;
+  box.textContent='Loading…';
+  try{
+   const {r,data}=await fetchJson(workerBase()+'/api/memory');
+   if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+   box.replaceChildren();
+   if(!data.memories.length){box.textContent='Nothing saved yet.';return}
+   data.memories.forEach(m=>{
+    const row=document.createElement('div');row.className='mem-row';
+    const span=document.createElement('span');span.textContent=m.text;
+    const del=document.createElement('button');del.className='home-mic danger-btn';del.textContent='Delete';
+    del.onclick=async()=>{if(!confirm('Delete this memory?'))return;del.disabled=true;
+     try{const {r,data}=await fetchJson(workerBase()+'/api/memory?id='+encodeURIComponent(m.id),{method:'DELETE'});if(!r.ok)throw new Error(data.error);renderMemory()}
+     catch(e){del.disabled=false;alert('Could not delete: '+e.message)}};
+    row.append(span,del);box.append(row);
+   });
+  }catch(e){box.textContent='Could not load memory: '+e.message}
+ }
+ async function addMemory(text,source){
+  const {r,data}=await fetchJson(workerBase()+'/api/memory',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,source})});
+  if(!r.ok)throw new Error(data.error||('HTTP '+r.status));return data.memory;
+ }
+ // Memories saved in the old hidden screen (jarvis_mem_v2) are uploaded once when cloud memory first works.
+ async function migrateOldMemories(){
+  if(!cloud.memory||localStorage.getItem('max_mem_migrated_v2'))return;
+  let old=[];try{old=JSON.parse(localStorage.getItem('jarvis_mem_v2')||'[]')}catch{}
+  try{for(const t of (Array.isArray(old)?old:[]))if(typeof t==='string'&&t.trim())await addMemory(t.trim(),'old-device-memory');localStorage.setItem('max_mem_migrated_v2','1')}
+  catch(e){console.warn('Old memory upload failed; will retry next start',e)}
+ }
+
+ // ---------- connection settings ----------
+ function openConnection(){
+  $('workerUrl').value=workerBase();$('maxPassInput').value=window.maxPass();
+  $('connectionResult').textContent=cloud.state==='offline'&&cloud.detail?('Last check failed: '+cloud.detail):'';
+  $('connectionModal').hidden=false;$('connectionModal').classList.add('open');renderMemory();
+ }
  function closeConnection(){ $('connectionModal').classList.remove('open');$('connectionModal').hidden=true; }
  $('openConnection').onclick=openConnection;$('closeConnection').onclick=closeConnection;
- $('saveWorkerUrl').onclick=()=>{
+ function saveConnectionFields(){
    const v=$('workerUrl').value.trim().replace(/\/+$/,'');
-   if(v && !/^https:\/\/[a-z0-9.-]+(?::\d+)?$/i.test(v)){ $('connectionResult').textContent='Please enter the HTTPS Worker base URL only, without a path or trailing slash.';return; }
+   if(v && !/^(https:\/\/[a-z0-9.-]+|http:\/\/(?:127\.0\.0\.1|localhost))(?::\d+)?$/i.test(v)){ $('connectionResult').textContent='Please enter the HTTPS Worker base URL only, without a path or trailing slash.';return null; }
    if(v){localStorage.setItem(API_KEY,v);localStorage.setItem('max_worker_url',v)}else{localStorage.removeItem(API_KEY);localStorage.removeItem('max_worker_url')}
-   refreshConnectionLabel();$('connectionResult').textContent=v?'Worker URL saved on this device. Now tap Test connection.':'Worker URL cleared. Max is in local mode.';
+   const p=$('maxPassInput').value.trim();if(p)localStorage.setItem('max_pass',p);else localStorage.removeItem('max_pass');
+   return v||workerBase();
+ }
+ $('saveWorkerUrl').onclick=()=>{
+   if(saveConnectionFields()===null)return;
+   $('connectionResult').textContent='Saved on this device. Now tap Test connection.';
+   checkCloud().then(async()=>{if(cloud.memory)await migrateOldMemories();renderMemory();if(cloud.memory)syncNotes()});
  };
  $('testWorkerUrl').onclick=async()=>{
-   const v=$('workerUrl').value.trim().replace(/\/+$/,'');
+   const v=saveConnectionFields();if(v===null)return;
    if(!v){$('connectionResult').textContent='Enter your Worker URL first.';return}
    $('connectionResult').textContent='Checking /health…';
-   try{
-     const r=await fetch(v+'/health',{method:'GET'});
-     const data=await r.json().catch(()=>({}));
-     if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
-     if(data.ok){localStorage.setItem(API_KEY,v);localStorage.setItem('max_worker_url',v);refreshConnectionLabel();$('connectionResult').textContent='SUCCESS: Max can reach the Worker. Service: '+(data.service||'Max backend')+'. Model: '+(data.model||'configured')+'. Next, ask Max a test question.'}
-     else throw new Error('The URL responded, but it did not look like the Max Worker health endpoint.');
-   }catch(e){$('connectionResult').textContent='CONNECTION FAILED\\n'+e.message+'\\n\\nCheck that the Worker is deployed, the URL is correct, and ALLOWED_ORIGIN equals https://navigator-isle.github.io.'}
+   await checkCloud();
+   const h=cloud.health||{};
+   if(cloud.state==='offline'){$('connectionResult').textContent='CONNECTION FAILED\n'+cloud.detail+'\n\nCheck that the Worker is deployed, the URL is correct, and ALLOWED_ORIGIN equals https://navigator-isle.github.io.';return}
+   const lines=['SUCCESS: Max can reach the Worker.','Model: '+(h.model||'configured')+(h.version?' · '+h.version:''),'Gemini key: '+(h.geminiKey||'unknown (older Worker)')];
+   if(!h.version)lines.push('Memory: this Worker is the older version without database support. Upload the new worker.js.');
+   else if(!h.passcodeRequired)lines.push('Memory: off. Add a MAX_PASSCODE secret in Cloudflare to switch it on.');
+   else if(h.passcode!=='accepted')lines.push('Memory: passcode is '+(h.passcode==='wrong'?'WRONG':'missing')+'. Type the same passcode as MAX_PASSCODE.');
+   else lines.push('Memory database: '+h.database+(cloud.memory?' ✓':''));
+   $('connectionResult').textContent=lines.join('\n');
+   if(cloud.memory)await migrateOldMemories();
+   renderMemory();if(cloud.memory){const ok=await syncNotes();$('connectionResult').textContent+='\nNotes sync: '+(ok?'done ✓':'failed, will retry');}
  };
+ $('memRefresh').onclick=renderMemory;
+ $('memAdd').onclick=async()=>{const t=$('memAddText').value.trim();if(!t)return;$('memAdd').disabled=true;
+  try{await addMemory(t,'app');$('memAddText').value='';renderMemory()}catch(e){alert('Could not save: '+e.message)}finally{$('memAdd').disabled=false}};
 
  function setSection(name){
   ['homeScreen','notesScreen','editorScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
   $('navHome').classList.toggle('active',name==='home');$('navNotes').classList.toggle('active',name!=='home');
-  if(name==='notes')renderList();
+  if(name==='notes'){renderList();syncNotes()}
  }
  $('navHome').onclick=()=>setSection('home');$('navNotes').onclick=()=>setSection('notes');
  function renderList(){
@@ -410,7 +577,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    const row=document.createElement('div');row.className='note-row';row.tabIndex=0;
    const t=document.createElement('strong');t.textContent=n.title||'Untitled note';
    const m=document.createElement('small');m.textContent=(n.category||'Unsorted')+' · '+new Date(n.updatedAt).toLocaleDateString()+(n.analysis?' · analyzed':'');
-   const excerpt=document.createElement('p');excerpt.textContent=(n.analysis?.summary||n.body.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ')).slice(0,180);
+   const excerpt=document.createElement('p');excerpt.textContent=(n.analysis?.summary||n.body.replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ')).slice(0,180);
    row.append(t,m,excerpt);row.onclick=()=>loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')loadNote(n.id)};list.append(row);
   });
  }
@@ -424,10 +591,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function saveCurrent(){
   const body=$('editorBody').innerHTML.trim();if(!body||body==='<br>'){status('Write something in your note first.');return null}
-  const notes=getNotes();let n=notes.find(x=>x.id===activeNoteId);
-  if(!n){n={id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),createdAt:Date.now(),analysis:null};notes.push(n);activeNoteId=n.id}
+  const notes=loadAll();let n=notes.find(x=>x.id===activeNoteId);
+  if(!n){n={id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),createdAt:Date.now(),analysis:null,deleted:false};notes.push(n);activeNoteId=n.id}
   n.title=$('editorTitle').value.trim()||$('editorBody').innerText.split('\n')[0].slice(0,80)||'Untitled note';n.category=$('editorCategory').value||'Unsorted';n.tags=$('editorTags').value.split(',').map(x=>x.trim()).filter(Boolean);n.body=body;n.updatedAt=Date.now();
-  putNotes(notes);dirty=false;$('editorPageHeading').textContent=n.title;renderList();status('Note saved.');return n;
+  putNotes(notes);dirty=false;$('editorPageHeading').textContent=n.title;renderList();status(cloud.memory?'Note saved. Syncing…':'Note saved on this phone.');return n;
  }
  async function analyze(n){
   const base=workerBase();
@@ -435,17 +602,21 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   $('editorAnalysis').textContent='Max is analyzing your note…';
   try{
    const plain=document.createElement('div');plain.innerHTML=n.body;
-   const r=await fetch(base+'/api/analyze-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:n.title,category:n.category,text:plain.innerText})});
-   const data=await r.json();if(!r.ok)throw new Error(data.error||'Analysis failed');
+   const {r,data}=await fetchJson(base+'/api/analyze-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:n.title,category:n.category,text:plain.innerText})},45000);
+   if(!r.ok)throw new Error(data.error||'Analysis failed');
    n.analysis={summary:data.summary||'',fullText:data.analysis||data.summary||'',tags:data.tags||[],related:data.related||[],questions:data.questions||[]};
-   putNotes(getNotes().map(x=>x.id===n.id?n:x));$('editorAnalysis').textContent=n.analysis.fullText||n.analysis.summary;renderList();status('Analysis complete. Your original note is unchanged.');
+   n.updatedAt=Date.now();
+   putNotes(loadAll().map(x=>x.id===n.id?n:x));$('editorAnalysis').textContent=n.analysis.fullText||n.analysis.summary;renderList();status('Analysis complete. Your original note is unchanged.');
   }catch(e){$('editorAnalysis').textContent='Analysis failed: '+e.message;status('Note is saved, but analysis failed.')}
  }
  const createNewNote=()=>{clearEditor();setSection('editor');$('editorTitle').focus()}; $('newNote').onclick=createNewNote;
  $('editorBack').onclick=()=>{if(dirty&&!confirm('You have unsaved changes. Leave without saving?'))return;setSection('notes')};
- $('editorSave').onclick=()=>{const n=saveCurrent();if(n)status('Saved successfully.')};
+ $('editorSave').onclick=()=>{const n=saveCurrent();if(n)status(cloud.memory?'Saved. Syncing to cloud…':'Saved successfully.')};
  $('editorAnalyze').onclick=()=>{const n=saveCurrent();if(n)analyze(n)};
- if($('editorDelete')) $('editorDelete').onclick=()=>{if(!activeNoteId)return;if(confirm('Delete this note?')){putNotes(getNotes().filter(n=>n.id!==activeNoteId));clearEditor();setSection('notes');status('Note deleted.')}};
+ $('editorDelete').onclick=()=>{
+  if(!activeNoteId){if(dirty&&!confirm('Discard this unsaved note?'))return;clearEditor();setSection('notes');return}
+  if(confirm('Delete this note?')){putNotes(loadAll().map(n=>n.id===activeNoteId?{...n,deleted:true,body:'',analysis:null,updatedAt:Date.now()}:n));clearEditor();setSection('notes');status('Note deleted.')}
+ };
  $('notesSearch').oninput=renderList;
  ['editorBody','editorTitle','editorTags','editorCategory'].forEach(id=>$(id).addEventListener('input',()=>dirty=true));
  document.querySelectorAll('.format-toolbar [data-cmd]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.cmd,false,null);$('editorBody').focus();dirty=true});
@@ -454,13 +625,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('highlightColor').oninput=()=>{document.execCommand('hiliteColor',false,$('highlightColor').value);$('editorBody').focus();dirty=true};
  $('editorDictate').onclick=()=>{
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){status('Dictation is not supported in this browser. Try Chrome.');return}
+  if(recognition)try{recognition.abort()}catch{}
   recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;
-  recognition.onresult=e=>{document.execCommand('insertText',false,e.results[0][0].transcript);dirty=true};
-  recognition.onerror=e=>status('Dictation error: '+e.error);recognition.start();status('Listening for your note…');
+  recognition.onresult=e=>{$('editorBody').focus();document.execCommand('insertText',false,e.results[0][0].transcript+' ');dirty=true};
+  recognition.onerror=e=>status('Dictation error: '+e.error);
+  try{recognition.start();status('Listening for your note…')}catch(e){status('Dictation could not start: '+e.message)}
  };
- $('editorAnalyze').insertAdjacentText('afterend','');
- $('notesSearch').addEventListener('input',renderList);
 
+ // ---------- voice ----------
  // Use the device's normal installed voice at natural pitch and pace.
  function chooseRegularVoice(){
   if(!('speechSynthesis' in window))return null;
@@ -468,52 +640,97 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const en=vs.filter(v=>/^en(-|_|$)/i.test(v.lang));
   return en.find(v=>/natural|enhanced/i.test(v.name))||en[0]||vs[0]||null;
  }
- function speak(text){
-  if(!('speechSynthesis' in window)){status('Text-to-speech is not available in this browser.');return}
+ let speakGuard=null;
+ function stopSpeakingLook(){clearTimeout(speakGuard);$('maxOrb').classList.remove('speaking')}
+ function speak(text,onDone){
+  if(!('speechSynthesis' in window)){status('Text-to-speech is not available in this browser.');onDone&&onDone();return}
   window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=chooseRegularVoice();if(v)u.voice=v;u.lang=v?.lang||'en-US';u.rate=1.05;u.pitch=1;u.volume=1;
+  const done=()=>{stopSpeakingLook();status('Ready');onDone&&onDone();onDone=null};
   u.onstart=()=>{$('maxOrb').classList.add('speaking');status('Max is speaking…')};
-  u.onend=()=>{$('maxOrb').classList.remove('speaking');status('Ready')};
-  u.onerror=()=>{$('maxOrb').classList.remove('speaking');status('Ready')};
+  u.onend=done;u.onerror=done;
+  // Android sometimes never reports the end of speech; this stops the circle from staying stuck.
+  clearTimeout(speakGuard);speakGuard=setTimeout(done,Math.min(120000,4000+text.length*90));
   window.speechSynthesis.speak(u);
  }
- if('speechSynthesis' in window)window.speechSynthesis.onvoiceschanged=()=>{voicesReady=true};
+ if('speechSynthesis' in window){
+  // Keep the older voice list loader working too (it used to be replaced here).
+  const onVoices=()=>{voicesReady=true;try{if(typeof loadVoices==='function')loadVoices()}catch{}};
+  window.speechSynthesis.onvoiceschanged=onVoices;
+ }
  function cleanMaxText(text){
   return String(text || '').replace(/\*/g, '').replace(/`/g, '');
-}
+ }
  function showAnswer(text){
   const cleanText = cleanMaxText(text);
   $('homeAnswer').textContent = cleanText;
   $('maxOrb').classList.remove('processing','listening');
   speak(cleanText);
-}
+ }
+ async function askMax(q){
+  $('homeAnswer').textContent='You: '+q;$('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
+  const base=workerBase();
+  if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.');return}
+  try{
+   const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory})},30000);
+   if(data&&data.savedMemory)renderMemory();
+   if(r.status===401){cloud.state='needpass';cloud.memory=false;refreshConnectionLabel();throw new Error('Max needs the passcode. Tap ⚙ and enter it.')}
+   if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
+   const reply=data.reply||data.response||data.text||'I could not generate a response.';
+   talkHistory.push({role:'user',text:q},{role:'model',text:reply});
+   showAnswer(reply);
+   if(data.savedMemory)setTimeout(()=>{if(!$('maxOrb').classList.contains('speaking'))status('Saved to memory ✓')},300);
+  }catch(err){$('maxOrb').classList.remove('processing');showAnswer('I could not reach my AI service. '+err.message)}
+ }
  function startTalk(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){status('Voice input is not supported by this browser.');return}
-  if(recognition)try{recognition.stop()}catch{}
+  if(!SR){status('Voice input is not supported by this browser. Open Max in Chrome.');return}
+  greetingDone=true; // never talk over the user
+  if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeakingLook();
+  if(recognition)try{recognition.abort()}catch{}
   recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;recognition.maxAlternatives=1;
-  recognition.onresult=async e=>{
-   const q=e.results[0][0].transcript;$('homeAnswer').textContent='You: '+q;$('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
-   const base=workerBase();
-   if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.');return}
-   try{
-    const r=await fetch(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,history:[],memory:[]})});
-    const data=await r.json();if(!r.ok)throw new Error(data.error||'AI request failed');
-    showAnswer(data.reply||data.response||data.text||'I could not generate a response.');
-   }catch(err){showAnswer('I could not reach my AI service. '+err.message)}
-  };
-  recognition.onerror=e=>{status('I could not hear that clearly. Tap the circle and try again.');$('maxOrb').classList.remove('listening')};
-  recognition.onend=()=>{$('maxOrb').classList.remove('listening')};
+  let heard=false;
+  recognition.onresult=e=>{heard=true;askMax(e.results[0][0].transcript)};
+  recognition.onerror=e=>{
+   const msg={'not-allowed':'Microphone is blocked. Allow the microphone for this site in Chrome settings.','no-speech':'I did not hear anything. Tap the circle and try again.','network':'Voice input needs internet. Check your connection.','audio-capture':'No microphone was found.'}[e.error];
+   status(msg||'I could not hear that clearly. Tap the circle and try again.');$('maxOrb').classList.remove('listening')};
+  recognition.onend=()=>{$('maxOrb').classList.remove('listening');if(!heard&&/Listening/.test($('homeStatus').textContent))status('Ready')};
   try{recognition.start();$('maxOrb').classList.add('listening');status('Listening… speak naturally.')}catch(e){status('Voice input could not start.')}
  }
  $('maxOrb').onclick=startTalk;$('homeTalk').onclick=startTalk;
- $('homeStop').onclick=()=>{if(recognition)try{recognition.stop()}catch{};if(window.speechSynthesis)window.speechSynthesis.cancel();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
- // One greeting on launch; Android browsers may require a first tap before they allow audio.
+ $('homeStop').onclick=()=>{greetingDone=true;if(recognition)try{recognition.abort()}catch{};if(window.speechSynthesis)window.speechSynthesis.cancel();stopSpeakingLook();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
+
+ // One spoken greeting. Android blocks speech until the first tap, so it plays on the first tap
+ // that is not a talk/stop/settings button (tapping the circle goes straight to listening instead).
  function greet(){
-  if(greetingDone)return;greetingDone=true;const msg='Good day. I’m Max. I’m ready when you are. What would you like to work on?';
-  status('Ready');
-  if('speechSynthesis' in window){try{const u=new SpeechSynthesisUtterance(msg),v=chooseRegularVoice();if(v)u.voice=v;u.lang=v?.lang||'en-US';u.rate=1;u.pitch=1;u.onstart=()=>$('maxOrb').classList.add('speaking');u.onend=()=>$('maxOrb').classList.remove('speaking');window.speechSynthesis.speak(u)}catch{}}
+  if(greetingDone)return;greetingDone=true;
+  speak('Good day. I’m Max. I’m ready when you are. What would you like to work on?');
  }
- window.addEventListener('load',()=>{try{renderList();refreshConnectionLabel();greet();status('Ready')}catch(e){status('App startup error: '+(e?.message||'unknown error'));console.error('Max startup error',e)}});
+ function armGreeting(){
+  const canSpeakNow=navigator.userActivation&&navigator.userActivation.hasBeenActive;
+  if(canSpeakNow){greet();return}
+  const onFirstTap=e=>{
+   if(greetingDone){document.removeEventListener('pointerdown',onFirstTap,true);return}
+   if(e.target.closest('button,input,select,textarea,[contenteditable],#connectionModal,.bottom-nav'))return;
+   if(!$('homeScreen').classList.contains('active'))return;
+   document.removeEventListener('pointerdown',onFirstTap,true);greet();
+  };
+  document.addEventListener('pointerdown',onFirstTap,true);
+ }
+
+ // ---------- startup: each step is separate, so one failure cannot freeze the whole app ----------
+ function step(name,fn){try{fn()}catch(e){console.error('Max startup step failed: '+name,e);window.maxShowProblem('Startup step "'+name+'" failed: '+(e&&e.message||e))}}
+ step('notes upgrade',migrateOldNotes);
+ step('notes list',renderList);
+ step('connection label',refreshConnectionLabel);
+ step('greeting',armGreeting);
+ if(!window.__maxErrors.length)status('Ready');
+ checkCloud().then(()=>{
+  if(cloud.memory){migrateOldMemories();syncNotes()}
+  if(!window.__maxErrors.length&&cloud.state==='needpass')status('Ready · tap ⚙ and enter your passcode to use Max’s AI.');
+ });
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkCloud().then(()=>{if(cloud.memory)syncNotes()})});
+ window.addEventListener('online',()=>checkCloud().then(()=>{if(cloud.memory)syncNotes()}));
 })();
 </script>
-</body></html></body>
+</body></html>
