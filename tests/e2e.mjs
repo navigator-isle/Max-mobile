@@ -160,7 +160,7 @@ await ctx.close();
 await wait(800);
 ok((await text(page, "#homeStatus")).startsWith("Ready"), "corrupt saved data: still starts", await text(page, "#homeStatus"));
 await ctx.close();
-({ ctx, page, errors } = await openPhone({ max_notes_v3: JSON.stringify([{ id: "x1", title: "No body", updatedAt: 5 }, null, { id: "x2", body: 42 }]) }));
+({ ctx, page, errors } = await openPhone({ jarvis_api_base_v2: "http://127.0.0.1:9", max_notes_v3: JSON.stringify([{ id: "x1", title: "No body", updatedAt: 5 }, null, { id: "x2", body: 42 }]) }));
 await wait(500);
 await page.click("#maxOrb",{button:"right"}); await page.click('[data-go=notes]');
 ok(await page.locator(".note-item").count() === 2 && errors.length === 0, "notes with missing fields still list (this used to crash startup)", errors.join(" | "));
