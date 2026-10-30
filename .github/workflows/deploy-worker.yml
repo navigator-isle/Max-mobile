@@ -67,11 +67,23 @@ jobs:
       - name: Deploy to Cloudflare
         run: |
           set -o pipefail
-          npx --yes wrangler@4 deploy 2>&1 | tee deploy.log || {
-            # Show the reason as annotations so it can be read without opening the log.
+          # Try the newest wrangler, then a few known-older ones; retry briefly on Cloudflare hiccups.
+          latest=$(npm view wrangler@4 version 2>/dev/null | tail -1 | sed -E "s/.*'([0-9.]+)'.*/\1/")
+          older=$(npm view wrangler versions --json 2>/dev/null | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const v=JSON.parse(s).filter(x=>/^4\.\d+\.\d+$/.test(x));const minors=[...new Set(v.map(x=>x.split('.').slice(0,2).join('.')))];const pick=minors.slice(-4,-1).reverse().map(m=>v.filter(x=>x.startsWith(m+'.')).pop());console.log(pick.join(' '))})")
+          echo "::notice::wrangler versions to try: ${latest:-4} ${older}"
+          ok=0
+          for ver in ${latest:-4} ${older}; do
+            for attempt in 1 2; do
+              if npx --yes wrangler@$ver deploy > deploy.log 2>&1; then ok=1; echo "::notice::Deployed with wrangler $ver"; break 2; fi
+              echo "::warning::wrangler $ver attempt $attempt: $(grep -E 'ERROR|✘' deploy.log | head -1 | sed 's/\x1b\[[0-9;]*m//g')"
+              sleep 15
+            done
+          done
+          if [ $ok -ne 1 ]; then
             grep -iE "error|✘|failed|authentication|permission|not found|code: [0-9]+" deploy.log | grep -v "CLOUDFLARE_API_TOKEN" | head -15 | while IFS= read -r line; do echo "::error::$line"; done
             exit 1
-          }
+          fi
+          cat deploy.log
           grep -E "Uploaded|Deployed|https://|Current Version" deploy.log | while IFS= read -r line; do echo "::notice::$line"; done
       - name: Check the live Worker
         run: |
