@@ -1,4 +1,5 @@
 // End-to-end: real Chrome (phone size) + real index.html + real worker.js on a real SQLite database. Gemini is faked.
+if (!process.env.SHOT_DIR) process.env.SHOT_DIR = (await import("node:os")).tmpdir();
 import http from "node:http";
 import fs from "node:fs";
 import { DatabaseSync } from "node:sqlite";

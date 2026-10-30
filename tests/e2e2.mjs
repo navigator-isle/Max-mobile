@@ -1,4 +1,5 @@
 // New: hands-free conversation loop, end words, interrupt, typing, memory badge, settings scroll.
+if (!process.env.SHOT_DIR) process.env.SHOT_DIR = (await import("node:os")).tmpdir();
 import http from "node:http"; import fs from "node:fs"; import { DatabaseSync } from "node:sqlite"; import { createRequire } from "node:module";
 const require = createRequire(process.env.PW_REQUIRE || import.meta.url); const { chromium, devices } = require("playwright");
 const [, , pagePath, workerPath] = process.argv;
