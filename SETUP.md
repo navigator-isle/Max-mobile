@@ -1,16 +1,16 @@
-**Max update — 30 Oct 2026 (Jarvis step 1)**
+**Max update — 30 Oct 2026 (second brain build)**
 
 **What's new**
-- **Hands-free talk:** tap **Talk to Max** once and just talk. Max listens, answers, then listens again by himself. He doesn't listen while he speaks.
-- **Ending a conversation:** say "that's all", "goodbye Max", "stop" or "tama na". If you stay quiet, he goes on standby.
-- **Interrupting:** tap the circle while Max is speaking.
-- **Remembers everything:** every conversation is saved. After closing the app, Max continues where you left off and can recall older conversations by topic.
-- **Learns by himself:** when you mention a lasting fact (your ship, family, plans, routines), Max saves it automatically and shows "✓ Noted in memory". He never saves passwords, PINs or card numbers.
-- **Notes first:** your notes are checked before anything else.
-- **Jarvis personality:** calm, natural, short spoken replies.
-- **Typing box:** for when you can't talk out loud. Typed questions get full-length answers.
-- **Settings:** the window now scrolls on small phones. Added a **Forget all conversations** button.
-- **Gemini model:** fixed to `gemini-3.5-flash-lite`.
+- **Circle screen:** only the circle, with dancing dots and voice lines, plus subtitles. Tap the circle to talk; tap it while Max speaks to interrupt.
+- **Commands in your own words:** say things like "bring up the keyboard", "pull up my ballast notes", "look up the new MARPOL rules" or "balik". You don't need exact words, and English, Filipino and Taglish all work.
+- **Learns your phrases:** if Max doesn't recognise how you say something, his AI works it out and he remembers that phrase, so next time it's instant. See ⚙ → **Phrases Max learned**.
+- **Mini Max:** on Notes, Research and a note, Max shrinks to the top and keeps talking with subtitles. Tap the small circle to talk, or tap the text to go back to the full circle.
+- **Research:** Max searches the web and shows findings, sources (OFFICIAL / WEB / MY NOTE), and any place your notes differ. Change it by voice ("change point 2 to …"). Nothing is saved until you say "approve it".
+- **Second brain:** notes are grouped by topic and subtopic, like Obsidian. Max files Unsorted notes into topics; you can change any topic. "Organise my notes" sorts all of them.
+- **Notes first:** answers show "From your note: …". Tap it to open the note.
+- **Linked notes:** related notes appear at the bottom of each note.
+- **Export:** a note to Obsidian `.md` (with topic, tags and [[links]]) or PDF, or all notes as one file.
+- **Hold the circle** for a menu (Keyboard, Notes, Research, Settings), for when you can't talk.
 
 **Install (same as before)**
 
@@ -20,20 +20,18 @@
 
 **2. Cloudflare**
 - In GitHub, open `worker.js` → **Raw** → long-press → **Select all** → **Copy**
-- Cloudflare → `max-ai-backend` → **Edit code** → long-press → **Select all** → **Paste**
-- Tap **Deploy**, then wait for "Deployed". Saving alone doesn't put it live.
+- Cloudflare → `max-ai-backend` → **Edit code** → long-press → **Select all** → **Paste** → **Deploy**, then wait for "Deployed"
 
 **3. Check**
 - Open `https://max-ai-backend.mjgaly-mg.workers.dev/health`
-- It should show `"version":"max-worker-2026-10-30"` and `"model":"gemini-3.5-flash-lite"`
-- If the version is right but the model isn't, delete the `GEMINI_MODEL` variable in Cloudflare or set it to `gemini-3.5-flash-lite`
+- You should see `"version":"max-worker-2026-10-30b"` and `"model":"gemini-3.5-flash-lite"`
 
 **4. Phone test**
-- Refresh Max, tap **Talk to Max** once, and have a 3-turn conversation without touching the screen
-- Mention something lasting, e.g. "My ship is MV …". You should see "✓ Noted in memory".
-- Say "that's all". Close Max fully, reopen it, and ask "What did we talk about?"
+- Refresh Max. You should see only the circle.
+- Tap it and say "show my notes" → then "just talk"
+- Say "research [a topic]" → "change point 1 to …" → "approve it"
+- Hold the circle → the menu appears
 
-**Security**
-- No key is in these files
-- The Gemini key stays in Cloudflare
-- Your passcode stays on your phone
+**Notes**
+- Web research uses Google Search through Gemini. If your Gemini plan doesn't allow it, Max still answers but marks the research **low confidence / unverified**.
+- No key is in these files. Your passcode stays on your phone.

@@ -130,6 +130,80 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
 .mem-row span{flex:1;overflow-wrap:anywhere}
 .mem-row button{padding:5px 9px;font-size:.75rem;border-radius:8px}
 .danger-btn{border-color:#7a3b45!important;color:#ffc9cf!important}
+/* ===== Max v3: circle-first layout ===== */
+.app-shell{padding:0 16px 20px!important;min-height:100dvh}
+.topbar{padding:14px 2px 6px!important}
+body.on-home .topbar .brand{opacity:.75}
+.icon-btn{width:40px;height:40px;border:1px solid #294861;background:#10273b;color:#bcecff;border-radius:12px;font:inherit;font-size:1.05rem;display:flex;align-items:center;justify-content:center;padding:0}
+body.on-home .icon-btn{background:transparent;border-color:transparent;color:#5f7d96}
+body.on-home .top-status{opacity:.7}
+#homeScreen{justify-content:center!important;align-items:center;text-align:center;gap:18px!important;padding:2vh 0 2vh!important}
+.orb-stage{display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;justify-content:center;width:100%}
+.max-orb{all:unset;cursor:pointer;width:min(80vw,340px);height:min(80vw,340px);display:block;border-radius:50%;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.max-orb:focus-visible{outline:2px solid #77d7ff;outline-offset:6px}
+.max-orb canvas{width:100%;height:100%;display:block}
+.max-orb:before,.max-orb:after{display:none!important}
+.home-status{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:#54e0c9;min-height:1.2em}
+.subtitles{width:100%;max-width:600px;min-height:22vh;display:flex;flex-direction:column;align-items:center;gap:8px}
+.sub-you{margin:0;color:#8fa8c0;font-size:.92rem;line-height:1.4;max-height:3.2em;overflow:hidden}
+.home-answer{margin:0;text-align:center!important;color:#e8f3ff!important;font-size:1.22rem!important;line-height:1.45!important;max-height:30vh!important;overflow:auto;padding:0 4px!important;white-space:pre-wrap}
+.note-refs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.note-refs button{border:1px solid #2b6b5f;background:#0d2a2a;color:#9ff0e0;border-radius:999px;padding:6px 12px;font:inherit;font-size:.82rem}
+.type-row{display:flex;gap:8px;width:100%;max-width:600px}
+.type-row[hidden]{display:none}
+.type-row input{flex:1;min-width:0;min-height:50px;box-sizing:border-box;background:#071421;color:var(--max-text);border:1px solid #294861;border-radius:999px;padding:0 18px;font:inherit}
+.send-btn{width:50px;height:50px;border-radius:50%;border:0;background:#bcecff;color:#062033;font-size:1.1rem;padding:0}
+.mini-max{display:flex;align-items:center;gap:10px;background:#0a1828;border:1px solid #1c344c;border-radius:16px;padding:6px 8px;margin:0 0 10px;position:sticky;top:6px;z-index:20}
+.mini-max[hidden]{display:none}
+.mini-orb{all:unset;cursor:pointer;width:56px;height:56px;border-radius:50%;flex:none}
+.mini-orb canvas{width:56px;height:56px;display:block}
+.mini-text{all:unset;cursor:pointer;flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;min-height:44px;justify-content:center}
+.mini-you{font-size:.75rem;color:#8fa8c0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-say{font-size:.92rem;color:#e8f3ff;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.label{display:block;font-size:.7rem;font-weight:600;letter-spacing:.08em;color:#8fa8c0;margin-bottom:6px}
+.muted{color:#8fa8c0}.small{font-size:.8rem}.center{text-align:center}
+.pill{border:1px solid #294861;background:#10273b;color:#e8f3ff;border-radius:12px;padding:10px 14px;font:inherit;font-size:.9rem;min-height:44px}
+.pill-ok{background:#54e0c9;border-color:#54e0c9;color:#04221d;font-weight:700}
+.field{width:100%;box-sizing:border-box;background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px 12px;font:inherit}
+.badge{font-size:.68rem;font-weight:700;border-radius:6px;padding:3px 7px;letter-spacing:.02em}
+.badge-draft{background:#f2b95c;color:#241500}.badge-note{background:#54e0c9;color:#04221d}.badge-res{background:#bcecff;color:#062033}.badge-web{background:#21384d;color:#c8d9e9}
+#researchScreen{gap:12px;padding-bottom:12px}
+.res-empty h1{margin:8px 0;font-size:1.5rem}.res-empty p{color:#8fa8c0;line-height:1.5}
+#resDraft{display:flex;flex-direction:column;gap:12px}
+#resDraft[hidden]{display:none}
+.res-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.res-title{margin:0;font-size:1.35rem;line-height:1.3}
+.res-points{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px;line-height:1.5;color:#c8d9e9}
+.res-points li.changed{background:#12304a;border:1px solid #54e0c9;border-radius:10px;padding:8px 10px;color:#e8f3ff}
+.res-conflicts{border:1px solid #6b5320;background:#221a0a;border-radius:12px;padding:10px 12px;color:#f6d79a;font-size:.9rem;line-height:1.45}
+.res-block{display:block;border-top:1px solid #1c344c;padding-top:10px}
+.src{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.88rem;overflow:hidden}
+.src a{color:#bcecff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-edit-row{display:flex;gap:8px}
+.res-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.search-box{display:flex;align-items:center;gap:8px;background:#071421;border:1px solid #24465d;border-radius:12px;padding:0 12px;min-height:46px;margin:6px 0}
+.search-box span{color:#8fa8c0}
+.search-box input{flex:1;min-width:0;background:transparent;border:0;color:#e8f3ff;font:inherit;outline:none}
+.notes-tools{display:flex;gap:8px;flex-wrap:wrap}
+.banner{border:1px solid #1c344c;background:#0b1a2b;border-radius:12px;padding:10px 12px;color:#c8d9e9;font-size:.9rem}
+.topic{border:1px solid #1c344c;background:#0b1a2b;border-radius:14px;margin:8px 0;overflow:hidden}
+.topic>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;font-weight:600;min-height:24px}
+.topic>summary::-webkit-details-marker{display:none}
+.topic>summary .count{color:#8fa8c0;font-weight:400;font-size:.8rem}
+.topic[open]>summary{color:#77d7ff}
+.subtopic{padding:0 14px 6px 14px}
+.subtopic>.sub-name{font-size:.82rem;color:#bcecff;font-weight:600;margin:6px 0 2px;padding-left:10px;border-left:2px solid #294861}
+.note-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 4px 10px 12px;border-top:1px solid #142a3d;cursor:pointer;min-height:24px}
+.note-item strong{font-size:.92rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.links{display:flex;flex-direction:column;gap:4px}
+.links button{all:unset;cursor:pointer;color:#77d7ff;padding:6px 0;font-size:.92rem}
+.export-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.export-row .label{margin:0 6px 0 0}
+#editorCategory{background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:9px;padding:10px;font:inherit;min-width:0}
+.quick-menu{position:fixed;inset:0;z-index:90;background:#020914cc;display:flex;align-items:flex-end;justify-content:center}
+.quick-menu[hidden]{display:none}
+.quick-sheet{width:min(100%,520px);background:#0b1a2b;border:1px solid #294861;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quick-sheet [data-go=close]{grid-column:1/-1}
 </style></head>
 <body>
 <script>
@@ -166,49 +240,79 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
 <div class="app-shell">
   <header class="topbar">
     <div class="brand">MAX</div>
-    <div style="display:flex;align-items:center;gap:10px"><div class="top-status" id="globalStatus">Local mode</div><button id="openConnection" aria-label="Connection settings" title="Connection settings" style="border:1px solid #294861;background:#10273b;color:#bcecff;border-radius:10px;padding:8px 10px;font:inherit">⚙</button></div>
+    <div style="display:flex;align-items:center;gap:8px"><div class="top-status" id="globalStatus">Local mode</div><button id="openConnection" class="icon-btn" aria-label="Settings" title="Settings">⚙</button></div>
   </header>
+
+  <!-- Max minimized: shown on every screen except the circle screen. Keeps talking and showing subtitles. -->
+  <div id="miniMax" class="mini-max" hidden>
+    <button id="miniOrb" class="mini-orb" aria-label="Talk to Max"><canvas id="miniCanvas" width="56" height="56" aria-hidden="true"></canvas></button>
+    <button id="miniHome" class="mini-text" aria-label="Open Max full screen">
+      <span id="miniYou" class="mini-you"></span>
+      <span id="miniSay" class="mini-say">Tap the circle to talk</span>
+    </button>
+  </div>
+
   <main id="homeScreen" class="section-screen active">
-    <div class="max-greeting">
-      <h1>Good day.</h1>
-      <p id="greetingSub">I’m Max. Tap once and just talk — I’ll listen when you finish.</p>
+    <div class="orb-stage">
+      <button id="maxOrb" class="max-orb" aria-label="Tap to talk to Max. Hold for the menu."><canvas id="orbCanvas" aria-hidden="true"></canvas></button>
+      <div id="homeStatus" class="home-status" aria-live="polite">Starting Max…</div>
     </div>
-    <div class="max-orb-wrap">
-      <button id="maxOrb" class="max-orb" aria-label="Tap to speak to Max"><span class="orb-core"></span></button>
+    <div class="subtitles">
+      <p id="subYou" class="sub-you"></p>
+      <p id="homeAnswer" class="home-answer" aria-live="polite"></p>
+      <div id="noteRefs" class="note-refs" hidden></div>
+      <div id="memoryBadge" class="memory-badge" hidden></div>
     </div>
-    <div id="homeStatus" class="home-status">Starting Max…</div>
-    <div id="homeAnswer" class="home-answer" aria-live="polite"></div>
-    <div class="home-controls">
-      <button id="homeTalk" class="home-mic primary">🎙 Talk to Max</button>
-      <button id="homeStop" class="home-mic">Stop</button>
+    <div id="typeRow" class="type-row" hidden>
+      <input id="typeInput" placeholder="Type to Max…" autocomplete="off" enterkeyhint="send" aria-label="Type a message to Max">
+      <button id="typeSend" class="send-btn" aria-label="Send">➤</button>
     </div>
-    <div id="memoryBadge" class="memory-badge" hidden></div>
-    <div class="type-row">
-      <input id="typeInput" placeholder="Or type to Max…" autocomplete="off" enterkeyhint="send" aria-label="Type a message to Max">
-      <button id="typeSend" class="home-mic">Send</button>
+    <div hidden><button id="homeTalk">Talk</button><button id="homeStop">Stop</button></div>
+  </main>
+
+  <main id="researchScreen" class="section-screen">
+    <div id="resEmpty" class="res-empty">
+      <h1>Research</h1>
+      <p>Ask Max to look something up, for example “research the latest BWM rules”. He’ll show what he found here, and nothing goes into your notes until you approve it.</p>
     </div>
+    <div id="resLoading" class="res-empty" hidden><h1>Researching…</h1><p id="resLoadingTopic"></p></div>
+    <section id="resDraft" hidden>
+      <div class="res-head"><span class="badge badge-draft">DRAFT · NOT IN NOTES YET</span><span id="resConfidence" class="muted small"></span></div>
+      <h1 id="resTitle" class="res-title"></h1>
+      <ol id="resPoints" class="res-points"></ol>
+      <div id="resConflicts" class="res-conflicts" hidden></div>
+      <div class="res-block"><span class="label">SOURCES</span><div id="resSources"></div></div>
+      <label class="res-block" for="resTopic"><span class="label">WILL BE SAVED TO</span><input id="resTopic" class="field" list="topicList"></label>
+      <div class="res-edit-row"><input id="resEditText" class="field" placeholder="Tell Max what to change…" aria-label="Change the research"><button id="resEditBtn" class="pill">Change</button></div>
+      <p class="muted small center">Say “approve it” or “change point 2 to …” — or tap</p>
+      <div class="res-actions"><button id="resReject" class="pill danger-btn">Reject</button><button id="resApprove" class="pill pill-ok">Approve &amp; save</button></div>
+    </section>
   </main>
 
   <main id="notesScreen" class="section-screen">
     <div class="notes-header">
-      <div><h1>Notes</h1><p>Your personal knowledge library · Max checks these first</p></div>
-      <input id="notesSearch" placeholder="Search notes…" style="max-width:46%;padding:10px;background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:10px">
+      <div><h1>Second brain</h1><p id="notesCount">Max checks these first</p></div>
     </div>
+    <label class="search-box"><span aria-hidden="true">⌕</span><input id="notesSearch" placeholder="Search notes…" aria-label="Search notes"></label>
+    <div class="notes-tools">
+      <button id="organizeBtn" class="pill">Organize with Max</button>
+      <button id="exportAll" class="pill">Export all</button>
+    </div>
+    <div id="organizeBanner" class="banner" hidden></div>
     <div id="noteList" class="note-list note-list-page"></div>
     <button id="newNote" class="add-note-bottom"><span>＋</span> New note</button>
   </main>
+
   <main id="editorScreen" class="section-screen">
     <div class="notes-header">
       <button id="editorBack" class="home-mic">← Notes</button>
-      <div><h1 id="editorPageHeading">New note</h1><p>Write it your way</p></div>
+      <div style="text-align:right"><h1 id="editorPageHeading">New note</h1><p id="editorBadge" class="muted small">Write it your way</p></div>
     </div>
     <section class="notes-editor full-editor">
       <input id="editorTitle" placeholder="Title" aria-label="Note title">
       <div class="editor-meta">
-        <select id="editorCategory" aria-label="Note category">
-          <option>Unsorted</option><option>Maritime</option><option>Work procedures</option><option>Learning</option><option>Personal</option><option>Ideas</option><option>Reference</option>
-        </select>
-        <input id="editorTags" placeholder="Tags, separated by commas">
+        <input id="editorCategory" list="topicList" placeholder="Topic, e.g. Maritime › Ballast" aria-label="Topic" value="Unsorted">
+        <input id="editorTags" placeholder="Tags, separated by commas" aria-label="Tags">
       </div>
       <div class="format-toolbar" role="toolbar" aria-label="Text formatting">
         <button data-cmd="bold" title="Bold"><b>B</b></button>
@@ -229,10 +333,24 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
         </div>
         <button id="editorSave" class="accent save-note-button">Save note</button>
       </div>
+      <div id="editorLinksWrap" hidden><span class="label">LINKED NOTES</span><div id="editorLinks" class="links"></div></div>
       <div><strong style="font-size:.9rem">Max's analysis</strong><p class="notes-tip">Max's summary and key facts are stored separately from your original note.</p></div>
       <div id="editorAnalysis" class="notes-analysis">Save your note to keep it in your library.</div>
+      <div class="export-row"><span class="label">EXPORT</span><button id="exportMd" class="pill">Obsidian .md</button><button id="exportPdf" class="pill">PDF</button></div>
     </section>
   </main>
+</div>
+<datalist id="topicList"></datalist>
+
+<!-- Hold the circle (or say "menu") for these -->
+<div id="quickMenu" class="quick-menu" hidden>
+  <div class="quick-sheet" role="dialog" aria-label="Max menu">
+    <button data-go="keyboard" class="pill">⌨ Keyboard</button>
+    <button data-go="notes" class="pill">▤ Notes</button>
+    <button data-go="research" class="pill">⌕ Research</button>
+    <button data-go="settings" class="pill">⚙ Settings</button>
+    <button data-go="close" class="pill">Close</button>
+  </div>
 </div>
 
 <div id="connectionModal" hidden style="position:fixed;inset:0;z-index:100;background:#020914eF;display:none;align-items:center;justify-content:center;padding:18px">
@@ -255,15 +373,16 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
       <p class="notes-tip" style="margin-top:12px">Max also keeps your conversations so he can continue where you left off.</p>
       <button id="talkForget" class="home-mic danger-btn" style="padding:8px 14px">Forget all conversations</button>
     </div>
+    <div id="learnedSection" style="border-top:1px solid #294861;margin-top:12px;padding-top:10px">
+      <strong>Phrases Max learned</strong>
+      <p class="notes-tip">When you ask for something in your own words, Max remembers how you said it so next time it works instantly.</p>
+      <div id="learnedList"></div>
+    </div>
     <details style="color:#9db4c8;font-size:.88rem;line-height:1.5"><summary>What must be set up in Cloudflare?</summary>
       <ol><li>A deployed Worker containing the Max backend code.</li><li>A Worker secret named <code>GEMINI_API_KEY</code>.</li><li>A plain-text variable named <code>ALLOWED_ORIGIN</code> set to <code>https://navigator-isle.github.io</code>.</li><li>For memory: a D1 binding named <code>MAX_MEMORY</code> and a secret named <code>MAX_PASSCODE</code>.</li><li>Then save the Worker URL and passcode here and test it.</li></ol>
     </details>
   </section>
 </div>
-<nav class="bottom-nav" aria-label="Main sections">
-  <button id="navHome" class="active"><span>◉</span> Max</button>
-  <button id="navNotes"><span>▤</span> Notes</button>
-</nav>
 <div id="legacyEngine" style="display:none!important" aria-hidden="true">
 <div class="app">
 <header><div class="brand">MAX</div><div class="status" id="status">● LOCAL MODE</div></header>
@@ -427,7 +546,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  let activeNoteId=null, dirty=false, recognition=null, greetingDone=false, voicesReady=false;
  // Cloud state comes from /health. memory=true only when passcode accepted AND database ready.
  const cloud={state:'checking',memory:false,detail:''};
- const talkHistory=[]; // this session's voice conversation, so Max can follow up
+ const talkHistory=[]; // this session's conversation, so Max can follow up
+ let screen='home', keyboardOn=false;
 
  // ---------- notes storage (deleted notes are kept as hidden markers so sync can remove them everywhere) ----------
  function normNote(n){
@@ -440,8 +560,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const loadAll=()=>{try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v.map(normNote).filter(Boolean):[]}catch{return []}};
  const getNotes=()=>loadAll().filter(n=>!n.deleted);
  const putNotes=items=>{localStorage.setItem(KEY,JSON.stringify(items));scheduleSync()};
- const legacy=id=>document.querySelector('#legacyEngine #'+id);
  const escHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const plain=html=>{const d=document.createElement('div');d.innerHTML=html||'';return (d.innerText||d.textContent||'').replace(/\s+/g,' ').trim()};
+ const newId=()=>'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
 
  // Older notes saved by the previous Notes screen (max_notes_v1) are copied in once, so nothing looks lost.
  function migrateOldNotes(){
@@ -468,6 +589,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   catch(e){throw new Error(e.name==='AbortError'?'No answer from the Worker (timed out). Check your internet connection.':e.message)}
   finally{clearTimeout(timer)}
  }
+ const postJson=(path,body,ms)=>fetchJson(workerBase()+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},ms);
  // Checks the Worker and decides if cloud memory can be used. Never blocks the app from starting.
  async function checkCloud(){
   const base=workerBase();
@@ -498,7 +620,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    (data.notes||[]).map(normNote).filter(Boolean).forEach(s=>{const l=merged.get(s.id);if(!l||s.updatedAt>l.updatedAt)merged.set(s.id,s)});
    localStorage.setItem(KEY,JSON.stringify([...merged.values()]));
    localStorage.setItem('max_last_sync',String(Date.now()));
-   if($('notesScreen').classList.contains('active'))renderList();
+   if(screen==='notes')renderList();
    return true;
   }catch(e){console.warn('Max notes sync failed',e);return false}
   finally{syncing=false}
@@ -539,9 +661,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 
  // ---------- connection settings ----------
  function openConnection(){
+  closeMenu();
   $('workerUrl').value=workerBase();$('maxPassInput').value=window.maxPass();
   $('connectionResult').textContent=cloud.state==='offline'&&cloud.detail?('Last check failed: '+cloud.detail):'';
-  $('connectionModal').hidden=false;$('connectionModal').classList.add('open');renderMemory();
+  $('connectionModal').hidden=false;$('connectionModal').classList.add('open');renderMemory();renderLearned();
  }
  function closeConnection(){ $('connectionModal').classList.remove('open');$('connectionModal').hidden=true; }
  $('openConnection').onclick=openConnection;$('closeConnection').onclick=closeConnection;
@@ -569,6 +692,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    else if(!h.passcodeRequired)lines.push('Memory: off. Add a MAX_PASSCODE secret in Cloudflare to switch it on.');
    else if(h.passcode!=='accepted')lines.push('Memory: passcode is '+(h.passcode==='wrong'?'WRONG':'missing')+'. Type the same passcode as MAX_PASSCODE.');
    else lines.push('Memory database: '+h.database+(cloud.memory?' ✓':''));
+   if(h.version&&h.version<'max-worker-2026-10-30b')lines.push('Research and smart commands need the newest worker.js ('+h.version+' is older).');
    $('connectionResult').textContent=lines.join('\n');
    if(cloud.memory)await migrateOldMemories();
    renderMemory();if(cloud.memory){const ok=await syncNotes();$('connectionResult').textContent+='\nNotes sync: '+(ok?'done ✓':'failed, will retry');}
@@ -577,54 +701,210 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('memAdd').onclick=async()=>{const t=$('memAddText').value.trim();if(!t)return;$('memAdd').disabled=true;
   try{await addMemory(t,'app');$('memAddText').value='';renderMemory()}catch(e){alert('Could not save: '+e.message)}finally{$('memAdd').disabled=false}};
 
+ // ---------- screens: talking is the default; everything else opens on command ----------
  function setSection(name){
-  ['homeScreen','notesScreen','editorScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
-  $('navHome').classList.toggle('active',name==='home');$('navNotes').classList.toggle('active',name!=='home');
+  if(!['home','notes','editor','research'].includes(name))name='home';
+  screen=name;
+  ['homeScreen','notesScreen','editorScreen','researchScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
+  document.body.classList.toggle('on-home',name==='home');
+  $('miniMax').hidden=name==='home';
   if(name==='notes'){renderList();syncNotes()}
+  if(name==='research')renderResearch();
+  window.scrollTo(0,0);
  }
- $('navHome').onclick=()=>setSection('home');$('navNotes').onclick=()=>setSection('notes');
+ function setKeyboard(on){
+  keyboardOn=!!on;$('typeRow').hidden=!keyboardOn;
+  if(keyboardOn&&screen!=='home')setSection('home');
+ }
+ const screenName=()=>screen==='home'&&keyboardOn?'keyboard':screen;
+ $('miniHome').onclick=()=>setSection('home');
+
+ // ---------- subtitles (shown under the circle, and in mini Max) ----------
+ function setSub(you,max){
+  if(you!==undefined){$('subYou').textContent=you?'“'+you+'”':'';$('miniYou').textContent=you?'You: '+you:''}
+  if(max!==undefined){$('homeAnswer').textContent=max;$('miniSay').textContent=max||'Tap the circle to talk'}
+ }
+ function showNoteRefs(titles){
+  const box=$('noteRefs');box.replaceChildren();
+  const list=(titles||[]).filter(Boolean).slice(0,3);
+  box.hidden=!list.length;
+  list.forEach(t=>{const b=document.createElement('button');b.textContent='From your note: '+t;b.onclick=()=>{const n=findNote(t);if(n)loadNote(n.id)};box.append(b)});
+ }
+
+ // ---------- the circle: dancing dots and voice lines ----------
+ const orb={energy:0.1,kick:0,reduce:window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches};
+ function orbState(){const c=$('maxOrb').classList;return c.contains('speaking')?'speaking':c.contains('listening')?'listening':c.contains('processing')?'thinking':'idle'}
+ function sizeCanvas(cv){
+  const dpr=Math.min(window.devicePixelRatio||1,2),w=cv.clientWidth||cv.width,h=cv.clientHeight||cv.height;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+  return {dpr,w,h};
+ }
+ function drawOrb(cv,t,st,en,dots){
+  const {dpr,w}=sizeCanvas(cv);if(!w)return;
+  const g=cv.getContext('2d');if(!g)return;
+  g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,w);
+  const c=w/2,ring=w*0.32,core=w*0.22,accent=st==='listening'?'84,224,201':'119,215,255';
+  const halo=g.createRadialGradient(c,c,ring*0.8,c,c,w/2);
+  halo.addColorStop(0,'rgba('+accent+','+(0.10+en*0.14)+')');halo.addColorStop(1,'rgba('+accent+',0)');
+  g.fillStyle=halo;g.beginPath();g.arc(c,c,w/2,0,Math.PI*2);g.fill();
+  g.fillStyle='#0b1f33';g.strokeStyle='rgba('+accent+',0.6)';g.lineWidth=Math.max(1,w*0.005);
+  g.beginPath();g.arc(c,c,ring,0,Math.PI*2);g.fill();g.stroke();
+  const cg=g.createRadialGradient(c-core*0.35,c-core*0.4,core*0.1,c,c,core);
+  cg.addColorStop(0,'#e9fbff');cg.addColorStop(0.35,'#80dcff');cg.addColorStop(0.75,'#2f7fae');cg.addColorStop(1,'#123450');
+  g.fillStyle=cg;g.beginPath();g.arc(c,c,core*(1+0.03*Math.sin(t*2)*en),0,Math.PI*2);g.fill();
+  // voice lines through the core
+  const amp=w*0.075*(st==='speaking'?en:en*0.35)+w*0.004;
+  [['rgba(233,251,255,0.95)',1,0],['rgba(84,224,201,0.8)',0.7,1.7]].forEach(([col,k,ph])=>{
+   g.strokeStyle=col;g.lineWidth=Math.max(1.2,w*(k===1?0.008:0.006));g.lineCap='round';g.lineJoin='round';g.beginPath();
+   for(let i=0;i<=64;i++){const u=i/64,x=c-ring*0.92+u*ring*1.84,env=Math.sin(Math.PI*u);
+    const y=c+env*amp*k*(0.6*Math.sin(u*12+t*6+ph)+0.4*Math.sin(u*27-t*9+ph));i?g.lineTo(x,y):g.moveTo(x,y)}
+   g.stroke();
+  });
+  // dancing dots around the ring
+  for(let i=0;i<dots;i++){
+   const a=Math.PI*2*i/dots+(st==='thinking'?t*1.4:0);
+   let rr=w*0.41+w*0.05*en*0.5*(Math.sin(i*1.7+t*3.2)+Math.sin(i*0.6-t*2.1));
+   if(st==='listening')rr=w*0.41+w*0.012*Math.sin(t*2.2+i*0.3);
+   const sz=Math.max(1,w*0.009*(1+0.7*en*(0.5+0.5*Math.sin(i*1.3+t*4))));
+   let al=0.35+0.6*(0.5+0.5*Math.sin(i*0.9+t*(st==='speaking'?5:1.5)));
+   if(st==='thinking')al=0.15+0.85*((i/dots+t*0.25)%1);
+   g.fillStyle='rgba('+accent+','+al.toFixed(2)+')';g.beginPath();g.arc(c+rr*Math.cos(a),c+rr*Math.sin(a),sz,0,Math.PI*2);g.fill();
+  }
+ }
+ function orbLoop(ts){
+  const t=ts/1000,st=orbState();
+  const target={speaking:1,listening:0.35,thinking:0.5,idle:0.12}[st];
+  orb.kick*=0.9;orb.energy+=(Math.min(1.2,target+orb.kick)-orb.energy)*0.08;
+  const en=orb.energy*(orb.reduce?0.4:1);
+  if(!document.hidden){
+   if(screen==='home')drawOrb($('orbCanvas'),t,st,en,48);
+   else drawOrb($('miniCanvas'),t,st,en,20);
+  }
+  requestAnimationFrame(orbLoop);
+ }
+
+ // ---------- notes: second brain grouped by topic ----------
+ const splitPath=cat=>String(cat||'').split(/\s*(?:›|>|\/)\s*/).map(s=>s.trim()).filter(Boolean);
+ const topicOf=n=>{const p=splitPath(n.category);return {top:p[0]||'Unsorted',sub:p.slice(1).join(' › ')}};
+ function allTopics(){
+  const set=new Set();getNotes().forEach(n=>{if(n.category&&n.category!=='Unsorted')set.add(splitPath(n.category).join(' › '))});
+  return [...set].sort();
+ }
+ function refreshTopicList(){
+  const dl=$('topicList');dl.replaceChildren();
+  [...new Set([...allTopics(),'Maritime','Work procedures','Projects','Learning','Personal','Ideas','Reference','Unsorted'])].forEach(t=>{const o=document.createElement('option');o.value=t;dl.append(o)});
+ }
+ const badgeFor=n=>n.source==='research'?['RESEARCH ✓','badge badge-res']:['MY NOTE','badge badge-note'];
+ function matchesQuery(n,q){
+  if(!q)return true;
+  const hay=(n.title+' '+plain(n.body)+' '+n.category+' '+(n.tags||[]).join(' ')+' '+(n.analysis?.summary||'')).toLowerCase();
+  return q.split(/\s+/).filter(Boolean).every(w=>hay.includes(w));
+ }
  function renderList(){
   const list=$('noteList'),q=$('notesSearch').value.toLowerCase().trim(),notes=getNotes().sort((a,b)=>b.updatedAt-a.updatedAt);
-  list.replaceChildren();
-  const found=notes.filter(n=>(n.title+' '+n.body+' '+n.category+' '+(n.tags||[]).join(' ')+' '+(n.analysis?.summary||'')).toLowerCase().includes(q));
+  list.replaceChildren();refreshTopicList();
+  const found=notes.filter(n=>matchesQuery(n,q));
+  $('notesCount').textContent=notes.length+' note'+(notes.length===1?'':'s')+(q?' · '+found.length+' found':' · Max checks these first');
   if(!found.length){const p=document.createElement('p');p.className='notes-tip';p.style.padding='18px';p.textContent=notes.length?'No matching notes.':'No notes yet. Tap + New note below to begin.';list.append(p);return}
-  found.forEach(n=>{
-   const row=document.createElement('div');row.className='note-row';row.tabIndex=0;
-   const t=document.createElement('strong');t.textContent=n.title||'Untitled note';
-   const m=document.createElement('small');m.textContent=(n.category||'Unsorted')+' · '+new Date(n.updatedAt).toLocaleDateString()+(n.analysis?' · analyzed':'');
-   const excerpt=document.createElement('p');excerpt.textContent=(n.analysis?.summary||n.body.replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ')).slice(0,180);
-   row.append(t,m,excerpt);row.onclick=()=>loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')loadNote(n.id)};list.append(row);
+  const groups=new Map();
+  found.forEach(n=>{const {top,sub}=topicOf(n);if(!groups.has(top))groups.set(top,new Map());const g=groups.get(top);if(!g.has(sub))g.set(sub,[]);g.get(sub).push(n)});
+  const tops=[...groups.keys()].sort((a,b)=>(a==='Unsorted')-(b==='Unsorted')||[...groups.get(b).values()].flat().length-[...groups.get(a).values()].flat().length||a.localeCompare(b));
+  tops.forEach((top,i)=>{
+   const subs=groups.get(top),count=[...subs.values()].flat().length;
+   const det=document.createElement('details');det.className='topic';det.open=!!q||i===0||tops.length<=2;
+   const sum=document.createElement('summary');const name=document.createElement('span');name.textContent=top;const c=document.createElement('span');c.className='count';c.textContent=count;sum.append(name,c);det.append(sum);
+   [...subs.keys()].sort((a,b)=>(a==='')-(b==='')||a.localeCompare(b)).forEach(sub=>{
+    const wrap=document.createElement('div');wrap.className='subtopic';
+    if(sub){const sn=document.createElement('div');sn.className='sub-name';sn.textContent=sub+' · '+subs.get(sub).length;wrap.append(sn)}
+    subs.get(sub).forEach(n=>{
+     const row=document.createElement('div');row.className='note-item';row.tabIndex=0;row.dataset.id=n.id;
+     const t=document.createElement('strong');t.textContent=n.title||'Untitled note';
+     const [bt,bc]=badgeFor(n);const b=document.createElement('span');b.className=bc;b.textContent=bt;
+     row.append(t,b);row.onclick=()=>loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')loadNote(n.id)};wrap.append(row);
+    });
+    det.append(wrap);
+   });
+   list.append(det);
   });
  }
  function clearEditor(){
-  activeNoteId=null;$('editorTitle').value='';$('editorCategory').value='Unsorted';$('editorTags').value='';$('editorBody').innerHTML='';$('editorAnalysis').textContent='Write your note, then save. Max can analyze it separately.';$('editorPageHeading').textContent='New note';dirty=false;
+  activeNoteId=null;$('editorTitle').value='';$('editorCategory').value='Unsorted';$('editorTags').value='';$('editorBody').innerHTML='';$('editorAnalysis').textContent='Write your note, then save. Max can analyze it separately.';$('editorPageHeading').textContent='New note';$('editorBadge').textContent='Write it your way';$('editorLinksWrap').hidden=true;dirty=false;
+ }
+ function linkedNotes(n){
+  const others=getNotes().filter(x=>x.id!==n.id);
+  const tags=new Set((n.tags||[]).map(t=>t.toLowerCase()));
+  const related=(n.analysis?.related||[]).map(r=>String(r).toLowerCase());
+  const text=(n.title+' '+plain(n.body)).toLowerCase();
+  return others.map(o=>{
+   let s=0;(o.tags||[]).forEach(t=>{if(tags.has(t.toLowerCase()))s+=2});
+   const ot=(o.title||'').toLowerCase();
+   if(ot&&ot.length>3&&text.includes(ot))s+=3;
+   if(n.title&&(o.title+' '+plain(o.body)).toLowerCase().includes(n.title.toLowerCase()))s+=2;
+   if(related.some(r=>r&&ot.includes(r)))s+=2;
+   if(o.category&&o.category===n.category&&o.category!=='Unsorted')s+=1;
+   return {o,s};
+  }).filter(x=>x.s>=2).sort((a,b)=>b.s-a.s).slice(0,6).map(x=>x.o);
  }
  function loadNote(id){
   const n=getNotes().find(x=>x.id===id);if(!n)return;
   activeNoteId=id;$('editorTitle').value=n.title||'';$('editorCategory').value=n.category||'Unsorted';$('editorTags').value=(n.tags||[]).join(', ');$('editorBody').innerHTML=n.body||'';
-  $('editorAnalysis').textContent=n.analysis?.fullText||'Not analyzed yet. Tap Analyze with Max to analyze this note.';$('editorPageHeading').textContent=n.title||'Edit note';dirty=false;setSection('editor');
+  $('editorAnalysis').textContent=n.analysis?.fullText||'Not analyzed yet. Tap Analyze with Max to analyze this note.';$('editorPageHeading').textContent=n.title||'Edit note';
+  $('editorBadge').textContent=(n.source==='research'?'Research ✓ approved by you':'My note')+(n.filedByMax?' · filed by Max':'');
+  const links=linkedNotes(n),box=$('editorLinks');box.replaceChildren();$('editorLinksWrap').hidden=!links.length;
+  links.forEach(o=>{const b=document.createElement('button');b.textContent='↔ '+(o.title||'Untitled');b.onclick=()=>loadNote(o.id);box.append(b)});
+  dirty=false;setSection('editor');
  }
  function saveCurrent(){
   const body=$('editorBody').innerHTML.trim();if(!body||body==='<br>'){status('Write something in your note first.');return null}
   const notes=loadAll();let n=notes.find(x=>x.id===activeNoteId);
-  if(!n){n={id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),createdAt:Date.now(),analysis:null,deleted:false};notes.push(n);activeNoteId=n.id}
-  n.title=$('editorTitle').value.trim()||$('editorBody').innerText.split('\n')[0].slice(0,80)||'Untitled note';n.category=$('editorCategory').value||'Unsorted';n.tags=$('editorTags').value.split(',').map(x=>x.trim()).filter(Boolean);n.body=body;n.updatedAt=Date.now();
-  putNotes(notes);dirty=false;$('editorPageHeading').textContent=n.title;renderList();status(cloud.memory?'Note saved. Syncing…':'Note saved on this phone.');return n;
+  if(!n){n={id:newId(),createdAt:Date.now(),analysis:null,deleted:false};notes.push(n);activeNoteId=n.id}
+  const cat=splitPath($('editorCategory').value).join(' › ');
+  if(n.category&&cat!==n.category)n.filedByMax=false;
+  n.title=$('editorTitle').value.trim()||$('editorBody').innerText.split('\n')[0].slice(0,80)||'Untitled note';n.category=cat||'Unsorted';n.tags=$('editorTags').value.split(',').map(x=>x.trim()).filter(Boolean);n.body=body;n.updatedAt=Date.now();
+  putNotes(notes);dirty=false;$('editorPageHeading').textContent=n.title;renderList();status(cloud.memory?'Note saved. Syncing…':'Note saved on this phone.');
+  if(n.category==='Unsorted'&&workerBase())analyze(n,{quiet:true}).catch(()=>{}); // Max files it into a topic
+  return n;
  }
- async function analyze(n){
+ // Analysis also suggests a topic. Unsorted notes are filed there automatically (you can change it any time).
+ async function analyze(n,opts={}){
   const base=workerBase();
-  if(!base){$('editorAnalysis').textContent='Saved locally. Connect Max’s Cloudflare Worker to enable AI analysis.';return}
-  $('editorAnalysis').textContent='Max is analyzing your note…';
+  if(!base){if(!opts.quiet)$('editorAnalysis').textContent='Saved locally. Connect Max’s Cloudflare Worker to enable AI analysis.';return false}
+  if(!opts.quiet)$('editorAnalysis').textContent='Max is analyzing your note…';
   try{
-   const plain=document.createElement('div');plain.innerHTML=n.body;
-   const {r,data}=await fetchJson(base+'/api/analyze-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:n.title,category:n.category,text:plain.innerText})},45000);
+   const {r,data}=await fetchJson(base+'/api/analyze-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:n.title,category:n.category,text:plain(n.body),topics:allTopics()})},45000);
    if(!r.ok)throw new Error(data.error||'Analysis failed');
-   n.analysis={summary:data.summary||'',fullText:data.analysis||data.summary||'',tags:data.tags||[],related:data.related||[],questions:data.questions||[]};
-   n.updatedAt=Date.now();
-   putNotes(loadAll().map(x=>x.id===n.id?n:x));$('editorAnalysis').textContent=n.analysis.fullText||n.analysis.summary;renderList();status('Analysis complete. Your original note is unchanged.');
-  }catch(e){$('editorAnalysis').textContent='Analysis failed: '+e.message;status('Note is saved, but analysis failed.')}
+   const cur=loadAll().find(x=>x.id===n.id)||n;
+   cur.analysis={summary:data.summary||'',fullText:data.analysis||data.summary||'',tags:data.tags||[],related:data.related||[],questions:data.questions||[]};
+   let filed='';
+   const topic=splitPath(data.topic).join(' › ');
+   if(topic&&(!cur.category||cur.category==='Unsorted')){cur.category=topic;cur.filedByMax=true;filed=topic}
+   if(!cur.tags.length&&Array.isArray(data.tags))cur.tags=data.tags.slice(0,6).map(String);
+   cur.updatedAt=Date.now();
+   putNotes(loadAll().map(x=>x.id===cur.id?cur:x));
+   if(activeNoteId===cur.id&&screen==='editor'){
+    $('editorAnalysis').textContent=cur.analysis.fullText||cur.analysis.summary;
+    if(filed){$('editorCategory').value=filed;$('editorBadge').textContent=(cur.source==='research'?'Research ✓ approved by you':'My note')+' · filed by Max'}
+    if(!$('editorTags').value)$('editorTags').value=cur.tags.join(', ');
+   }
+   if(screen==='notes')renderList();
+   if(!opts.quiet)status('Analysis complete. Your original note is unchanged.');
+   else if(filed)status('Max filed it under '+filed+'.');
+   return filed||true;
+  }catch(e){if(!opts.quiet){$('editorAnalysis').textContent='Analysis failed: '+e.message;status('Note is saved, but analysis failed.')}return false}
  }
- const createNewNote=()=>{clearEditor();setSection('editor');$('editorTitle').focus()}; $('newNote').onclick=createNewNote;
+ async function organizeAll(){
+  const todo=getNotes().filter(n=>!n.category||n.category==='Unsorted').slice(0,12);
+  const banner=$('organizeBanner');banner.hidden=false;
+  if(!todo.length){banner.textContent='Everything is already filed under a topic.';return 'All your notes are already filed under topics.'}
+  if(!workerBase()){banner.textContent='Connect Max’s Worker first.';return 'I need my connection to organize your notes.'}
+  let filed=0;
+  for(let i=0;i<todo.length;i++){banner.textContent='Max is organizing… '+(i+1)+' of '+todo.length;const r=await analyze(todo[i],{quiet:true});if(typeof r==='string')filed++}
+  banner.textContent='Max filed '+filed+' note'+(filed===1?'':'s')+' into topics. Open a note to change its topic.';
+  renderList();
+  return filed?'Done. I filed '+filed+' note'+(filed===1?'':'s')+' into topics.':'I could not find good topics for those notes yet.';
+ }
+ const createNewNote=title=>{clearEditor();if(title)$('editorTitle').value=title;setSection('editor');$('editorTitle').focus()};
+ $('newNote').onclick=()=>createNewNote('');
  $('editorBack').onclick=()=>{if(dirty&&!confirm('You have unsaved changes. Leave without saving?'))return;setSection('notes')};
  $('editorSave').onclick=()=>{const n=saveCurrent();if(n)status(cloud.memory?'Saved. Syncing to cloud…':'Saved successfully.')};
  $('editorAnalyze').onclick=()=>{const n=saveCurrent();if(n)analyze(n)};
@@ -633,6 +913,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(confirm('Delete this note?')){putNotes(loadAll().map(n=>n.id===activeNoteId?{...n,deleted:true,body:'',analysis:null,updatedAt:Date.now()}:n));clearEditor();setSection('notes');status('Note deleted.')}
  };
  $('notesSearch').oninput=renderList;
+ $('organizeBtn').onclick=()=>organizeAll();
  ['editorBody','editorTitle','editorTags','editorCategory'].forEach(id=>$(id).addEventListener('input',()=>dirty=true));
  document.querySelectorAll('.format-toolbar [data-cmd]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.cmd,false,null);$('editorBody').focus();dirty=true});
  $('formatBlock').onchange=()=>{document.execCommand('formatBlock',false,$('formatBlock').value);$('editorBody').focus();dirty=true};
@@ -640,12 +921,264 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('highlightColor').oninput=()=>{document.execCommand('hiliteColor',false,$('highlightColor').value);$('editorBody').focus();dirty=true};
  $('editorDictate').onclick=()=>{
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){status('Dictation is not supported in this browser. Try Chrome.');return}
+  endConversation(null);
   if(recognition)try{recognition.abort()}catch{}
   recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;
   recognition.onresult=e=>{$('editorBody').focus();document.execCommand('insertText',false,e.results[0][0].transcript+' ');dirty=true};
   recognition.onerror=e=>status('Dictation error: '+e.error);
   try{recognition.start();status('Listening for your note…')}catch(e){status('Dictation could not start: '+e.message)}
  };
+
+ // ---------- export: Obsidian markdown, all notes, PDF ----------
+ function htmlToMd(html){
+  const d=document.createElement('div');d.innerHTML=html||'';
+  const walk=(node,ctx)=>{
+   if(node.nodeType===3)return node.nodeValue.replace(/\s+/g,' ');
+   if(node.nodeType!==1)return '';
+   const tag=node.tagName.toLowerCase(),inner=()=>[...node.childNodes].map(c=>walk(c,ctx)).join('');
+   switch(tag){
+    case 'br':return '\n';
+    case 'h1':return '\n# '+inner().trim()+'\n\n';case 'h2':return '\n## '+inner().trim()+'\n\n';case 'h3':return '\n### '+inner().trim()+'\n\n';
+    case 'b':case 'strong':{const t=inner();return t.trim()?'**'+t.trim()+'**':''}
+    case 'i':case 'em':{const t=inner();return t.trim()?'*'+t.trim()+'*':''}
+    case 'a':return '['+inner().trim()+']('+(node.getAttribute('href')||'')+')';
+    case 'ul':case 'ol':{let i=0;return '\n'+[...node.children].map(li=>(tag==='ol'?(++i)+'. ':'- ')+[...li.childNodes].map(c=>walk(c,ctx)).join('').trim()).join('\n')+'\n\n'}
+    case 'blockquote':return '\n'+inner().trim().split('\n').map(l=>'> '+l).join('\n')+'\n\n';
+    case 'pre':return '\n```\n'+node.textContent+'\n```\n\n';
+    case 'p':case 'div':return inner().trim()+'\n\n';
+    default:return inner();
+   }
+  };
+  return walk(d,{}).replace(/\n{3,}/g,'\n\n').trim();
+ }
+ const q=s=>'"'+String(s||'').replace(/"/g,'\\"')+'"';
+ function noteToMd(n){
+  const links=linkedNotes(n).map(o=>'[['+(o.title||'Untitled')+']]');
+  let md='---\ntitle: '+q(n.title)+'\ntopic: '+q(n.category)+'\ntags: ['+(n.tags||[]).map(t=>q(t)).join(', ')+']\nsource: '+(n.source==='research'?'research (approved)':'my note')+
+   '\ncreated: '+new Date(n.createdAt).toISOString()+'\nupdated: '+new Date(n.updatedAt).toISOString()+'\n---\n\n# '+(n.title||'Untitled')+'\n\n'+htmlToMd(n.body)+'\n';
+  if(n.analysis?.summary)md+='\n## Max’s summary\n\n'+n.analysis.summary+'\n';
+  if(links.length)md+='\n## Linked notes\n\n'+links.map(l=>'- '+l).join('\n')+'\n';
+  return md;
+ }
+ function download(name,text,type){
+  const blob=new Blob([text],{type:type||'text/markdown'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+ }
+ const fileSafe=s=>String(s||'note').replace(/[\\/:*?"<>|#^[\]]+/g,' ').replace(/\s+/g,' ').trim().slice(0,80)||'note';
+ function exportNote(n){download(fileSafe(n.title)+'.md',noteToMd(n))}
+ function exportAllNotes(){
+  const notes=getNotes();if(!notes.length)return 'You have no notes to export yet.';
+  const byTopic=new Map();notes.forEach(n=>{const k=splitPath(n.category).join(' › ')||'Unsorted';if(!byTopic.has(k))byTopic.set(k,[]);byTopic.get(k).push(n)});
+  let md='# Max notes export\n\nExported '+new Date().toLocaleString()+' · '+notes.length+' notes\n';
+  [...byTopic.keys()].sort().forEach(k=>{md+='\n\n## '+k+'\n';byTopic.get(k).forEach(n=>{md+='\n### '+(n.title||'Untitled')+'\n\n'+(n.tags?.length?'Tags: '+n.tags.map(t=>'#'+t.replace(/\s+/g,'-')).join(' ')+'\n\n':'')+htmlToMd(n.body)+'\n'})});
+  download('Max-notes-'+new Date().toISOString().slice(0,10)+'.md',md);
+  return 'Your '+notes.length+' notes are downloading as one file.';
+ }
+ function printNote(n){
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0;right:0;bottom:0';
+  f.srcdoc='<!doctype html><meta charset="utf-8"><title>'+escHtml(n.title)+'</title><style>body{font:15px/1.6 system-ui,sans-serif;color:#111;margin:32px}h1{font-size:24px}small{color:#555}</style><h1>'+escHtml(n.title)+'</h1><small>'+escHtml(n.category)+(n.tags?.length?' · '+escHtml(n.tags.join(', ')):'')+'</small><hr>'+n.body+(n.analysis?.summary?'<h3>Max’s summary</h3><p>'+escHtml(n.analysis.summary)+'</p>':'');
+  f.onload=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch{}setTimeout(()=>f.remove(),60000)};
+  document.body.append(f);
+ }
+ const currentNote=()=>activeNoteId&&getNotes().find(n=>n.id===activeNoteId);
+ $('exportMd').onclick=()=>{const n=currentNote()||saveCurrent();if(n)exportNote(n)};
+ $('exportPdf').onclick=()=>{const n=currentNote()||saveCurrent();if(n)printNote(n)};
+ $('exportAll').onclick=()=>{status(exportAllNotes())};
+
+ // ---------- research: Max looks it up, you approve before it goes into your notes ----------
+ const RES_KEY='max_research_draft';
+ let draft=null;try{draft=JSON.parse(localStorage.getItem(RES_KEY)||'null')}catch{draft=null}
+ const saveDraft=()=>{try{draft?localStorage.setItem(RES_KEY,JSON.stringify(draft)):localStorage.removeItem(RES_KEY)}catch{}};
+ function renderResearch(){
+  const has=!!(draft&&Array.isArray(draft.points)&&draft.points.length);
+  $('resDraft').hidden=!has;$('resEmpty').hidden=has||!$('resLoading').hidden;
+  if(!has)return;
+  $('resTitle').textContent=draft.title;$('resConfidence').textContent=draft.confidence?'Confidence: '+draft.confidence:'';
+  const ol=$('resPoints');ol.replaceChildren();
+  draft.points.forEach((p,i)=>{const li=document.createElement('li');li.textContent=p;if((draft.changed||[]).includes(i+1)){li.className='changed';const s=document.createElement('span');s.className='muted small';s.style.display='block';s.textContent='Changed just now';li.append(s)}ol.append(li)});
+  const cf=$('resConflicts');cf.hidden=!(draft.conflicts&&draft.conflicts.length);cf.textContent=(draft.conflicts||[]).map(c=>'⚠ '+c).join('\n');
+  const src=$('resSources');src.replaceChildren();
+  (draft.sources||[]).forEach(s=>{
+   const row=document.createElement('div');row.className='src';
+   const b=document.createElement('span');b.className='badge '+(s.kind==='official'?'badge-note':s.kind==='note'?'badge-res':'badge-web');b.textContent=s.kind==='official'?'OFFICIAL':s.kind==='note'?'MY NOTE':'WEB';
+   let el;if(s.url){el=document.createElement('a');el.href=s.url;el.target='_blank';el.rel='noopener noreferrer'}else{el=document.createElement('button');el.className='links';el.style.cssText='all:unset;cursor:pointer;color:#bcecff';el.onclick=()=>{if(s.noteId)loadNote(s.noteId)}}
+   el.textContent=s.title;row.append(b,el);src.append(row);
+  });
+  if(!(draft.sources||[]).length)src.textContent='No sources found — treat this as unverified.';
+  if(document.activeElement!==$('resTopic'))$('resTopic').value=draft.topic||'Research';
+ }
+ $('resTopic').addEventListener('input',()=>{if(draft){draft.topic=$('resTopic').value;saveDraft()}});
+ async function startResearch(topic){
+  setSection('research');
+  $('resLoading').hidden=false;$('resLoadingTopic').textContent=topic;$('resDraft').hidden=true;$('resEmpty').hidden=true;
+  try{
+   const {r,data}=await postJson('/api/research',{topic,topics:allTopics()},90000);
+   if(r.status===404)throw new Error('Research needs the newest worker.js in Cloudflare.');
+   if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+   draft={...data.draft,question:topic,changed:[]};saveDraft();
+   $('resLoading').hidden=true;renderResearch();
+   const n=draft.points.length;
+   return 'I found '+n+' key point'+(n===1?'':'s')+(draft.conflicts?.length?', and one thing that differs from your notes':'')+(draft.searched?'':', but I couldn’t search the web, so treat it as unverified')+'. Say approve to save it, or tell me what to change.';
+  }catch(e){$('resLoading').hidden=true;renderResearch();$('resEmpty').hidden=false;return 'I couldn’t finish the research. '+e.message}
+ }
+ async function editResearch(instruction){
+  if(!draft)return 'There’s no research open to change. Ask me to research something first.';
+  setSection('research');
+  try{
+   const {r,data}=await postJson('/api/research-edit',{draft,instruction},45000);
+   if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+   draft={...draft,title:data.title||draft.title,topic:data.topic||draft.topic,points:data.points,changed:data.changed||[]};saveDraft();renderResearch();
+   return data.say||'Done.';
+  }catch(e){return 'I couldn’t make that change. '+e.message}
+ }
+ function approveResearch(){
+  if(!draft)return 'There’s no research waiting for approval.';
+  const topic=splitPath($('resTopic').value||draft.topic).join(' › ')||'Research';
+  const srcs=(draft.sources||[]).filter(s=>s.url||s.title);
+  const body='<ul>'+draft.points.map(p=>'<li>'+escHtml(p)+'</li>').join('')+'</ul>'+
+   ((draft.conflicts||[]).length?'<blockquote>'+draft.conflicts.map(c=>'⚠ '+escHtml(c)).join('<br>')+'</blockquote>':'')+
+   (srcs.length?'<h3>Sources</h3><ul>'+srcs.map(s=>'<li>'+(s.url?'<a href="'+escHtml(s.url)+'">'+escHtml(s.title)+'</a>':escHtml(s.title)+' (my note)')+'</li>').join('')+'</ul>':'')+
+   (draft.confidence?'<p><i>Confidence: '+escHtml(draft.confidence)+'</i></p>':'');
+  const tags=[...new Set(splitPath(topic).slice(1).concat(splitPath(topic).slice(0,1)).map(t=>t.toLowerCase()))].slice(0,5);
+  const n={id:newId(),title:draft.title,category:topic,tags,body,source:'research',sources:srcs,analysis:{summary:draft.points.slice(0,2).join(' '),fullText:draft.points.join('\n')},createdAt:Date.now(),updatedAt:Date.now(),deleted:false};
+  const all=loadAll();all.push(n);putNotes(all);
+  draft=null;saveDraft();loadNote(n.id);
+  return 'Saved to your notes under '+topic+'.';
+ }
+ function rejectResearch(){
+  if(!draft)return 'There’s nothing to discard.';
+  draft=null;saveDraft();renderResearch();
+  return 'Discarded. Nothing was saved to your notes.';
+ }
+ $('resApprove').onclick=()=>{const s=approveResearch();setSub('',s);speak(s)};
+ $('resReject').onclick=()=>{const s=rejectResearch();setSub('',s);speak(s)};
+ $('resEditBtn').onclick=async()=>{const t=$('resEditText').value.trim();if(!t)return;$('resEditText').value='';$('resEditBtn').disabled=true;const s=await editResearch(t);$('resEditBtn').disabled=false;setSub(t,s);speak(s)};
+ $('resEditText').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('resEditBtn').click()}});
+
+ // ---------- understanding commands by meaning (no need to memorize exact words) ----------
+ // 1) Quick understanding on the phone for common requests, in English, Filipino or Taglish.
+ // 2) Anything else goes to Max's AI, which can also decide to change the screen.
+ // 3) When the AI understands a new way you say something, Max learns that phrase for next time.
+ const LEARN_KEY='max_learned_phrases';
+ const learned=()=>{try{const v=JSON.parse(localStorage.getItem(LEARN_KEY)||'[]');return Array.isArray(v)?v:[]}catch{return []}};
+ const NO_QUERY=new Set(['save_note','show_keyboard','hide_keyboard','show_research','approve_research','reject_research','save_answer','organize_notes','open_settings','go_home','export_notes','open_menu']);
+ function norm(t){
+  return String(t||'').toLowerCase().replace(/[“”"’']/g,"'").replace(/[^\p{L}\p{N}' ]+/gu,' ')
+   .replace(/^\s*(?:(?:hey|ok(?:ay)?|hi|yo)\s+max\s+|max\s+)?(?:please\s+|pls\s+|can you\s+|could you\s+|would you\s+|will you\s+|i want you to\s+|i need you to\s+|paki(?!ta\b|kita)\s*|pwede\s+(?:mo\s+)?(?:bang\s+)?)*/,'')
+   .replace(/\s+(?:please|pls|po|naman|max)\s*$/,'').replace(/\s+/g,' ').trim();
+ }
+ const words=s=>new Set(s.split(' ').filter(w=>w.length>1));
+ function similar(a,b){const A=words(a),B=words(b);if(A.size<2||B.size<2)return a===b?1:0;let i=0;A.forEach(w=>{if(B.has(w))i++});return i/(A.size+B.size-i)}
+ function matchLearned(n){
+  let best=null,score=0;
+  learned().forEach(l=>{const s=l.p===n?1:NO_QUERY.has(l.a.type)?similar(l.p,n):0;if(s>score){score=s;best=l}});
+  return score>=0.75?{...best.a,learned:true}:null;
+ }
+ function learn(n,a){
+  if(!n||!a||n.split(' ').length>14)return;
+  const list=learned().filter(l=>l.p!==n);
+  list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
+  try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
+ }
+ function renderLearned(){
+  const box=$('learnedList');box.replaceChildren();const list=learned();
+  if(!list.length){box.textContent='Nothing yet. Ask Max for things in your own words and he’ll learn them.';return}
+  const label={show_keyboard:'show keyboard',hide_keyboard:'hide keyboard',show_notes:'open notes',open_note:'open a note',new_note:'new note',research:'research',show_research:'show research',edit_research:'change research',approve_research:'approve research',reject_research:'reject research',save_answer:'save answer to notes',organize_notes:'organize notes',open_settings:'settings',go_home:'back to talking',export_notes:'export notes',open_menu:'menu'};
+  list.forEach(l=>{const row=document.createElement('div');row.className='mem-row';const s=document.createElement('span');s.textContent='“'+l.p+'” → '+(label[l.a.type]||l.a.type)+(l.a.query?' ('+l.a.query+')':'');
+   const del=document.createElement('button');del.className='home-mic danger-btn';del.textContent='Forget';del.onclick=()=>{try{localStorage.setItem(LEARN_KEY,JSON.stringify(learned().filter(x=>x.p!==l.p)))}catch{}renderLearned()};row.append(s,del);box.append(row)});
+ }
+ const QUESTION=/^(what|how|why|when|who|whom|which|where|is|are|does|do|did|can|could|should|would|will|ano|paano|bakit|kailan|sino|saan|ilan)\b/;
+ function stripQuery(s){return s.replace(/^(?:about|on|for|regarding|related to|tungkol sa|sa|the|my|a|an|some)\s+/g,'').replace(/^(?:about|on|for|regarding|the|my)\s+/,'').replace(/\s+(?:in|from|on)\s+(?:my|the)\s+(?:notes?|second brain)$/,'').replace(/\s+(?:notes?|note)$/,'').trim()}
+ function matchCommand(raw){
+  const n=norm(raw);if(!n)return null;
+  const wc=n.split(' ').length;
+  const has=re=>re.test(n);
+  const hasDraft=!!(draft&&draft.points&&draft.points.length);
+  const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
+  // research screen: approve / reject / change by voice
+  if(hasDraft&&(screen==='research'||has(/\b(research|draft|findings)\b/))){
+   if(has(/\b(approve[sd]?|looks good|that'?s good|go ahead|save it|save (the|this|that) research|keep it|i'?ll take it|sige|ok na|okay na|tama yan|good,? save|yes,? save|ok(ay)?,? save)\b/))return {type:'approve_research'};
+   if(has(/\b(reject|discard|scrap|throw (it|that|this) away|don'?t save|do not save|cancel (it|that|this|the research)|delete (it|that|this|the research|the draft)|huwag (na )?(i ?save|isave))\b/))return {type:'reject_research'};
+   if(screen==='research'&&has(/^(change|edit|update|replace|add|remove|delete|fix|correct|make|put|include|rewrite|shorten|simplify|combine|split|move|mention|say|use|palitan|baguhin|idagdag|tanggalin)\b|\bpoint (\d+|one|two|three|four|five)\b/))return {type:'edit_research',query:raw.trim()};
+  }
+  if(wc>16)return null;
+  if(has(/\b(settings?|passcode|connection settings?|configuration)\b/)&&(wc<=6||has(/\b(open|show|go|take me|bring|display|check|change|pakita|buksan)\b/)))return {type:'open_settings'};
+  if(has(/^(the )?(menu|options)$|\b(open|show) (the )?menu\b/))return {type:'open_menu'};
+  if(has(/\b(keyboard|type ?bar|typing|text ?box|type box|chat box)\b/)){return NEG.test(n)?{type:'hide_keyboard'}:{type:'show_keyboard'}}
+  if(has(/\b(let me|i'?ll|i will|i want to|i wanna|i'?d rather|gusto ko(ng)?|mag)\s*(type|write it|mag ?type)\b|\btype (na lang|instead|it out)\b/))return {type:'show_keyboard'};
+  if(has(/\b(voice only|just voice|no keyboard|stop typing)\b/))return {type:'hide_keyboard'};
+  if(has(/\b(export|download|back ?up)\b/)&&has(/\b(notes?|everything|all|it|this|that|second brain)\b/))return {type:'export_notes',query:has(/\b(this|it|that)\b/)&&screen==='editor'?'this':''};
+  if(has(/\b(organi[sz]e|sort|arrange|clean up|tidy( up)?|categori[sz]e|group|file|ayusin)\b/)&&has(/\b(notes?|second brain|library)\b/))return {type:'organize_notes'};
+  if(has(/\b(show|open|see|display|back to|go to|let me see|pakita|tingnan|where'?s|bring up|pull up)\b.*\b(research|findings|what you found)\b|^(your |the )?research$/))return {type:'show_research'};
+  if(!has(/\b(my notes?|notes|second brain)\b/)&&has(/\b(research|look up|look into|search (the )?(web|internet|online)|find out|check online|google|verify|double ?check|i ?research|alamin)\b/)){
+   let topic=raw.replace(/^.*?\b(research(?:ing)?|look(?:ing)? (?:up|into)|search(?:ing)? (?:the )?(?:web|internet|online)(?: for)?|find(?:ing)? out|check(?:ing)? online|google|verify|double ?check|i ?research|alamin)\b/i,'').trim();
+   topic=topic.replace(/^(?:about|on|for|regarding|if|whether|that|the latest|tungkol sa|kung)\s+/i,'').replace(/[?.!]+$/,'').trim();
+   if(/^(it|that|this|more|deeper|again)?$/i.test(topic)){topic=hasDraft?draft.question||draft.title:(talkHistory.filter(m=>m.role==='user').slice(-1)[0]?.text||'')}
+   return topic&&topic.length>2?{type:'research',query:topic}:null;
+  }
+  if(screen==='editor'&&has(/^(save|i ?save|isave)( it| this| the note| my note)?( now)?$/))return {type:'save_note'};
+  if(has(/\b(save|put|add|keep|store|write|i ?save|isave|ilagay)\b/)&&has(/\b(that|this|it|answer|what you said|sinabi mo)\b/)&&has(/\b(notes?|second brain)\b/))return {type:'save_answer'};
+  if(has(/^(save|keep) (that|this|it)$/)&&talkHistory.some(m=>m.role==='model'))return {type:'save_answer'};
+  if(has(/\b(new|create|make|start|write|add|gumawa)\b\s+(a\s+)?(new\s+)?note\b/)){const m=raw.match(/\b(?:about|called|titled|named|on|for)\s+(.+)$/i);return {type:'new_note',query:m?m[1].replace(/[?.!]+$/,'').trim():''}}
+  const openM=n.match(/\b(?:open|show|read|pull up|bring up|buksan|basahin)\s+(?:me\s+)?(?:my |the )?(.+?)\s+note$/);
+  if(openM&&!/^(my|the|all|your)?\s*$/.test(openM[1]))return {type:'open_note',query:openM[1]};
+  if(has(/^(close|exit|leave|isara)\b/)&&wc<=4)return {type:'go_home'};
+  if(has(/\b(notes?|second brain|library|mga note)\b/)){
+   if(QUESTION.test(n)&&!has(/^(do i have|what notes|which notes|ano ang mga note)/)&&!has(/\b(show|open|find|search|list)\b/))return null; // a real question: answer from notes
+   if(has(/\b(show|open|see|display|go to|bring up|pull up|find|search|look (for|at|up|in|through)|check|list|pakita|tingnan|hanapin|buksan|do i have|what notes|which notes|take me)\b/)||wc<=3){
+    let query='';
+    const m=raw.match(/\b(?:about|on|for|regarding|related to|tungkol sa|with)\s+(.+)$/i)||raw.match(/\b(?:find|search(?: for)?|look for|hanapin)\s+(.+?)\s+(?:in|from|sa)\s+(?:my |the |mga )?(?:notes?|second brain)/i)||raw.match(/\b(?:find|search(?: for)?|look for|hanapin)\s+(?:my |the )?(.+?)\s+notes?\b/i);
+    if(m)query=stripQuery(m[1].toLowerCase().replace(/[?.!]+$/,''));
+    return {type:'show_notes',query};
+   }
+  }
+  if(has(/^(go )?(back|home)$|\b(just talk|main screen|home screen|close (the )?(notes|research|this|it|that)|exit|balik|let'?s (just )?talk|back to (you|max|talking|the circle|home|main)|go back to (you|talking|home))\b/))return {type:'go_home'};
+  return null;
+ }
+ function findNote(query){
+  const qn=String(query||'').toLowerCase().trim();if(!qn)return null;
+  let best=null,score=0;
+  getNotes().forEach(n=>{const t=(n.title||'').toLowerCase();let s=t===qn?3:t.includes(qn)||qn.includes(t)&&t.length>3?2:similar(norm(t),norm(qn))*2;if(s>score){score=s;best=n}});
+  return score>=0.9?best:null;
+ }
+ // Carries out an understood command. Returns what Max says about it.
+ async function doAction(a,raw,aiReply){
+  const say=s=>aiReply||s;
+  switch(a.type){
+   case 'show_keyboard':setSection('home');setKeyboard(true);return say('Keyboard’s up. Type, or just keep talking.');
+   case 'hide_keyboard':setKeyboard(false);return say('Keyboard’s away.');
+   case 'open_menu':openMenu();return 'Here’s the menu.';
+   case 'open_settings':openConnection();return say('Here are the settings.');
+   case 'go_home':closeConnection();closeMenu();setSection('home');return say('I’m here.');
+   case 'show_notes':{
+    $('notesSearch').value=a.query||'';setSection('notes');
+    const all=getNotes(),found=all.filter(n=>matchesQuery(n,(a.query||'').toLowerCase()));
+    if(!a.query)return all.length?'Here are your notes — '+all.length+' in all.':'You don’t have any notes yet.';
+    return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
+   }
+   case 'open_note':{const n=findNote(a.query);if(n){loadNote(n.id);return 'Here’s your '+n.title+' note.'}return doAction({type:'show_notes',query:a.query},raw)}
+   case 'new_note':createNewNote(a.query||'');return a.query?'New note started: '+a.query+'.':'New note ready. Type it, or tap Dictate.';
+   case 'research':return await startResearch(a.query||raw);
+   case 'show_research':setSection('research');return draft?'Here’s the research. Say approve, or tell me what to change.':'There’s no research yet. Tell me what to look up.';
+   case 'edit_research':return await editResearch(a.query||raw);
+   case 'approve_research':return approveResearch();
+   case 'reject_research':return rejectResearch();
+   case 'save_answer':{
+    const lastMax=[...talkHistory].reverse().find(m=>m.role==='model'),lastYou=[...talkHistory].reverse().find(m=>m.role==='user');
+    if(!lastMax)return 'There’s no answer to save yet.';
+    const title=(lastYou?.text||'Max’s answer').replace(/[?.!]+$/,'').slice(0,80);
+    const n={id:newId(),title,category:'Unsorted',tags:[],body:'<p>'+escHtml(lastMax.text).replace(/\n/g,'<br>')+'</p>'+(lastYou?'<blockquote>You asked: '+escHtml(lastYou.text)+'</blockquote>':''),source:'max',createdAt:Date.now(),updatedAt:Date.now(),deleted:false};
+    const all=loadAll();all.push(n);putNotes(all);
+    if(workerBase())analyze(n,{quiet:true}).catch(()=>{});
+    return 'Saved to your notes. I’ll file it under the right topic.';
+   }
+   case 'organize_notes':setSection('notes');return await organizeAll();
+   case 'save_note':{const n=saveCurrent();return n?'Saved.':'There’s nothing to save yet.'}
+   case 'export_notes':{if(a.query==='this'&&currentNote()){exportNote(currentNote());return 'Exporting this note for Obsidian.'}return exportAllNotes()}
+  }
+  return aiReply||'';
+ }
 
  // ---------- voice ----------
  // Use the device's normal installed voice at natural pitch and pace.
@@ -661,7 +1194,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!('speechSynthesis' in window)){status('Text-to-speech is not available in this browser.');onDone&&onDone();return}
   window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=chooseRegularVoice();if(v)u.voice=v;u.lang=v?.lang||'en-US';u.rate=1.05;u.pitch=1;u.volume=1;
   const done=()=>{stopSpeakingLook();status('Ready');onDone&&onDone();onDone=null};
-  u.onstart=()=>{$('maxOrb').classList.add('speaking');status('Max is speaking…')};
+  u.onstart=()=>{$('maxOrb').classList.add('speaking');status('Speaking')};
+  u.onboundary=()=>{orb.kick=0.5};
   u.onend=done;u.onerror=done;
   // Android sometimes never reports the end of speech; this stops the circle from staying stuck.
   clearTimeout(speakGuard);speakGuard=setTimeout(done,Math.min(120000,4000+text.length*90));
@@ -677,32 +1211,48 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function showAnswer(text,onDone){
   const cleanText = cleanMaxText(text);
-  $('homeAnswer').textContent = cleanText;
+  setSub(undefined,cleanText);
   $('maxOrb').classList.remove('processing','listening');
   speak(cleanText,onDone);
  }
  const modalOpen=()=>!$('connectionModal').hidden;
- // Sends one message to Max. Resolves after Max has finished speaking the answer.
- function askMax(q,voice){
+ // Handles one thing you said or typed. Resolves after Max has finished speaking.
+ function handleUtterance(q,voice){
   return new Promise(async finish=>{
-  $('homeAnswer').textContent='You: '+q;$('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
+  setSub(q,'');showNoteRefs([]);
+  $('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
+  try{
+   const local=matchLearned(norm(q))||matchCommand(q);
+   if(local){
+    const said=await doAction(local,q);
+    talkHistory.push({role:'user',text:q},{role:'model',text:said});
+    showAnswer(said,finish);return;
+   }
+  }catch(e){console.error('Command failed',e)}
   const base=workerBase();
   if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.',finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
    if(r.status===401){cloud.state='needpass';cloud.memory=false;refreshConnectionLabel();throw new Error('Max needs the passcode. Tap ⚙ and enter it.')}
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
-   const reply=data.reply||data.response||data.text||'I could not generate a response.';
+   let reply=data.reply||data.response||data.text||'I could not generate a response.';
+   if(data.action&&data.action.type){
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note'].includes(data.action.type)?'':reply);
+    if(said)reply=said;
+    learn(norm(q),data.action); // next time this phrase works instantly
+   }
    talkHistory.push({role:'user',text:q},{role:'model',text:reply});
+   showNoteRefs(data.notesUsed);
    showAnswer(reply,finish);
    if(remembered)setTimeout(()=>{$('memoryBadge').textContent='✓ Noted in memory';$('memoryBadge').hidden=false;setTimeout(()=>$('memoryBadge').hidden=true,5000)},200);
   }catch(err){$('maxOrb').classList.remove('processing');endConversation(null);showAnswer('I could not reach my AI service. '+err.message,finish)}
   });
  }
+ const askMax=handleUtterance;
 
  // ---------- hands-free conversation: you talk, he listens; he talks, you listen ----------
  // Tap once to start. Max stops listening while he speaks (so he doesn't hear himself),
@@ -711,7 +1261,6 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const END_WORDS=/^\s*(?:ok(?:ay)?[, ]+)?(?:max[, ]+)?(?:stop(?: listening)?|goodbye(?: max)?|bye(?: max)?|that'?s all(?: for now)?|thanks?(?: you)?,? that'?s all|stand ?by|tama na|sige na(?:,? max)?|wala na)\s*(?:max)?[.!]*\s*$/i;
  function setTalkButton(){
   $('homeTalk').textContent=convo?'● Conversation on':'🎙 Talk to Max';
-  $('homeTalk').classList.toggle('live',convo);
  }
  function endConversation(msg){
   convo=false;listenToken++;misses=0;setTalkButton();
@@ -731,8 +1280,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    heard=true;misses=0;
    const q=(e.results[0][0].transcript||'').trim();
    if(!q)return;
-   if(END_WORDS.test(q)){$('homeAnswer').textContent='You: '+q;endConversation(null);speak('Very well. I’ll be here when you need me.');return}
-   await askMax(q,true);
+   if(END_WORDS.test(q)){setSub(q,'');endConversation(null);showAnswer('Very well. I’ll be here when you need me.');return}
+   await handleUtterance(q,true);
    if(convo&&token===listenToken)setTimeout(()=>{if(token===listenToken)listenOnce()},350);
   };
   recognition.onerror=e=>{
@@ -750,35 +1299,51 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(misses>=3){endConversation('Standing by. Tap the circle when you need me.');return}
    setTimeout(()=>{if(token===listenToken)listenOnce()},250);
   };
-  try{recognition.start();$('maxOrb').classList.add('listening');status('Listening… speak naturally.')}
+  try{recognition.start();$('maxOrb').classList.add('listening');status('Listening…')}
   catch(e){endConversation('Voice input could not start. Tap the circle to try again.')}
  }
  function startConversation(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){status('Voice input is not supported by this browser. Open Max in Chrome, or type below.');return}
+  if(!SR){status('Voice input is not supported here. Hold the circle and choose Keyboard to type.');return}
   greetingDone=true; // never talk over the user
   if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeakingLook();
   convo=true;misses=0;setTalkButton();listenOnce();
  }
- // Kept for older code paths: starts a conversation.
  function startTalk(){startConversation()}
- $('homeTalk').onclick=()=>{convo?endConversation('Conversation ended. Tap to talk again.'):startConversation()};
- $('maxOrb').onclick=()=>{
-  if($('maxOrb').classList.contains('speaking')){ // interrupt Max and let you speak
+ // One tap on the circle (big or mini): start talking · interrupt Max · or end the conversation.
+ function orbTap(){
+  if($('maxOrb').classList.contains('speaking')){
    if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeakingLook();
    convo=true;misses=0;setTalkButton();listenOnce();return;
   }
   if(convo&&$('maxOrb').classList.contains('listening')){endConversation('Conversation ended. Tap to talk again.');return}
   if(!convo)startConversation();
- };
+ }
+ $('homeTalk').onclick=()=>{convo?endConversation('Conversation ended. Tap to talk again.'):startConversation()};
+ // Hold the circle for the menu (keyboard, notes, research, settings) — useful when you can't talk.
+ let pressTimer=null,longPressed=false;
+ const orbEl=$('maxOrb');
+ orbEl.addEventListener('pointerdown',()=>{longPressed=false;clearTimeout(pressTimer);pressTimer=setTimeout(()=>{longPressed=true;openMenu()},600)});
+ ['pointerup','pointerleave','pointercancel'].forEach(ev=>orbEl.addEventListener(ev,()=>clearTimeout(pressTimer)));
+ orbEl.addEventListener('contextmenu',e=>{e.preventDefault();longPressed=true;openMenu()});
+ orbEl.onclick=()=>{if(longPressed){longPressed=false;return}orbTap()};
+ $('miniOrb').onclick=orbTap;
+ function openMenu(){$('quickMenu').hidden=false}
+ function closeMenu(){$('quickMenu').hidden=true}
+ $('quickMenu').addEventListener('click',e=>{
+  const go=e.target.closest('[data-go]')?.dataset.go;
+  if(e.target===$('quickMenu')||go==='close'){closeMenu();return}
+  if(!go)return;closeMenu();
+  if(go==='keyboard')setKeyboard(true);else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='settings')openConnection();
+ });
  $('homeStop').onclick=()=>{greetingDone=true;endConversation(null);if(window.speechSynthesis)window.speechSynthesis.cancel();stopSpeakingLook();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&convo)endConversation('Standing by.')});
- // Typing, for when you can't talk out loud.
+ // Typing, for when you can't talk out loud ("show keyboard", or hold the circle).
  async function sendTyped(){
   const q=$('typeInput').value.trim();if(!q)return;
   $('typeInput').value='';$('typeInput').blur();greetingDone=true;
   endConversation(null);$('typeSend').disabled=true;
-  try{await askMax(q,false)}finally{$('typeSend').disabled=false}
+  try{await handleUtterance(q,false)}finally{$('typeSend').disabled=false}
  }
  $('typeSend').onclick=sendTyped;
  $('typeInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendTyped()}});
@@ -789,33 +1354,39 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  };
 
  // One spoken greeting. Android blocks speech until the first tap, so it plays on the first tap
- // that is not a talk/stop/settings button (tapping the circle goes straight to listening instead).
+ // that is not on the circle or a button (tapping the circle goes straight to listening instead).
  function greet(){
   if(greetingDone)return;greetingDone=true;
-  speak('Good day. I’m Max. I’m ready when you are. What would you like to work on?');
+  const msg='Good day. I’m Max. I’m ready when you are.';
+  setSub('',msg);speak(msg);
  }
  function armGreeting(){
   const canSpeakNow=navigator.userActivation&&navigator.userActivation.hasBeenActive;
   if(canSpeakNow){greet();return}
   const onFirstTap=e=>{
    if(greetingDone){document.removeEventListener('pointerdown',onFirstTap,true);return}
-   if(e.target.closest('button,input,select,textarea,[contenteditable],#connectionModal,.bottom-nav'))return;
-   if(!$('homeScreen').classList.contains('active'))return;
+   if(e.target.closest('button,input,select,textarea,[contenteditable],#connectionModal,#quickMenu'))return;
+   if(screen!=='home')return;
    document.removeEventListener('pointerdown',onFirstTap,true);greet();
   };
   document.addEventListener('pointerdown',onFirstTap,true);
  }
 
+ // For testing on a computer: window.MaxDebug.understand("show me my notes on ballast")
+ window.MaxDebug={understand:t=>matchLearned(norm(t))||matchCommand(t),norm};
+
  // ---------- startup: each step is separate, so one failure cannot freeze the whole app ----------
  function step(name,fn){try{fn()}catch(e){console.error('Max startup step failed: '+name,e);window.maxShowProblem('Startup step "'+name+'" failed: '+(e&&e.message||e))}}
  step('notes upgrade',migrateOldNotes);
+ step('screen',()=>setSection('home'));
  step('notes list',renderList);
  step('connection label',refreshConnectionLabel);
  step('greeting',armGreeting);
+ step('circle',()=>requestAnimationFrame(orbLoop));
  if(!window.__maxErrors.length)status('Ready');
  checkCloud().then(()=>{
   if(cloud.memory){migrateOldMemories();syncNotes()}
-  if(!window.__maxErrors.length&&cloud.state==='needpass')status('Ready · tap ⚙ and enter your passcode to use Max’s AI.');
+  if(!window.__maxErrors.length&&cloud.state==='needpass')status('Ready · passcode needed (hold the circle → Settings)');
  });
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkCloud().then(()=>{if(cloud.memory)syncNotes()})});
  window.addEventListener('online',()=>checkCloud().then(()=>{if(cloud.memory)syncNotes()}));

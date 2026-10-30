@@ -1,0 +1,21 @@
+// Cloudflare settings for Max's backend (the Worker "max-ai-backend").
+// When Cloudflare is connected to this GitHub repo, every change pushed to `main`
+// is deployed automatically using these settings.
+// Nothing secret is in this file: GEMINI_API_KEY and MAX_PASSCODE stay as Cloudflare secrets.
+{
+  "name": "max-ai-backend",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-23",
+  "workers_dev": true,
+  // Keep the plain-text variables set in the dashboard (ALLOWED_ORIGIN, GEMINI_MODEL).
+  "keep_vars": true,
+  // Max's long-term memory database. The code uses the name MAX_MEMORY.
+  "d1_databases": [
+    {
+      "binding": "MAX_MEMORY",
+      "database_name": "max-memory",
+      "database_id": "ff30b39a-aea5-4d5a-ba42-0a2274789967"
+    }
+  ],
+  "observability": { "enabled": true }
+}
