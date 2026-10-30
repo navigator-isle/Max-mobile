@@ -3,11 +3,56 @@
 // Set ALLOWED_ORIGIN to your exact GitHub Pages origin, e.g. https://yourname.github.io
 // Long-term memory (v2): bind a D1 database as MAX_MEMORY and add a secret MAX_PASSCODE.
 // Cloud memory and notes sync stay switched off until BOTH exist. Tables are created automatically.
-// Google retires model names over time. To switch without editing code, add a plain-text
-// variable GEMINI_MODEL in Cloudflare (it is used for chat and note analysis).
-const DEFAULT_MODEL = "gemini-3.5-flash-lite";
-const modelFor = env => cleanText(env.GEMINI_MODEL, 80) || DEFAULT_MODEL;
-const WORKER_VERSION = "max-worker-2026-10-30c";
+// Max's brain. Gemini Flash first (smarter, free tier), Flash-Lite as automatic backup when Flash
+// is unavailable or its free daily limit runs out. To force a model, add a plain-text variable
+// GEMINI_MODEL in Cloudflare. If an ANTHROPIC_API_KEY secret exists, conversation uses Claude
+// (CLAUDE_MODEL variable to choose; default Haiku) and falls back to Gemini if Claude fails.
+const GEMINI_CHAIN = ["gemini-3.5-flash", "gemini-3.5-flash-lite"];
+const DEFAULT_CLAUDE = "claude-haiku-5-5";
+const modelChain = env => { const own = cleanText(env.GEMINI_MODEL, 80); return own ? [own, ...GEMINI_CHAIN.filter(m => m !== own)] : GEMINI_CHAIN; };
+const modelFor = env => lastGood || modelChain(env)[0];
+const skipUntil = new Map(); // models that recently failed are skipped for a while
+let lastGood = "";
+async function gemini(env, payload) {
+  const chain = modelChain(env), now = Date.now();
+  const usable = chain.filter(m => !(skipUntil.get(m) > now));
+  let last = null, networkError = false;
+  for (const m of usable.length ? usable : chain) {
+    let res;
+    try {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST",
+        headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY}, body: JSON.stringify(payload)});
+    } catch { networkError = true; continue; }
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) { lastGood = m; skipUntil.delete(m); return {ok:true, status:200, data, model:m}; }
+    last = {ok:false, status:res.status, data, model:m};
+    const msg = String(data?.error?.message || "");
+    const modelProblem = [403, 404, 429].includes(res.status) || (res.status === 400 && /model|no longer available|not found|deprecated|retired|not supported for/i.test(msg) && !/tool|search/i.test(msg));
+    if (modelProblem) { skipUntil.set(m, now + (res.status === 429 ? 10 * 60e3 : 60 * 60e3)); continue; }
+    if (res.status >= 500) continue;
+    break; // a problem with the request itself: another model would fail the same way
+  }
+  if (!last && networkError) throw new Error("network");
+  return last;
+}
+// Claude (optional). Returns null if Claude is not set up or fails, so the caller uses Gemini.
+async function claude(env, system, history, message, maxTokens) {
+  if (!env.ANTHROPIC_API_KEY) return null;
+  const msgs = [];
+  for (const m of [...history.map(h => ({role: h.role === "model" ? "assistant" : "user", content: h.parts[0].text})), {role:"user", content:message}]) {
+    if (msgs.length && msgs[msgs.length - 1].role === m.role) msgs[msgs.length - 1].content += "\n" + m.content; else msgs.push({...m});
+  }
+  while (msgs.length && msgs[0].role !== "user") msgs.shift();
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {method:"POST",
+      headers:{"content-type":"application/json","x-api-key":env.ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},
+      body: JSON.stringify({model: cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE, max_tokens: maxTokens, system, messages: msgs})});
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return {failed: (data?.error?.message || ("HTTP " + res.status)).slice(0, 200)};
+    return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
+  } catch { return {failed: "Could not reach Claude"}; }
+}
+const WORKER_VERSION = "max-worker-2026-10-30d";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -245,7 +290,7 @@ export default {
     }
     if (url.pathname === "/health" && request.method === "GET") {
       // Public check: says what is configured, never any secret value or stored data.
-      const health = {ok:true, service:"Max backend", model:modelFor(env), version:WORKER_VERSION,
+      const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env), brain: env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini", version:WORKER_VERSION,
         geminiKey: env.GEMINI_API_KEY ? "set" : "missing", passcodeRequired: passcodeSet(env),
         database: env.MAX_MEMORY ? "bound" : "not bound"};
       if (request.headers.get("X-Max-Pass") !== null) {
@@ -372,28 +417,25 @@ export default {
       const system = style + `\nCurrent time: ${cleanText(body.now, 40) || when(Date.now())}${body.tz ? " (" + cleanText(body.tz, 60) + ")" : ""}.` +
         (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote;
       const contents = [...history, {role:"user", parts:[{text:message}]}];
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelFor(env)}:generateContent`;
-      let upstream;
-      try {
-        upstream = await fetch(endpoint, {
-          method:"POST",
-          headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY},
-          body:JSON.stringify({
-            systemInstruction:{parts:[{text:system}]},
-            contents,
+      let raw = "", cutOff = false, usedModel = "", claudeNote = "";
+      const c = await claude(env, system, history, message, 4096);
+      if (c && c.text) { raw = c.text; cutOff = c.cutOff; usedModel = c.model; }
+      else {
+        if (c && c.failed) claudeNote = c.failed;
+        let g;
+        try {
+          g = await gemini(env, {systemInstruction:{parts:[{text:system}]}, contents,
             // Large limit: newer Gemini models also spend part of it on thinking, which used to cut answers short.
-            generationConfig:{temperature:0.7, maxOutputTokens:8192, ...(db || actionsOn ? {responseMimeType:"application/json"} : {})}
-          })
-        });
-      } catch { return json({error:"Could not reach the AI provider. Try again later.", savedMemory}, 502, origin, env); }
-      const result = await upstream.json().catch(()=>({}));
-      if (!upstream.ok) {
-        const message = result?.error?.message || `AI provider returned HTTP ${upstream.status}`;
-        return json({error:message.slice(0,400), savedMemory}, upstream.status === 429 ? 429 : 502, origin, env);
+            generationConfig:{temperature:0.7, maxOutputTokens:8192, ...(db || actionsOn ? {responseMimeType:"application/json"} : {})}});
+        } catch { return json({error:"Could not reach the AI provider. Try again later.", savedMemory}, 502, origin, env); }
+        if (!g || !g.ok) {
+          const message = g?.data?.error?.message || `AI provider returned HTTP ${g?.status}`;
+          return json({error:message.slice(0,400), savedMemory}, g?.status === 429 ? 429 : 502, origin, env);
+        }
+        raw = (g.data?.candidates?.[0]?.content?.parts || []).map(p=>p.text||"").join("\n").trim();
+        cutOff = g.data?.candidates?.[0]?.finishReason === "MAX_TOKENS"; usedModel = g.model;
       }
-      const raw = (result?.candidates?.[0]?.content?.parts || []).map(p=>p.text||"").join("\n").trim();
-      const parsed = db || actionsOn ? parseModelJson(raw) : {reply: raw, remember: []};
-      const cutOff = result?.candidates?.[0]?.finishReason === "MAX_TOKENS";
+      const parsed = db || actionsOn || (c && c.text) ? parseModelJson(raw) : {reply: raw, remember: []};
       const reply = parsed.reply ? parsed.reply + (cutOff ? " … That was a long one, so I stopped there. Say “continue” for the rest." : "") : "";
       if (!reply) return json({error:"The AI provider returned no text. Try rephrasing.", savedMemory}, 502, origin, env);
       let autoSaved = [];
@@ -401,7 +443,7 @@ export default {
         if (!savedMemory) { try { autoSaved = await saveFacts(db, parsed.remember); } catch {} }
         try { await saveTalk(db, message, reply); } catch {}
       }
-      return json({reply, action: actionsOn ? cleanAction(parsed.action) : null, model:modelFor(env), savedMemory, autoSaved, memoriesUsed:allMemories.length,
+      return json({reply, action: actionsOn ? cleanAction(parsed.action) : null, model:usedModel, ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
         notesUsed: Array.isArray(parsed.used_notes) ? [...new Set(parsed.used_notes.map(t => cleanText(String(t), 200)).filter(t => knownTitles.some(k => k.toLowerCase() === t.toLowerCase())))].slice(0, 4)
           : [...fromPhone.items.map(n => n.title), ...notesUsed.map(n => n.title || "Untitled")].slice(0, 3),
         truncated: cutOff, conversationSaved: !!db}, 200, origin, env);
@@ -429,18 +471,14 @@ POINTS:
 CONFLICTS:
 - <a difference between the user's notes and the sources, or "none">
 CONFIDENCE: <high, medium or low, and why in a few words>`;
-      const model = modelFor(env);
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-      const call = tools => fetch(endpoint, {method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY},
-        body: JSON.stringify({contents:[{role:"user", parts:[{text:prompt}]}], ...(tools ? {tools:[{google_search:{}}]} : {}), generationConfig:{temperature:0.3, maxOutputTokens:1200}})});
-      let upstream, searched = true;
+      const call = tools => gemini(env, {contents:[{role:"user", parts:[{text:prompt}]}], ...(tools ? {tools:[{google_search:{}}]} : {}), generationConfig:{temperature:0.3, maxOutputTokens:8192}});
+      let g, searched = true;
       try {
-        upstream = await call(true);
-        if (!upstream.ok && upstream.status !== 429) { searched = false; upstream = await call(false); }
+        g = await call(true);
+        if ((!g || !g.ok) && g?.status !== 429) { searched = false; g = await call(false); }
       } catch { return json({error:"Could not reach the AI provider."}, 502, origin, env); }
-      const result = await upstream.json().catch(() => ({}));
-      if (!upstream.ok) return json({error:(result?.error?.message || "Research failed.").slice(0, 400)}, upstream.status === 429 ? 429 : 502, origin, env);
-      const cand = result?.candidates?.[0] || {};
+      if (!g || !g.ok) return json({error:(g?.data?.error?.message || "Research failed.").slice(0, 400)}, g?.status === 429 ? 429 : 502, origin, env);
+      const cand = g.data?.candidates?.[0] || {};
       const raw = (cand.content?.parts || []).map(p => p.text || "").join("\n");
       const draft = parseResearch(raw, topic);
       const chunks = cand.groundingMetadata?.groundingChunks || [];
@@ -466,15 +504,11 @@ POINTS:
 ${d.points.slice(0, 15).map((p, i) => `${i + 1}. ${cleanText(String(p), 600)}`).join("\n")}
 His instruction: ${instruction}
 Return ONLY JSON: {"title": "...", "topic": "...", "points": ["..."], "changed": [index numbers of points you changed or added, starting at 1], "say": "one short sentence telling him what you changed"}`;
-      let upstream;
-      try {
-        upstream = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelFor(env)}:generateContent`, {method:"POST",
-          headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY},
-          body: JSON.stringify({contents:[{role:"user", parts:[{text:prompt}]}], generationConfig:{temperature:0.2, responseMimeType:"application/json"}})});
-      } catch { return json({error:"Could not reach the AI provider."}, 502, origin, env); }
-      const result = await upstream.json().catch(() => ({}));
-      if (!upstream.ok) return json({error:(result?.error?.message || "Edit failed.").slice(0, 400)}, upstream.status === 429 ? 429 : 502, origin, env);
-      const raw = (result?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
+      let g;
+      try { g = await gemini(env, {contents:[{role:"user", parts:[{text:prompt}]}], generationConfig:{temperature:0.2, maxOutputTokens:8192, responseMimeType:"application/json"}}); }
+      catch { return json({error:"Could not reach the AI provider."}, 502, origin, env); }
+      if (!g || !g.ok) return json({error:(g?.data?.error?.message || "Edit failed.").slice(0, 400)}, g?.status === 429 ? 429 : 502, origin, env);
+      const raw = (g.data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
       let o; try { o = JSON.parse(raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")); } catch { return json({error:"Max could not apply that change. Try saying it another way."}, 502, origin, env); }
       const points = Array.isArray(o.points) ? o.points.map(p => cleanText(String(p), 600)).filter(Boolean).slice(0, 15) : [];
       if (!points.length) return json({error:"Max could not apply that change."}, 502, origin, env);
@@ -498,19 +532,11 @@ Title: ${title}
 Category: ${category}
 Original note:
 ${noteText}`;
-      const model = modelFor(env);
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-      let upstream;
-      try {
-        upstream = await fetch(endpoint, {
-          method:"POST",
-          headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY},
-          body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,responseMimeType:"application/json"}})
-        });
-      } catch { return json({error:"Could not reach the AI provider."}, 502, origin, env); }
-      const payload = await upstream.json().catch(()=>({}));
-      if (!upstream.ok) return json({error:payload.error?.message || "AI analysis request failed."}, upstream.status, origin, env);
-      const raw = payload.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("") || "";
+      let g;
+      try { g = await gemini(env, {contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:8192,responseMimeType:"application/json"}}); }
+      catch { return json({error:"Could not reach the AI provider."}, 502, origin, env); }
+      if (!g || !g.ok) return json({error:g?.data?.error?.message || "AI analysis request failed."}, g?.status || 502, origin, env);
+      const raw = g.data?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("") || "";
       try {
         const parsed = JSON.parse(raw.replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,""));
         return json(parsed, 200, origin, env);

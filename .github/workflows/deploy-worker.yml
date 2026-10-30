@@ -1,4 +1,4 @@
-# Deploys Max's backend (worker.js) to Cloudflare whenever it changes on main.
+# Tests Max on every change, then deploys Max's backend (worker.js) to Cloudflare — only if all tests pass.
 # Needs one repository secret: CLOUDFLARE_API_TOKEN (a token that can deploy only this Worker).
 # Settings come from wrangler.jsonc. Secrets in Cloudflare (GEMINI_API_KEY, MAX_PASSCODE) are not touched.
 name: Deploy Max backend
@@ -6,9 +6,7 @@ name: Deploy Max backend
 on:
   push:
     branches: [main]
-    paths:
-      - worker.js
-      - wrangler.jsonc
+  pull_request: {}
   workflow_dispatch: {}
 
 concurrency:
@@ -16,7 +14,24 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install test browser
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1
+          npx playwright install --with-deps chromium
+      - name: Run all Max tests
+        run: bash tests/run.sh
+
   deploy:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
