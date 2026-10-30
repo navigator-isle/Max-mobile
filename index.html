@@ -222,15 +222,19 @@ body.on-home .top-status{opacity:.7}
   try{localStorage.setItem('__max_test','1');localStorage.removeItem('__max_test')}
   catch(e){window.maxShowProblem('This browser is blocking storage, so notes cannot be saved here. Open Max in normal Chrome (not Incognito).')}
   window.maxPass=function(){try{return localStorage.getItem('max_pass')||''}catch(e){return ''}};
+  window.maxSession=function(){try{return localStorage.getItem('max_session')||''}catch(e){return ''}};
+  // Coming back from "Sign in with Google": keep the session on this phone and tidy the address bar.
+  try{var m=location.hash.match(/max_session=([A-Za-z0-9_-]+)/);if(m){localStorage.setItem('max_session',m[1]);window.__maxJustSignedIn=true;history.replaceState(null,'',location.pathname+location.search)}}catch(e){}
   window.maxWorker=function(){try{return (localStorage.getItem('jarvis_api_base_v2')||localStorage.getItem('max_worker_url')||DEFAULT_WORKER).trim().replace(/\/+$/,'')}catch(e){return DEFAULT_WORKER}};
   var nativeFetch=window.fetch.bind(window);
   window.fetch=function(input,init){
     var url=typeof input==='string'?input:(input&&input.url)||'';
-    var base=window.maxWorker(),pass=window.maxPass();
-    if(pass&&base&&url.indexOf(base+'/')===0){
+    var base=window.maxWorker(),pass=window.maxPass(),sess=window.maxSession();
+    if((pass||sess)&&base&&url.indexOf(base+'/')===0){
       init=Object.assign({},init||{});
       var h=new Headers(init.headers||(typeof input!=='string'&&input.headers)||{});
-      if(!h.has('X-Max-Pass'))h.set('X-Max-Pass',pass);
+      if(pass&&!h.has('X-Max-Pass'))h.set('X-Max-Pass',pass);
+      if(sess&&!h.has('X-Max-Session'))h.set('X-Max-Session',sess);
       init.headers=h;
     }
     return nativeFetch(input,init);
@@ -362,7 +366,12 @@ body.on-home .top-status{opacity:.7}
     <p class="notes-tip">Enter only the Worker base URL. Do not enter your Gemini API key here.</p>
     <label for="maxPassInput" style="display:block;margin:12px 0 6px">Max passcode</label>
     <input id="maxPassInput" type="password" autocomplete="current-password" placeholder="Same as MAX_PASSCODE in Cloudflare" style="width:100%;box-sizing:border-box;background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:12px;font:inherit">
-    <p class="notes-tip">Needed for cloud memory and notes sync. Saved on this phone only. This is not the Gemini key.</p>
+    <p class="notes-tip">Needed for cloud memory and notes sync. Saved on this phone only. This is not the Gemini key. After you sign in with Google, the passcode is no longer used.</p>
+    <div id="googleSection" style="border-top:1px solid #294861;margin-top:12px;padding-top:10px">
+      <strong>Google account</strong>
+      <p id="googleStatus" class="notes-tip">Checking…</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button id="googleSignIn" class="home-mic primary" hidden>Sign in with Google</button><button id="googleSignOut" class="home-mic" hidden>Sign out on this phone</button><button id="googleDisconnect" class="home-mic danger-btn" hidden>Disconnect Google</button></div>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button id="saveWorkerUrl" class="home-mic primary">Save</button><button id="testWorkerUrl" class="home-mic">Test connection</button></div>
     <p id="connectionResult" style="white-space:pre-wrap;color:#bcecff;line-height:1.5"></p>
     <div id="memorySection" hidden style="border-top:1px solid #294861;margin-top:10px;padding-top:10px">
@@ -580,7 +589,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const API_KEY='jarvis_api_base_v2';
  function workerBase(){return window.maxWorker()}
  function refreshConnectionLabel(){
-  const labels={checking:'Connecting…',online:'Connected',memory:'Connected · memory on',needpass:'Connected · passcode needed',offline:'Offline',local:'Local mode'};
+  const labels={checking:'Connecting…',online:'Connected',memory:'Connected · memory on',needpass:'Connected · passcode needed',needlogin:'Sign in needed',offline:'Offline',local:'Local mode'};
   $('globalStatus').textContent=labels[cloud.memory?'memory':cloud.state]||'Local mode';
  }
  async function fetchJson(url,opts={},ms=15000){
@@ -600,12 +609,33 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    const {r,data}=await fetchJson(base+'/health',{method:'GET',headers:pass?{'X-Max-Pass':pass}:{}},8000);
    if(!r.ok||!data.ok)throw new Error(data.error||('HTTP '+r.status));
    cloud.health=data;
-   cloud.state=data.passcodeRequired&&data.passcode!=='accepted'?'needpass':'online';
-   cloud.memory=data.passcode==='accepted'&&data.database==='ready';
+   const signedIn=data.session==='accepted';
+   if(data.session==='wrong'){try{localStorage.removeItem('max_session')}catch{}}
+   cloud.state=data.login==='google'&&!signedIn?'needlogin':data.passcodeRequired&&data.passcode!=='accepted'&&!signedIn?'needpass':'online';
+   cloud.memory=(data.passcode==='accepted'||signedIn)&&data.database==='ready';
+   cloud.google=data.google||'not set up';cloud.signedIn=signedIn;
    cloud.detail=data.database||'';
   }catch(e){cloud.state='offline';cloud.memory=false;cloud.detail=e.message}
-  refreshConnectionLabel();return cloud;
+  refreshConnectionLabel();renderGoogle();return cloud;
  }
+ // ---------- Google account (sign-in, Calendar, Tasks) ----------
+ function renderGoogle(){
+  const st=$('googleStatus');if(!st)return;
+  const g=cloud.google||'not set up',inBtn=$('googleSignIn'),outBtn=$('googleSignOut'),disc=$('googleDisconnect');
+  inBtn.hidden=outBtn.hidden=disc.hidden=true;
+  if(cloud.state==='offline'){st.textContent='Offline — connect to the internet to manage Google.';return}
+  if(g==='not set up'){st.textContent='Not set up yet. Follow the Google steps in SETUP.md (one time, about 10 minutes). Then Max can use your Calendar and Tasks, and you sign in with Google instead of the passcode.';return}
+  if(cloud.signedIn){st.textContent='Signed in with Google ✓ — Calendar and Tasks are connected. The passcode is no longer used.';outBtn.hidden=false;disc.hidden=false;return}
+  if(g==='linked'){st.textContent='Google is connected, but this phone is not signed in. Sign in to use Max here.';inBtn.hidden=false;return}
+  st.textContent='Ready. Sign in once with your Google account to connect Calendar and Tasks.';inBtn.hidden=false;
+ }
+ $('googleSignIn').onclick=()=>{location.href=workerBase()+'/auth/google/start?return='+encodeURIComponent(location.origin+location.pathname)};
+ $('googleSignOut').onclick=async()=>{try{await fetchJson(workerBase()+'/api/session',{method:'DELETE'})}catch{}try{localStorage.removeItem('max_session')}catch{}await checkCloud()};
+ $('googleDisconnect').onclick=async()=>{
+  if(!confirm('Disconnect Google? Max will stop using your Calendar and Tasks, and the passcode will work again.'))return;
+  try{const {r,data}=await postJson('/api/google/disconnect',{});if(!r.ok)throw new Error(data.error);try{localStorage.removeItem('max_session')}catch{}await checkCloud();alert('Google disconnected. Enter the passcode to keep using Max.')}
+  catch(e){alert('Could not disconnect: '+e.message)}
+ };
 
  // ---------- notes cloud sync ----------
  let syncTimer=null,syncing=false;
@@ -691,7 +721,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!h.version)lines.push('Memory: this Worker is the older version without database support. Upload the new worker.js.');
    else if(!h.passcodeRequired)lines.push('Memory: off. Add a MAX_PASSCODE secret in Cloudflare to switch it on.');
    else if(h.passcode!=='accepted')lines.push('Memory: passcode is '+(h.passcode==='wrong'?'WRONG':'missing')+'. Type the same passcode as MAX_PASSCODE.');
+   else if(h.login==='google'&&!cloud.signedIn)lines.push('Login: Google — sign in below to use Max on this phone.');
    else lines.push('Memory database: '+h.database+(cloud.memory?' ✓':''));
+   lines.push('Google: '+(h.google||'not set up')+(cloud.signedIn?' · signed in ✓':''));
    if(h.version&&h.version<'max-worker-2026-10-30b')lines.push('Research and smart commands need the newest worker.js ('+h.version+' is older).');
    $('connectionResult').textContent=lines.join('\n');
    if(cloud.memory)await migrateOldMemories();
@@ -1109,7 +1141,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // 3) When the AI understands a new way you say something, Max learns that phrase for next time.
  const LEARN_KEY='max_learned_phrases';
  const learned=()=>{try{const v=JSON.parse(localStorage.getItem(LEARN_KEY)||'[]');return Array.isArray(v)?v:[]}catch{return []}};
- const NO_QUERY=new Set(['save_note','show_keyboard','hide_keyboard','show_research','approve_research','reject_research','save_answer','organize_notes','open_settings','go_home','export_notes','open_menu']);
+ const NO_QUERY=new Set(['undo_last','save_note','show_keyboard','hide_keyboard','show_research','approve_research','reject_research','save_answer','organize_notes','open_settings','go_home','export_notes','open_menu']);
  function norm(t){
   return String(t||'').toLowerCase().replace(/[“”"’']/g,"'").replace(/[^\p{L}\p{N}' ]+/gu,' ')
    .replace(/^\s*(?:(?:hey|ok(?:ay)?|hi|yo)\s+max\s+|max\s+)?(?:please\s+|pls\s+|can you\s+|could you\s+|would you\s+|will you\s+|i want you to\s+|i need you to\s+|paki(?!ta\b|kita)\s*|pwede\s+(?:mo\s+)?(?:bang\s+)?)*/,'')
@@ -1123,7 +1155,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14)return;
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1131,7 +1163,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function renderLearned(){
   const box=$('learnedList');box.replaceChildren();const list=learned();
   if(!list.length){box.textContent='Nothing yet. Ask Max for things in your own words and he’ll learn them.';return}
-  const label={read_note:'read a note',show_keyboard:'show keyboard',hide_keyboard:'hide keyboard',show_notes:'open notes',open_note:'open a note',new_note:'new note',research:'research',show_research:'show research',edit_research:'change research',approve_research:'approve research',reject_research:'reject research',save_answer:'save answer to notes',organize_notes:'organize notes',open_settings:'settings',go_home:'back to talking',export_notes:'export notes',open_menu:'menu'};
+  const label={list_schedule:'read my schedule',read_note:'read a note',show_keyboard:'show keyboard',hide_keyboard:'hide keyboard',show_notes:'open notes',open_note:'open a note',new_note:'new note',research:'research',show_research:'show research',edit_research:'change research',approve_research:'approve research',reject_research:'reject research',save_answer:'save answer to notes',organize_notes:'organize notes',open_settings:'settings',go_home:'back to talking',export_notes:'export notes',open_menu:'menu'};
   list.forEach(l=>{const row=document.createElement('div');row.className='mem-row';const s=document.createElement('span');s.textContent='“'+l.p+'” → '+(label[l.a.type]||l.a.type)+(l.a.query?' ('+l.a.query+')':'');
    const del=document.createElement('button');del.className='home-mic danger-btn';del.textContent='Forget';del.onclick=()=>{try{localStorage.setItem(LEARN_KEY,JSON.stringify(learned().filter(x=>x.p!==l.p)))}catch{}renderLearned()};row.append(s,del);box.append(row)});
  }
@@ -1149,6 +1181,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(has(/\b(reject|discard|scrap|throw (it|that|this) away|don'?t save|do not save|cancel (it|that|this|the research)|delete (it|that|this|the research|the draft)|huwag (na )?(i ?save|isave))\b/))return {type:'reject_research'};
    if(screen==='research'&&has(/^(change|edit|update|replace|add|remove|delete|fix|correct|make|put|include|rewrite|shorten|simplify|combine|split|move|mention|say|use|palitan|baguhin|idagdag|tanggalin)\b|\bpoint (\d+|one|two|three|four|five)\b/))return {type:'edit_research',query:raw.trim()};
   }
+  // reminders and new events need date understanding: let Max's AI handle them
+  if(has(/^(please )?(remind|set (a |an )?(reminder|alarm)|schedule|book|add .*\b(calendar|to-?do|task|reminder)s?\b|put .*\b(calendar|to-?do)\b|paalala|ipaalala)/))return null;
+  if(lastCreated&&Date.now()-lastCreated.at<30*60e3&&has(/^(undo|undo that|undo it|cancel (that|it)|remove (that|it)|delete (that|it)( reminder| event| task)?|that'?s wrong|mali|bawiin|huwag na)( please)?$/))return {type:'undo_last'};
+  if(has(/\b(schedule|calendar|agenda|appointments?|meetings?|events?|lakad|gagawin|to-?dos?|tasks?)\b/)&&(QUESTION.test(n)||has(/\b(show|check|read|tell me|list|pakita|ano|anong|ano ang|meron)\b/))&&!has(/\b(notes?|research)\b/)){
+   return {type:'list_schedule',query:has(/\b(tomorrow|bukas)\b/)?'tomorrow':has(/\b(week|linggo|next few days|coming days)\b/)?'week':'today'};
+  }
+  if(has(/^what do i have (today|tomorrow|this week)|^(am i|are we) (free|busy)\b/))return {type:'list_schedule',query:has(/\btomorrow\b/)?'tomorrow':has(/\bweek\b/)?'week':'today'};
   if(wc>16)return null;
   if(has(/\b(settings?|passcode|connection settings?|configuration)\b/)&&(wc<=6||has(/\b(open|show|go|take me|bring|display|check|change|pakita|buksan)\b/)))return {type:'open_settings'};
   if(has(/^(the )?(menu|options)$|\b(open|show) (the )?menu\b/))return {type:'open_menu'};
@@ -1194,6 +1233,63 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   getNotes().forEach(n=>{const t=(n.title||'').toLowerCase();let s=t===qn?3:t.includes(qn)||qn.includes(t)&&t.length>3?2:similar(norm(t),norm(qn))*2;if(s>score){score=s;best=n}});
   return score>=0.9?best:null;
  }
+ // ---------- calendar & tasks ----------
+ let lastCreated=null;
+ const pad=n=>String(n).padStart(2,'0');
+ const localISO=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+ function fmtWhen(start,allDay){
+  if(!start)return '';
+  const dateOnly=/^\d{4}-\d\d-\d\d$/.test(start)||allDay;
+  const d=dateOnly?new Date(String(start).slice(0,10)+'T12:00'):new Date(start);
+  if(isNaN(d))return start;
+  const today=new Date();today.setHours(0,0,0,0);const day=new Date(d);day.setHours(0,0,0,0);
+  const diff=Math.round((day-today)/864e5);
+  const dayName=diff===0?'today':diff===1?'tomorrow':d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+  return dateOnly?dayName:dayName+' at '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+ }
+ const needGoogleMsg='Your Google Calendar isn’t connected yet. Hold the circle, open Settings, and sign in with Google — then ask me again.';
+ async function addEvent(d){
+  if(!d||!d.title)return 'What should I call it?';
+  if(!d.start)return 'When should I set “'+d.title+'”? Tell me the day and time.';
+  const {r,data}=await postJson('/api/calendar/event',{...d,tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC'},20000);
+  if(data&&data.needGoogle)return needGoogleMsg;
+  if(!r.ok)return 'I couldn’t add it to your calendar. '+(data.error||'');
+  lastCreated={kind:'event',id:data.event.id,title:data.event.title,at:Date.now()};
+  const rm=data.event.reminderMinutes;
+  return 'Done — “'+data.event.title+'” '+fmtWhen(data.event.start,data.event.allDay)+'. '+(data.event.allDay?'':rm===0?'Your phone will notify you at that time. ':'Your phone will remind you '+rm+' minutes before. ')+'Say “undo” if that’s wrong.';
+ }
+ async function addTask(d){
+  if(!d||!d.title)return 'What’s the task?';
+  const {r,data}=await postJson('/api/tasks',d,20000);
+  if(data&&data.needGoogle)return needGoogleMsg;
+  if(!r.ok)return 'I couldn’t add that task. '+(data.error||'');
+  lastCreated={kind:'task',id:data.task.id,title:data.task.title,at:Date.now()};
+  return 'Added to your to-do list: “'+data.task.title+'”'+(data.task.due?', due '+fmtWhen(data.task.due,true):'')+'. Say “undo” if that’s wrong.';
+ }
+ async function listSchedule(range){
+  const now=new Date(),start=new Date(now);start.setHours(0,0,0,0);
+  let from=start,to=new Date(start);
+  if(range==='tomorrow'){from=new Date(start);from.setDate(from.getDate()+1);to=new Date(from);to.setDate(to.getDate()+1)}
+  else if(range==='week'){from=now;to=new Date(start);to.setDate(to.getDate()+7)}
+  else to.setDate(to.getDate()+1);
+  const {r,data}=await fetchJson(workerBase()+'/api/calendar?from='+encodeURIComponent(from.toISOString())+'&to='+encodeURIComponent(to.toISOString()),{},20000);
+  if(data&&data.needGoogle)return needGoogleMsg;
+  if(!r.ok)return 'I couldn’t read your calendar. '+(data.error||'');
+  const label=range==='tomorrow'?'Tomorrow':range==='week'?'This week':'Today';
+  const ev=data.events||[],tk=(data.tasks||[]).slice(0,5);
+  let out=ev.length?label+' you have '+ev.length+' thing'+(ev.length===1?'':'s')+': '+ev.slice(0,8).map(e=>(e.allDay?(range==='week'?fmtWhen(e.start,true)+', all day':'all day'):(range==='week'?fmtWhen(e.start):new Date(e.start).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})))+' — '+e.title).join('; ')+'.':label+' your calendar is clear.';
+  if(tk.length)out+=' Open to-dos: '+tk.map(t=>t.title+(t.due?' (due '+fmtWhen(t.due,true)+')':'')).join('; ')+'.';
+  return out;
+ }
+ async function undoLast(){
+  if(!lastCreated||Date.now()-lastCreated.at>30*60e3)return 'There’s nothing recent for me to undo.';
+  const it=lastCreated;
+  const {r,data}=await fetchJson(workerBase()+(it.kind==='event'?'/api/calendar/event?id=':'/api/tasks?id=')+encodeURIComponent(it.id),{method:'DELETE'},20000);
+  if(!r.ok)return 'I couldn’t remove it. '+(data.error||'');
+  lastCreated=null;
+  return 'Removed “'+it.title+'”.';
+ }
+
  // Carries out an understood command. Returns what Max says about it.
  async function doAction(a,raw,aiReply){
   const say=s=>aiReply||s;
@@ -1214,6 +1310,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     }
     return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
    }
+   case 'add_event':return await addEvent(a.details);
+   case 'add_task':return await addTask(a.details||{title:a.query});
+   case 'list_schedule':return await listSchedule(a.details?.range||a.query||'today');
+   case 'undo_last':return await undoLast();
    case 'read_note':{
     const n=a.query?findNote(a.query)||rankNotes(a.query,1)[0]:(screen==='editor'&&currentNote())||(lastNote.id&&getNotes().find(x=>x.id===lastNote.id));
     if(n)return readNote(n);
@@ -1325,11 +1425,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
-   if(r.status===401){cloud.state='needpass';cloud.memory=false;refreshConnectionLabel();throw new Error('Max needs the passcode. Tap ⚙ and enter it.')}
+   if(r.status===401){cloud.memory=false;if(data.needLogin==='google'){cloud.state='needlogin';refreshConnectionLabel();throw new Error('Please sign in with Google first: hold the circle, then Settings.')}cloud.state='needpass';refreshConnectionLabel();throw new Error('Max needs the passcode. Tap ⚙ and enter it.')}
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
@@ -1480,8 +1580,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  window.addEventListener('offline',()=>{cloud.state='offline';cloud.memory=false;refreshConnectionLabel();status('Offline — your notes and commands still work')});
  if(!window.__maxErrors.length)status('Ready');
  checkCloud().then(()=>{
+  if(window.__maxJustSignedIn&&cloud.signedIn){setSub('','Signed in with Google ✓ Your Calendar and Tasks are connected.')}
   if(cloud.memory){migrateOldMemories();syncNotes()}
   if(!window.__maxErrors.length&&cloud.state==='needpass')status('Ready · passcode needed (hold the circle → Settings)');
+  if(!window.__maxErrors.length&&cloud.state==='needlogin')status('Ready · sign in with Google (hold the circle → Settings)');
  });
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkCloud().then(()=>{if(cloud.memory)syncNotes()})});
  window.addEventListener('online',()=>checkCloud().then(()=>{if(cloud.memory)syncNotes()}));

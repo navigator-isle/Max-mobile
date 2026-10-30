@@ -18,6 +18,8 @@ const cases = [
  ["organize my notes","organize_notes"],["sort my notes into topics","organize_notes"],["ayusin mo ang notes ko","organize_notes"],
  ["export my notes","export_notes"],["download all my notes","export_notes"],
  ["open settings","open_settings"],["take me to the settings","open_settings"],
+ ["what's on my schedule today","list_schedule:today"],["what do I have tomorrow","list_schedule:tomorrow"],["anong lakad ko bukas","list_schedule:tomorrow"],["show my calendar this week","list_schedule:week"],["do I have any meetings today?","list_schedule:today"],["what are my tasks","list_schedule:today"],
+ ["remind me Friday 9am to renew my passport",null],["add buy safety shoes to my to-do list",null],["set a reminder for 6pm to call home",null],["what's the plan for the ballast operation?",null],["paalala bukas ng 8am mag bunker",null],
  ["go back","go_home"],["just talk","go_home"],["close the notes","go_home"],["balik","go_home"],["let's just talk","go_home"],
 ];
 const res = await p.evaluate(cs => cs.map(([t]) => { const a = window.MaxDebug.understand(t); return a ? a.type + (a.query ? ":" + a.query : "") : null; }), cases);
