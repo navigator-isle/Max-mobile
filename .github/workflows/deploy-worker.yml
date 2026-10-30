@@ -30,8 +30,17 @@ jobs:
       - name: Check the Worker code loads
         run: node -e "import('./worker.js').then(()=>console.log('worker.js OK'))"
       - name: Check the deploy key is present
+        env:
+          RAW_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::error::The CLOUDFLARE_API_TOKEN secret is missing or empty in GitHub."; exit 1; fi
+          # Accept the key even if extra text was pasted with it (labels, quotes, "Bearer", the account ID line).
+          tok=$(printf '%s\n' "$RAW_TOKEN" | sed -E 's/\r//g; s/^[[:space:]]*(export[[:space:]]+)?(CLOUDFLARE_API_TOKEN|API_TOKEN|TOKEN|apiToken)[[:space:]]*[:=][[:space:]]*//I; s/^[[:space:]]*Bearer[[:space:]]+//I; s/["'\''`,;]//g; s/^[[:space:]]+|[[:space:]]+$//g' \
+            | grep -vE '^(CLOUDFLARE_)?ACCOUNT_ID|^fe65b997a30f62c013810d5ecb34f4ca$' | grep -E '^[A-Za-z0-9_-]{30,}$' | awk '{ print length, $0 }' | sort -rn | head -1 | cut -d' ' -f2-)
+          if [ -z "$tok" ]; then echo "::error::The CLOUDFLARE_API_TOKEN secret does not contain a Cloudflare key. Paste only the key (one long code, no spaces)."; exit 1; fi
+          lines=$(printf '%s\n' "$RAW_TOKEN" | grep -c . || true)
+          echo "::notice::Deploy key found (${#tok} characters; the secret had $lines line(s))."
+          echo "::add-mask::$tok"
+          echo "CLOUDFLARE_API_TOKEN=$tok" >> "$GITHUB_ENV"
       - name: Deploy to Cloudflare
         run: |
           set -o pipefail
