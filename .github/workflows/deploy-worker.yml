@@ -19,18 +19,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: fe65b997a30f62c013810d5ecb34f4ca
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Check the Worker code loads
         run: node -e "import('./worker.js').then(()=>console.log('worker.js OK'))"
+      - name: Check the deploy key is present
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::error::The CLOUDFLARE_API_TOKEN secret is missing or empty in GitHub."; exit 1; fi
       - name: Deploy to Cloudflare
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: fe65b997a30f62c013810d5ecb34f4ca
-          wranglerVersion: "4"
-          command: deploy
+        run: |
+          set -o pipefail
+          npx --yes wrangler@4 deploy 2>&1 | tee deploy.log || {
+            # Show the reason as annotations so it can be read without opening the log.
+            grep -iE "error|✘|failed|authentication|permission|not found|code: [0-9]+" deploy.log | grep -v "CLOUDFLARE_API_TOKEN" | head -15 | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          }
+          grep -E "Uploaded|Deployed|https://|Current Version" deploy.log | while IFS= read -r line; do echo "::notice::$line"; done
       - name: Check the live Worker
         run: |
           sleep 5
-          curl -fsS https://max-ai-backend.mjgaly-mg.workers.dev/health
+          out=$(curl -fsS https://max-ai-backend.mjgaly-mg.workers.dev/health)
+          echo "$out"
+          echo "::notice::health: $out"
