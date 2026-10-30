@@ -1,0 +1,36 @@
+# Deploys Max's backend (worker.js) to Cloudflare whenever it changes on main.
+# Needs one repository secret: CLOUDFLARE_API_TOKEN (a token that can deploy only this Worker).
+# Settings come from wrangler.jsonc. Secrets in Cloudflare (GEMINI_API_KEY, MAX_PASSCODE) are not touched.
+name: Deploy Max backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - worker.js
+      - wrangler.jsonc
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the Worker code loads
+        run: node -e "import('./worker.js').then(()=>console.log('worker.js OK'))"
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: fe65b997a30f62c013810d5ecb34f4ca
+          wranglerVersion: "4"
+          command: deploy
+      - name: Check the live Worker
+        run: |
+          sleep 5
+          curl -fsS https://max-ai-backend.mjgaly-mg.workers.dev/health
