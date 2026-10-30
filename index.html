@@ -70,6 +70,14 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
 .home-controls{display:flex;justify-content:center;gap:12px;align-items:center}
 .home-mic{border:1px solid #2a526f;background:#10273b;color:var(--max-text);border-radius:999px;padding:13px 20px;font:inherit}
 .home-mic.primary{background:#bcecff;color:#062033;border-color:#bcecff}
+.home-mic.primary.live{background:#54e0c9;border-color:#54e0c9;color:#04221d}
+.type-row{display:flex;gap:8px;width:100%;max-width:560px}
+.type-row input{flex:1;min-width:0;background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:999px;padding:12px 16px;font:inherit}
+.type-row button{padding:10px 18px}
+.memory-badge{color:#54e0c9;font-size:.85rem;min-height:1em}
+#connectionModal{overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:flex-start!important}
+#connectionModal>section{margin:auto 0;max-width:100%}
+#homeScreen{gap:14px!important}
 #notesScreen{padding:12px 0;gap:14px}
 .notes-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .notes-header h1{font-size:1.55rem;margin:0}
@@ -163,7 +171,7 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
   <main id="homeScreen" class="section-screen active">
     <div class="max-greeting">
       <h1>Good day.</h1>
-      <p id="greetingSub">I’m Max. I’m here and listening when you are.</p>
+      <p id="greetingSub">I’m Max. Tap once and just talk — I’ll listen when you finish.</p>
     </div>
     <div class="max-orb-wrap">
       <button id="maxOrb" class="max-orb" aria-label="Tap to speak to Max"><span class="orb-core"></span></button>
@@ -174,11 +182,16 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
       <button id="homeTalk" class="home-mic primary">🎙 Talk to Max</button>
       <button id="homeStop" class="home-mic">Stop</button>
     </div>
+    <div id="memoryBadge" class="memory-badge" hidden></div>
+    <div class="type-row">
+      <input id="typeInput" placeholder="Or type to Max…" autocomplete="off" enterkeyhint="send" aria-label="Type a message to Max">
+      <button id="typeSend" class="home-mic">Send</button>
+    </div>
   </main>
 
   <main id="notesScreen" class="section-screen">
     <div class="notes-header">
-      <div><h1>Notes</h1><p>Your personal knowledge library</p></div>
+      <div><h1>Notes</h1><p>Your personal knowledge library · Max checks these first</p></div>
       <input id="notesSearch" placeholder="Search notes…" style="max-width:46%;padding:10px;background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:10px">
     </div>
     <div id="noteList" class="note-list note-list-page"></div>
@@ -239,6 +252,8 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
       <p class="notes-tip">Tip: say “Max, remember that …” and it is saved here. Avoid passwords or bank details.</p>
       <div style="display:flex;gap:8px;margin:8px 0"><input id="memAddText" placeholder="Add something Max should remember" style="flex:1;min-width:0;background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit"><button id="memAdd" class="home-mic primary" style="padding:8px 14px">Add</button></div>
       <div id="memList" style="max-height:34vh;overflow:auto"></div>
+      <p class="notes-tip" style="margin-top:12px">Max also keeps your conversations so he can continue where you left off.</p>
+      <button id="talkForget" class="home-mic danger-btn" style="padding:8px 14px">Forget all conversations</button>
     </div>
     <details style="color:#9db4c8;font-size:.88rem;line-height:1.5"><summary>What must be set up in Cloudflare?</summary>
       <ol><li>A deployed Worker containing the Max backend code.</li><li>A Worker secret named <code>GEMINI_API_KEY</code>.</li><li>A plain-text variable named <code>ALLOWED_ORIGIN</code> set to <code>https://navigator-isle.github.io</code>.</li><li>For memory: a D1 binding named <code>MAX_MEMORY</code> and a secret named <code>MAX_PASSCODE</code>.</li><li>Then save the Worker URL and passcode here and test it.</li></ol>
@@ -660,45 +675,118 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function cleanMaxText(text){
   return String(text || '').replace(/\*/g, '').replace(/`/g, '');
  }
- function showAnswer(text){
+ function showAnswer(text,onDone){
   const cleanText = cleanMaxText(text);
   $('homeAnswer').textContent = cleanText;
   $('maxOrb').classList.remove('processing','listening');
-  speak(cleanText);
+  speak(cleanText,onDone);
  }
- async function askMax(q){
+ const modalOpen=()=>!$('connectionModal').hidden;
+ // Sends one message to Max. Resolves after Max has finished speaking the answer.
+ function askMax(q,voice){
+  return new Promise(async finish=>{
   $('homeAnswer').textContent='You: '+q;$('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
   const base=workerBase();
-  if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.');return}
+  if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.',finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory})},30000);
-   if(data&&data.savedMemory)renderMemory();
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,
+     now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
+   const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
+   if(remembered&&modalOpen())renderMemory();
    if(r.status===401){cloud.state='needpass';cloud.memory=false;refreshConnectionLabel();throw new Error('Max needs the passcode. Tap ⚙ and enter it.')}
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    const reply=data.reply||data.response||data.text||'I could not generate a response.';
    talkHistory.push({role:'user',text:q},{role:'model',text:reply});
-   showAnswer(reply);
-   if(data.savedMemory)setTimeout(()=>{if(!$('maxOrb').classList.contains('speaking'))status('Saved to memory ✓')},300);
-  }catch(err){$('maxOrb').classList.remove('processing');showAnswer('I could not reach my AI service. '+err.message)}
+   showAnswer(reply,finish);
+   if(remembered)setTimeout(()=>{$('memoryBadge').textContent='✓ Noted in memory';$('memoryBadge').hidden=false;setTimeout(()=>$('memoryBadge').hidden=true,5000)},200);
+  }catch(err){$('maxOrb').classList.remove('processing');endConversation(null);showAnswer('I could not reach my AI service. '+err.message,finish)}
+  });
  }
- function startTalk(){
+
+ // ---------- hands-free conversation: you talk, he listens; he talks, you listen ----------
+ // Tap once to start. Max stops listening while he speaks (so he doesn't hear himself),
+ // then listens again. Say "that's all", "goodbye Max" or "tama na" to end. Silence ends it too.
+ let convo=false, misses=0, listenToken=0;
+ const END_WORDS=/^\s*(?:ok(?:ay)?[, ]+)?(?:max[, ]+)?(?:stop(?: listening)?|goodbye(?: max)?|bye(?: max)?|that'?s all(?: for now)?|thanks?(?: you)?,? that'?s all|stand ?by|tama na|sige na(?:,? max)?|wala na)\s*(?:max)?[.!]*\s*$/i;
+ function setTalkButton(){
+  $('homeTalk').textContent=convo?'● Conversation on':'🎙 Talk to Max';
+  $('homeTalk').classList.toggle('live',convo);
+ }
+ function endConversation(msg){
+  convo=false;listenToken++;misses=0;setTalkButton();
+  if(recognition)try{recognition.abort()}catch{}
+  $('maxOrb').classList.remove('listening');
+  if(msg)status(msg);
+ }
+ function listenOnce(){
+  if(!convo)return;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){status('Voice input is not supported by this browser. Open Max in Chrome.');return}
-  greetingDone=true; // never talk over the user
-  if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeakingLook();
+  const token=++listenToken;
   if(recognition)try{recognition.abort()}catch{}
   recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;recognition.maxAlternatives=1;
-  let heard=false;
-  recognition.onresult=e=>{heard=true;askMax(e.results[0][0].transcript)};
+  let heard=false,fatal=false;
+  recognition.onresult=async e=>{
+   if(token!==listenToken)return;
+   heard=true;misses=0;
+   const q=(e.results[0][0].transcript||'').trim();
+   if(!q)return;
+   if(END_WORDS.test(q)){$('homeAnswer').textContent='You: '+q;endConversation(null);speak('Very well. I’ll be here when you need me.');return}
+   await askMax(q,true);
+   if(convo&&token===listenToken)setTimeout(()=>{if(token===listenToken)listenOnce()},350);
+  };
   recognition.onerror=e=>{
-   const msg={'not-allowed':'Microphone is blocked. Allow the microphone for this site in Chrome settings.','no-speech':'I did not hear anything. Tap the circle and try again.','network':'Voice input needs internet. Check your connection.','audio-capture':'No microphone was found.'}[e.error];
-   status(msg||'I could not hear that clearly. Tap the circle and try again.');$('maxOrb').classList.remove('listening')};
-  recognition.onend=()=>{$('maxOrb').classList.remove('listening');if(!heard&&/Listening/.test($('homeStatus').textContent))status('Ready')};
-  try{recognition.start();$('maxOrb').classList.add('listening');status('Listening… speak naturally.')}catch(e){status('Voice input could not start.')}
+   if(token!==listenToken)return;
+   if(e.error==='no-speech'||e.error==='aborted')return;
+   fatal=true;
+   const msg={'not-allowed':'Microphone is blocked. Allow the microphone for this site in Chrome settings.','network':'Voice input needs internet. Check your connection.','audio-capture':'No microphone was found.'}[e.error];
+   endConversation(msg||('Voice problem: '+e.error+'. Tap the circle to try again.'));
+  };
+  recognition.onend=()=>{
+   if(token!==listenToken)return;
+   $('maxOrb').classList.remove('listening');
+   if(heard||fatal||!convo)return;
+   misses++;
+   if(misses>=3){endConversation('Standing by. Tap the circle when you need me.');return}
+   setTimeout(()=>{if(token===listenToken)listenOnce()},250);
+  };
+  try{recognition.start();$('maxOrb').classList.add('listening');status('Listening… speak naturally.')}
+  catch(e){endConversation('Voice input could not start. Tap the circle to try again.')}
  }
- $('maxOrb').onclick=startTalk;$('homeTalk').onclick=startTalk;
- $('homeStop').onclick=()=>{greetingDone=true;if(recognition)try{recognition.abort()}catch{};if(window.speechSynthesis)window.speechSynthesis.cancel();stopSpeakingLook();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
+ function startConversation(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){status('Voice input is not supported by this browser. Open Max in Chrome, or type below.');return}
+  greetingDone=true; // never talk over the user
+  if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeakingLook();
+  convo=true;misses=0;setTalkButton();listenOnce();
+ }
+ // Kept for older code paths: starts a conversation.
+ function startTalk(){startConversation()}
+ $('homeTalk').onclick=()=>{convo?endConversation('Conversation ended. Tap to talk again.'):startConversation()};
+ $('maxOrb').onclick=()=>{
+  if($('maxOrb').classList.contains('speaking')){ // interrupt Max and let you speak
+   if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeakingLook();
+   convo=true;misses=0;setTalkButton();listenOnce();return;
+  }
+  if(convo&&$('maxOrb').classList.contains('listening')){endConversation('Conversation ended. Tap to talk again.');return}
+  if(!convo)startConversation();
+ };
+ $('homeStop').onclick=()=>{greetingDone=true;endConversation(null);if(window.speechSynthesis)window.speechSynthesis.cancel();stopSpeakingLook();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&convo)endConversation('Standing by.')});
+ // Typing, for when you can't talk out loud.
+ async function sendTyped(){
+  const q=$('typeInput').value.trim();if(!q)return;
+  $('typeInput').value='';$('typeInput').blur();greetingDone=true;
+  endConversation(null);$('typeSend').disabled=true;
+  try{await askMax(q,false)}finally{$('typeSend').disabled=false}
+ }
+ $('typeSend').onclick=sendTyped;
+ $('typeInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendTyped()}});
+ if($('talkForget'))$('talkForget').onclick=async()=>{
+  if(!confirm('Forget all saved conversations? Your notes and memory list stay.'))return;
+  try{const {r,data}=await fetchJson(workerBase()+'/api/talk',{method:'DELETE'});if(!r.ok)throw new Error(data.error);talkHistory.length=0;alert('Conversations forgotten.')}
+  catch(e){alert('Could not forget: '+e.message)}
+ };
 
  // One spoken greeting. Android blocks speech until the first tap, so it plays on the first tap
  // that is not a talk/stop/settings button (tapping the circle goes straight to listening instead).
