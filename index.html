@@ -586,7 +586,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function fetchJson(url,opts={},ms=15000){
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),ms);
   try{const r=await fetch(url,{...opts,signal:ctl.signal});const data=await r.json().catch(()=>({}));return {r,data}}
-  catch(e){throw new Error(e.name==='AbortError'?'No answer from the Worker (timed out). Check your internet connection.':e.message)}
+  catch(e){const err=new Error(e.name==='AbortError'?'No answer from the Worker (timed out). Check your internet connection.':e.message);err.offline=true;throw err}
   finally{clearTimeout(timer)}
  }
  const postJson=(path,body,ms)=>fetchJson(workerBase()+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},ms);
@@ -847,7 +847,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function loadNote(id){
   const n=getNotes().find(x=>x.id===id);if(!n)return;
-  activeNoteId=id;$('editorTitle').value=n.title||'';$('editorCategory').value=n.category||'Unsorted';$('editorTags').value=(n.tags||[]).join(', ');$('editorBody').innerHTML=n.body||'';
+  activeNoteId=id;lastNote={id,at:Date.now()};$('editorTitle').value=n.title||'';$('editorCategory').value=n.category||'Unsorted';$('editorTags').value=(n.tags||[]).join(', ');$('editorBody').innerHTML=n.body||'';
   $('editorAnalysis').textContent=n.analysis?.fullText||'Not analyzed yet. Tap Analyze with Max to analyze this note.';$('editorPageHeading').textContent=n.title||'Edit note';
   $('editorBadge').textContent=(n.source==='research'?'Research ✓ approved by you':'My note')+(n.filedByMax?' · filed by Max':'');
   const links=linkedNotes(n),box=$('editorLinks');box.replaceChildren();$('editorLinksWrap').hidden=!links.length;
@@ -1056,6 +1056,53 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('resEditBtn').onclick=async()=>{const t=$('resEditText').value.trim();if(!t)return;$('resEditText').value='';$('resEditBtn').disabled=true;const s=await editResearch(t);$('resEditBtn').disabled=false;setSub(t,s);speak(s)};
  $('resEditText').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('resEditBtn').click()}});
 
+ // ---------- Max reads your notes: the most relevant ones go with every question ----------
+ const NOTE_STOP=new Set('the a an and or but to of in on at for with is are was were be it this that what how why when where who which my me i you your can could would should do does did please max about from have has had will just tell know said say note notes read show open find ano paano bakit saan kailan sino ang ng mga sa na ba po ko mo yung iyong'.split(' '));
+ const qWords=q=>[...new Set(norm(q).split(' ').filter(w=>w.length>2&&!NOTE_STOP.has(w)))];
+ function rankNotes(q,k){
+  const ws=qWords(q);if(!ws.length)return [];
+  const hit=(hay,w)=>hay.includes(w)||(w.length>4&&hay.includes(w.slice(0,-1)))||(w.length>5&&hay.includes(w.slice(0,-2)));
+  return getNotes().map(n=>{
+   const t=(n.title||'').toLowerCase(),tg=(n.tags||[]).join(' ').toLowerCase(),c=(n.category||'').toLowerCase(),b=(plain(n.body)+' '+(n.analysis?.summary||'')).toLowerCase();
+   let s=0;ws.forEach(w=>{if(hit(t,w))s+=3;if(hit(tg,w))s+=2;if(hit(c,w))s+=1;if(hit(b,w))s+=1});
+   return {n,s};
+  }).filter(x=>x.s>=2).sort((a,b)=>b.s-a.s||b.n.updatedAt-a.n.updatedAt).slice(0,k).map(x=>x.n);
+ }
+ let lastNote={id:null,at:0};
+ function noteText(n){return plain(n.body)+(n.analysis?.summary?' (Max’s summary: '+n.analysis.summary+')':'')}
+ function notesContext(q){
+  const all=getNotes().sort((a,b)=>b.updatedAt-a.updatedAt);
+  let items=rankNotes(q,6);
+  if(!items.length&&/\b(notes?|wrote|written|saved|second brain|nota|isinulat)\b/i.test(q)&&all.length<=6)items=all;
+  let active=null;
+  if(screen==='editor'&&(activeNoteId||$('editorBody').innerText.trim()))active={id:activeNoteId||'unsaved',title:$('editorTitle').value.trim()||'Untitled (not saved yet)',category:$('editorCategory').value||'Unsorted',text:plain($('editorBody').innerHTML)};
+  else if(lastNote.id&&Date.now()-lastNote.at<20*60e3&&/\b(this|that|the|last) note\b|\b(it|ito|iyan|yan)\b/i.test(q)){const n=all.find(x=>x.id===lastNote.id);if(n)active={id:n.id,title:n.title,category:n.category,text:noteText(n)}}
+  return {index:all.slice(0,400).map(n=>({t:n.title||'Untitled',c:n.category})),items:items.map(n=>({id:n.id,title:n.title||'Untitled',category:n.category,text:noteText(n)})),active};
+ }
+ // Without internet, Max answers from your notes on the phone.
+ function bestSentences(text,q,max){
+  const ws=qWords(q),sents=[];
+  // split into sentences, but not after "No.", "e.g.", "Reg.", numbers like "2.5"
+  String(text).split(/(?<=[.!?])\s+(?=[A-Z0-9“"(])/).forEach(part=>{
+   if(sents.length&&/\b(no|nos|e\.g|i\.e|reg|regs|art|para|ch|sec|fig|approx|vs|mr|mrs|ms|dr|capt|st|vol|p|pp)\.$/i.test(sents[sents.length-1]))sents[sents.length-1]+=' '+part;
+   else if(part)sents.push(part);
+  });
+  const scored=sents.map((s,i)=>({s,i,v:ws.reduce((a,w)=>a+(s.toLowerCase().includes(w)?1:0),0)}));
+  const top=scored.filter(x=>x.v>0).sort((a,b)=>b.v-a.v||a.i-b.i).slice(0,max).sort((a,b)=>a.i-b.i).map(x=>x.s);
+  return (top.length?top:sents.slice(0,max)).join(' ').slice(0,700);
+ }
+ function offlineAnswer(q){
+  const found=rankNotes(q,3);
+  if(!found.length)return {text:'I’m offline right now, so I can’t think that one through. Your notes and screen commands still work — try “show my notes”, or ask about something in your notes.',refs:[]};
+  const n=found[0];
+  return {text:'I’m offline, but your note “'+(n.title||'Untitled')+'” says: '+bestSentences(plain(n.body),q,3),refs:found.map(x=>x.title)};
+ }
+ function readNote(n){
+  loadNote(n.id);
+  const body=plain(n.body);
+  return body?(n.title?n.title+'. ':'')+(body.length>3500?body.slice(0,3500)+' … That’s the first part. The rest is on screen.':body):'That note is empty.';
+ }
+
  // ---------- understanding commands by meaning (no need to memorize exact words) ----------
  // 1) Quick understanding on the phone for common requests, in English, Filipino or Taglish.
  // 2) Anything else goes to Max's AI, which can also decide to change the screen.
@@ -1084,7 +1131,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function renderLearned(){
   const box=$('learnedList');box.replaceChildren();const list=learned();
   if(!list.length){box.textContent='Nothing yet. Ask Max for things in your own words and he’ll learn them.';return}
-  const label={show_keyboard:'show keyboard',hide_keyboard:'hide keyboard',show_notes:'open notes',open_note:'open a note',new_note:'new note',research:'research',show_research:'show research',edit_research:'change research',approve_research:'approve research',reject_research:'reject research',save_answer:'save answer to notes',organize_notes:'organize notes',open_settings:'settings',go_home:'back to talking',export_notes:'export notes',open_menu:'menu'};
+  const label={read_note:'read a note',show_keyboard:'show keyboard',hide_keyboard:'hide keyboard',show_notes:'open notes',open_note:'open a note',new_note:'new note',research:'research',show_research:'show research',edit_research:'change research',approve_research:'approve research',reject_research:'reject research',save_answer:'save answer to notes',organize_notes:'organize notes',open_settings:'settings',go_home:'back to talking',export_notes:'export notes',open_menu:'menu'};
   list.forEach(l=>{const row=document.createElement('div');row.className='mem-row';const s=document.createElement('span');s.textContent='“'+l.p+'” → '+(label[l.a.type]||l.a.type)+(l.a.query?' ('+l.a.query+')':'');
    const del=document.createElement('button');del.className='home-mic danger-btn';del.textContent='Forget';del.onclick=()=>{try{localStorage.setItem(LEARN_KEY,JSON.stringify(learned().filter(x=>x.p!==l.p)))}catch{}renderLearned()};row.append(s,del);box.append(row)});
  }
@@ -1121,6 +1168,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(save|put|add|keep|store|write|i ?save|isave|ilagay)\b/)&&has(/\b(that|this|it|answer|what you said|sinabi mo)\b/)&&has(/\b(notes?|second brain)\b/))return {type:'save_answer'};
   if(has(/^(save|keep) (that|this|it)$/)&&talkHistory.some(m=>m.role==='model'))return {type:'save_answer'};
   if(has(/\b(new|create|make|start|write|add|gumawa)\b\s+(a\s+)?(new\s+)?note\b/)){const m=raw.match(/\b(?:about|called|titled|named|on|for)\s+(.+)$/i);return {type:'new_note',query:m?m[1].replace(/[?.!]+$/,'').trim():''}}
+  if(has(/\b(read|basahin|read out|read aloud)\b/)&&(has(/\bnotes?\b/)||screen==='editor'&&wc<=5)){
+   const m=raw.match(/\b(?:read|basahin)\b(?:\s+(?:me|out|aloud|to me|mo|nga))*\s+(?:my |the |ang |yung )?(.+?)\s+notes?\b/i)||raw.match(/\bnotes?\s+(?:about|on|for|tungkol sa)\s+(.+?)[?.!]*$/i);
+   const t=m?m[1].trim():'';
+   return {type:'read_note',query:/^(this|that|it|current|open|ito|iyan)$/i.test(t)?'':t};
+  }
   const openM=n.match(/\b(?:open|show|read|pull up|bring up|buksan|basahin)\s+(?:me\s+)?(?:my |the )?(.+?)\s+note$/);
   if(openM&&!/^(my|the|all|your)?\s*$/.test(openM[1]))return {type:'open_note',query:openM[1]};
   if(has(/^(close|exit|leave|isara)\b/)&&wc<=4)return {type:'go_home'};
@@ -1154,8 +1206,18 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'show_notes':{
     $('notesSearch').value=a.query||'';setSection('notes');
     const all=getNotes(),found=all.filter(n=>matchesQuery(n,(a.query||'').toLowerCase()));
-    if(!a.query)return all.length?'Here are your notes — '+all.length+' in all.':'You don’t have any notes yet.';
+    if(!a.query){
+     if(!all.length)return 'You don’t have any notes yet.';
+     const tops={};all.forEach(x=>{const t=topicOf(x).top;tops[t]=(tops[t]||0)+1});
+     const list=Object.entries(tops).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([t,c])=>t+' '+c).join(', ');
+     return 'Here are your notes — '+all.length+' in all: '+list+'.';
+    }
     return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
+   }
+   case 'read_note':{
+    const n=a.query?findNote(a.query)||rankNotes(a.query,1)[0]:(screen==='editor'&&currentNote())||(lastNote.id&&getNotes().find(x=>x.id===lastNote.id));
+    if(n)return readNote(n);
+    return a.query?doAction({type:'show_notes',query:a.query},raw):'Which note should I read? Say “read my” and the note’s name.';
    }
    case 'open_note':{const n=findNote(a.query);if(n){loadNote(n.id);return 'Here’s your '+n.title+' note.'}return doAction({type:'show_notes',query:a.query},raw)}
    case 'new_note':createNewNote(a.query||'');return a.query?'New note started: '+a.query+'.':'New note ready. Type it, or tap Dictate.';
@@ -1188,18 +1250,43 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const en=vs.filter(v=>/^en(-|_|$)/i.test(v.lang));
   return en.find(v=>/natural|enhanced/i.test(v.name))||en[0]||vs[0]||null;
  }
- let speakGuard=null;
+ let speakGuard=null,speakToken=0,pendingDone=null;
  function stopSpeakingLook(){clearTimeout(speakGuard);$('maxOrb').classList.remove('speaking')}
+ // Long answers are spoken in short pieces: Android's voice often goes silent partway through a long one.
+ function splitSpeech(text){
+  const parts=String(text).replace(/\s+/g,' ').trim().match(/[^.!?;:]+[.!?;:]*["”’)]*\s*/g)||[];
+  const out=[];let cur='';
+  parts.forEach(p=>{
+   while(p.length>220){const cut=Math.max(p.lastIndexOf(', ',220),p.lastIndexOf(' ',220),120);out.push((cur+p.slice(0,cut)).trim());cur='';p=p.slice(cut)}
+   if((cur+p).length>220&&cur){out.push(cur.trim());cur=p}else cur+=p;
+  });
+  if(cur.trim())out.push(cur.trim());
+  return out.length?out:[String(text)];
+ }
+ function stopSpeech(){
+  speakToken++;clearTimeout(speakGuard);
+  const f=pendingDone;pendingDone=null;
+  if('speechSynthesis' in window)try{window.speechSynthesis.cancel()}catch{}
+  stopSpeakingLook();f&&f();
+ }
  function speak(text,onDone){
   if(!('speechSynthesis' in window)){status('Text-to-speech is not available in this browser.');onDone&&onDone();return}
-  window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=chooseRegularVoice();if(v)u.voice=v;u.lang=v?.lang||'en-US';u.rate=1.05;u.pitch=1;u.volume=1;
-  const done=()=>{stopSpeakingLook();status('Ready');onDone&&onDone();onDone=null};
-  u.onstart=()=>{$('maxOrb').classList.add('speaking');status('Speaking')};
-  u.onboundary=()=>{orb.kick=0.5};
-  u.onend=done;u.onerror=done;
-  // Android sometimes never reports the end of speech; this stops the circle from staying stuck.
-  clearTimeout(speakGuard);speakGuard=setTimeout(done,Math.min(120000,4000+text.length*90));
-  window.speechSynthesis.speak(u);
+  stopSpeech();
+  const token=speakToken,chunks=splitSpeech(text),v=chooseRegularVoice();
+  pendingDone=onDone||null;let i=0;
+  const done=()=>{if(token!==speakToken)return;speakToken++;stopSpeakingLook();status('Ready');const f=pendingDone;pendingDone=null;f&&f()};
+  const next=()=>{
+   if(token!==speakToken)return;
+   if(i>=chunks.length){done();return}
+   const piece=chunks[i++],u=new SpeechSynthesisUtterance(piece);if(v)u.voice=v;u.lang=v?.lang||'en-US';u.rate=1.05;u.pitch=1;u.volume=1;
+   u.onstart=()=>{if(token!==speakToken)return;$('maxOrb').classList.add('speaking');status('Speaking')};
+   u.onboundary=()=>{orb.kick=0.5};
+   u.onend=()=>{clearTimeout(speakGuard);next()};u.onerror=()=>{clearTimeout(speakGuard);next()};
+   // Android sometimes never reports the end of speech; this stops the circle from staying stuck.
+   clearTimeout(speakGuard);speakGuard=setTimeout(next,Math.min(60000,4000+piece.length*90));
+   window.speechSynthesis.speak(u);
+  };
+  next();
  }
  if('speechSynthesis' in window){
   // Keep the older voice list loader working too (it used to be replaced here).
@@ -1231,9 +1318,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   }catch(e){console.error('Command failed',e)}
   const base=workerBase();
   if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.',finish);return}
+  if(navigator.onLine===false){const o=offlineAnswer(q);talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
@@ -1249,7 +1337,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    showNoteRefs(data.notesUsed);
    showAnswer(reply,finish);
    if(remembered)setTimeout(()=>{$('memoryBadge').textContent='✓ Noted in memory';$('memoryBadge').hidden=false;setTimeout(()=>$('memoryBadge').hidden=true,5000)},200);
-  }catch(err){$('maxOrb').classList.remove('processing');endConversation(null);showAnswer('I could not reach my AI service. '+err.message,finish)}
+  }catch(err){
+   $('maxOrb').classList.remove('processing');
+   if(err.offline){cloud.state='offline';cloud.memory=false;refreshConnectionLabel();const o=offlineAnswer(q);talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
+   endConversation(null);showAnswer('I could not reach my AI service. '+err.message,finish)}
   });
  }
  const askMax=handleUtterance;
@@ -1288,7 +1379,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(token!==listenToken)return;
    if(e.error==='no-speech'||e.error==='aborted')return;
    fatal=true;
-   const msg={'not-allowed':'Microphone is blocked. Allow the microphone for this site in Chrome settings.','network':'Voice input needs internet. Check your connection.','audio-capture':'No microphone was found.'}[e.error];
+   if(e.error==='network'){endConversation('No internet for voice on this phone — I opened the keyboard. I can still answer from your notes.');setKeyboard(true);return}
+   const msg={'not-allowed':'Microphone is blocked. Allow the microphone for this site in Chrome settings.','audio-capture':'No microphone was found.'}[e.error];
    endConversation(msg||('Voice problem: '+e.error+'. Tap the circle to try again.'));
   };
   recognition.onend=()=>{
@@ -1306,14 +1398,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){status('Voice input is not supported here. Hold the circle and choose Keyboard to type.');return}
   greetingDone=true; // never talk over the user
-  if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeakingLook();
+  stopSpeech();
   convo=true;misses=0;setTalkButton();listenOnce();
  }
  function startTalk(){startConversation()}
  // One tap on the circle (big or mini): start talking · interrupt Max · or end the conversation.
  function orbTap(){
   if($('maxOrb').classList.contains('speaking')){
-   if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeakingLook();
+   stopSpeech();
    convo=true;misses=0;setTalkButton();listenOnce();return;
   }
   if(convo&&$('maxOrb').classList.contains('listening')){endConversation('Conversation ended. Tap to talk again.');return}
@@ -1336,7 +1428,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!go)return;closeMenu();
   if(go==='keyboard')setKeyboard(true);else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='settings')openConnection();
  });
- $('homeStop').onclick=()=>{greetingDone=true;endConversation(null);if(window.speechSynthesis)window.speechSynthesis.cancel();stopSpeakingLook();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
+ $('homeStop').onclick=()=>{greetingDone=true;endConversation(null);stopSpeech();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&convo)endConversation('Standing by.')});
  // Typing, for when you can't talk out loud ("show keyboard", or hold the circle).
  async function sendTyped(){
@@ -1383,6 +1475,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  step('connection label',refreshConnectionLabel);
  step('greeting',armGreeting);
  step('circle',()=>requestAnimationFrame(orbLoop));
+ // Works offline: the app itself is kept on the phone, notes are already stored here.
+ step('offline',()=>{if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{})});
+ window.addEventListener('offline',()=>{cloud.state='offline';cloud.memory=false;refreshConnectionLabel();status('Offline — your notes and commands still work')});
  if(!window.__maxErrors.length)status('Ready');
  checkCloud().then(()=>{
   if(cloud.memory){migrateOldMemories();syncNotes()}
