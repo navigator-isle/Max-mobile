@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 661 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 665 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 

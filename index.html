@@ -3229,6 +3229,19 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // Works offline: the app itself is kept on the phone, notes are already stored here.
  step('offline',()=>{if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{})});
  step('shared',()=>{setTimeout(()=>takeShared().catch(()=>{}),800)});
+ // Self-update: when a new version of Max is published, he reloads himself the next time you come back to him (never mid-conversation).
+ step('auto-update',()=>{
+  if(location.protocol==='file:')return;
+  const digest=async()=>{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const b=await r.arrayBuffer();const h=await crypto.subtle.digest('SHA-256',b);return [...new Uint8Array(h)].slice(0,8).map(x=>x.toString(16).padStart(2,'0')).join('')};
+  let base=null,ready=false;
+  const busy=()=>convo||$('maxOrb').classList.contains('speaking')||$('maxOrb').classList.contains('processing')||screen==='editor'||routineActive()||confirmFresh()||!!pendingDraft;
+  const check=async()=>{try{const d=await digest();if(!base){base=d;return}if(d!==base){ready=true;tryReload()}}catch{}};
+  const tryReload=()=>{if(ready&&!busy()){try{sessionStorage.setItem('max_updated','1')}catch{}location.reload()}};
+  setTimeout(check,8000);setInterval(check,20*60e3);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(ready)tryReload();else check()}});
+  setInterval(()=>{if(ready&&document.visibilityState==='visible')tryReload()},60e3);
+  try{if(sessionStorage.getItem('max_updated')){sessionStorage.removeItem('max_updated');setTimeout(()=>{const t='I’ve updated myself to the newest version.';$('homeStatus').textContent=t.toUpperCase()},1500)}}catch{}
+ });
  window.addEventListener('offline',()=>{cloud.state='offline';cloud.memory=false;refreshConnectionLabel();status('Offline — your notes and commands still work')});
  if(!window.__maxErrors.length)status('Ready');
  checkCloud().then(()=>{
