@@ -25,7 +25,7 @@ ok(r.status === 200 && /when does it expire/.test(last.contents[0].parts[1].text
 r = await call({ name: "notes.txt", mime: "text/plain", data: Buffer.from("Hello").toString("base64") });
 ok(r.status === 200, "text files work");
 r = await call({ name: "a.docx", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", data: "UEsD" });
-ok(r.status === 415 && /save them as PDF/.test(r.data.error), "Word files: clear message to save as PDF");
+ok(r.status === 415, "unknown file types refused (the phone converts Word/Excel/PowerPoint to text first)");
 r = await call({ name: "x.jpg", mime: "image/jpeg", data: "not base64!!" });
 ok(r.status === 400, "damaged file refused");
 r = await call({ name: "big.pdf", mime: "application/pdf", data: "A".repeat(26_000_004) });

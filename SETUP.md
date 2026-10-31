@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 420 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 452 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -21,17 +21,29 @@
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
 
-**📎 Send Max a file**
-- **How:** tap 📎 at the top, then pick a photo, screenshot, PDF or text file.
+**📎 Send Max anything**
+- **How:** tap 📎 at the top.
+  - **Photo, file, video or recording:** pick it from your phone.
+  - **A link:** paste a website or YouTube address and tap **Read**.
+- **What Max can read:**
+  - Photos and screenshots
+  - PDFs
+  - **Word** (.docx), **Excel** (.xlsx) and **PowerPoint** (.pptx), opened on your phone
+  - Text and CSV files
+  - **Videos** and **voice recordings**, up to 95 MB
+  - **Web pages** and **YouTube videos**
+- **By voice:** "summarize www.imo.org/en/bwm", or "read hobbyisle dot com slash gundam".
 - **What Max does:**
-  - Reads it and says what it is, plus the key deadline
+  - Says what it is and the key deadline
   - Shows the key facts, dates and amounts on screen
 - **Then say:**
-  - "When does it expire?" or any other question about the file
-  - "Save it" to file it in your notes under the right topic, with the full text
+  - "When does it expire?" or any other question about it
+  - "Save it" to file it in your notes with the full text (and the link for web pages)
   - "Discard it" to throw it away
-- **Rules:** nothing is saved until you say so. Word and Excel files: save them as PDF first. Up to about 19 MB.
-- **Cost:** free on Gemini Flash.
+- **Rules:** nothing is saved until you say so.
+- **Old formats** (.doc, .xls, .ppt): save them as .docx / .xlsx / .pptx or PDF first.
+- **Share to Max:** install Max on your phone. In Chrome, open the ⋮ menu, then **Add to Home screen** or **Install app**. After that, **Max** appears in Android's **Share** menu, so from any app (Files, Gallery, YouTube, Chrome) you can tap Share → Max.
+- **Cost:** free on Gemini Flash. Videos are deleted from Gemini right after Max watches them.
 
 **Display screen**
 - **What it does:** say "show me … on the screen" or "display …". Max checks your notes first and shows them. If your notes have nothing, he looks it up on the web.

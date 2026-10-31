@@ -91,7 +91,7 @@ ok(/Discarded/.test(await answer()) && (await p.evaluate(() => JSON.parse(localS
 // unsupported file + voice asking to send a file
 await p.setInputFiles("#attachInput", { name: "report.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", buffer: Buffer.from("PK") });
 await p.waitForTimeout(500);
-ok(/save them as PDF/.test(await answer()) && sent.length === 2, "Word file: asks you to save it as PDF (nothing sent)", await answer());
+ok(/seems damaged/.test(await answer()) && sent.length === 2, "a damaged Word file: says so clearly (nothing sent)", await answer());
 await say("I want to send you a document");
 ok(/Tap the 📎/.test(await answer()) && await p.locator("#attachBtn.pulse").count() === 1, "“send you a document” → points to the 📎 button", await answer());
 ok(errs.length === 0, "no script errors", errs.join(" | "));

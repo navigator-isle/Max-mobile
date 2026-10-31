@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07111f"><title>Max — Personal Butler</title>
+<meta name="theme-color" content="#07111f"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Max — Personal Butler</title>
 <style>
 :root{--bg:#07111f;--panel:#0d1b2b;--line:#1b3b55;--cyan:#53dfff;--text:#e8f7ff;--muted:#8eafc2;--user:#12334a}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#123957 0%,var(--bg) 55%);color:var(--text);font:16px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
@@ -200,6 +200,8 @@ body.on-home .top-status{opacity:.7}
 .export-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .export-row .label{margin:0 6px 0 0}
 #editorCategory{background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:9px;padding:10px;font:inherit;min-width:0}
+.att-sheet{display:flex!important;flex-direction:column;gap:10px}.att-sheet h2{margin:0;font-size:1.1rem;color:#e8f3ff}
+.att-link{display:block;color:#9fdcff;overflow-wrap:anywhere;margin:6px 0;font-size:.9rem}
 .att-img{display:block;max-width:100%;max-height:320px;border-radius:12px;margin:8px 0;object-fit:contain;background:#06101a}
 .att-text{white-space:pre-wrap;overflow-wrap:anywhere;background:#06101a;border:1px solid #1c344c;border-radius:10px;padding:10px;color:#c8d9e9;font-size:.85rem;max-height:420px;overflow:auto}
 #attachBtn.pulse{box-shadow:0 0 0 3px #54e0c9}
@@ -270,7 +272,7 @@ body.on-home .top-status{opacity:.7}
   <header class="topbar">
     <div class="brand">MAX</div>
     <div style="display:flex;align-items:center;gap:8px"><div class="top-status" id="globalStatus">Local mode</div><button id="attachBtn" class="icon-btn" aria-label="Send Max a file or photo" title="Send Max a file or photo">📎</button><button id="openConnection" class="icon-btn" aria-label="Settings" title="Settings">⚙</button></div>
-    <input id="attachInput" type="file" accept="image/*,application/pdf,.pdf,.txt,.md,.csv,.heic,.heif" hidden>
+    <input id="attachInput" type="file" accept="image/*,video/*,audio/*,application/pdf,.pdf,.txt,.md,.csv,.json,.html,.htm,.heic,.heif,.docx,.xlsx,.xlsm,.pptx,.doc,.xls,.ppt,.mp3,.m4a,.wav,.ogg,.aac,.amr,.mp4,.mov,.webm,.3gp" hidden>
   </header>
 
   <!-- Max minimized: shown on every screen except the circle screen. Keeps talking and showing subtitles. -->
@@ -386,6 +388,15 @@ body.on-home .top-status{opacity:.7}
 <datalist id="topicList"></datalist>
 
 <!-- Hold the circle (or say "menu") for these -->
+<div id="attachSheet" class="quick-menu" hidden>
+  <div class="quick-sheet att-sheet">
+    <h2>Send Max something</h2>
+    <button id="attachPick" class="pill pill-ok">📎 Photo, file, video or recording</button>
+    <p class="muted small">PDF, Word, Excel, PowerPoint, photos, screenshots, videos, voice recordings, text.</p>
+    <div class="res-edit-row"><input id="linkInput" class="field" type="url" inputmode="url" placeholder="…or paste a website or YouTube link" aria-label="Web or YouTube link"><button id="linkGo" class="pill">Read</button></div>
+    <button id="attachClose" class="pill">Close</button>
+  </div>
+</div>
 <div id="quickMenu" class="quick-menu" hidden>
   <div class="quick-sheet" role="dialog" aria-label="Max menu">
     <button data-go="keyboard" class="pill">⌨ Keyboard</button>
@@ -1211,7 +1222,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1232,6 +1243,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  {const spoken=raw.replace(/\s+dot\s+(?=[a-z]{2,}\b)/gi,'.').replace(/\bwww\s+(?=[a-z0-9-]+\.)/gi,'www.').replace(/(\.[a-z]{2,})\s+slash\s+/gi,'$1/').replace(/(\/[\w-]+)\s+slash\s+/gi,'$1/');const link=spoken.match(/https?:\/\/\S+|\b(?:[a-z0-9-]+\.)+(?:com|net|org|io|ph|gov|int|edu|co|uk|info|app|dev|ai|me|tv|be|de|jp|sg|au)\b(?:\/\S*)?/i);
+   if(link&&(/^\s*\S+\s*$/.test(spoken)||/\b(read|summari[sz]e|sum up|check|look at|what'?s (on|in)|analy[sz]e|watch|go through|study|basahin|tingnan)\b/i.test(spoken)))return {type:'read_link',query:link[0]};}
   if(has(/\b(attach|upload|send you|scan|read|check|look at)\b.*\b(file|document|pdf|photo|picture|screenshot|certificate|receipt|letter|form)\b/)&&!attachFresh()&&!has(/\bnotes?\b/)||has(/^(attach|upload)( a| the)? (file|photo|picture|document|pdf)/))return {type:'attach_file'};
   if(attachFresh()&&(screen==='display'||has(/\b(file|document|pdf|photo|picture|screenshot|attachment|certificate|receipt|letter)\b/))){
    if(has(/\b(save|keep|store|file|add|put|approve[sd]?|i ?save|isave|ilagay)\b/)&&(has(/^(save|keep|file|approve)( it| this| that)?( now| please)?$/)||has(/\b(notes?|second brain)\b/)||has(/\b(it|this|that|the (file|document|pdf|photo|picture|screenshot))\b/))&&!QUESTION.test(n))return {type:'save_attachment'};
@@ -1631,6 +1644,71 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    (gaps.length?'Most to do: '+gaps.slice(0,3).map(x=>x.p.name+' ('+x.miss.length+')').join(', ')+'. Everything is on the screen.':'Nothing missing that I can see.');
  }
 
+ // ---------- Word, Excel and PowerPoint: opened on the phone and turned into text (no upload of the original) ----------
+ async function unzip(buf){
+  const b=new Uint8Array(buf),dv=new DataView(buf),files={};
+  let e=-1;for(let i=b.length-22;i>=Math.max(0,b.length-65557);i--){if(dv.getUint32(i,true)===0x06054b50){e=i;break}}
+  if(e<0)throw new Error('This file seems damaged (it is not a valid Office file).');
+  let p=dv.getUint32(e+16,true);const n=dv.getUint16(e+10,true),dec=new TextDecoder();
+  for(let k=0;k<n&&dv.getUint32(p,true)===0x02014b50;k++){
+   const method=dv.getUint16(p+10,true),csize=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),off=dv.getUint32(p+42,true);
+   const name=dec.decode(b.subarray(p+46,p+46+nl));p+=46+nl+xl+cl;
+   files[name]=async()=>{const lnl=dv.getUint16(off+26,true),lxl=dv.getUint16(off+28,true),start=off+30+lnl+lxl,raw=b.subarray(start,start+csize);
+    if(method===0)return dec.decode(raw);
+    if(method!==8)throw new Error('This Office file uses packing I can’t open. Save it as PDF and send that.');
+    return await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()};
+  }
+  return files;
+ }
+ const xmlDecode=s=>s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#(\d+);/g,(_,d)=>String.fromCodePoint(+d)).replace(/&#x([0-9a-f]+);/gi,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&amp;/g,'&');
+ async function docxText(z){
+  const x=await z['word/document.xml']?.();if(!x)throw new Error('No text found in this Word file.');
+  return xmlDecode(x.replace(/<w:tc\b[\s\S]*?<\/w:tc>/g,c=>c.replace(/<\/w:p>(?![\s\S]*<\/w:p>)/,'').replace(/<\/w:p>/g,' ')).replace(/<w:tab\/>/g,'\t').replace(/<w:br[^>]*\/>/g,'\n').replace(/<\/w:tc>/g,' | ').replace(/<\/w:tr>/g,'\n').replace(/<\/w:p>/g,'\n').replace(/<w:delText[^>]*>[\s\S]*?<\/w:delText>/g,'').replace(/<[^>]+>/g,'')).replace(/ \| \n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+ }
+ async function xlsxText(z){
+  const ss=[];const sx=await z['xl/sharedStrings.xml']?.();
+  if(sx)for(const m of sx.matchAll(/<si>([\s\S]*?)<\/si>/g))ss.push(xmlDecode([...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(t=>t[1]).join('')));
+  const wb=await z['xl/workbook.xml']?.()||'',rels=await z['xl/_rels/workbook.xml.rels']?.()||'';
+  const target={};for(const m of rels.matchAll(/<Relationship\b[^>]*>/g)){const id=(m[0].match(/Id="([^"]+)"/)||[])[1],t=(m[0].match(/Target="([^"]+)"/)||[])[1];if(id&&t)target[id]=t.replace(/^\/?(xl\/)?/,'xl/')}
+  const sheets=[...wb.matchAll(/<sheet\b[^>]*>/g)].map(m=>({name:xmlDecode((m[0].match(/name="([^"]*)"/)||[])[1]||'Sheet'),path:target[(m[0].match(/r:id="([^"]+)"/)||[])[1]]})).filter(s=>s.path&&z[s.path]);
+  const col=r=>{let c=0;for(const ch of r.replace(/\d+/g,''))c=c*26+ch.charCodeAt(0)-64;return c-1};
+  const csv=v=>/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+  let out='',rows=0;
+  for(const s of sheets.slice(0,12)){
+   const x=await z[s.path]();out+='\n=== Sheet: '+s.name+' ===\n';
+   for(const r of x.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/g)){
+    if(++rows>3000||out.length>300000){out+='… (more rows not shown)\n';break}
+    const cells=[];
+    for(const c of r[1].matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)){
+     const ref=(c[1].match(/r="([A-Z]+\d+)"/)||[])[1],t=(c[1].match(/t="(\w+)"/)||[])[1],inner=c[2]||'';
+     let v=(inner.match(/<v>([\s\S]*?)<\/v>/)||[])[1];
+     if(t==='s')v=ss[+v]??'';else if(t==='inlineStr')v=[...inner.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(q=>q[1]).join('');else if(t==='b')v=v==='1'?'TRUE':'FALSE';
+     v=xmlDecode(String(v??''));cells[ref?col(ref):cells.length]=v;
+    }
+    out+=Array.from(cells,v=>csv(v??'')).join(',').replace(/,+$/,'')+'\n';
+   }
+  }
+  if(!sheets.length)throw new Error('No sheets found in this Excel file.');
+  return out.trim();
+ }
+ async function pptxText(z){
+  const slides=Object.keys(z).filter(k=>/^ppt\/slides\/slide\d+\.xml$/.test(k)).sort((a,b)=>+a.match(/\d+/)[0]-+b.match(/\d+/)[0]);
+  if(!slides.length)throw new Error('No slides found in this PowerPoint file.');
+  let out='';
+  for(const [i,k] of slides.entries()){const x=await z[k]();out+='\n=== Slide '+(i+1)+' ===\n'+xmlDecode(x.replace(/<\/a:p>/g,'\n').replace(/<a:br\/>/g,'\n').replace(/<(?!\/?a:t\b)[^>]+>/g,'').replace(/<\/?a:t[^>]*>/g,'')).replace(/\n{2,}/g,'\n').trim()+'\n';
+   const nk=k.replace('slides/slide','notesSlides/notesSlide');if(z[nk]){const nx=await z[nk]();const nt=xmlDecode([...nx.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map(m=>m[1]).join(' ')).trim();if(nt&&!/^\d+$/.test(nt))out+='(Speaker notes: '+nt+')\n'}}
+  return out.trim();
+ }
+ const OFFICE={docx:['Word document',docxText],docm:['Word document',docxText],xlsx:['Excel spreadsheet',xlsxText],xlsm:['Excel spreadsheet',xlsxText],pptx:['PowerPoint',pptxText]};
+ async function officeToText(f){
+  const ext=(f.name.split('.').pop()||'').toLowerCase(),[label,fn]=OFFICE[ext];
+  if(typeof DecompressionStream!=='function')throw new Error('This phone’s browser can’t open Office files. Save it as PDF and send that.');
+  const text=await fn(await unzip(await f.arrayBuffer()));
+  if(!text.trim())throw new Error('That '+label+' looks empty.');
+  return {label,text:text.slice(0,400000)};
+ }
+ const utf8B64=s=>{const b=new TextEncoder().encode(s);let o='';for(let i=0;i<b.length;i+=32768)o+=String.fromCharCode(...b.subarray(i,i+32768));return btoa(o)};
+
  // ---------- attachments: send Max a photo, screenshot, PDF or text file ----------
  const ATT_KEY='max_pending_attachment';
  let pendingAttach=null,attachURL='';
@@ -1658,45 +1736,78 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(t==='text/markdown'||ext==='md')return 'text/markdown';
   if(t.startsWith('text/')||['txt','log'].includes(ext))return 'text/plain';
   if(['heic','heif'].includes(ext))return 'image/heic';
+  if(t.startsWith('video/')||t.startsWith('audio/'))return t;
+  const media={mp4:'video/mp4',mov:'video/quicktime',webm:'video/webm','3gp':'video/3gpp',mkv:'',avi:'video/avi',mp3:'audio/mp3',m4a:'audio/mp4',aac:'audio/aac',wav:'audio/wav',ogg:'audio/ogg',opus:'audio/ogg',flac:'audio/flac',amr:'audio/amr'};
+  if(media[ext])return media[ext];
+  if(OFFICE[ext])return 'office';
+  if(['json','xml','log','ini','yaml','yml'].includes(ext))return 'text/plain';
+  if(['html','htm'].includes(ext))return 'text/html';
   return '';
  }
  async function readAttachment(f){
-  const mime=attachMime(f);
-  if(!mime)return 'I can read photos, screenshots, PDFs and text files. For Word or Excel files, save them as PDF first.';
-  if(f.size>19e6)return 'That file is too big for me (over 19 MB). Send a smaller one, or a few pages at a time.';
-  setSection('display');$('dispTitle').textContent='Reading '+f.name+'…';$('dispSub').textContent='This takes a few seconds for big files.';$('dispBody').replaceChildren();
+  const mime=attachMime(f),ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(!mime)return ['doc','xls','ppt'].includes(ext)?'That’s an old Office format. Open it and save it as '+(ext==='doc'?'.docx':ext==='xls'?'.xlsx':'.pptx')+' or PDF, then send it again.':
+   ext==='mkv'?'I can’t read MKV videos. Send it as MP4.':'I can read photos, screenshots, PDFs, Word, Excel, PowerPoint, text files, videos and voice recordings — but not this kind of file.';
+  const media=mime.startsWith('video/')||mime.startsWith('audio/');
+  if(f.size>(media?95e6:19e6)&&!(mime==='application/pdf'&&f.size<=95e6))return media?'That video is too big for me (over 95 MB). Trim it or send a shorter clip.':'That file is too big for me (over 19 MB). Send a smaller one, or a few pages at a time.';
+  setSection('display');$('dispTitle').textContent=(media?'Watching ':'Reading ')+f.name+'…';$('dispSub').textContent=media?'Videos and recordings take up to a minute or two.':'This takes a few seconds for big files.';$('dispBody').replaceChildren();
   try{
-   const {mime:m,data}=mime.startsWith('image/')&&mime!=='image/heic'?await shrinkImage(f):{mime,data:await fileToB64(f)};
-   const {r,data:res}=await postJson('/api/attachment',{name:f.name,mime:m,data,topics:allTopics()},120000);
-   if(r.status===404)throw new Error('Reading files needs the newest Max backend.');
+   let r,res;
+   if(media||(mime==='application/pdf'&&f.size>15e6)){
+    ({r,data:res}=await fetchJson(workerBase()+'/api/attachment/upload',{method:'POST',headers:{'Content-Type':mime,'X-File-Type':mime,'X-File-Name':encodeURIComponent(f.name),'X-Topics':encodeURIComponent(allTopics().slice(0,60).join('|'))},body:f},300000));
+   }else if(mime==='office'){
+    const {label,text}=await officeToText(f);
+    ({r,data:res}=await postJson('/api/attachment',{name:f.name,mime:'text/plain',from:label,data:utf8B64(text),topics:allTopics()},120000));
+   }else{
+    const {mime:m,data}=mime.startsWith('image/')&&mime!=='image/heic'?await shrinkImage(f):{mime,data:await fileToB64(f)};
+    ({r,data:res}=await postJson('/api/attachment',{name:f.name,mime:m,data,topics:allTopics()},120000));
+   }
+   if(r.status===404)throw new Error('Reading this needs the newest Max backend.');
    if(!r.ok)throw new Error(res.error||('HTTP '+r.status));
    if(attachURL)URL.revokeObjectURL(attachURL);
-   attachURL=mime.startsWith('image/')?URL.createObjectURL(f):'';
-   pendingAttach={...res.attachment,at:Date.now()};saveAttach();
-   renderAttachment();
-   const d=pendingAttach.dates[0];
-   return (pendingAttach.say||pendingAttach.summary||'Here’s what’s in it.')+(d&&!/\d{4}-\d\d-\d\d|\b(expir|due|deadline)/i.test(pendingAttach.say||'')?' '+d.what+': '+fullDate(d.date)+'.':'')+' Say “save it” to put it in your notes, or ask me anything about it.';
-  }catch(e){$('dispTitle').textContent='Couldn’t read the file';$('dispSub').textContent=e.message;return 'I couldn’t read that file. '+e.message}
+   attachURL=mime.startsWith('image/')||mime.startsWith('video/')?URL.createObjectURL(f):'';
+   return gotAttachment(res.attachment,mime.startsWith('video/')?'video':'');
+  }catch(e){$('dispTitle').textContent='Couldn’t read it';$('dispSub').textContent=e.message;return 'I couldn’t read that. '+e.message}
+ }
+ function gotAttachment(att,preview){
+  pendingAttach={...att,preview:preview||'',at:Date.now()};saveAttach();
+  renderAttachment();
+  const d=pendingAttach.dates[0];
+  return (pendingAttach.say||pendingAttach.summary||'Here’s what’s in it.')+(d&&!/\d{4}-\d\d-\d\d|\b(expir|due|deadline)/i.test(pendingAttach.say||'')?' '+d.what+': '+fullDate(d.date)+'.':'')+' Say “save it” to put it in your notes, or ask me anything about it.';
+ }
+ async function readLink(raw){
+  const m=String(raw||'').replace(/\s+dot\s+/gi,'.').replace(/\bwww\s+(?=[a-z0-9-]+\.)/gi,'www.').replace(/\s+slash\s+/gi,'/').match(/https?:\/\/[^\s<>"]+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>"]*)?/i);
+  if(!m)return 'Which web address? Tap 📎 and paste the link, or type it.';
+  const url=m[0].replace(/[).,!?]+$/,'');
+  setSection('display');$('dispTitle').textContent='Reading '+url.replace(/^https?:\/\//,'')+'…';$('dispSub').textContent=/youtu/.test(url)?'Watching the video — this can take a minute.':'Opening the page…';$('dispBody').replaceChildren();
+  try{
+   const {r,data}=await postJson('/api/link',{url,topics:allTopics()},180000);
+   if(r.status===404)throw new Error('Reading links needs the newest Max backend.');
+   if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+   if(attachURL){URL.revokeObjectURL(attachURL);attachURL=''}
+   return gotAttachment(data.attachment,'');
+  }catch(e){$('dispTitle').textContent='Couldn’t read that link';$('dispSub').textContent=e.message;return 'I couldn’t read that link. '+e.message}
  }
  function renderAttachment(){
   const a=pendingAttach;if(!a)return;
   const lines=[...a.points.map(t=>({text:'• '+t})),...a.dates.map(d=>({text:'⏰ '+d.what+': '+fullDate(d.date),cls:'miss'})),...a.amounts.map(x=>({text:'💰 '+x.what+': '+money(x.currency||'',x.amount),cls:'ok'}))];
-  showDisplay(a.title,'📎 '+a.name+' · '+a.kind+' · not in your notes yet',[{badge:'FROM FILE',badgeClass:'badge-draft',meta:'Will be filed under '+a.topic,title:a.summary||a.title,lines,
+  showDisplay(a.title,(a.url?'🔗 ':'📎 ')+a.name+' · '+a.kind+' · not in your notes yet',[{badge:'FROM FILE',badgeClass:'badge-draft',meta:'Will be filed under '+a.topic,title:a.summary||a.title,lines,
    buttons:[['Save to notes',()=>{const s=saveAttachment();setSub('',s);speak(s)}],['Show full text',()=>{const el=$('attText');if(el)el.hidden=!el.hidden}],['Discard',()=>{const s=discardAttachment();setSub('',s);speak(s)}]]}]);
   const card=$('dispBody').firstElementChild;
-  if(attachURL){const img=document.createElement('img');img.src=attachURL;img.alt=a.title;img.className='att-img';card.insertBefore(img,card.children[1])}
+  if(attachURL){const v=a.preview==='video'?document.createElement('video'):document.createElement('img');v.src=attachURL;v.className='att-img';if(a.preview==='video'){v.controls=true;v.playsInline=true}else v.alt=a.title;card.insertBefore(v,card.children[1])}
+  if(a.url){const l=document.createElement('a');l.href=a.url;l.target='_blank';l.rel='noopener noreferrer';l.className='att-link';l.textContent='🔗 '+a.url;card.insertBefore(l,card.children[1])}
   if(a.answer){const p=document.createElement('p');p.className='disp-text';p.textContent='Your question: '+a.answer;card.append(p)}
   const pre=document.createElement('pre');pre.id='attText';pre.className='att-text';pre.hidden=true;pre.textContent=a.text||'(no text)';card.append(pre);
  }
  function saveAttachment(){
   const a=pendingAttach;if(!a)return 'There’s no file waiting to be saved. Tap the 📎 at the top to send me one.';
   const topic=splitPath(a.topic).join(' › ')||'Inbox';
-  const body='<p><i>📎 From file: '+escHtml(a.name)+' ('+escHtml(a.kind)+')</i></p>'+(a.summary?'<p>'+escHtml(a.summary)+'</p>':'')+
+  const body=(a.url?'<p><i>🔗 From <a href="'+escHtml(a.url)+'">'+escHtml(a.url)+'</a> ('+escHtml(a.kind)+')</i></p>':'<p><i>📎 From file: '+escHtml(a.name)+' ('+escHtml(a.kind)+')</i></p>')+(a.summary?'<p>'+escHtml(a.summary)+'</p>':'')+
    (a.points.length?'<ul>'+a.points.map(p=>'<li>'+escHtml(p)+'</li>').join('')+'</ul>':'')+
    (a.dates.length?'<h3>Dates</h3><ul>'+a.dates.map(d=>'<li>'+escHtml(d.what)+': '+d.date+'</li>').join('')+'</ul>':'')+
    (a.amounts.length?'<h3>Amounts</h3><ul>'+a.amounts.map(x=>'<li>'+escHtml(x.what)+': '+escHtml(money(x.currency||'',x.amount))+'</li>').join('')+'</ul>':'')+
    (a.text?'<h3>Full text</h3><pre>'+escHtml(a.text)+'</pre>':'');
-  const n={id:newId(),title:a.title,category:topic,tags:[...new Set(a.tags.map(t=>t.toLowerCase()))].slice(0,6),body,source:'attachment',file:{name:a.name,kind:a.kind},analysis:{summary:a.summary,fullText:a.points.join('\n')},createdAt:Date.now(),updatedAt:Date.now(),deleted:false};
+  const n={id:newId(),title:a.title,category:topic,tags:[...new Set(a.tags.map(t=>t.toLowerCase()))].slice(0,6),body,source:'attachment',file:{name:a.name,kind:a.kind,url:a.url||''},sources:a.url?[{title:a.name,url:a.url}]:[],analysis:{summary:a.summary,fullText:a.points.join('\n')},createdAt:Date.now(),updatedAt:Date.now(),deleted:false};
   const all=loadAll();all.push(n);putNotes(all);
   pendingAttach=null;saveAttach();loadNote(n.id);lastNote={id:n.id,at:Date.now()};
   return 'Saved to your notes under '+topic+'.';
@@ -1706,7 +1817,22 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   pendingAttach=null;saveAttach();if(screen==='display')setSection('home');
   return 'Discarded. Nothing was saved.';
  }
- $('attachBtn').onclick=()=>$('attachInput').click();
+ $('attachBtn').onclick=()=>{$('attachSheet').hidden=false;$('linkInput').value=''};
+ $('attachPick').onclick=()=>{$('attachSheet').hidden=true;$('attachInput').click()};
+ $('attachClose').onclick=()=>{$('attachSheet').hidden=true};
+ $('attachSheet').addEventListener('click',e=>{if(e.target===$('attachSheet'))$('attachSheet').hidden=true});
+ $('linkGo').onclick=async()=>{const u=$('linkInput').value.trim();if(!u)return $('linkInput').focus();$('attachSheet').hidden=true;const s=await readLink(u);setSub('🔗 '+u,s);speak(s)};
+ $('linkInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('linkGo').click()}});
+ // Shared to Max from another app (Android share menu, once Max is installed)
+ async function takeShared(){
+  const q=new URLSearchParams(location.search);if(!q.has('share'))return;
+  history.replaceState(null,'',location.pathname);
+  if(q.get('share')==='file'){
+   try{const c=await caches.open('max-share'),res=await c.match('shared-file');if(!res)return;await c.delete('shared-file');
+    const f=new File([await res.blob()],decodeURIComponent(res.headers.get('X-File-Name')||'shared file'),{type:res.headers.get('Content-Type')||''});
+    const s=await readAttachment(f);setSub('📎 '+f.name,s);speak(s)}catch(e){setSub('','I couldn’t open the shared file. '+e.message)}
+  }else{const t=[q.get('url'),q.get('text'),q.get('title')].filter(Boolean).join(' ');const s=await readLink(t);setSub('🔗 '+(q.get('url')||q.get('text')||''),s);speak(s)}
+ }
  $('attachInput').onchange=async()=>{
   const f=$('attachInput').files[0];$('attachInput').value='';if(!f)return;
   const s=await readAttachment(f);setSub('📎 '+f.name,s);speak(s);
@@ -1789,7 +1915,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     }
     return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
    }
-   case 'attach_file':$('attachBtn').classList.add('pulse');setTimeout(()=>$('attachBtn').classList.remove('pulse'),6000);return 'Tap the 📎 at the top, then pick a photo, screenshot or PDF. I’ll read it for you.';
+   case 'read_link':return await readLink(a.query||a.details?.url||raw);
+   case 'attach_file':$('attachBtn').classList.add('pulse');setTimeout(()=>$('attachBtn').classList.remove('pulse'),6000);return 'Tap the 📎 at the top, then pick a file, photo, video or recording — or paste a link. I’ll read it for you.';
    case 'save_attachment':return saveAttachment();
    case 'discard_attachment':return discardAttachment();
    case 'show_attachment':if(!attachFresh())return 'There’s no file open. Tap the 📎 at the top to send me one.';renderAttachment();return 'Here’s the file again.';
@@ -1926,7 +2053,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
@@ -2074,6 +2201,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  step('circle',()=>requestAnimationFrame(orbLoop));
  // Works offline: the app itself is kept on the phone, notes are already stored here.
  step('offline',()=>{if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{})});
+ step('shared',()=>{setTimeout(()=>takeShared().catch(()=>{}),800)});
  window.addEventListener('offline',()=>{cloud.state='offline';cloud.memory=false;refreshConnectionLabel();status('Offline — your notes and commands still work')});
  if(!window.__maxErrors.length)status('Ready');
  checkCloud().then(()=>{
