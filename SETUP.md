@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 641 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 661 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -22,6 +22,21 @@
   - "Any requests for Hobby Isle?"
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
+
+**▶ Google Play (Passage Planner listing)**
+- **Things to say:**
+  - "Show Passage Planner on the Play Store"
+  - "Change the Play Store short description of Passage Planner to mention tides" (Max shows the new text, then publishes after your "yes")
+  - "Rewrite the description to mention …"
+  - "Set the release notes to …"
+  - "Any Play Store reviews?"
+- **Setup (one time, about 10 minutes):**
+  1. Google Cloud console → project **Max-ai** → search **Google Play Android Developer API** → **Enable**.
+  2. ☰ → **IAM & Admin** → **Service Accounts** → **Create service account** → name `max-play` → **Done** (no roles needed).
+  3. Open `max-play` → **Keys** → **Add key** → **Create new key** → **JSON** → a file downloads. (If Google says key creation is disabled by an organization policy, tell Max's builder: that policy has to be turned off first.)
+  4. Play Console → **Users and permissions** → **Invite new users** → paste the service account's email (ends in `iam.gserviceaccount.com`) → **App permissions** → add **Passage Planner** with: View app information, Manage store presence, Release to testing tracks, Reply to reviews → **Invite**.
+  5. Cloudflare → **max-ai-backend** → **Settings** → **Variables and Secrets** → **Secret** `PLAY_SERVICE_ACCOUNT` = the whole text of the JSON file.
+  6. More apps later: **Text** `PLAY_APPS` = `Passage Planner=app.passageplanner.navigation; Other App=com.example.other`
 
 **🔁 Routines**
 - **Teach one:** "My morning routine is check email, check my watchlist and 20 push-ups"

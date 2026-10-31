@@ -107,7 +107,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-02a";
+const WORKER_VERSION = "max-worker-2026-11-02b";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -312,7 +312,7 @@ function officialSource(s) {
   return /imo\.org|\.gov\b|\.gov\.|\.int\b|europa\.eu|marina\.gov\.ph|uscg|mca\.gov|amsa\.gov|mpa\.gov\.sg|classnk|dnv\.|lr\.org|abs-group|eagle\.org|bureauveritas|iacs\.org|ilo\.org|panama-maritime|amp\.gob\.pa|liscr|register-iri/i.test(String(s));
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
@@ -324,6 +324,7 @@ function cleanAction(a) {
     to: cleanText(String(d.to || ""), 200), subject: cleanText(String(d.subject || ""), 200), instruction: cleanText(String(d.instruction || ""), 1500), reply: d.reply === true, revise: d.revise === true,
     find: cleanText(String(d.find || ""), 120), on: cleanText(String(d.on || ""), 10), location: cleanText(String(d.location || ""), 200),
     reminders: Array.isArray(d.reminders) ? d.reminders.map(Number).filter(Number.isFinite).slice(0, 5) : undefined,
+    text: cleanText(String(d.text || ""), 4000), field: ["title","shortDescription","fullDescription"].includes(d.field) ? d.field : undefined,
     target: cleanText(String(d.target || ""), 200), op: ["archive","unarchive","trash","untrash","read","unread","star","unstar","important","unimportant","label","unlabel"].includes(d.op) ? d.op : undefined, label: cleanText(String(d.label || ""), 60),
     symbols: Array.isArray(d.symbols) ? d.symbols.map(x => cleanText(String(x), 40)).filter(Boolean).slice(0, 10) : undefined, symbol: cleanText(String(d.symbol || ""), 40), kind: ["pse","crypto","fx"].includes(d.kind) ? d.kind : undefined, tier: cleanText(String(d.tier || ""), 20),
     direction: ["above","below"].includes(d.direction) ? d.direction : undefined, price: Number.isFinite(Number(d.price)) ? Number(d.price) : undefined, from: cleanText(String(d.from || ""), 20),
@@ -1141,6 +1142,105 @@ async function marketRoutes(request, env, url, origin) {
   }
   return json({error: "Not found."}, 404, origin, env);
 }
+// ---------- Google Play: read and update store listings, release notes, reviews (changes only after his "yes") ----------
+// Needs a Cloudflare secret PLAY_SERVICE_ACCOUNT (the service account's JSON key) and, optionally, a text variable
+// PLAY_APPS like "Passage Planner=app.passageplanner.navigation; Other App=com.example.other".
+const PLAY = "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/";
+const playApps = env => { const m = {"passage planner": "app.passageplanner.navigation"};
+  for (const part of String(env.PLAY_APPS || "").split(/[;\n]/)) { const [n, p] = part.split("="); if (n && p && /^[a-z][\w]*(\.[\w]+)+$/i.test(p.trim())) m[n.trim().toLowerCase()] = p.trim(); }
+  return m; };
+function playApp(env, name) { const m = playApps(env), k = String(name || "").toLowerCase().trim();
+  return m[k] ? {name: Object.keys(m).find(x => x === k), pkg: m[k]} : Object.entries(m).map(([n, p]) => ({name: n, pkg: p})).find(x => k && (x.name.includes(k) || k.includes(x.name) || x.pkg === k)) || (Object.keys(m).length === 1 && !k ? {name: Object.keys(m)[0], pkg: Object.values(m)[0]} : null); }
+let playTok = {t: "", exp: 0};
+async function playToken(env) {
+  if (playTok.t && playTok.exp > Date.now() + 60e3) return playTok.t;
+  let sa; try { sa = JSON.parse(env.PLAY_SERVICE_ACCOUNT); } catch { throw new Error("The PLAY_SERVICE_ACCOUNT secret isn't valid JSON — paste the whole key file."); }
+  if (!sa.client_email || !sa.private_key) throw new Error("The Play key is missing client_email or private_key.");
+  const der = Uint8Array.from(atob(sa.private_key.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "")), c => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("pkcs8", der, {name: "RSASSA-PKCS1-v1_5", hash: "SHA-256"}, false, ["sign"]);
+  const now = Math.floor(Date.now() / 1000), enc = o => btoa(JSON.stringify(o)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const unsigned = enc({alg: "RS256", typ: "JWT"}) + "." + enc({iss: sa.client_email, scope: "https://www.googleapis.com/auth/androidpublisher", aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600});
+  const sig = new Uint8Array(await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(unsigned)));
+  let s = ""; sig.forEach(b => s += String.fromCharCode(b));
+  const res = await fetch("https://oauth2.googleapis.com/token", {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: new URLSearchParams({grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: unsigned + "." + btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")})});
+  const t = await res.json().catch(() => ({}));
+  if (!res.ok || !t.access_token) throw new Error("Google refused the Play key (" + (t.error_description || t.error || res.status) + ").");
+  playTok = {t: t.access_token, exp: Date.now() + (Number(t.expires_in) || 3000) * 1000};
+  return playTok.t;
+}
+async function papi(env, path, opts = {}) {
+  const res = await fetch(PLAY + path, {...opts, headers: {"Content-Type": "application/json", ...(opts.headers || {}), Authorization: "Bearer " + await playToken(env)}});
+  if (res.status === 204) return {};
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) { const m = d?.error?.message || String(res.status);
+    throw new Error(res.status === 401 || res.status === 403 ? "Google Play says Max has no permission for this app yet (" + m + "). In Play Console → Users and permissions, give the service account access to the app." : res.status === 404 ? "Google Play doesn't know that app (" + m + ")." : "Google Play: " + m); }
+  return d;
+}
+const LIMITS = {title: 30, shortDescription: 80, fullDescription: 4000}, DRAFT_LIMITS = {...LIMITS, releaseNotes: 500};
+async function playRoutes(request, env, url, origin) {
+  if (url.pathname === "/api/play/status") return json({connected: !!env.PLAY_SERVICE_ACCOUNT, apps: Object.entries(playApps(env)).map(([n, p]) => ({name: n, pkg: p}))}, 200, origin, env);
+  if (!env.PLAY_SERVICE_ACCOUNT) return json({error: "Google Play isn't connected yet. The steps are in SETUP.md (Play Store).", needPlay: true}, 409, origin, env);
+  let body = {}; if (request.method === "POST") { try { body = await request.json(); } catch { return json({error: "Invalid JSON body."}, 400, origin, env); } }
+  const app = playApp(env, body.app || url.searchParams.get("app"));
+  if (!app) return json({error: "Which app? Known: " + Object.keys(playApps(env)).join(", ") + "."}, 400, origin, env);
+  const lang = /^[a-z]{2}(-[A-Z]{2})?$/.test(body.lang || "") ? body.lang : "en-US";
+  try {
+    if (url.pathname === "/api/play/overview" && request.method === "POST") {
+      const edit = await papi(env, app.pkg + "/edits", {method: "POST", body: "{}"});
+      try {
+        const [ls, tr] = await Promise.all([papi(env, app.pkg + "/edits/" + edit.id + "/listings"), papi(env, app.pkg + "/edits/" + edit.id + "/tracks")]);
+        return json({app, listings: (ls.listings || []).map(l => ({language: l.language, title: l.title || "", shortDescription: l.shortDescription || "", fullDescription: l.fullDescription || ""})),
+          tracks: (tr.tracks || []).map(t => ({track: t.track, releases: (t.releases || []).map(r => ({name: r.name || "", versionCodes: r.versionCodes || [], status: r.status, notes: (r.releaseNotes || []).map(n => n.language + ": " + n.text)}))}))}, 200, origin, env);
+      } finally { await papi(env, app.pkg + "/edits/" + edit.id, {method: "DELETE"}).catch(() => {}); }
+    }
+    if (url.pathname === "/api/play/draft" && request.method === "POST") {
+      // Max writes new listing text from his instruction. Nothing is changed on Google Play here.
+      const field = Object.keys(DRAFT_LIMITS).includes(body.field) ? body.field : "fullDescription";
+      const current = cleanText(String(body.current || ""), 4000), instruction = cleanText(String(body.instruction || ""), 1500);
+      if (!instruction) return json({error: "What should change?"}, 400, origin, env);
+      const g = await gemini(env, {contents: [{parts: [{text: `You write Google Play store text for "${app.name}" (${app.pkg}), a maritime app by a ship officer. Field: ${field === "releaseNotes" ? "release notes (\"What's new\") for the latest test release" : field} (max ${DRAFT_LIMITS[field]} characters${field === "fullDescription" ? "; plain text, short paragraphs and • bullets allowed" : ""}). Follow Google Play policy: no ranking claims like "best" or "#1", no prices or calls to action like "download now", no keyword stuffing, no emoji in the title, and keep any safety disclaimer that is already there (e.g. "not for navigation").
+Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nReturn ONLY JSON {"text": "the new text"}.`}]}], generationConfig: {temperature: 0.4, maxOutputTokens: 2048, responseMimeType: "application/json"}});
+      let text = ""; try { text = String(JSON.parse(((g?.data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("")).replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")).text || ""); } catch {}
+      if (!text) return json({error: "Writing the new text failed. Try again."}, 502, origin, env);
+      return json({field, text: text.slice(0, DRAFT_LIMITS[field]), length: Math.min(text.length, DRAFT_LIMITS[field]), limit: DRAFT_LIMITS[field], cut: text.length > DRAFT_LIMITS[field]}, 200, origin, env);
+    }
+    if (url.pathname === "/api/play/listing" && request.method === "POST") {
+      const changes = {}; for (const f of Object.keys(LIMITS)) if (typeof body[f] === "string" && body[f].trim()) {
+        if (body[f].length > LIMITS[f]) return json({error: f + " is too long (" + body[f].length + "/" + LIMITS[f] + ")."}, 400, origin, env); changes[f] = body[f].trim(); }
+      if (!Object.keys(changes).length) return json({error: "Nothing to change."}, 400, origin, env);
+      if (body.confirm !== "PUBLISH " + app.pkg) return json({error: "Max changes the Play listing only after you say yes.", needConfirm: true}, 400, origin, env);
+      const edit = await papi(env, app.pkg + "/edits", {method: "POST", body: "{}"});
+      try {
+        await papi(env, app.pkg + "/edits/" + edit.id + "/listings/" + lang, {method: "PATCH", body: JSON.stringify(changes)});
+        await papi(env, app.pkg + "/edits/" + edit.id + ":commit", {method: "POST", body: "{}"});
+      } catch (e) { await papi(env, app.pkg + "/edits/" + edit.id, {method: "DELETE"}).catch(() => {}); throw e; }
+      return json({updated: Object.keys(changes), lang, app}, 200, origin, env);
+    }
+    if (url.pathname === "/api/play/notes" && request.method === "POST") {
+      const track = cleanText(String(body.track || ""), 40) || "", text = cleanText(String(body.text || ""), 500);
+      if (!text) return json({error: "What should the release notes say?"}, 400, origin, env);
+      if (body.confirm !== "PUBLISH " + app.pkg) return json({error: "Max changes release notes only after you say yes.", needConfirm: true}, 400, origin, env);
+      const edit = await papi(env, app.pkg + "/edits", {method: "POST", body: "{}"});
+      try {
+        const tracks = (await papi(env, app.pkg + "/edits/" + edit.id + "/tracks")).tracks || [];
+        const t = tracks.find(x => x.track === track) || tracks.find(x => (x.releases || []).length && x.track !== "production") || tracks[0];
+        if (!t || !(t.releases || []).length) throw new Error("There's no release on that track to add notes to.");
+        const r = t.releases[t.releases.length - 1];
+        r.releaseNotes = [...(r.releaseNotes || []).filter(n => n.language !== lang), {language: lang, text}];
+        await papi(env, app.pkg + "/edits/" + edit.id + "/tracks/" + encodeURIComponent(t.track), {method: "PUT", body: JSON.stringify({track: t.track, releases: t.releases})});
+        await papi(env, app.pkg + "/edits/" + edit.id + ":commit", {method: "POST", body: "{}"});
+        return json({updated: "releaseNotes", track: t.track, release: r.name || (r.versionCodes || []).join(","), app}, 200, origin, env);
+      } catch (e) { await papi(env, app.pkg + "/edits/" + edit.id, {method: "DELETE"}).catch(() => {}); throw e; }
+    }
+    if (url.pathname === "/api/play/reviews" && request.method === "POST") {
+      const d = await papi(env, app.pkg + "/reviews?maxResults=20");
+      return json({app, reviews: (d.reviews || []).map(r => { const c = (r.comments || []).find(x => x.userComment)?.userComment || {};
+        return {author: r.authorName || "A user", stars: c.starRating || null, text: cleanText(String(c.text || ""), 600), at: c.lastModified?.seconds ? new Date(c.lastModified.seconds * 1000).toISOString() : ""}; })}, 200, origin, env);
+    }
+  } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
+  return json({error: "Not found."}, 404, origin, env);
+}
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1159,7 +1259,7 @@ export default {
         google: !googleConfigured(env) ? "not set up" : auth.enforced ? "linked" + (canModifyMail(await googleRow(env)) ? " (calendar, tasks, gmail)" : hasGmail(await googleRow(env)) ? " (calendar, tasks, gmail read-only — sign in again to let Max organize email)" : " (calendar, tasks — sign in again to add Gmail)") : "set up, not signed in",
         login: auth.enforced ? "google" : passcodeSet(env) ? "passcode" : "open",
         github: githubReady(env) ? "connected (" + allowedRepos(env).length + " repos)" : "not connected",
-        analytics: statsReady(env) ? "connected" : "not connected"};
+        analytics: statsReady(env) ? "connected" : "not connected", play: env.PLAY_SERVICE_ACCOUNT ? "connected" : "not connected"};
       if (request.headers.get("X-Max-Pass") !== null) health.passcode = auth.enforced ? "replaced by Google sign-in" : passcodeOk(request, env) ? "accepted" : "wrong";
       if (auth.session) health.session = auth.session;
       if (auth.ok && (request.headers.get("X-Max-Pass") !== null || auth.via === "google")) health.database = await dbStatus(env);
@@ -1187,6 +1287,7 @@ export default {
     if (url.pathname.startsWith("/api/calendar") || url.pathname === "/api/tasks") return calendarRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/gmail/")) return gmailRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/market/")) return marketRoutes(request, env, url, origin);
+    if (url.pathname.startsWith("/api/play/")) return playRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/projects/") || url.pathname.startsWith("/api/github/")) return projectRoutes(request, env, url, origin);
     if (url.pathname === "/api/memory" || url.pathname === "/api/sync" || url.pathname === "/api/talk") {
       if (!passcodeSet(env) && !auth.enforced) return json({error:"Cloud memory is off: add a MAX_PASSCODE secret to the Worker first."}, 403, origin, env);
@@ -1301,7 +1402,7 @@ export default {
             "edit_event (change, move or rename an existing calendar event, or change its reminders; details = {find: words from its title, on: \"YYYY-MM-DD\" if he said which day, then only what changes: title, start, durationMinutes, location, reminders: [minutes before, e.g. 60, 10]}) · delete_event (cancel/remove an event; details = {find, on}) · alarms: an alarm is add_event with title starting \"⏰ \", reminderMinutes 0, durationMinutes 5 · several reminders: add_event with reminders: [60, 10] · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
-          "ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
+          "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}). The app always shows the new text and asks him before publishing. · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +

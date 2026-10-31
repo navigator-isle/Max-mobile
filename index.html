@@ -1231,7 +1231,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1252,6 +1252,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- google play ----
+  if(has(/\b(play ?store|google play|play console|store listing)\b/)){
+   const pr=projects().find(x=>n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al))));
+   if(has(/\breviews?\b/))return {type:'play_reviews',details:{project:pr?.name||''}};
+   if(has(/\b(change|update|rewrite|edit|improve|make|add|set|write|release notes|what'?s new)\b/))return null; // the brain works out what to change
+   return {type:'play_overview',details:{project:pr?.name||''}};
+  }
   // ---- routine in progress ----
   if(routineActive()&&wc<=5){
    if(has(/^(done|did it|finished|finish|next|ok(ay)? next|tapos|tapos na|check|ok(ay)? done|yes done)\b/))return {type:'routine_step',query:'done'};
@@ -2507,6 +2514,51 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return say+'.';
  }
 
+ // ================= GOOGLE PLAY: your store listings, release notes and reviews =================
+ const playAppName=d=>{const p=findProject(d?.project||d?.app||'');return p?p.name:(d?.project||'Passage Planner')};
+ const FIELD_NAME={title:'title',shortDescription:'short description',fullDescription:'full description',releaseNotes:'release notes'};
+ async function playCall(path,body,ms){const {r,data}=await postJson(path,body,ms||45000);if(data&&data.needPlay)throw Object.assign(new Error('Google Play isn’t connected to Max yet. The steps are in SETUP.md, under Play Store.'),{plain:true});if(r.status===404)throw new Error('This needs the newest Max backend.');if(!r.ok)throw new Error(data.error||'HTTP '+r.status);return data}
+ async function playOverview(d){
+  const app=playAppName(d);setSection('display');$('dispTitle').textContent='Checking Google Play…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  try{
+   const o=await playCall('/api/play/overview',{app});
+   const L=o.listings.find(l=>l.language==='en-US')||o.listings[0]||{},rel=t=>t.releases.map(r=>(r.name||r.versionCodes.join(','))+' · '+String(r.status||'').replace(/_/g,' ')).join('; ');
+   showDisplay(app+' on Google Play',o.app.pkg,[{badge:'LISTING',badgeClass:'badge-res',meta:L.language||'',title:L.title||'(no title)',lines:['Short: '+(L.shortDescription||'—')+' ('+(L.shortDescription||'').length+'/80)','Full description: '+(L.fullDescription||'').length+'/4000 characters'],html:'<p>'+escHtml((L.fullDescription||'').slice(0,1200)).replace(/\n/g,'<br>')+'</p>'},
+    ...o.tracks.map(t=>({badge:t.track.toUpperCase(),badgeClass:t.track==='production'?'badge-note':'badge-draft',title:t.track==='production'?'Production':t.track.replace(/[:_-]/g,' ')+' testing',lines:t.releases.length?t.releases.map(r=>'• '+(r.name||'version '+r.versionCodes.join(','))+' — '+String(r.status||'').replace(/_/g,' ')+(r.notes.length?' · notes: '+r.notes[0].slice(0,80):'')):['No release on this track.']}))]);
+   const tested=o.tracks.filter(t=>t.releases.length);
+   return app+' on Google Play: “'+(L.title||'no title')+'”. '+(tested.length?tested.map(t=>t.track+': '+rel(t)).join('. '):'No releases yet')+'. Say “change the short description to …” or “rewrite the description to mention …”.';
+  }catch(e){$('dispTitle').textContent='Google Play';$('dispSub').textContent=e.message;return e.plain?e.message:'I couldn’t read Google Play. '+e.message}
+ }
+ async function playUpdate(d){
+  const app=playAppName(d),field=['title','shortDescription','fullDescription'].includes(d?.field)?d.field:/title|name/i.test(d?.instruction||'')?'title':/short/i.test(d?.instruction||'')?'shortDescription':'fullDescription';
+  setSection('display');$('dispTitle').textContent='Preparing the new '+FIELD_NAME[field]+'…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  try{
+   const o=await playCall('/api/play/overview',{app}),L=o.listings.find(l=>l.language==='en-US')||o.listings[0]||{},cur=L[field]||'';
+   const text=d?.text?d.text:(await playCall('/api/play/draft',{app,field,current:cur,instruction:d?.instruction||''})).text;
+   const lim={title:30,shortDescription:80,fullDescription:4000}[field];
+   if(text.length>lim)return 'That’s too long for the '+FIELD_NAME[field]+' ('+text.length+' of '+lim+' characters). Say a shorter version.';
+   return askConfirm('Publish the new '+FIELD_NAME[field]+' for '+app+' on Google Play? '+(field==='fullDescription'?'It’s on the screen.':'It says: “'+text+'”.'),async()=>{
+    await playCall('/api/play/listing',{app,lang:L.language||'en-US',[field]:text,confirm:'PUBLISH '+o.app.pkg});
+    return 'Published — the '+FIELD_NAME[field]+' of '+app+' is updated on Google Play. Google may take a little while to show it.';
+   },[{badge:'NEW '+FIELD_NAME[field].toUpperCase(),badgeClass:'badge-draft',meta:text.length+'/'+lim+' characters',title:field==='fullDescription'?app+' — new description':text,html:field==='fullDescription'?'<p>'+escHtml(text).replace(/\n/g,'<br>')+'</p>':'',lines:['Now: '+(cur.slice(0,200)||'(empty)')]}],'Change the Play listing?');
+  }catch(e){$('dispTitle').textContent='Google Play';$('dispSub').textContent=e.message;return e.plain?e.message:'I couldn’t prepare that. '+e.message}
+ }
+ async function playNotes(d){
+  const app=playAppName(d);
+  try{
+   const text=d?.text?d.text.slice(0,500):(await playCall('/api/play/draft',{app,field:'releaseNotes',current:'',instruction:d?.instruction||'Describe the latest improvements briefly.'})).text;
+   const pkg=(await playCall('/api/play/overview',{app})).app.pkg;
+   return askConfirm('Set the “What’s new” notes for the latest '+app+' test release to: “'+text+'”?',async()=>{const r=await playCall('/api/play/notes',{app,text,track:d?.track||'',confirm:'PUBLISH '+pkg});return 'Done — release notes updated on the '+r.track+' track.'},[{badge:'RELEASE NOTES',badgeClass:'badge-draft',meta:text.length+'/500',title:text}],'Update release notes?');
+  }catch(e){return e.plain?e.message:'I couldn’t prepare the release notes. '+e.message}
+ }
+ async function playReviews(d){
+  const app=playAppName(d);
+  try{const o=await playCall('/api/play/reviews',{app});
+   showDisplay(app+' reviews','Google Play · last reviews with text',o.reviews.length?o.reviews.map(r=>({badge:r.stars?'★'.repeat(r.stars):'REVIEW',title:r.author,lines:[r.text,r.at?new Date(r.at).toLocaleDateString():''].filter(Boolean)})):[{title:'No reviews yet',lines:['Google only shares reviews with text from the last week, and closed tests often have none.']}]);
+   return o.reviews.length?app+' has '+o.reviews.length+' recent review'+(o.reviews.length===1?'':'s')+'. Latest: '+o.reviews[0].stars+' stars — '+o.reviews[0].text.slice(0,120):'No recent reviews for '+app+'.';
+  }catch(e){return e.plain?e.message:'I couldn’t read the reviews. '+e.message}
+ }
+
  // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
  const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
  const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
@@ -2845,6 +2897,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'draft_email':return await draftEmail(a.details||{instruction:a.query},raw);
    case 'send_email':return await sendEmail(/\b(send|ipadala|ipasa|yes)\b/i.test(raw)&&!/\b(don'?t|do not|not yet|huwag|wait)\b/i.test(raw));
    case 'cancel_email':return await cancelEmail();
+   case 'play_overview':return await playOverview(a.details||{project:a.query});
+   case 'play_update':return await playUpdate(a.details||{instruction:raw});
+   case 'play_notes':return await playNotes(a.details||{instruction:raw});
+   case 'play_reviews':return await playReviews(a.details||{project:a.query});
    case 'new_routine':return await newRoutine(a.details||{},raw);
    case 'start_routine':return startRoutine(a.details||{name:a.query});
    case 'routine_step':return routineStep(a.query||'done');
@@ -3023,7 +3079,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
