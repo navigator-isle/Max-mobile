@@ -696,8 +696,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   inBtn.hidden=outBtn.hidden=disc.hidden=true;
   if(cloud.state==='offline'){st.textContent='Offline — connect to the internet to manage Google.';return}
   if(g==='not set up'){st.textContent='Not set up yet. Follow the Google steps in SETUP.md (one time, about 10 minutes). Then Max can use your Calendar and Tasks, and you sign in with Google instead of the passcode.';return}
-  if(cloud.signedIn){st.textContent='Signed in with Google ✓ — Calendar and Tasks are connected. The passcode is no longer used.';outBtn.hidden=false;disc.hidden=false;return}
-  if(g==='linked'){st.textContent='Google is connected, but this phone is not signed in. Sign in to use Max here.';inBtn.hidden=false;return}
+  if(cloud.signedIn){const gm=/gmail/.test(g);st.textContent='Signed in with Google ✓ — Calendar, Tasks'+(gm?' and Gmail':'')+' are connected. The passcode is no longer used.'+(gm?'':' Gmail isn’t allowed yet: tap “Add Gmail”.');if(!gm){inBtn.hidden=false;inBtn.textContent='Add Gmail'}outBtn.hidden=false;disc.hidden=false;return}
+  if(g.startsWith('linked')){st.textContent='Google is connected, but this phone is not signed in. Sign in to use Max here.';inBtn.hidden=false;return}
   st.textContent='Ready. Sign in once with your Google account to connect Calendar and Tasks.';inBtn.hidden=false;
  }
  $('googleSignIn').onclick=()=>{location.href=workerBase()+'/auth/google/start?return='+encodeURIComponent(location.origin+location.pathname)};
@@ -1229,7 +1229,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1250,6 +1250,18 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- email ----
+  if(pendingDraft&&Date.now()-pendingDraft.at<30*60e3){
+   if(has(/^(yes,? |ok(ay)?,? |sige,? )?(please )?(send( it| the email| that| it now| now)?|go ahead and send( it)?|ipadala( mo)?( na)?|ipasa( mo)?( na)?)( please| now| na)?$/)&&!NEG.test(n))return {type:'send_email'};
+   if(has(/\b(don'?t send|do not send|cancel (the )?(email|draft|it)|discard (the )?(draft|email|it)|scrap (it|the draft)|huwag (mo )?(na )?ipadala)\b/))return {type:'cancel_email'};
+   if(draftShowing()&&has(/^(change|make it|add|remove|delete|say|mention|tell (him|her|them)|shorter|longer|more|less|replace|also|instead|fix|put|sign it|end with|start with)\b/))return {type:'draft_email',details:{revise:true,instruction:raw.trim()}};
+  }
+  if(has(/^(read|open|show)( me)? (the |that )?(e-?mail|mail|message)?\s*(number |no\.? |#)?(\d{1,2}|first|second|third|fourth|fifth|last)( one| email)?$/)&&lastInbox.length)return {type:'read_email',query:raw};
+  if(has(/\b(read|open|show me)\b.*\b(e-?mail|mail|message)s? (from|about)\b/)&&!has(/\b(write|send|reply)\b/))return {type:'read_email',query:raw.replace(/^.*?\b(e-?mail|mail|message)s?\s+/i,'')};
+  if(has(/^(reply|respond|answer|sagutin)\b|\breply (to (him|her|them|it|this|that|this email|that email)|back)\b/)&&attachFresh()&&pendingAttach.email)return {type:'draft_email',details:{reply:true,instruction:raw.replace(/^.*?\b(reply|respond|answer|sagutin)\b( to (him|her|them|it|this|that)( email)?| back)?\s*(that|saying|and say|with)?\s*/i,'').trim()||raw}};
+  {const em=raw.match(/^\s*(?:max,?\s+)?(?:please\s+)?(?:(?:send|write|compose|draft)\s+(?:an?\s+)?(?:e-?mail|message)\s+to|e-?mail)\s+(.+?)\s+(?:that|saying|and say|about|to say|telling (?:him|her|them))\s+(.+)$/i);
+   if(em&&!/^(me|myself)$/i.test(em[1]))return {type:'draft_email',details:{to:em[1].replace(/^(the|my)\s+/i,''),instruction:em[2]}};}
+  if(has(/\b(e-?mails?|inbox|gmail|mails?)\b/)&&!has(/\b(write|compose|draft|reply|respond|send (an?|the) |save|note|research|look up|my notes)\b/)&&(QUESTION.test(n)||has(/\b(check|any|show|read|what'?s|new|unread|important|latest|got|received|meron|may)\b/)))return {type:'check_email',query:raw};
   // ---- the crew ----
   {const cm=raw.match(/^\s*(?:(?:hey|ok|okay|max)[,\s]+)*(?:(?:ask|tell|get|have|let|call)\s+(?:the\s+|my\s+)?)?(secretary|researcher|librarian)\b[\s,:.-]*(?:(?:to|please|pakisabi)\s+)?(.*)$/i);
    if(cm){const who=cm[1].toLowerCase(),rest=cm[2].trim();
@@ -1868,6 +1880,103 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const s=await readAttachment(f);setSub('📎 '+f.name,s);speak(s);
  };
 
+ // ---------- Gmail: inbox, reading, replies — sending only after "yes, send it" ----------
+ let lastInbox=[],pendingDraft=null;
+ const gmailOn=()=>/gmail/.test(cloud.google||'');
+ const gmailProblem=d=>d&&d.needGoogle?'Gmail isn’t connected yet. Sign in with Google in Settings first.':d&&d.needGmail?'Google is connected, but not Gmail. Open Settings and tap “Add Gmail” to allow it.':'';
+ function gmailQuery(t){
+  const s=' '+String(t||'').toLowerCase()+' ',q=[];
+  const from=s.match(/\bfrom ([\w.@'-]+(?: [\w.'-]+)?)/);if(from&&!/^(today|yesterday|this|last|the)\b/.test(from[1]))q.push('from:('+from[1].replace(/\s+(today|this week|yesterday)$/,'')+')');
+  const about=s.match(/\b(?:about|regarding|re|tungkol sa) ([^?.!]+?)(?= from | today| this week| yesterday|[?.!]| $)/);if(about)q.push('"'+about[1].trim()+'"');
+  if(/\bunread|new\b/.test(s))q.push('is:unread');
+  if(/\bimportant\b/.test(s))q.push('is:important');
+  q.push(/\btoday\b/.test(s)?'newer_than:1d':/\byesterday\b/.test(s)?'newer_than:2d':/\b(this|last) week\b|\b7 days\b/.test(s)?'newer_than:7d':/\b(this|last) month\b/.test(s)?'newer_than:31d':q.some(x=>/^(from|")/.test(x))?'newer_than:90d':'newer_than:2d');
+  return 'in:inbox '+q.join(' ');
+ }
+ async function checkEmail(text){
+  setSection('display');$('dispTitle').textContent='Checking your email…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  try{
+   const query=gmailQuery(text);
+   const {r,data}=await postJson('/api/gmail/inbox',{query},45000);
+   const prob=gmailProblem(data);if(prob){$('dispTitle').textContent='Email';$('dispSub').textContent=prob;return prob}
+   if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+   lastInbox=data.items||[];
+   const order={high:0,normal:1,low:2};const sorted=lastInbox.map((x,i)=>({...x,n:i+1})).sort((a,b)=>(order[a.priority]??1)-(order[b.priority]??1));
+   showDisplay('Email',lastInbox.length+' email'+(lastInbox.length===1?'':'s')+' · '+query.replace(/^in:inbox\s*/,''),sorted.length?sorted.map(x=>({badge:(x.priority==='high'?'IMPORTANT':x.unread?'UNREAD':'EMAIL')+' · '+x.n,badgeClass:x.priority==='high'?'badge-draft':x.unread?'badge-note':'badge-res',meta:x.from,title:x.subject,lines:[x.why?{text:x.why,cls:x.priority==='high'?'miss':''}:x.snippet].filter(Boolean),
+    buttons:[['Read',()=>readEmail(String(x.n)).then(t=>{setSub('',t);speak(t)})],['Reply',()=>{const t='Tell me what to say — for example “reply that I’ll call tomorrow”.';openEmailFor(x.id).then(()=>{setSub('',t);speak(t)})}]]})):[{title:'Nothing here',lines:['No emails matched.']}]);
+   return data.say+(lastInbox.length?' Say “read number 1”, or “read the one from …”.':'');
+  }catch(e){return 'I couldn’t check your email. '+e.message}
+ }
+ function pickEmail(q){
+  q=String(q||'').toLowerCase().trim();
+  const words={first:1,one:1,second:2,two:2,third:3,three:3,fourth:4,four:4,fifth:5,five:5,last:lastInbox.length};
+  const num=q.match(/\b(\d{1,2})\b/)?.[1]||Object.keys(words).find(w=>new RegExp('\\b'+w+'\\b').test(q));
+  if(num){const i=(+num||words[num])-1;if(lastInbox[i])return lastInbox[i]}
+  const k=q.replace(/\b(the|email|mail|message|one|from|about|read|open|me|please|latest|newest)\b/g,' ').trim().split(/\s+/).filter(w=>w.length>2);
+  return k.length?lastInbox.find(x=>k.every(w=>(x.from+' '+x.fromEmail+' '+x.subject).toLowerCase().includes(w)))||lastInbox.find(x=>k.some(w=>(x.from+' '+x.fromEmail).toLowerCase().includes(w))):lastInbox[0];
+ }
+ async function openEmailFor(id){
+  const {r,data}=await fetchJson(workerBase()+'/api/gmail/message?id='+encodeURIComponent(id)+'&topics='+encodeURIComponent(allTopics().slice(0,40).join('|')),{},60000);
+  const prob=gmailProblem(data);if(prob)throw new Error(prob);
+  if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  if(attachURL){URL.revokeObjectURL(attachURL);attachURL=''}
+  return gotAttachment(data.attachment,'');
+ }
+ async function readEmail(q){
+  let x=pickEmail(q);
+  if(!x){ // not in the last list: search for it
+   const {r,data}=await postJson('/api/gmail/inbox',{query:gmailQuery(/\bfrom\b|\babout\b/.test(q)?q:'about '+q).replace(/newer_than:\d+d/,'newer_than:90d'),max:5},45000);
+   const prob=gmailProblem(data);if(prob)return prob;
+   if(r.ok&&data.items?.length){lastInbox=data.items;x=data.items[0]}
+  }
+  if(!x)return 'I couldn’t find that email. Say “check my email” first, then “read number 2”.';
+  setSection('display');$('dispTitle').textContent='Reading the email…';$('dispSub').textContent=x.from+' — '+x.subject;$('dispBody').replaceChildren();
+  try{return (await openEmailFor(x.id)).replace('Say “save it” to put it in your notes, or ask me anything about it.','Say “reply …” to answer, “save it” to keep it in your notes, or ask me about it.')}
+  catch(e){return 'I couldn’t open that email. '+e.message}
+ }
+ function renderDraft(){
+  const d=pendingDraft;if(!d)return;
+  showDisplay('Draft email',(d.reply?'Reply':'New email')+' · not sent yet',[{badge:'DRAFT · NOT SENT',badgeClass:'badge-draft',meta:'To: '+d.to,title:d.subject,
+   buttons:[['Send',()=>{sendEmail(true).then(t=>{setSub('',t);speak(t)})}],['Discard',()=>{cancelEmail().then(t=>{setSub('',t);speak(t)})}]]}]);
+  const card=$('dispBody').firstElementChild,pre=document.createElement('pre');pre.className='att-text';pre.textContent=d.body;card.insertBefore(pre,card.querySelector('.notes-tools'));
+ }
+ async function draftEmail(d,raw){
+  d=d||{};
+  const revising=!!(pendingDraft&&d.revise);
+  const replyTo=!revising&&(d.reply||!d.to)&&attachFresh()&&pendingAttach.email?pendingAttach.email.id:'';
+  const instruction=String(d.instruction||raw||'').trim();
+  if(!revising&&!replyTo&&!d.to)return 'Who should I email? Say for example “email the agency that I’m available from the 15th”.';
+  setSection('display');$('dispTitle').textContent=revising?'Changing the draft…':'Writing the email…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  try{
+   const body=revising?{instruction,previous:pendingDraft.body,to:pendingDraft.to,subject:pendingDraft.subject,draftId:pendingDraft.id}:{instruction,to:d.to||'',subject:d.subject||'',replyTo};
+   if(revising&&pendingDraft.replyTo){body.replyTo=pendingDraft.replyTo;delete body.to}
+   const {r,data}=await postJson('/api/gmail/draft',body,60000);
+   const prob=gmailProblem(data);if(prob){$('dispTitle').textContent='Email';$('dispSub').textContent=prob;return prob}
+   if(!r.ok){$('dispTitle').textContent='Draft email';$('dispSub').textContent=data.error||'';return data.error||'I couldn’t write that email.'}
+   pendingDraft={...data.draft,replyTo:revising?pendingDraft.replyTo:replyTo,at:Date.now()};renderDraft();
+   return 'Here’s the draft to '+nameOf2(pendingDraft.to)+': '+pendingDraft.body.replace(/\s+/g,' ').slice(0,260)+(pendingDraft.body.length>260?'…':'')+' Say “yes, send it”, or tell me what to change.';
+  }catch(e){return 'I couldn’t write that email. '+e.message}
+ }
+ const nameOf2=s=>String(s||'').replace(/<[^>]*>/,'').replace(/"/g,'').trim()||s;
+ async function sendEmail(confirmed){
+  if(!pendingDraft||Date.now()-pendingDraft.at>30*60e3)return 'There’s no draft waiting to be sent.';
+  if(!confirmed)return 'Say “yes, send it” to send the email to '+nameOf2(pendingDraft.to)+'.';
+  const d=pendingDraft;
+  try{
+   const {r,data}=await postJson('/api/gmail/send',{draftId:d.id,confirm:'SEND '+d.id},45000);
+   if(!r.ok)return 'It wasn’t sent. '+(data.error||'');
+   pendingDraft=null;showDisplay('Sent ✓','To '+d.to,[{badge:'SENT',title:d.subject,lines:[d.body.slice(0,300)]}]);
+   return 'Sent to '+nameOf2(d.to)+'.';
+  }catch(e){return 'It wasn’t sent. '+e.message}
+ }
+ async function cancelEmail(){
+  if(!pendingDraft)return 'There’s no draft to discard.';
+  const id=pendingDraft.id;pendingDraft=null;
+  try{await fetchJson(workerBase()+'/api/gmail/draft?id='+encodeURIComponent(id),{method:'DELETE'},20000)}catch{}
+  setSection('home');return 'Okay, I won’t send it. The draft is deleted.';
+ }
+ const draftShowing=()=>!!(pendingDraft&&Date.now()-pendingDraft.at<30*60e3&&screen==='display'&&/^Draft email/.test($('dispTitle').textContent));
+
  // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
  const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
  const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
@@ -1933,16 +2042,18 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function briefing(){
   setSection('display');$('dispTitle').textContent='Preparing your briefing…';$('dispSub').textContent='';$('dispBody').replaceChildren();
   const tasks=[checkProjects().catch(()=>''),loadStats(false).catch(()=>false)];
-  const sched=cloud.google==='linked'?listSchedule('today').catch(()=>''):Promise.resolve('');
-  const [schedText]=await Promise.all([Promise.race([sched,new Promise(r=>setTimeout(()=>r(''),15000))]),Promise.race([Promise.all(tasks),new Promise(r=>setTimeout(r,15000))])]);
+  const sched=/^linked/.test(cloud.google||'')?listSchedule('today').catch(()=>''):Promise.resolve('');
+  const mail=gmailOn()?postJson('/api/gmail/inbox',{query:'in:inbox is:unread newer_than:1d',max:10},30000).then(x=>x.r.ok?x.data:null).catch(()=>null):Promise.resolve(null);
+  const [schedText,,mailData]=await Promise.all([Promise.race([sched,new Promise(r=>setTimeout(()=>r(''),15000))]),Promise.race([Promise.all(tasks),new Promise(r=>setTimeout(r,15000))]),Promise.race([mail,new Promise(r=>setTimeout(()=>r(null),20000))])]);
   const dl=findDeadlines(30),wait=waitingItems(),list=projects();
   const down=list.filter(p=>projStatus[p.id]?.up===false).map(p=>p.name);
   const visitors=list.filter(p=>projStats[p.id]&&!projStats[p.id].error).map(p=>p.name+' '+projStats[p.id].today.visitors);
   const sales=salesTotals(null,'month'),watch=jget(WATCH_KEY,[]);
   const h=new Date().getHours(),hi=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
   const cards=[
-   {badge:'SECRETARY',title:'Today',lines:[schedText||(cloud.google==='linked'?'Calendar: couldn’t read it right now.':'Calendar not connected (Google is off) — I only know what’s in your notes.')]},
+   {badge:'SECRETARY',title:'Today',lines:[schedText||(/^linked/.test(cloud.google||'')?'Calendar: couldn’t read it right now.':'Calendar not connected (Google is off) — I only know what’s in your notes.')]},
    {badge:'SECRETARY',title:'Deadlines — next 30 days',lines:dl.length?dl.slice(0,6).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['Nothing due.'],buttons:dl.length?[['All deadlines',()=>doAction({type:'deadlines'},'').then(t=>{setSub('',t);speak(t)})]]:[]},
+   ...(mailData?[{badge:'EMAIL',badgeClass:'badge-res',title:'Unread email (last 24 h)',lines:mailData.items?.length?[mailData.say,...mailData.items.filter(x=>x.priority==='high').slice(0,4).map(x=>({text:'• '+x.from+' — '+x.subject,cls:'miss'}))]:['No new email.'],buttons:mailData.items?.length?[['Open inbox',()=>checkEmail('unread today').then(t=>{setSub('',t);speak(t)})]]:[]}]:[]),
    {badge:'WAITING',badgeClass:'badge-draft',title:'Waiting for you',lines:wait.length?wait.map(x=>'• '+x):['Nothing waiting.']},
    {badge:'WEBMASTER',badgeClass:'badge-res',title:'Your projects',lines:[down.length?{text:'Down: '+down.join(', '),cls:'miss'}:{text:'All sites I can check are up.',cls:'ok'},visitors.length?'Visitors today: '+visitors.join(' · '):statsProblem==='not connected'?'Visitor numbers not connected.':'',Object.keys(sales).length?'Sales this month: '+totalsText(sales):'No sales logged this month.'].filter(Boolean)},
    {badge:'RESEARCHER',badgeClass:'badge-res',title:'Watch list',lines:watch.length?watch.map(t=>'🔎 '+t.topic+(t.lastChecked?' — checked '+whenText(localDate(new Date(t.lastChecked))):' — not checked yet')):['Nothing on the watch list. Say “keep an eye on BWM updates”.']}];
@@ -1952,6 +2063,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(due.length)setTimeout(()=>checkWatch(false).then(t=>{if(t&&/found/.test(t))setSub('',t)}).catch(()=>{}),500);
   return hi+'. '+(schedText&&!/clear/.test(schedText)?schedText+' ':'')+
    (dl.length?dl.length+' deadline'+(dl.length===1?'':'s')+' in the next 30 days, first: '+dl[0].what+', '+whenText(dl[0].date)+'. ':'No deadlines in the next 30 days. ')+
+   (mailData?.items?.length?'Email: '+mailData.say+' ':'')+
    (wait.length?'Waiting for you: '+wait.join('; ')+'. ':'')+
    (down.length?'Heads up: '+down.join(' and ')+(down.length===1?' is':' are')+' down. ':'')+
    (visitors.length?'Visitors today: '+visitors.join(', ')+'. ':'')+
@@ -2189,6 +2301,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     }
     return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
    }
+   case 'check_email':return await checkEmail(a.query||raw);
+   case 'read_email':return await readEmail(a.query||raw);
+   case 'draft_email':return await draftEmail(a.details||{instruction:a.query},raw);
+   case 'send_email':return await sendEmail(/\b(send|ipadala|ipasa|yes)\b/i.test(raw)&&!/\b(don'?t|do not|not yet|huwag|wait)\b/i.test(raw));
+   case 'cancel_email':return await cancelEmail();
    case 'briefing':return await briefing();
    case 'deadlines':return deadlinesSay(a.details||{});
    case 'show_crew':setSection('crew');return 'Here’s your crew: the Secretary, the Researcher and the Librarian. Name one and tell them what you need.';
@@ -2341,7 +2458,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

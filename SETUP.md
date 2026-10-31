@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 482 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 515 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -120,7 +120,7 @@
   - **Text** `MAX_GITHUB_REPOS` = `navigator-isle/Max-mobile,navigator-isle/hobbyisle,navigator-isle/navigator-isle.github.io`
 - **What Max can then do:** file change requests as GitHub issues, list them along with any ready fixes, and publish a fix only after you say "yes, merge it" and its tests have passed. He never touches domains, DNS or account settings.
 
-**Google sign-in + Calendar + Tasks (one-time, about 10 minutes)**
+**Google sign-in + Calendar + Tasks + Gmail (one-time, about 10 minutes)**
 
 **1. Create a Google Cloud project**
 - Open console.cloud.google.com and sign in with your Gmail
@@ -130,6 +130,8 @@
 - Menu ☰ → **APIs & Services** → **Library**
 - Search **Google Calendar API** → **Enable**
 - Search **Google Tasks API** → **Enable**
+- Search **Gmail API** → **Enable**
+- Optional, for later: **Google Drive API** and **People API**
 
 **3. Set up the sign-in screen**
 - Menu ☰ → **Google Auth Platform**, or **APIs & Services → OAuth consent screen** → **Get started**
@@ -154,7 +156,7 @@
 **6. Sign in**
 - Max → hold the circle → **Settings** → **Sign in with Google**
 - Google will say "Google hasn't verified this app". That's normal for a personal app: tap **Advanced** → **Go to Max**
-- Allow **Calendar** and **Tasks**, and you're returned to Max: "Signed in with Google ✓"
+- Allow **Calendar**, **Tasks** and **Gmail**, and you're returned to Max: "Signed in with Google ✓"
 
 **After signing in**
 - **Passcode:** no longer used. Each phone signs in with Google once.
@@ -166,6 +168,15 @@
 - "Remind me Friday at 9 to renew my passport" adds a calendar event, and your phone notifies you at that time
 - "Add buy safety shoes to my to-do list" adds it to Google Tasks
 - "Undo" removes the last thing Max added
+- "Any important emails?" / "check my email from the agency"
+- "Read number 1", then "reply that I confirm the joining date"
+- "Make it shorter", then "yes, send it" (or tap **Send**). "Don't send it" deletes the draft.
+- "Email Captain Reyes that I'll be there at 0800" (Max finds the address from past emails)
+
+**Gmail rules**
+- **Access:** Max can read your mail and save drafts. He has no permission to delete emails or change your mailbox settings.
+- **Sending:** an email goes out only after you hear or see the draft and say "yes, send it" (or tap Send).
+- **Instructions inside emails:** treated as text to report, never as orders to Max.
 
 **Security**
 - No keys are in these files

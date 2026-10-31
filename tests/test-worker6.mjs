@@ -75,7 +75,7 @@ ok(r.status === 401, "a made-up session is refused");
 r = await call("/api/memory", { session });
 ok(r.status === 200, "signed-in phone works");
 r = await call("/health", { session });
-ok(r.data.login === "google" && r.data.google === "linked" && r.data.session === "accepted" && r.data.database === "ready", "health shows Google login", JSON.stringify(r.data));
+ok(r.data.login === "google" && r.data.google.startsWith("linked") && r.data.session === "accepted" && r.data.database === "ready", "health shows Google login", JSON.stringify(r.data));
 
 // calendar & tasks
 r = await call("/api/calendar?from=2026-10-30T00:00:00Z&to=2026-11-06T00:00:00Z", { session });

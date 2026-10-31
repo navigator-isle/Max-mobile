@@ -19,6 +19,7 @@ run "Projects & GitHub"    tests/test-worker7.mjs "$TMP/worker.mjs"
 run "Visitors & sales"     tests/test-worker8.mjs "$TMP/worker.mjs"
 run "Reading files"        tests/test-worker9.mjs "$TMP/worker.mjs"
 run "Videos & links"       tests/test-worker10.mjs "$TMP/worker.mjs"
+run "Gmail"                tests/test-worker11.mjs "$TMP/worker.mjs"
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
 run "Phone: conversation"  tests/e2e2.mjs "$PWD/index.html" "$TMP/worker.mjs"
@@ -31,4 +32,5 @@ run "Phone: display & overview" tests/e2e8.mjs "$PWD/index.html" "$TMP/worker.mj
 run "Phone: attachments"  tests/e2e9.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: Office, video & links" tests/e2e10.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: crew & skills"  tests/e2e11.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: Gmail"         tests/e2e12.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }
