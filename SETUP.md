@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 452 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 482 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -20,6 +20,26 @@
   - "Any requests for Hobby Isle?"
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
+
+**👥 Max's crew**
+- **How it works:** talk to Max as always. To give a job to one crew member, say their name first, for example "secretary, brief me". Open the crew screen from the menu with **👥 Crew**.
+- **📋 Secretary:**
+  - **Deadlines:** finds them in your notes and saved files (certificates, renewals, exams, sign-off). Say "what's expiring?" or "any deadlines this month?".
+  - **Briefing:** say "brief me" for your schedule (when Google is connected), deadlines, what's waiting for you, your sites, visitors, sales and the watch list.
+  - **Greeting:** the first time you open Max each day, he greets you with what's due.
+- **🔎 Researcher:**
+  - **Research:** "researcher, look up …"
+  - **Watch list:** "keep an eye on MARPOL Annex VI updates". He checks each topic weekly; "check my watch list" checks now.
+  - **Findings:** they wait in the research inbox ("what did the researcher find?") until you approve them.
+  - **Fact-checks:** "fact check my ballast note"
+- **🗂 Librarian:**
+  - **Library report:** say "librarian" or "how many notes do I have".
+  - **Duplicates:** "find duplicate notes", then "merge them". Merging keeps the text of both notes.
+  - **Filing:** "organize my notes"
+- **🧠 Skills you teach Max:**
+  - **Teach one:** "new skill port arrival: when I say arriving at a port, list its pilot rules and my pre-arrival checklist". After that, "arriving at Busan" uses that playbook.
+  - **Manage them:** "show my skills", "forget skill port arrival". Skills are saved as notes under **Max › Skills**, so they sync and back up.
+- **Limits:** the crew can't publish, spend money, or change any website or DNS. Research goes into your notes only after you approve it.
 
 **📎 Send Max anything**
 - **How:** tap 📎 at the top.

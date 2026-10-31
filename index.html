@@ -329,6 +329,11 @@ body.on-home .top-status{opacity:.7}
     <div id="projReqBox" class="banner" hidden></div>
   </main>
 
+  <main id="crewScreen" class="section-screen">
+    <div class="notes-header"><div><h1>My crew</h1><p>Talk to Max, or name one: “secretary, brief me”, “researcher, keep an eye on BWM updates”, “librarian, find duplicate notes”.</p></div></div>
+    <div id="crewBody" class="disp"></div>
+  </main>
+
   <main id="displayScreen" class="section-screen">
     <div class="notes-header"><div><h1 id="dispTitle">Display</h1><p id="dispSub">Say “show me … on the screen” and Max puts it here — your notes first, then the web.</p></div></div>
     <div id="dispBody" class="disp"></div>
@@ -404,6 +409,7 @@ body.on-home .top-status{opacity:.7}
     <button data-go="research" class="pill">⌕ Research</button>
     <button data-go="projects" class="pill">◆ Projects</button>
     <button data-go="overview" class="pill">▦ Overview</button>
+    <button data-go="crew" class="pill">👥 Crew</button>
     <button data-go="settings" class="pill">⚙ Settings</button>
     <button data-go="close" class="pill">Close</button>
   </div>
@@ -800,13 +806,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 
  // ---------- screens: talking is the default; everything else opens on command ----------
  function setSection(name){
-  if(!['home','notes','editor','research','projects','display'].includes(name))name='home';
+  if(!['home','notes','editor','research','projects','display','crew'].includes(name))name='home';
   screen=name;
-  ['homeScreen','notesScreen','editorScreen','researchScreen','projectsScreen','displayScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
+  ['homeScreen','notesScreen','editorScreen','researchScreen','projectsScreen','displayScreen','crewScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
   document.body.classList.toggle('on-home',name==='home');
   $('miniMax').hidden=name==='home';
   if(name==='notes'){renderList();syncNotes()}
   if(name==='research')renderResearch();
+  if(name==='crew')renderCrew();
   if(name==='projects'){renderProjects();loadStats(false).then(()=>{if(screen==='projects')renderProjects()})}
   window.scrollTo(0,0);
  }
@@ -1222,7 +1229,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1243,6 +1250,29 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- the crew ----
+  {const cm=raw.match(/^\s*(?:(?:hey|ok|okay|max)[,\s]+)*(?:(?:ask|tell|get|have|let|call)\s+(?:the\s+|my\s+)?)?(secretary|researcher|librarian)\b[\s,:.-]*(?:(?:to|please|pakisabi)\s+)?(.*)$/i);
+   if(cm){const who=cm[1].toLowerCase(),rest=cm[2].trim();
+    const inner=rest?matchCommand(rest):null;
+    if(inner)return inner;
+    if(!rest)return who==='secretary'?{type:'briefing'}:who==='librarian'?{type:'library_report'}:{type:'show_crew'};
+    if(who==='researcher')return {type:'research',query:rest.replace(/^(look up|find out|research|check)\s+(about\s+)?/i,'').replace(/[?.!]+$/,'')};
+    return null;}}
+  if(has(/^(yes,? )?merge (them|those|the duplicates|these)\b/)&&pendingDupes)return {type:'merge_duplicates'};
+  if(has(/\b(new skill|teach you (a |this )?(new )?skill|learn (a |this )?(new )?skill|add (a )?skill|bagong skill)\b/)){const t=raw.replace(/^.*?\b(new skill|teach you (a |this )?(new )?skill|learn (a |this )?(new )?skill|add (a )?skill|bagong skill)\b(\s+called|\s+named)?/i,'');return {type:'new_skill',query:t.trim()}}
+  if(has(/\b(forget|delete|remove) (the |my )?skill\b/)){return {type:'forget_skill',query:raw.replace(/^.*?\bskill\b/i,'').replace(/[?.!]+$/,'').trim()}}
+  if(has(/\b(show|list|what are|see)( me)? (my |your |all )?(the )?skills\b|^(my |your )?skills$/))return {type:'show_skills'};
+  if(has(/\b(my crew|the crew|your crew|show (me )?(the |my )?crew|crew status|subordinates|my team)\b/))return {type:'show_crew'};
+  if(has(/\b(brief me|briefing|morning report|daily report|status report|sitrep|what did i miss|what'?s my day( like)?|ano meron ngayon)\b/))return {type:'briefing'};
+  if(has(/\b(deadlines?|expir(y|ing|es|ation)|due dates?|what'?s due|renewals?)\b/)&&!has(/\b(add|remind me|research|look up)\b/))return {type:'deadlines',details:{days:has(/\b(year|12 months)\b/)?365:has(/\b(3|three) months\b/)?90:60}};
+  if(has(/\b(stop|don'?t|no longer) (watching|following|tracking|monitoring)\b|\bremove .* from (the |my )?watch ?list\b/))return {type:'unwatch_topic',query:raw.replace(/^.*?\b(watching|following|tracking|monitoring|remove)\b/i,'').replace(/\bfrom (the |my )?watch ?list\b/i,'').trim()};
+  if(has(/\b(check|run|update) (my |the )?watch ?list\b|\bany (new )?(updates|news) on (my )?(watched|watch)/))return {type:'check_watch'};
+  if(has(/\b(keep an eye on|watch|follow|monitor|keep track of|bantayan)\b/)&&!has(/\bwatch ?list\b/)&&!has(/\b(visitors?|traffic|sales|video|youtube|movie)\b/)&&!has(/^(what|show|list)/)){const t=raw.replace(/^.*?\b(keep an eye on|watch|follow|monitor|keep track of|bantayan)\b/i,'').trim();if(t.length>2)return {type:'watch_topic',query:t}}
+  if(has(/\b(check|run|update) (my |the )?watch ?list\b|\bany (new )?(updates|news) on (my )?(watched|watch)/))return {type:'check_watch'};
+  if(has(/\b(research inbox|what did the researcher find|researcher'?s? (updates|findings))\b/))return {type:'research_inbox'};
+  if(has(/\b(verify|double ?check|fact ?check|re-?check|still (correct|current|valid|up to date))\b/)&&has(/\bnotes?\b/)){return {type:'verify_note',query:raw.replace(/^.*?\b(verify|double ?check|fact ?check|re-?check|is)\b/i,'').replace(/\b(my|the|note|notes|on|about|still|correct|current|valid|up to date|is)\b/gi,' ').replace(/[?.!]+/g,'').replace(/\s+/g,' ').trim()}}
+  if(has(/\b(library|notes?) (report|status|health|summary|stats)\b|\bhow many notes\b/))return {type:'library_report'};
+  if(has(/\b(duplicates?|duplicate notes|double notes|same notes|repeated notes)\b/))return {type:'find_duplicates'};
   {const spoken=raw.replace(/\s+dot\s+(?=[a-z]{2,}\b)/gi,'.').replace(/\bwww\s+(?=[a-z0-9-]+\.)/gi,'www.').replace(/(\.[a-z]{2,})\s+slash\s+/gi,'$1/').replace(/(\/[\w-]+)\s+slash\s+/gi,'$1/');const link=spoken.match(/https?:\/\/\S+|\b(?:[a-z0-9-]+\.)+(?:com|net|org|io|ph|gov|int|edu|co|uk|info|app|dev|ai|me|tv|be|de|jp|sg|au)\b(?:\/\S*)?/i);
    if(link&&(/^\s*\S+\s*$/.test(spoken)||/\b(read|summari[sz]e|sum up|check|look at|what'?s (on|in)|analy[sz]e|watch|go through|study|basahin|tingnan)\b/i.test(spoken)))return {type:'read_link',query:link[0]};}
   if(has(/\b(attach|upload|send you|scan|read|check|look at)\b.*\b(file|document|pdf|photo|picture|screenshot|certificate|receipt|letter|form)\b/)&&!attachFresh()&&!has(/\bnotes?\b/)||has(/^(attach|upload)( a| the)? (file|photo|picture|document|pdf)/))return {type:'attach_file'};
@@ -1838,6 +1868,250 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const s=await readAttachment(f);setSub('📎 '+f.name,s);speak(s);
  };
 
+ // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
+ const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
+ const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+ const todayKey=()=>localDate(new Date());
+ const daysUntil=d=>Math.round((new Date(d+'T12:00:00')-new Date(localDate(new Date())+'T12:00:00'))/864e5);
+ const whenText=d=>{const k=daysUntil(d);return k===0?'today':k===1?'tomorrow':k===-1?'yesterday':k<0?(-k)+' days ago':k<=14?'in '+k+' days':fullDate(d)};
+
+ // ---------- Secretary: deadlines found in your notes and files ----------
+ const MONTHS='jan feb mar apr may jun jul aug sep oct nov dec'.split(' ');
+ const DEADLINE_WORDS=/\b(expir\w*|valid until|valid till|due|deadline|renew\w*|until|before|by|survey|audit|inspection|exam\w*|joining|sign[ -]?(on|off)|embark\w*|disembark\w*|appointment|meeting|interview|flight|payment|pay|bill|reminder|remind|starts?|ends?|birthday|anniversary|hanggang|bago)\b/i;
+ function datesIn(line){
+  const out=[],add=(y,m,d)=>{if(m>=1&&m<=12&&d>=1&&d<=31&&y>=2000&&y<2100)out.push(y+'-'+pad(m)+'-'+pad(d))};
+  for(const m of line.matchAll(/\b(20\d\d)-(\d\d)-(\d\d)\b/g))add(+m[1],+m[2],+m[3]);
+  for(const m of line.matchAll(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?,?\s+(20\d\d)\b/gi))add(+m[3],MONTHS.indexOf(m[2].toLowerCase().slice(0,3))+1,+m[1]);
+  for(const m of line.matchAll(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d\d)\b/gi))add(+m[3],MONTHS.indexOf(m[1].toLowerCase().slice(0,3))+1,+m[2]);
+  return [...new Set(out)];
+ }
+ const noteLines=n=>String(n.body||'').split(/<\/(?:p|li|h\d|div|tr|pre)>|<br\s*\/?>|\n/i).map(x=>plain(x)).filter(Boolean);
+ function findDeadlines(ahead=60,behind=14){
+  const seen=new Set(),out=[];
+  getNotes().filter(n=>!/^Max › Skills$/.test(n.category||'')&&n.category!==SALES_CAT).forEach(n=>{
+   const fromFile=n.source==='attachment';
+   noteLines(n).forEach(line=>{
+    if(line.length>400)return;
+    datesIn(line).forEach(d=>{
+     const k=daysUntil(d);if(k>ahead||k<-behind)return;
+     if(!fromFile&&!DEADLINE_WORDS.test(line))return;
+     const key=n.id+d;if(seen.has(key))return;seen.add(key);
+     const what=line.replace(/\s*[:–—-]?\s*(\b20\d\d-\d\d-\d\d\b|\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?,?\s+20\d\d\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+20\d\d\b)/gi,' ').replace(/\s+([.,;])/g,'$1').replace(/\s{2,}/g,' ').replace(/[\s.,;:–—-]+$/,'').replace(/\s+(by|on|before|sa)$/i,'').trim();
+     out.push({date:d,days:k,what:(what.length>2?what:n.title).slice(0,140),noteId:n.id,noteTitle:n.title||'Untitled'});
+    });
+   });
+  });
+  return out.sort((a,b)=>a.date.localeCompare(b.date));
+ }
+ function deadlinesSay(d){
+  const days=Number(d?.days)||60,list=findDeadlines(days);
+  const late=list.filter(x=>x.days<0),soon=list.filter(x=>x.days>=0);
+  showDisplay('Deadlines','Secretary · next '+days+' days, from your notes and files',list.length?list.map(x=>({badge:x.days<0?'OVERDUE':x.days<=7?'THIS WEEK':'COMING UP',badgeClass:x.days<0?'badge-web':x.days<=7?'badge-draft':'badge-note',meta:fullDate(x.date)+' · '+whenText(x.date),title:x.what,lines:['From: '+x.noteTitle],buttons:[['Open note',()=>loadNote(x.noteId)]]})):
+   [{title:'Nothing due',lines:['No dates found in your notes for the next '+days+' days. Send me certificates or documents with 📎 and I’ll track their dates.']}]);
+  if(!list.length)return 'Secretary: nothing due in the next '+days+' days that I can find in your notes.';
+  return 'Secretary: '+(late.length?late.length+' overdue — '+late.slice(0,2).map(x=>x.what+' ('+whenText(x.date)+')').join('; ')+'. ':'')+
+   (soon.length?soon.length+' coming up. Next: '+soon.slice(0,3).map(x=>x.what+', '+whenText(x.date)).join('; ')+'.':'');
+ }
+ // ---------- Secretary: daily briefing ----------
+ function waitingItems(){
+  const w=[];
+  if(draft&&draft.points?.length)w.push('a research draft to approve ('+draft.title+')');
+  const inbox=jget(INBOX_KEY,[]);if(inbox.length)w.push(inbox.length+' research update'+(inbox.length===1?'':'s')+' from the Researcher');
+  if(attachFresh())w.push('a file to save or discard ('+pendingAttach.title+')');
+  const reqs=getNotes().filter(n=>n.category==='Projects › Change requests').length;if(reqs)w.push(reqs+' change request'+(reqs===1?'':'s')+' for your projects');
+  return w;
+ }
+ function headline(){
+  const h=new Date().getHours(),hi=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  const dl=findDeadlines(30),late=dl.filter(x=>x.days<0).length,wait=waitingItems();
+  const bits=[];
+  if(late)bits.push(late+' overdue');
+  const soon=dl.filter(x=>x.days>=0);if(soon.length)bits.push(soon.length+' deadline'+(soon.length===1?'':'s')+' in the next 30 days — first: '+soon[0].what+', '+whenText(soon[0].date));
+  if(wait.length)bits.push(wait.length+' thing'+(wait.length===1?'':'s')+' waiting for you');
+  return hi+', Mark. '+(bits.length?bits.join('; ')+'. Say “brief me” for the full report.':'I’m Max — nothing urgent today. I’m ready when you are.');
+ }
+ async function briefing(){
+  setSection('display');$('dispTitle').textContent='Preparing your briefing…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  const tasks=[checkProjects().catch(()=>''),loadStats(false).catch(()=>false)];
+  const sched=cloud.google==='linked'?listSchedule('today').catch(()=>''):Promise.resolve('');
+  const [schedText]=await Promise.all([Promise.race([sched,new Promise(r=>setTimeout(()=>r(''),15000))]),Promise.race([Promise.all(tasks),new Promise(r=>setTimeout(r,15000))])]);
+  const dl=findDeadlines(30),wait=waitingItems(),list=projects();
+  const down=list.filter(p=>projStatus[p.id]?.up===false).map(p=>p.name);
+  const visitors=list.filter(p=>projStats[p.id]&&!projStats[p.id].error).map(p=>p.name+' '+projStats[p.id].today.visitors);
+  const sales=salesTotals(null,'month'),watch=jget(WATCH_KEY,[]);
+  const h=new Date().getHours(),hi=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  const cards=[
+   {badge:'SECRETARY',title:'Today',lines:[schedText||(cloud.google==='linked'?'Calendar: couldn’t read it right now.':'Calendar not connected (Google is off) — I only know what’s in your notes.')]},
+   {badge:'SECRETARY',title:'Deadlines — next 30 days',lines:dl.length?dl.slice(0,6).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['Nothing due.'],buttons:dl.length?[['All deadlines',()=>doAction({type:'deadlines'},'').then(t=>{setSub('',t);speak(t)})]]:[]},
+   {badge:'WAITING',badgeClass:'badge-draft',title:'Waiting for you',lines:wait.length?wait.map(x=>'• '+x):['Nothing waiting.']},
+   {badge:'WEBMASTER',badgeClass:'badge-res',title:'Your projects',lines:[down.length?{text:'Down: '+down.join(', '),cls:'miss'}:{text:'All sites I can check are up.',cls:'ok'},visitors.length?'Visitors today: '+visitors.join(' · '):statsProblem==='not connected'?'Visitor numbers not connected.':'',Object.keys(sales).length?'Sales this month: '+totalsText(sales):'No sales logged this month.'].filter(Boolean)},
+   {badge:'RESEARCHER',badgeClass:'badge-res',title:'Watch list',lines:watch.length?watch.map(t=>'🔎 '+t.topic+(t.lastChecked?' — checked '+whenText(localDate(new Date(t.lastChecked))):' — not checked yet')):['Nothing on the watch list. Say “keep an eye on BWM updates”.']}];
+  showDisplay(hi+', Mark',new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}),cards);
+  jset('max_last_brief',todayKey());
+  const due=watch.filter(t=>!t.lastChecked||Date.now()-t.lastChecked>7*864e5);
+  if(due.length)setTimeout(()=>checkWatch(false).then(t=>{if(t&&/found/.test(t))setSub('',t)}).catch(()=>{}),500);
+  return hi+'. '+(schedText&&!/clear/.test(schedText)?schedText+' ':'')+
+   (dl.length?dl.length+' deadline'+(dl.length===1?'':'s')+' in the next 30 days, first: '+dl[0].what+', '+whenText(dl[0].date)+'. ':'No deadlines in the next 30 days. ')+
+   (wait.length?'Waiting for you: '+wait.join('; ')+'. ':'')+
+   (down.length?'Heads up: '+down.join(' and ')+(down.length===1?' is':' are')+' down. ':'')+
+   (visitors.length?'Visitors today: '+visitors.join(', ')+'. ':'')+
+   (due.length?'The Researcher is checking '+due.length+' watched topic'+(due.length===1?'':'s')+' now.':'');
+ }
+
+ // ---------- Researcher: watch list and research inbox ----------
+ const WATCH_KEY='max_watch',INBOX_KEY='max_crew_inbox';
+ function watchTopic(t){
+  t=String(t||'').replace(/\b(for me|please|po|updates?|news|changes|the latest( on| about)?|any|on|about)\b/gi,' ').replace(/\s+/g,' ').replace(/[?.!]+$/,'').trim();
+  if(t.length<2)return 'Which topic should the Researcher keep an eye on?';
+  const w=jget(WATCH_KEY,[]);if(w.some(x=>norm(x.topic)===norm(t)))return 'Researcher: already watching '+t+'.';
+  if(w.length>=10)return 'Researcher: the watch list is full (10 topics). Remove one first.';
+  w.push({topic:t,added:Date.now(),lastChecked:0});jset(WATCH_KEY,w);if(screen==='crew')renderCrew();
+  return 'Researcher: I’ll keep an eye on '+t+' and check it every week. Anything new waits for your approval before it goes in your notes. Say “check my watch list” to look now.';
+ }
+ function unwatchTopic(t){
+  const w=jget(WATCH_KEY,[]),k=norm(String(t||'').replace(/\b(updates?|news|watching|on|about|the)\b/gi,' '));
+  const i=w.findIndex(x=>norm(x.topic)===k||norm(x.topic).includes(k)||k.includes(norm(x.topic)));
+  if(i<0)return 'That topic isn’t on the watch list.';
+  const [x]=w.splice(i,1);jset(WATCH_KEY,w);if(screen==='crew')renderCrew();return 'Researcher: stopped watching '+x.topic+'.';
+ }
+ let watchRunning=false;
+ async function checkWatch(force){
+  if(watchRunning)return 'Researcher: already checking.';
+  const w=jget(WATCH_KEY,[]);if(!w.length)return 'The watch list is empty. Say “keep an eye on” and a topic.';
+  const due=w.filter(t=>force||!t.lastChecked||Date.now()-t.lastChecked>7*864e5).slice(0,3);
+  if(!due.length)return 'Researcher: everything on the watch list was checked this week.';
+  watchRunning=true;let found=0;const failed=[];
+  try{
+   for(const t of due){
+    try{
+     const since=t.lastChecked?' since '+fullDate(localDate(new Date(t.lastChecked))):' in the last 12 months';
+     const {r,data}=await postJson('/api/research',{topic:'Latest news, rule changes and updates on '+t.topic+since,topics:allTopics()},90000);
+     if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+     const inbox=jget(INBOX_KEY,[]);inbox.push({id:newId(),crew:'researcher',topic:t.topic,title:data.draft.title,draft:{...data.draft,question:t.topic,changed:[]},at:Date.now()});jset(INBOX_KEY,inbox.slice(-20));
+     found++;
+    }catch(e){failed.push(t.topic)}
+    const all=jget(WATCH_KEY,[]);const x=all.find(y=>y.topic===t.topic);if(x&&!failed.includes(t.topic)){x.lastChecked=Date.now();jset(WATCH_KEY,all)}
+   }
+  }finally{watchRunning=false}
+  if(screen==='crew')renderCrew();
+  return 'Researcher: '+(found?'found updates on '+found+' topic'+(found===1?'':'s')+'. They’re in the research inbox on the Crew screen — open one to review and approve.':'')+(failed.length?' Couldn’t check '+failed.join(', ')+' right now.':'');
+ }
+ function openInbox(id){
+  const inbox=jget(INBOX_KEY,[]),i=id?inbox.findIndex(x=>x.id===id):0;
+  if(i<0||!inbox.length)return 'The research inbox is empty.';
+  const [it]=inbox.splice(i,1);jset(INBOX_KEY,inbox);
+  draft=it.draft;saveDraft();setSection('research');
+  return 'Researcher: here’s the update on '+it.topic+'. Say approve to save it, or tell me what to change.'+(inbox.length?' '+inbox.length+' more in the inbox.':'');
+ }
+ async function verifyNote(q){
+  const n=findNote(q||'')||rankNotes(q||'',1)[0]||(lastNote.id&&getNotes().find(x=>x.id===lastNote.id));
+  if(!n)return 'Which note should the Researcher check?';
+  const r=await startResearch('Is this still correct and up to date? Note "'+n.title+'": '+bestSentences(noteText(n),n.title,3).slice(0,400));
+  return 'Researcher: '+r;
+ }
+
+ // ---------- Librarian: report, duplicates, merging ----------
+ const SKILL_CAT='Max › Skills';
+ function libraryReport(){
+  const all=getNotes().filter(n=>n.category!==SKILL_CAT),by={};
+  all.forEach(n=>{const top=splitPath(n.category||'Unsorted')[0]||'Unsorted';by[top]=(by[top]||0)+1});
+  const unsorted=all.filter(n=>!n.category||n.category==='Unsorted'),empty=all.filter(n=>plain(n.body).length<5);
+  const old=all.filter(n=>n.source==='research'&&Date.now()-(n.createdAt||n.updatedAt||0)>365*864e5);
+  const dupes=findDuplicates();
+  const fixes=[];
+  if(unsorted.length)fixes.push(unsorted.length+' not filed under a topic — say “organize my notes”');
+  if(dupes.length)fixes.push(dupes.length+' possible duplicate'+(dupes.length===1?'':'s')+' — say “find duplicate notes”');
+  if(empty.length)fixes.push(empty.length+' empty note'+(empty.length===1?'':'s'));
+  if(old.length)fixes.push(old.length+' research note'+(old.length===1?' is':'s are')+' over a year old — the Researcher can re-check them');
+  showDisplay('Your library','Librarian · '+all.length+' notes · '+Object.keys(by).length+' topics',[
+   {badge:'LIBRARIAN',badgeClass:'badge-res',title:'By topic',lines:Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([t,c])=>t+' — '+c)},
+   {badge:fixes.length?'TO TIDY':'TIDY',badgeClass:fixes.length?'badge-draft':'badge-note',title:fixes.length?'What needs attention':'Everything is in order',lines:fixes.map(t=>({text:'• '+t,cls:'miss'})),
+    buttons:[...(unsorted.length?[['Organize',()=>doAction({type:'organize_notes'},'').then(t=>{setSub('',t);speak(t)})]]:[]),...(dupes.length?[['Duplicates',()=>doAction({type:'find_duplicates'},'').then(t=>{setSub('',t);speak(t)})]]:[]),...(old.length?[['Re-check oldest',()=>verifyNote(old[0].title).then(t=>{setSub('',t);speak(t)})]]:[])]}]);
+  return 'Librarian: you have '+all.length+' notes in '+Object.keys(by).length+' topics. '+(fixes.length?'To tidy: '+fixes.map(f=>f.replace(/ — .*/,'')).join('; ')+'.':'Everything is filed and tidy.');
+ }
+ function findDuplicates(){
+  const all=getNotes().filter(n=>![SKILL_CAT,SALES_CAT].includes(n.category)),pairs=[];
+  const words=n=>new Set(norm(plain(n.body)+' '+n.title).split(' ').filter(w=>w.length>3));
+  const W=all.map(words);
+  for(let i=0;i<all.length&&pairs.length<20;i++)for(let j=i+1;j<all.length&&pairs.length<20;j++){
+   const sameTitle=norm(all[i].title||'')&&norm(all[i].title||'')===norm(all[j].title||'');
+   let sim=0;if(W[i].size>=6&&W[j].size>=6){let c=0;W[i].forEach(w=>{if(W[j].has(w))c++});sim=c/(W[i].size+W[j].size-c)}
+   if(sameTitle||sim>=0.7)pairs.push([all[i],all[j],sameTitle?1:sim]);
+  }
+  return pairs;
+ }
+ let pendingDupes=null;
+ function showDuplicates(){
+  const pairs=findDuplicates();pendingDupes=pairs.length?{pairs:pairs.map(([a,b])=>[a.id,b.id]),at:Date.now()}:null;
+  showDisplay('Possible duplicates','Librarian · '+pairs.length+' pair'+(pairs.length===1?'':'s'),pairs.length?pairs.map(([a,b,s])=>({badge:Math.round(s*100)+'% SAME',badgeClass:'badge-draft',title:a.title+'  ⇄  '+b.title,lines:[(a.category||'Unsorted')+'  ·  '+(b.category||'Unsorted')],
+   buttons:[['Open first',()=>loadNote(a.id)],['Open second',()=>loadNote(b.id)],['Merge these two',()=>{const t=mergeNotes([[a.id,b.id]]);setSub('',t);speak(t)}]]})):[{title:'No duplicates found',lines:['Your notes look unique.']}]);
+  return pairs.length?'Librarian: I found '+pairs.length+' possible duplicate'+(pairs.length===1?'':'s')+'. Check them on the screen. Say “merge them” to combine each pair into one note — nothing is lost, the text of both is kept.':'Librarian: no duplicate notes found.';
+ }
+ function mergeNotes(pairs){
+  pairs=pairs||(pendingDupes&&Date.now()-pendingDupes.at<30*60e3?pendingDupes.pairs:null);
+  if(!pairs||!pairs.length)return 'There’s nothing to merge. Say “find duplicate notes” first.';
+  const all=loadAll();let done=0;
+  pairs.forEach(([ida,idb])=>{
+   const a=all.find(n=>n.id===ida&&!n.deleted),b=all.find(n=>n.id===idb&&!n.deleted);if(!a||!b)return;
+   const [keep,drop]=(a.createdAt||0)<=(b.createdAt||0)?[a,b]:[b,a];
+   if(norm(plain(drop.body))!==norm(plain(keep.body)))keep.body=(keep.body||'')+'<hr><p><i>Merged from “'+escHtml(drop.title||'Untitled')+'” by the Librarian</i></p>'+(drop.body||'');
+   keep.tags=[...new Set([...(keep.tags||[]),...(drop.tags||[])])].slice(0,10);keep.updatedAt=Date.now();
+   drop.deleted=true;drop.updatedAt=Date.now();done++;
+  });
+  putNotes(all);pendingDupes=null;renderList();
+  return 'Librarian: merged '+done+' pair'+(done===1?'':'s')+'. Each pair is now one note with the text of both.';
+ }
+
+ // ---------- Skill cards: playbooks you teach Max by voice ----------
+ const getSkills=()=>getNotes().filter(n=>n.category===SKILL_CAT);
+ function newSkill(text){
+  text=String(text||'').replace(/^[\s:,-]+/,'').trim();
+  if(text.length<8)return 'Tell me the skill in one go, like: “new skill port arrival: when I say arriving at a port, list its pilot rules and my pre-arrival checklist.”';
+  let name='',how=text;const m=text.match(/^(.{2,60}?)\s*(?::|—| - |\.\s)\s*(.+)$/s);
+  if(m){name=m[1];how=m[2]}else{const w=text.match(/^(.{2,40}?)\s+(when|whenever|if|kapag|pag)\b(.*)$/i);if(w){name=w[1];how=w[2]+w[3]}else name=text.split(/\s+/).slice(0,4).join(' ')}
+  name=name.replace(/^(called|named)\s+/i,'').replace(/[“”"]/g,'').trim();name=name.charAt(0).toUpperCase()+name.slice(1);
+  const all=loadAll(),old=all.find(n=>!n.deleted&&n.category===SKILL_CAT&&norm(n.title)===norm('Skill: '+name));
+  if(old){old.body='<p>'+escHtml(how)+'</p>';old.updatedAt=Date.now()}
+  else all.push({id:newId(),title:'Skill: '+name,category:SKILL_CAT,tags:['skill'],body:'<p>'+escHtml(how)+'</p>',source:'skill',createdAt:Date.now(),updatedAt:Date.now(),deleted:false});
+  putNotes(all);if(screen==='crew')renderCrew();
+  return (old?'Updated the skill “':'Learned a new skill: “')+name+'”. I’ll follow it whenever you ask for that. Say “show my skills” to see them all.';
+ }
+ function showSkills(){
+  const sk=getSkills();
+  showDisplay('Max’s skills',sk.length+' skill'+(sk.length===1?'':'s')+' you taught me',sk.length?sk.map(n=>({badge:'SKILL',badgeClass:'badge-res',title:n.title.replace(/^Skill:\s*/,''),html:n.body,buttons:[['Edit',()=>loadNote(n.id)],['Forget',()=>{const t=forgetSkill(n.title.replace(/^Skill:\s*/,''));setSub('',t);speak(t);showSkills()}]]})):
+   [{title:'No skills yet',lines:['Teach me one by saying: “new skill port arrival: when I say arriving at a port, list its pilot rules and my pre-arrival checklist.”']}]);
+  return sk.length?'You’ve taught me '+sk.length+' skill'+(sk.length===1?'':'s')+': '+sk.map(n=>n.title.replace(/^Skill:\s*/,'')).join(', ')+'.':'You haven’t taught me any skills yet. Say “new skill”, give it a name, then tell me what to do.';
+ }
+ function forgetSkill(name){
+  const k=norm(String(name||'').replace(/\bskill\b/gi,''));const all=loadAll();
+  const n=all.find(x=>!x.deleted&&x.category===SKILL_CAT&&(norm(x.title.replace(/^Skill:\s*/,''))===k||norm(x.title).includes(k)));
+  if(!n||!k)return 'I don’t have a skill called that. Say “show my skills” to see them.';
+  n.deleted=true;n.updatedAt=Date.now();putNotes(all);if(screen==='crew')renderCrew();
+  return 'Forgot the skill “'+n.title.replace(/^Skill:\s*/,'')+'”.';
+ }
+
+ // ---------- Crew screen ----------
+ function renderCrew(){
+  const box=$('crewBody');if(!box)return;box.replaceChildren();
+  const dl=findDeadlines(30),watch=jget(WATCH_KEY,[]),inbox=jget(INBOX_KEY,[]),notes=getNotes().filter(n=>n.category!==SKILL_CAT),skills=getSkills();
+  const unsorted=notes.filter(n=>!n.category||n.category==='Unsorted').length;
+  const run=(type,q)=>()=>doAction({type,query:q||''},'').then(t=>{if(t){setSub('',t);speak(t)}});
+  const crew=[
+   {badge:'SECRETARY',title:'📋 Secretary',meta:'deadlines · briefing · schedule',lines:dl.length?dl.slice(0,3).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['No deadlines in the next 30 days.'],buttons:[['Brief me',run('briefing')],['Deadlines',run('deadlines')]]},
+   {badge:'RESEARCHER',badgeClass:'badge-res',title:'🔎 Researcher',meta:'research · watch list · fact-checks',lines:[...(inbox.length?[{text:inbox.length+' update'+(inbox.length===1?'':'s')+' waiting for approval',cls:'miss'}]:[]),...(watch.length?watch.map(t=>'Watching: '+t.topic+(t.lastChecked?' (checked '+whenText(localDate(new Date(t.lastChecked)))+')':' (not checked yet)')):['Nothing on the watch list. Say “keep an eye on BWM updates”.'])],
+    buttons:[...inbox.slice(0,3).map(it=>['Open: '+it.topic,()=>{const t=openInbox(it.id);setSub('',t);speak(t)}]),...(watch.length?[['Check now',run('check_watch')]]:[])]},
+   {badge:'LIBRARIAN',badgeClass:'badge-res',title:'🗂 Librarian',meta:'filing · duplicates · tidy-ups',lines:[notes.length+' notes'+(unsorted?' · '+unsorted+' not filed':' · all filed')],buttons:[['Library report',run('library_report')],['Duplicates',run('find_duplicates')],...(unsorted?[['Organize',run('organize_notes')]]:[])]},
+   {badge:'SKILLS',badgeClass:'badge-draft',title:'🧠 Skills you taught Max',meta:skills.length+' skill'+(skills.length===1?'':'s'),lines:skills.length?skills.map(n=>'• '+n.title.replace(/^Skill:\s*/,'')):['Say “new skill …” to teach me one.'],buttons:skills.length?[['Show skills',run('show_skills')]]:[]}];
+  crew.forEach(c=>{
+   const card=document.createElement('article');card.className='disp-card';
+   const head=document.createElement('div');head.className='disp-head';const b=document.createElement('span');b.className='badge '+(c.badgeClass||'badge-note');b.textContent=c.badge;const m=document.createElement('span');m.className='muted small';m.textContent=c.meta;head.append(b,m);
+   const h=document.createElement('h2');h.textContent=c.title;card.append(head,h);
+   const ul=document.createElement('ul');ul.className='disp-lines';c.lines.forEach(l=>{const li=document.createElement('li');li.textContent=typeof l==='string'?l:l.text;if(l.cls)li.className=l.cls;ul.append(li)});card.append(ul);
+   if(c.buttons.length){const row=document.createElement('div');row.className='notes-tools';c.buttons.forEach(([label,fn])=>{const x=document.createElement('button');x.className='pill';x.textContent=label;x.onclick=fn;row.append(x)});card.append(row)}
+   box.append(card);
+  });
+ }
+
  // ---------- calendar & tasks ----------
  let lastCreated=null;
  const pad=n=>String(n).padStart(2,'0');
@@ -1915,6 +2189,20 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     }
     return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
    }
+   case 'briefing':return await briefing();
+   case 'deadlines':return deadlinesSay(a.details||{});
+   case 'show_crew':setSection('crew');return 'Here’s your crew: the Secretary, the Researcher and the Librarian. Name one and tell them what you need.';
+   case 'watch_topic':return watchTopic(a.query||a.details?.topic);
+   case 'unwatch_topic':return unwatchTopic(a.query||a.details?.topic);
+   case 'check_watch':return await checkWatch(true);
+   case 'research_inbox':{const ib=jget(INBOX_KEY,[]);if(!ib.length){setSection('crew');return 'The research inbox is empty.'}return openInbox()}
+   case 'verify_note':return await verifyNote(a.query||a.details?.topic);
+   case 'library_report':return libraryReport();
+   case 'find_duplicates':return showDuplicates();
+   case 'merge_duplicates':return mergeNotes();
+   case 'new_skill':return newSkill(a.query||a.details?.skill||raw);
+   case 'show_skills':return showSkills();
+   case 'forget_skill':return forgetSkill(a.query||a.details?.name);
    case 'read_link':return await readLink(a.query||a.details?.url||raw);
    case 'attach_file':$('attachBtn').classList.add('pulse');setTimeout(()=>$('attachBtn').classList.remove('pulse'),6000);return 'Tap the 📎 at the top, then pick a file, photo, video or recording — or paste a link. I’ll read it for you.';
    case 'save_attachment':return saveAttachment();
@@ -1959,7 +2247,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     if(workerBase())analyze(n,{quiet:true}).catch(()=>{});
     return 'Saved to your notes. I’ll file it under the right topic.';
    }
-   case 'organize_notes':setSection('notes');return await organizeAll();
+   case 'organize_notes':setSection('notes');return 'Librarian: '+await organizeAll();
    case 'save_note':{const n=saveCurrent();return n?'Saved.':'There’s nothing to save yet.'}
    case 'export_notes':{if(a.query==='this'&&currentNote()){exportNote(currentNote());return 'Exporting this note for Obsidian.'}return exportAllNotes()}
   }
@@ -2045,7 +2333,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(navigator.onLine===false){const o=offlineAnswer(q);talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),projects:projects().map(p=>p.name),
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),projects:projects().map(p=>p.name),skills:getSkills().slice(0,20).map(n=>({name:n.title.replace(/^Skill:\s*/,''),text:plain(n.body).slice(0,1500)})),
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
@@ -2053,7 +2341,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
@@ -2150,7 +2438,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const go=e.target.closest('[data-go]')?.dataset.go;
   if(e.target===$('quickMenu')||go==='close'){closeMenu();return}
   if(!go)return;closeMenu();
-  if(go==='keyboard')setKeyboard(true);else if(go==='projects')setSection('projects');else if(go==='overview'){closeMenu();doAction({type:'projects_overview'},'').then(t=>{if(t){setSub('',t);speak(t)}})}else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='settings')openConnection();
+  if(go==='keyboard')setKeyboard(true);else if(go==='projects')setSection('projects');else if(go==='crew')setSection('crew');else if(go==='overview'){closeMenu();doAction({type:'projects_overview'},'').then(t=>{if(t){setSub('',t);speak(t)}})}else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='settings')openConnection();
  });
  $('homeStop').onclick=()=>{greetingDone=true;endConversation(null);stopSpeech();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&convo)endConversation('Standing by.')});
@@ -2173,7 +2461,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // that is not on the circle or a button (tapping the circle goes straight to listening instead).
  function greet(){
   if(greetingDone)return;greetingDone=true;
-  const msg='Good day. I’m Max. I’m ready when you are.';
+  let msg='Good day. I’m Max. I’m ready when you are.';
+  try{if(jget('max_last_headline','')!==todayKey()){msg=headline();jset('max_last_headline',todayKey())}}catch{}
   setSub('',msg);speak(msg);
  }
  function armGreeting(){
