@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>Fake Passage Planner</title>
+<script>
+// Stand-in for Passage Planner's own functions (the real ones are tested separately against the live app code).
+const P = [{ id: 1, n: "Longview", c: "United States of America", lat: 46.1 }, { id: 2, n: "Vancouver", c: "Canada", lat: 49.3 }, { id: 3, n: "Manila", c: "Philippines", lat: 14.6 }, { id: 4, n: "Singapore", c: "Singapore", lat: 1.3 }];
+window.__calls = [];
+function searchPorts(q) { q = String(q).toLowerCase(); return P.filter(p => p.n.toLowerCase().startsWith(q)); }
+function mpDist(a, b) { window.__calls.push([a, b]); const k = [a, b].sort().join("|"); return { "Longview|Vancouver": 378.75, "Manila|Singapore": 1350.4 }[k] ?? null; }
+function portZD(p, t) { return { Longview: 7, Vancouver: 7, Manila: -8, Singapore: -8 }[p.n]; }
+</script><body>planner</body>

@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 612 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 641 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -22,6 +22,31 @@
   - "Any requests for Hobby Isle?"
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
+
+**🔁 Routines**
+- **Teach one:** "My morning routine is check email, check my watchlist and 20 push-ups"
+- **Run it:** "Start my morning routine". Max reads each step; say "done", "skip" or "stop". He keeps a streak.
+- **Repeating reminders:** "Remind me every day at 7am to log my workout". Also works for weekdays, weekends, "every Monday and Thursday", monthly, or "every 2 days".
+- **Manage them:** "show my routines", "delete my morning routine". Routines are saved as notes under **Max › Routines**.
+
+**🎯 Coaches**
+- **Talk to one:** "Talk to my fitness coach", "career coach, how do I prepare for chief mate?", "coach me on my business". The coaches are investment, fitness, skills, business, career and life.
+- **First session:** the coach asks a few questions about you.
+- **Coaching file:** goals and progress are kept in notes under **Max › Coaches**, so each session continues where you left off.
+- **Check-ins:** "Fitness coach, check in with me every evening at 8" creates a repeating calendar reminder.
+- **End a session:** "thanks coach" or "back to Max".
+- **Limits:**
+  - The investment coach never tells you to buy or sell and isn't a licensed advisor.
+  - The fitness coach isn't medical advice.
+  - The life coach isn't therapy and encourages real help if things are hard.
+
+**⚓ Passage Planner from Max**
+- **Things to say:**
+  - "Distance from Longview to Vancouver"
+  - "ETA from Longview to Vancouver at 12 knots leaving tomorrow 0600"
+  - "What speed do I need from Manila to Singapore to arrive by Monday 0800?"
+- **How it works:** Max uses your Passage Planner's own ports, routing and time zones, loaded quietly in the background. Your planner settings and saved plans are never changed.
+- **Limits:** a planning aid only, not for navigation.
 
 **📈 Markets: stocks, crypto, currencies**
 - **Things to say:**

@@ -205,6 +205,7 @@ body.on-home .top-status{opacity:.7}
 .att-img{display:block;max-width:100%;max-height:320px;border-radius:12px;margin:8px 0;object-fit:contain;background:#06101a}
 .att-text{white-space:pre-wrap;overflow-wrap:anywhere;background:#06101a;border:1px solid #1c344c;border-radius:10px;padding:10px;color:#c8d9e9;font-size:.85rem;max-height:420px;overflow:auto}
 #attachBtn.pulse{box-shadow:0 0 0 3px #54e0c9}
+body[data-coach]::after{content:attr(data-coach);position:fixed;top:8px;left:50%;transform:translateX(-50%);background:#0b1a2b;border:1px solid #54e0c9;color:#9ff0e0;font-size:.7rem;letter-spacing:.08em;padding:3px 10px;border-radius:999px;z-index:60;pointer-events:none}
 .mkt-chart{display:block;width:100%;height:120px;margin:8px 0}.mkt-chart.big{height:240px}
 .disp{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .disp-card{border:1px solid #1c344c;background:#0b1a2b;border-radius:16px;padding:14px;min-width:0}
@@ -1230,7 +1231,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1251,6 +1252,30 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- routine in progress ----
+  if(routineActive()&&wc<=5){
+   if(has(/^(done|did it|finished|finish|next|ok(ay)? next|tapos|tapos na|check|ok(ay)? done|yes done)\b/))return {type:'routine_step',query:'done'};
+   if(has(/^(skip|skip it|skip this|next one|pass|laktaw)\b/))return {type:'routine_step',query:'skip'};
+   if(has(/^(stop|stop (the )?routine|cancel( the)? routine|end( the)? routine|quit)\b/))return {type:'routine_step',query:'stop'};
+  }
+  // ---- routines ----
+  if(has(/\b(routines?|checklists?)\b/)&&!has(/\b(reminder|calendar|skills?)\b/)){
+   if(has(/^(start|begin|run|do|let'?s do|simulan)\b/)){return {type:'start_routine',query:raw.replace(/^.*?\b(start|begin|run|do|let'?s do|simulan)\b\s*(my |the )?/i,'').replace(/\s*(routine|checklist)\b.*$/i,'')}}
+   if(has(/\b(delete|remove|forget)\b/))return {type:'delete_routine',query:raw.replace(/^.*?\b(delete|remove|forget)\b\s*(my |the )?/i,'').replace(/\s*(routine|checklist)\b.*$/i,'')};
+   if(has(/\b(new|create|add|make|set up)\b|\broutine (is|:)|\bmy \w+( \w+)? routine is\b/))return {type:'new_routine',query:raw};
+   if(has(/^(show|list|what are|see|my)\b|\bwhat routines\b/))return {type:'show_routines'};
+  }
+  // ---- coaches ----
+  if(coachActive()&&has(/^(thanks?( you)?,? coach|thank you coach|end (the )?session|that'?s all,? coach|back to max|bye coach|exit coach|stop coaching)\b/))return {type:'coach_end'};
+  {const cm=raw.match(/^\s*(?:(?:hey|ok|okay|max)[,\s]+)*(?:(?:talk to|ask|open|call|i want to talk to|let me talk to|get)\s+(?:my |the )?)?(investment|fitness|skills?|business|career|life)\s+coach\b[\s,:.-]*(.*)$/i)||raw.match(/^\s*(?:max,?\s+)?coach me (?:on|about|in|for) (?:my )?(investment|fitness|skills?|business|career|life|\w+)\b[\s,:.-]*(.*)$/i);
+   if(cm){const id=coachFor(cm[1]);if(id){const rest=cm[2].trim();
+    if(has(/\b(check in|check-in|checkin)\b/)&&!/\d/.test(n)&&!has(/\b(morning|evening|night|noon|daily|weekly|every)\b/))return {type:'coach_checkin',details:{coach:id},query:raw};
+    if(!rest)return {type:'coach_talk',details:{coach:id}};
+    activeCoach={id,at:Date.now()};coachStatus();return null;}}} // with a question: the coach answers through the brain
+  if(has(/\b(my coaches|show (me )?(the |my )?coaches|all coaches)\b/))return {type:'show_crew'};
+  // ---- passage planner ----
+  {const pm=raw.replace(/[?.!]+$/,'').match(/\b(?:distance|how far|how many (?:nautical )?miles|ilang milya)\b.*?\bfrom\s+(.+?)\s+to\s+(.+)$/i)||raw.replace(/[?.!]+$/,'').match(/\b(?:distance)\s+(.+?)\s+(?:to|-)\s+(.+)$/i);
+   if(pm&&!has(/\b(eta|arrive|arrival|speed|knots?|leave|depart)\b/))return {type:'passage_distance',details:{from:pm[1].replace(/^(the )?port of /i,''),to:pm[2].replace(/^(the )?port of /i,'')}};}
   // ---- markets ----
   if(has(/\b(watch ?list|watchlist)\b/)&&!has(/\b(topics?|research|researcher|updates on)\b/)){
    if(has(/\b(add|put|include|isama|idagdag)\b/)){const m=raw.match(/\b(?:add|put|include|isama|idagdag)\s+(.+?)\s+(?:to|in|on|sa)\s+(?:my |the )?watch ?list(?:\s+(?:as|under|in)\s+(.+))?/i);if(m){const sy=symbolsIn(m[1])[0]||{symbol:m[1].replace(/^(the|a)\s+/i,'').trim().toUpperCase()};return {type:'watchlist_add',details:{symbol:sy.symbol,kind:sy.kind,tier:m[2]||''}}}}
@@ -2307,6 +2332,181 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // check alerts every 15 minutes while Max is open
  setInterval(()=>{if(document.visibilityState==='visible')alertsDue().then(f=>{if(f.length){const t='Price alert: '+f.join('; ')+'.';setSub('',t);speak(t)}})},15*60e3);
 
+ // ================= ROUTINES: repeating reminders and daily checklists =================
+ const ROUT_CAT='Max › Routines',ROUT_STATE='max_routine_state';
+ function repeatRule(rep){
+  const r=String(rep||'').toLowerCase().trim();if(!r||/^(no|none|once)$/.test(r))return '';
+  const D={mon:'MO',monday:'MO',tue:'TU',tues:'TU',tuesday:'TU',wed:'WE',wednesday:'WE',thu:'TH',thur:'TH',thurs:'TH',thursday:'TH',fri:'FR',friday:'FR',sat:'SA',saturday:'SA',sun:'SU',sunday:'SU',mo:'MO',tu:'TU',we:'WE',th:'TH',fr:'FR',sa:'SA',su:'SU'};
+  if(/week ?days|weekday|monday to friday|mon-fri/.test(r))return 'RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR';
+  if(/week ?ends?/.test(r))return 'RRULE:FREQ=WEEKLY;BYDAY=SA,SU';
+  const ev=r.match(/every (\d{1,2}) (day|week|month)s?/);if(ev)return 'RRULE:FREQ='+{day:'DAILY',week:'WEEKLY',month:'MONTHLY'}[ev[2]]+';INTERVAL='+ev[1];
+  const days=[...new Set((r.replace(/^weekly:?/,'').match(/[a-z]+/g)||[]).map(w=>D[w]).filter(Boolean))];
+  if(days.length&&!/^(daily|every ?day|monthly|yearly)$/.test(r))return 'RRULE:FREQ=WEEKLY;BYDAY='+days.join(',');
+  if(/daily|every ?day|araw-araw|gabi-gabi|every (morning|night|evening)/.test(r))return 'RRULE:FREQ=DAILY';
+  if(/weekly|every week/.test(r))return 'RRULE:FREQ=WEEKLY';
+  if(/monthly|every month/.test(r))return 'RRULE:FREQ=MONTHLY';
+  if(/yearly|every year|annually/.test(r))return 'RRULE:FREQ=YEARLY';
+  return '';
+ }
+ const repeatText=rr=>!rr?'':/BYDAY=MO,TU,WE,TH,FR$/.test(rr)?'every weekday':/BYDAY=SA,SU$/.test(rr)?'every weekend':/INTERVAL=(\d+)/.test(rr)?'every '+rr.match(/INTERVAL=(\d+)/)[1]+' '+({DAILY:'days',WEEKLY:'weeks',MONTHLY:'months'}[rr.match(/FREQ=(\w+)/)[1]]):/BYDAY=/.test(rr)?'every '+rr.match(/BYDAY=([A-Z,]+)/)[1].split(',').map(d=>({MO:'Monday',TU:'Tuesday',WE:'Wednesday',TH:'Thursday',FR:'Friday',SA:'Saturday',SU:'Sunday'}[d])).join(', '):({DAILY:'every day',WEEKLY:'every week',MONTHLY:'every month',YEARLY:'every year'}[rr.match(/FREQ=(\w+)/)?.[1]]||'');
+ const routines=()=>getNotes().filter(n=>n.category===ROUT_CAT).map(n=>({id:n.id,name:n.title.replace(/^Routine:\s*/,''),steps:noteLines(n).filter(l=>!/^(Time|Repeats):/.test(l)),note:n}));
+ const rstate=()=>jget(ROUT_STATE,{});
+ function findRoutine(name){const k=norm(String(name||'').replace(/\b(my|the|routine|checklist)\b/gi,' '));const list=routines();return list.find(r=>norm(r.name)===k)||list.find(r=>k&&(norm(r.name).includes(k)||k.includes(norm(r.name))))||(list.length===1&&!k?list[0]:null)}
+ function splitSteps(t){return String(t||'').replace(/\band then\b|\bthen\b/gi,',').split(/\s*(?:,|;|\n|\band\b(?=[^,]*$))\s*/i).map(x=>x.replace(/^(?:[-•]\s*|\d+[.)]\s+)/,'').replace(/[.!]+$/,'').trim()).filter(x=>x.length>1).slice(0,20)}
+ async function newRoutine(d,raw){
+  let name=String(d?.name||'').trim(),steps=d?.steps||[];
+  if(!steps.length){const m=String(raw||'').match(/(?:new routine|create (?:a )?routine|add (?:a )?routine|my)\s+(?:called |named )?(.{2,40}?)\s+(?:routine|checklist)?\s*(?:is|:|—|-|with steps?|goes)\s+(.+)$/i)||String(raw||'').match(/(?:new routine|routine)\s+(.{2,40}?)\s*:\s*(.+)$/i);if(m){name=name||m[1];steps=splitSteps(m[2])}}
+  name=name.replace(/\b(routine|checklist|my|the)\b/gi,' ').replace(/\s+/g,' ').trim();name=name.charAt(0).toUpperCase()+name.slice(1);
+  if(!name||!steps.length)return 'Tell me the routine in one go, like “my morning routine is check email, check my watchlist, 20 push-ups”.';
+  const all=loadAll(),old=all.find(n=>!n.deleted&&n.category===ROUT_CAT&&norm(n.title)===norm('Routine: '+name));
+  const rr=repeatRule(d?.repeat||(d?.time?'daily':'')),body='<ul>'+steps.map(s=>'<li>'+escHtml(s)+'</li>').join('')+'</ul>'+(d?.time?'<p>Time: '+escHtml(d.time)+'</p>':'')+(rr?'<p>Repeats: '+escHtml(repeatText(rr))+'</p>':'');
+  if(old){old.body=body;old.updatedAt=Date.now()}else all.push({id:newId(),title:'Routine: '+name,category:ROUT_CAT,tags:['routine'],body,source:'routine',createdAt:Date.now(),updatedAt:Date.now(),deleted:false});
+  putNotes(all);
+  let cal='';
+  if(d?.time&&/^\d{1,2}:\d\d$/.test(d.time)&&/^linked/.test(cloud.google||'')){
+   const t=new Date();const [hh,mm]=d.time.split(':').map(Number);t.setHours(hh,mm,0,0);if(t<new Date())t.setDate(t.getDate()+1);
+   const {r}=await postJson('/api/calendar/event',{title:'🔁 '+name+' routine',start:localIso(t),durationMinutes:15,reminderMinutes:0,recurrence:rr||'RRULE:FREQ=DAILY',notes:'Say “start my '+name.toLowerCase()+' routine” to Max.',tz:tzName()},20000).catch(()=>({r:{ok:false}}));
+   cal=r.ok?' I added a reminder to your calendar at '+d.time+' '+(repeatText(rr||'RRULE:FREQ=DAILY'))+'.':' I couldn’t add the calendar reminder, but the routine is saved.';
+  }
+  return (old?'Updated':'Saved')+' your '+name.toLowerCase()+' routine: '+steps.length+' step'+(steps.length===1?'':'s')+'.'+cal+' Say “start my '+name.toLowerCase()+' routine” when you’re ready.';
+ }
+ let activeRoutine=null;
+ const routineActive=()=>!!(activeRoutine&&Date.now()-activeRoutine.at<45*60e3);
+ function renderRoutine(){
+  const a=activeRoutine,r=routines().find(x=>x.id===a.id);if(!r)return;
+  showDisplay(r.name+' routine','Step '+Math.min(a.idx+1,r.steps.length)+' of '+r.steps.length+' · say “done”, “skip” or “stop”',[{badge:'ROUTINE',badgeClass:'badge-res',meta:(rstate()[r.id]?.streak||0)+'-day streak',title:r.steps[a.idx]||'All done',
+   lines:r.steps.map((s,i)=>({text:(a.done[i]===true?'✅ ':a.done[i]===false?'⏭ ':i===a.idx?'▶ ':'◻ ')+s,cls:i===a.idx?'miss':a.done[i]?'ok':''})),
+   buttons:[['Done',()=>{const t=routineStep('done');setSub('',t);speak(t)}],['Skip',()=>{const t=routineStep('skip');setSub('',t);speak(t)}],['Stop',()=>{const t=routineStep('stop');setSub('',t);speak(t)}]]}]);
+ }
+ function startRoutine(d){
+  const r=findRoutine(d?.name||d?.query||'');
+  if(!r)return routines().length?'Which routine? You have: '+routines().map(x=>x.name).join(', ')+'.':'You have no routines yet. Say “my morning routine is check email, check my watchlist, 20 push-ups”.';
+  activeRoutine={id:r.id,idx:0,done:[],at:Date.now()};renderRoutine();
+  return r.name+' routine, '+r.steps.length+' step'+(r.steps.length===1?'':'s')+'. Step 1: '+r.steps[0]+'. Say “done” when finished.';
+ }
+ function routineStep(kind){
+  if(!routineActive())return 'There’s no routine running. Say “start my morning routine”.';
+  const a=activeRoutine,r=routines().find(x=>x.id===a.id);if(!r){activeRoutine=null;return 'That routine was deleted.'}
+  a.at=Date.now();
+  if(kind==='stop'){activeRoutine=null;setSection('home');return 'Stopped. '+a.done.filter(Boolean).length+' of '+r.steps.length+' steps done.'}
+  a.done[a.idx]=kind!=='skip';a.idx++;
+  if(a.idx<r.steps.length){renderRoutine();return (kind==='skip'?'Skipped. ':'Good. ')+'Step '+(a.idx+1)+': '+r.steps[a.idx]+'.'}
+  const st=rstate(),s=st[r.id]||{streak:0,last:''},today=todayKey(),y=new Date();y.setDate(y.getDate()-1);const yk=localDate(y);
+  const doneN=a.done.filter(Boolean).length;
+  if(s.last!==today){s.streak=s.last===yk?s.streak+1:1;s.last=today}
+  s.history=Object.assign(s.history||{},{[today]:doneN+'/'+r.steps.length});st[r.id]=s;jset(ROUT_STATE,st);
+  activeRoutine=null;renderRoutine.call&&showDisplay(r.name+' routine','Finished',[{badge:'DONE',title:doneN+' of '+r.steps.length+' steps',lines:['🔥 '+s.streak+'-day streak']}]);
+  return 'All done — '+doneN+' of '+r.steps.length+' steps. That’s a '+s.streak+'-day streak'+(s.streak>=3?'. Keep it going!':'.');
+ }
+ function showRoutines(){
+  const list=routines(),st=rstate(),today=todayKey();
+  showDisplay('My routines',list.length+' routine'+(list.length===1?'':'s'),list.length?list.map(r=>({badge:st[r.id]?.last===today?'DONE TODAY':'ROUTINE',badgeClass:st[r.id]?.last===today?'badge-note':'badge-res',meta:'🔥 '+(st[r.id]?.streak||0)+'-day streak',title:r.name,lines:r.steps.map(s=>'• '+s),buttons:[['Start',()=>{const t=startRoutine({name:r.name});setSub('',t);speak(t)}],['Edit',()=>loadNote(r.id)],['Delete',()=>{const t=deleteRoutine({name:r.name});setSub('',t);speak(t);showRoutines()}]]})):[{title:'No routines yet',lines:['Say “my morning routine is check email, check my watchlist, 20 push-ups”.']}]);
+  return list.length?'You have '+list.length+' routine'+(list.length===1?'':'s')+': '+list.map(r=>r.name+(st[r.id]?.last===today?' (done today)':'')).join(', ')+'.':'You have no routines yet.';
+ }
+ function deleteRoutine(d){
+  const r=findRoutine(d?.name||'');if(!r)return 'I don’t have a routine called that.';
+  const all=loadAll(),n=all.find(x=>x.id===r.id);n.deleted=true;n.updatedAt=Date.now();putNotes(all);if(activeRoutine?.id===r.id)activeRoutine=null;
+  return 'Deleted the '+r.name.toLowerCase()+' routine. (The calendar reminder, if there is one, stays until you delete it: say “cancel my '+r.name.toLowerCase()+' routine reminder”.)';
+ }
+
+ // ================= COACHES =================
+ const COACH_CAT='Max › Coaches';
+ const COACHES={
+  investment:{name:'Investment coach',icon:'💰',words:'invest|investment|investing|money|finance|financial|savings?|budget|stocks?|portfolio',brief:'Focus: his money goals, budget, savings plan, emergency fund, understanding investing concepts, and keeping to the PSE strategy rules HE set (three tiers: blue chips, middle, speculative). Use his watchlist and sales log when relevant. RULES: you are not a licensed financial advisor — never tell him to buy, sell or hold a specific stock or coin, never predict prices, never promise returns; explain options, risks and questions to ask, and point him to a licensed advisor for personal recommendations.'},
+  fitness:{name:'Fitness coach',icon:'🏋️',words:'fitness|workout|exercise|gym|training|run|running|health|strength|push-?ups',brief:'Focus: workouts he can do on board (small spaces, no equipment, ship motion, watch schedules) and at home, consistency, sleep and energy around watchkeeping. RULES: not medical advice — for pain, injury, illness or medication, tell him to see a doctor; never suggest extreme dieting, fasting or rapid weight loss; keep progress positive and realistic.'},
+  skills:{name:'Skills coach',icon:'📚',words:'skills?|learn|learning|study|studying|exam|review|marina|course|practice',brief:'Focus: learning plans and daily practice — e.g. the MARINA deck officer exams, maritime conventions, coding, languages. Break goals into small daily steps, quiz him from his own notes when asked, track what he finished.'},
+  business:{name:'Business coach',icon:'📈',words:'business|side ?hustle|income|hobby isle|website|sales|marketing|apps?',brief:'Focus: his side businesses (Hobby Isle affiliate site, his apps), clear weekly targets, ideas to test, using real numbers (visitors, sales log) when he shares them. Practical, low-cost steps for someone who works at sea and builds from his phone.'},
+  career:{name:'Career coach',icon:'🧭',words:'career|promotion|rank|chief mate|captain|master|cv|resume|interview|contract|manning|sea ?time',brief:'Focus: his seafaring career — rank goals, sea time, certificates and their expiry, training, CV and interview practice, manning agency communication. Work with the Secretary for deadlines.'},
+  life:{name:'Life coach',icon:'🌱',words:'life|habits?|balance|family|goals?|motivation|stress|mindset|purpose',brief:'Focus: life goals, habits, balance between long contracts at sea and family, weekly reflection. Supportive and practical. RULES: not therapy — if he mentions serious distress, hopelessness or crisis, respond with care and encourage him to reach a trusted person or a professional, and keep that the priority.'}};
+ const COACH_IDS=Object.keys(COACHES);
+ let activeCoach=null;
+ const coachActive=()=>!!(activeCoach&&Date.now()-activeCoach.at<15*60e3);
+ const coachNote=id=>getNotes().find(n=>n.category===COACH_CAT&&n.title==='Coach: '+COACHES[id].name);
+ function coachFileText(id){const n=coachNote(id);return n?noteLines(n).join('\n').slice(-6000):''}
+ function coachAppend(id,lines){
+  if(!lines||!lines.length)return;
+  const all=loadAll();let n=all.find(x=>!x.deleted&&x.category===COACH_CAT&&x.title==='Coach: '+COACHES[id].name);
+  if(!n){n={id:newId(),title:'Coach: '+COACHES[id].name,category:COACH_CAT,tags:['coach',id],body:'',source:'coach',createdAt:Date.now(),deleted:false};all.push(n)}
+  n.body=(n.body||'')+lines.map(l=>'<p>'+todayKey()+' · '+escHtml(String(l).slice(0,300))+'</p>').join('');n.updatedAt=Date.now();putNotes(all);
+ }
+ function coachFor(text){const t=String(text||'').toLowerCase();const direct=t.match(/\b(investment|fitness|skills?|business|career|life)\b/);if(direct)return direct[1]==='skill'?'skills':direct[1];return COACH_IDS.find(id=>new RegExp('\\b('+COACHES[id].words+')\\b').test(t))||''}
+ function coachStatus(){if(!coachActive()){document.body.removeAttribute('data-coach');return}document.body.dataset.coach=COACHES[activeCoach.id].icon+' '+COACHES[activeCoach.id].name.toUpperCase()}
+ function coachTalk(d){
+  const id=d?.coach&&COACHES[d.coach]?d.coach:coachFor(d?.query||'');
+  if(!id){setSection('crew');return 'Which coach? Investment, fitness, skills, business, career or life.'}
+  activeCoach={id,at:Date.now()};coachStatus();
+  const c=COACHES[id],file=coachFileText(id),last=file.split('\n').filter(Boolean).slice(-1)[0]||'';
+  return c.name+' here. '+(file?'Last time: '+last.replace(/^\d{4}-\d\d-\d\d · /,'')+'. What do you want to work on today?':'Let’s get to know your situation first. What’s the one thing you most want to improve with your '+({investment:'money',fitness:'fitness',skills:'skills',business:'business',career:'career',life:'life'}[id])+' right now?');
+ }
+ function coachEnd(){if(!activeCoach)return 'Okay.';const c=COACHES[activeCoach.id];activeCoach=null;coachStatus();return c.name+' signing off. I’ve kept your notes for next time. Back to Max.'}
+ async function coachCheckin(d){
+  const id=d?.coach&&COACHES[d.coach]?d.coach:activeCoach?.id||coachFor(d?.query||'');if(!id)return 'Which coach should check in with you?';
+  if(!/^linked/.test(cloud.google||''))return 'I need your Google Calendar connected to schedule check-ins.';
+  const time=/^\d{1,2}:\d\d$/.test(d?.time||'')?d.time:'20:00',rr=repeatRule(d?.repeat||'daily')||'RRULE:FREQ=DAILY',c=COACHES[id];
+  const t=new Date();const [hh,mm]=time.split(':').map(Number);t.setHours(hh,mm,0,0);if(t<new Date())t.setDate(t.getDate()+1);
+  const {r,data}=await postJson('/api/calendar/event',{title:c.icon+' '+c.name+' check-in',start:localIso(t),durationMinutes:15,reminderMinutes:0,recurrence:rr,notes:'Say “talk to my '+c.name.toLowerCase()+'” to Max.',tz:tzName()},20000);
+  if(!r.ok)return 'I couldn’t schedule it. '+(data.error||'');
+  lastCreated={kind:'event',id:data.event.id,title:data.event.title,at:Date.now()};
+  return 'Done — your '+c.name.toLowerCase()+' will check in '+repeatText(rr)+' at '+time+'. Your phone will remind you. Say “undo” if that’s wrong.';
+ }
+ function coachSummary(){return COACH_IDS.map(id=>{const n=coachNote(id);if(!n)return null;const lines=noteLines(n),last=lines.slice(-1)[0]||'',goal=lines.filter(l=>/goal/i.test(l)).slice(-1)[0]||'';const days=Math.round((Date.now()-(n.updatedAt||0))/864e5);
+  return {id,icon:COACHES[id].icon,name:COACHES[id].name,goal:goal.replace(/^\d{4}-\d\d-\d\d · /,''),last:last.replace(/^\d{4}-\d\d-\d\d · /,''),days}}).filter(Boolean)}
+
+ // ================= PASSAGE PLANNER: Max uses your app's own ports, routing and time zones =================
+ let ppFrame=null,ppReady=null;
+ const ppUrl=()=>location.origin+'/';
+ function planner(){
+  if(ppReady)return ppReady;
+  // Keep your Passage Planner settings exactly as they were: snapshot them, restore after it has loaded.
+  const snap={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('pp2_'))snap[k]=localStorage.getItem(k)}}catch{}
+  const restore=()=>{try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('pp2_')&&!(k in snap))localStorage.removeItem(k)}for(const [k,v] of Object.entries(snap))if(localStorage.getItem(k)!==v)localStorage.setItem(k,v)}catch{}};
+  ppReady=new Promise((ok,no)=>{
+   ppFrame=document.createElement('iframe');ppFrame.src=ppUrl();ppFrame.setAttribute('aria-hidden','true');ppFrame.tabIndex=-1;
+   ppFrame.style.cssText='position:fixed;width:1px;height:1px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none';
+   document.body.append(ppFrame);
+   const t0=Date.now(),poll=()=>{let w=null;try{w=ppFrame.contentWindow;if(w&&typeof w.searchPorts==='function'&&typeof w.mpDist==='function'&&w.searchPorts('Manila').length){try{w.Storage.prototype.setItem=function(){};w.Storage.prototype.removeItem=function(){};w.Storage.prototype.clear=function(){}}catch{}setTimeout(()=>{restore();ok(w)},300);setTimeout(restore,3000);return}}catch(e){/* still starting */}
+    if(Date.now()-t0>30000){restore();no(new Error('Passage Planner didn’t load (no internet, or it moved).'));return}setTimeout(poll,300)};
+   ppFrame.onload=poll;setTimeout(poll,1500);
+  }).catch(e=>{ppReady=null;if(ppFrame){ppFrame.remove();ppFrame=null}throw e});
+  return ppReady;
+ }
+ function ppPort(w,name){
+  const q=String(name||'').replace(/\b(port of|the port|port)\b/gi,'').trim();const list=w.searchPorts(q);
+  if(!list.length)throw new Error('Passage Planner has no port called “'+q+'”.');
+  return list[0];
+ }
+ const zLabel=z=>'UTC'+(z>0?'−':z<0?'+':'±')+Math.abs(z);
+ const fmtPort=p=>p.n+(p.cn||p.c?', '+(p.cn||p.c):'');
+ function fmtLT(ms){return new Date(ms).toLocaleString('en-GB',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false})}
+ async function passage(d,mode){
+  d=d||{};if(!d.from||!d.to)return 'From which port to which port?';
+  setSection('display');$('dispTitle').textContent='Asking Passage Planner…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  let w;try{w=await planner()}catch(e){$('dispTitle').textContent='Passage Planner';$('dispSub').textContent=e.message;return 'I couldn’t open Passage Planner. '+e.message}
+  let A,B,nm;
+  try{A=ppPort(w,d.from);B=ppPort(w,d.to);if(A===B)return 'Those are the same port.';nm=w.mpDist(A.n,B.n)}catch(e){$('dispTitle').textContent='Passage Planner';$('dispSub').textContent=e.message;return e.message}
+  if(!(nm>0))return 'Passage Planner couldn’t find a route from '+A.n+' to '+B.n+' with its current settings.';
+  const lines=['Distance '+nm.toFixed(1)+' nm (pilot station to pilot station, Passage Planner route)'];let say=fmtPort(A)+' to '+fmtPort(B)+': '+nm.toFixed(1)+' nautical miles';
+  if(mode==='eta'){
+   const sp=+d.speed||+jget('max_pp_speed',0)||12;if(+d.speed)jset('max_pp_speed',+d.speed);
+   const delays=+d.delays||0,hours=nm/sp+delays;
+   const dep=/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(d.depart||'')?d.depart:localIso(new Date()).slice(0,16);
+   const z0=w.portZD(A,Date.parse(dep+':00Z'));const depUTC=Date.parse(dep+':00Z')+z0*36e5;
+   lines.push('Departure '+fmtLT(depUTC-z0*36e5)+' LT ('+zLabel(z0)+')');
+   if(/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(d.arriveBy||'')){
+    const z1=w.portZD(B,Date.parse(d.arriveBy+':00Z'));const arrUTC=Date.parse(d.arriveBy+':00Z')+z1*36e5,avail=(arrUTC-depUTC)/36e5-delays;
+    if(avail<=0)return 'That arrival time is before you could leave.';
+    const need=nm/avail;lines.push('Arrive by '+fmtLT(arrUTC-z1*36e5)+' LT ('+zLabel(z1)+')','Speed needed '+need.toFixed(1)+' kn ('+avail.toFixed(1)+' h of steaming'+(delays?' after '+delays+' h delays':'')+')');
+    say+='. To arrive by '+fmtLT(arrUTC-z1*36e5)+' local time you need '+need.toFixed(1)+' knots';
+   }else{
+    const etaUTC=Math.round((depUTC+hours*36e5)/6e4)*6e4,z1=w.portZD(B,etaUTC);
+    lines.push('Speed '+sp+' kn'+(+d.speed?'':' (your usual — say another speed if different)'),'Steaming time '+Math.floor(nm/sp)+' h '+Math.round((nm/sp%1)*60)+' min'+(delays?' + '+delays+' h delays':''),'ETA '+fmtLT(etaUTC-z1*36e5)+' LT ('+zLabel(z1)+') · '+fmtLT(etaUTC)+' UTC');
+    say+='. At '+sp+' knots that’s '+(nm/sp).toFixed(1)+' hours'+(delays?' plus '+delays+' hours of delays':'')+', arriving '+fmtLT(etaUTC-z1*36e5)+' local time';
+   }
+  }
+  showDisplay(A.n+' → '+B.n,'From your Passage Planner · planning aid only, not for navigation',[{badge:'PASSAGE',badgeClass:'badge-res',meta:fmtPort(A)+' → '+fmtPort(B),title:nm.toFixed(1)+' nm',lines,buttons:[['Open Passage Planner',()=>openProject(projects().find(p=>p.id==='passage')||{name:'Passage Planner',url:ppUrl()})]]}]);
+  return say+'.';
+ }
+
  // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
  const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
  const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
@@ -2389,6 +2589,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    {badge:'WAITING',badgeClass:'badge-draft',title:'Waiting for you',lines:wait.length?wait.map(x=>'• '+x):['Nothing waiting.']},
    {badge:'WEBMASTER',badgeClass:'badge-res',title:'Your projects',lines:[down.length?{text:'Down: '+down.join(', '),cls:'miss'}:{text:'All sites I can check are up.',cls:'ok'},visitors.length?'Visitors today: '+visitors.join(' · '):statsProblem==='not connected'?'Visitor numbers not connected.':'',Object.keys(sales).length?'Sales this month: '+totalsText(sales):'No sales logged this month.'].filter(Boolean)},
    ...(mktData&&mktData.length?[{badge:'MARKETS',badgeClass:'badge-res',title:'Watchlist',lines:[...mktFired.map(t=>({text:'🔔 '+t,cls:'miss'})),...mktData.filter(q=>!q.error).slice(0,6).map(q=>q.symbol+' '+quoteLine(q))],buttons:[['Open watchlist',()=>showWatchlist(true).then(t=>{setSub('',t);speak(t)})]]}]:[]),
+   ...(routines().length?[{badge:'ROUTINES',badgeClass:'badge-res',title:'Routines today',lines:routines().map(r=>(rstate()[r.id]?.last===todayKey()?'✅ ':'◻ ')+r.name+' — 🔥 '+(rstate()[r.id]?.streak||0)+'-day streak'),buttons:routines().filter(r=>rstate()[r.id]?.last!==todayKey()).slice(0,2).map(r=>['Start '+r.name,()=>{const t=startRoutine({name:r.name});setSub('',t);speak(t)}])}]:[]),
+   ...(coachSummary().length?[{badge:'COACHES',badgeClass:'badge-note',title:'Your coaches',lines:coachSummary().map(c=>c.icon+' '+c.name+(c.goal?' — '+c.goal:'')+' · last session '+(c.days===0?'today':c.days===1?'yesterday':c.days+' days ago'))}]:[]),
    {badge:'RESEARCHER',badgeClass:'badge-res',title:'Watched topics',lines:watch.length?watch.map(t=>'🔎 '+t.topic+(t.lastChecked?' — checked '+whenText(localDate(new Date(t.lastChecked))):' — not checked yet')):['No watched topics. Say “keep an eye on BWM updates”.']}];
   showDisplay(hi+', Mark',new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}),cards);
   jset('max_last_brief',todayKey());
@@ -2547,6 +2749,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    {badge:'RESEARCHER',badgeClass:'badge-res',title:'🔎 Researcher',meta:'research · watch list · fact-checks',lines:[...(inbox.length?[{text:inbox.length+' update'+(inbox.length===1?'':'s')+' waiting for approval',cls:'miss'}]:[]),...(watch.length?watch.map(t=>'Watching: '+t.topic+(t.lastChecked?' (checked '+whenText(localDate(new Date(t.lastChecked)))+')':' (not checked yet)')):['No watched topics. Say “keep an eye on BWM updates”.'])],
     buttons:[...inbox.slice(0,3).map(it=>['Open: '+it.topic,()=>{const t=openInbox(it.id);setSub('',t);speak(t)}]),...(watch.length?[['Check now',run('check_watch')]]:[])]},
    {badge:'LIBRARIAN',badgeClass:'badge-res',title:'🗂 Librarian',meta:'filing · duplicates · tidy-ups',lines:[notes.length+' notes'+(unsorted?' · '+unsorted+' not filed':' · all filed')],buttons:[['Library report',run('library_report')],['Duplicates',run('find_duplicates')],...(unsorted?[['Organize',run('organize_notes')]]:[])]},
+   {badge:'COACHES',badgeClass:'badge-note',title:'🎯 Your coaches',meta:'investment · fitness · skills · business · career · life',lines:COACH_IDS.map(id=>{const n=coachNote(id);return COACHES[id].icon+' '+COACHES[id].name+(n?' — last session '+whenText(localDate(new Date(n.updatedAt))):' — not started')}),buttons:COACH_IDS.map(id=>[COACHES[id].icon+' '+COACHES[id].name.replace(' coach',''),()=>{const t=coachTalk({coach:id});setSub('',t);speak(t)}])},
+   {badge:'ROUTINES',badgeClass:'badge-res',title:'🔁 Routines',meta:routines().length+' routine'+(routines().length===1?'':'s'),lines:routines().length?routines().map(r=>'• '+r.name+' — 🔥 '+(rstate()[r.id]?.streak||0)+' days'):['Say “my morning routine is …”.'],buttons:routines().slice(0,3).map(r=>['Start '+r.name,()=>{const t=startRoutine({name:r.name});setSub('',t);speak(t)}])},
    {badge:'SKILLS',badgeClass:'badge-draft',title:'🧠 Skills you taught Max',meta:skills.length+' skill'+(skills.length===1?'':'s'),lines:skills.length?skills.map(n=>'• '+n.title.replace(/^Skill:\s*/,'')):['Say “new skill …” to teach me one.'],buttons:skills.length?[['Show skills',run('show_skills')]]:[]}];
   crew.forEach(c=>{
    const card=document.createElement('article');card.className='disp-card';
@@ -2576,12 +2780,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function addEvent(d){
   if(!d||!d.title)return 'What should I call it?';
   if(!d.start)return 'When should I set “'+d.title+'”? Tell me the day and time.';
-  const {r,data}=await postJson('/api/calendar/event',{...d,tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC'},20000);
+  const rr=repeatRule(d.repeat);
+  const {r,data}=await postJson('/api/calendar/event',{...d,...(rr?{recurrence:rr}:{}),tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC'},20000);
   if(data&&data.needGoogle)return needGoogleMsg;
   if(!r.ok)return 'I couldn’t add it to your calendar. '+(data.error||'');
   lastCreated={kind:'event',id:data.event.id,title:data.event.title,at:Date.now()};
   const rm=data.event.reminderMinutes;
-  return 'Done — “'+data.event.title+'” '+fmtWhen(data.event.start,data.event.allDay)+'. '+(data.event.allDay?'':rm===0?'Your phone will notify you at that time. ':'Your phone will remind you '+rm+' minutes before. ')+'Say “undo” if that’s wrong.';
+  return 'Done — “'+data.event.title+'” '+fmtWhen(data.event.start,data.event.allDay)+(rr?', repeating '+repeatText(rr):'')+'. '+(data.event.allDay?'':rm===0?'Your phone will notify you at that time. ':'Your phone will remind you '+rm+' minutes before. ')+'Say “undo” if that’s wrong.';
  }
  async function addTask(d){
   if(!d||!d.title)return 'What’s the task?';
@@ -2640,6 +2845,16 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'draft_email':return await draftEmail(a.details||{instruction:a.query},raw);
    case 'send_email':return await sendEmail(/\b(send|ipadala|ipasa|yes)\b/i.test(raw)&&!/\b(don'?t|do not|not yet|huwag|wait)\b/i.test(raw));
    case 'cancel_email':return await cancelEmail();
+   case 'new_routine':return await newRoutine(a.details||{},raw);
+   case 'start_routine':return startRoutine(a.details||{name:a.query});
+   case 'routine_step':return routineStep(a.query||'done');
+   case 'show_routines':return showRoutines();
+   case 'delete_routine':return deleteRoutine(a.details||{name:a.query});
+   case 'coach_talk':return coachTalk(a.details?.coach?a.details:{query:a.query||raw});
+   case 'coach_checkin':return await coachCheckin(a.details||{query:raw});
+   case 'coach_end':return coachEnd();
+   case 'passage_distance':return await passage(a.details||{},'distance');
+   case 'passage_eta':return await passage(a.details||{},'eta');
    case 'market_quote':return await marketQuote(a.details||{},raw);
    case 'show_watchlist':return await showWatchlist(true);
    case 'market_chart':return await marketChart(a.details||{symbol:a.query});
@@ -2651,7 +2866,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'set_currencies':return setCurrencies(a.details||{},raw);
    case 'briefing':return await briefing();
    case 'deadlines':return deadlinesSay(a.details||{});
-   case 'show_crew':setSection('crew');return 'Here’s your crew: the Secretary, the Researcher and the Librarian. Name one and tell them what you need.';
+   case 'show_crew':setSection('crew');return 'Here’s your crew: the Secretary, the Researcher, the Librarian, and your six coaches. Name one and tell them what you need.';
    case 'watch_topic':return watchTopic(a.query||a.details?.topic);
    case 'unwatch_topic':return unwatchTopic(a.query||a.details?.topic);
    case 'check_watch':return await checkWatch(true);
@@ -2799,15 +3014,16 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(navigator.onLine===false){const o=offlineAnswer(q);talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),projects:projects().map(p=>p.name),skills:getSkills().slice(0,20).map(n=>({name:n.title.replace(/^Skill:\s*/,''),text:plain(n.body).slice(0,1500)})),
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),projects:projects().map(p=>p.name),skills:getSkills().slice(0,20).map(n=>({name:n.title.replace(/^Skill:\s*/,''),text:plain(n.body).slice(0,1500)})),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
    if(r.status===401){cloud.memory=false;if(data.needLogin==='google'){cloud.state='needlogin';refreshConnectionLabel();throw new Error('Please sign in with Google first: hold the circle, then Settings.')}cloud.state='needpass';refreshConnectionLabel();throw new Error('Max needs the passcode. Tap ⚙ and enter it.')}
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
+   if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
@@ -2944,7 +3160,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
 
  // For testing on a computer: window.MaxDebug.understand("show me my notes on ballast")
- window.MaxDebug={understand:t=>matchLearned(norm(t))||matchCommand(t),norm,waiting:()=>({confirm:confirmFresh(),pick:!!pendingPick,draft:!!pendingDraft})};
+ window.MaxDebug={understand:t=>matchLearned(norm(t))||matchCommand(t),norm,waiting:()=>({confirm:confirmFresh(),pick:!!pendingPick,draft:!!pendingDraft}),passage:(from,to,extra)=>passage({from,to,...(extra||{})},extra?'eta':'distance')};
 
  // ---------- startup: each step is separate, so one failure cannot freeze the whole app ----------
  function step(name,fn){try{fn()}catch(e){console.error('Max startup step failed: '+name,e);window.maxShowProblem('Startup step "'+name+'" failed: '+(e&&e.message||e))}}
