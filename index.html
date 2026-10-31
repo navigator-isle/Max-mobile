@@ -200,6 +200,11 @@ body.on-home .top-status{opacity:.7}
 .export-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .export-row .label{margin:0 6px 0 0}
 #editorCategory{background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:9px;padding:10px;font:inherit;min-width:0}
+.dash{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.dash-tile{border:1px solid #1c344c;background:#0b1a2b;border-radius:14px;padding:12px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.dash-tile b{font-size:1.25rem;color:#e8f3ff;overflow-wrap:anywhere;line-height:1.2}
+.dash-tile span{font-size:.75rem;color:#8fa8c0}.dash-tile small{font-size:.7rem;color:#6f8aa3}
+.proj .stats{font-size:.8rem;color:#9ff0e0!important;white-space:normal!important}
 .proj-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .proj{border:1px solid #1c344c;background:#0b1a2b;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px}
 .proj .dot{width:10px;height:10px;border-radius:50%;background:#4a6378;flex:none}
@@ -303,7 +308,8 @@ body.on-home .top-status{opacity:.7}
 
   <main id="projectsScreen" class="section-screen">
     <div class="notes-header"><div><h1>My projects</h1><p id="projectsSub">Say “open SeaLex”, “are my apps up?” or “on Hobby Isle, add …”</p></div></div>
-    <div class="notes-tools"><button id="projCheck" class="pill">Check if they’re up</button><button id="projRequests" class="pill">Change requests</button></div>
+    <div id="projDash" class="dash"></div>
+    <div class="notes-tools"><button id="projCheck" class="pill">Refresh</button><button id="projRequests" class="pill">Change requests</button></div>
     <div id="projList" class="proj-list"></div>
     <div id="projReqBox" class="banner" hidden></div>
   </main>
@@ -406,6 +412,7 @@ body.on-home .top-status{opacity:.7}
         <input id="projAddName" placeholder="Name, e.g. Officer Checklist" style="background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit">
         <input id="projAddUrl" placeholder="Web address, e.g. https://mysite.netlify.app" style="background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit">
         <input id="projAddRepo" placeholder="GitHub repo (optional), e.g. navigator-isle/hobbyisle" style="background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit">
+        <label style="display:flex;gap:8px;align-items:center;color:#c8d9e9;font-size:.9rem"><input type="checkbox" id="projAddStats" style="width:auto"> Show visitor numbers (site uses Cloudflare Web Analytics)</label>
         <button id="projAdd" class="home-mic primary">Add project</button>
       </div>
       <p id="githubStatus" class="notes-tip" style="margin-top:8px"></p>
@@ -770,7 +777,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   $('miniMax').hidden=name==='home';
   if(name==='notes'){renderList();syncNotes()}
   if(name==='research')renderResearch();
-  if(name==='projects')renderProjects();
+  if(name==='projects'){renderProjects();loadStats(false).then(()=>{if(screen==='projects')renderProjects()})}
   window.scrollTo(0,0);
  }
  function setKeyboard(on){
@@ -1184,7 +1191,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1219,6 +1226,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(pendingMerge&&Date.now()-pendingMerge.at<5*60e3){
    if(has(/^(yes|yeah|yep|oo|opo|sige|confirm|go ahead)\b.*\b(merge|publish|go|do it|ahead|it)\b|^(yes|confirm)$/))return {type:'confirm_merge'};
    if(has(/^(no|nope|hindi|huwag|cancel|wait|don'?t)\b/))return {type:'cancel_merge'};
+  }
+  if(has(/\b(visitors?|visits|traffic|page ?views|analytics|stats|statistics|dashboard)\b/)&&!has(/\b(add|change|make|fix|build|log)\b/)){const pr=projects().find(x=>findProject(x.name)&&n.includes(norm(x.name)))||projects().find(x=>(x.aliases||[]).some(al=>n.includes(norm(al))));return {type:'project_stats',query:pr?.name||''}}
+  if(has(/\bhow (is|are|'?s)\b.*\b(doing|going|performing)\b/)){const pr=projects().find(x=>n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al))));if(pr||has(/\b(sites?|websites?|projects?|apps?)\b/))return {type:'project_stats',query:pr?.name||''}}
+  if(has(/\b(how much|what) (did|have) i (earn|earned|make|made|sell|sold)\b|\b(my )?(earnings|income|sales|kita|benta)\b/)&&!has(/\b(log|add|record|put|i earned|i made)\b/)&&!/\d/.test(n)){
+   const pr=projects().find(x=>n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al))));
+   return {type:'sales_summary',details:{project:pr?.name||'',period:has(/\btoday\b/)?'today':has(/\bweek\b/)?'week':has(/\byear\b/)?'year':has(/\b(all time|total|ever)\b/)?'all':'month'}};
   }
   if(has(/\b(passage plans?|saved routes?|my routes?|voyage plans?)\b/)&&!has(/\b(add|change|update|fix)\b/))return {type:'list_passage_plans'};
   if(has(/\b(apps?|sites?|websites?|projects?)\b/)&&has(/\b(up|online|working|down|running|alive|ok(ay)?|status|check)\b/)&&!has(/\b(add|change|make|fix|update|build)\b/))return {type:'check_projects'};
@@ -1278,7 +1291,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   {id:'max',name:'Max',url:'https://navigator-isle.github.io/Max-mobile/',repo:'navigator-isle/Max-mobile',aliases:['max app','this app','yourself']},
   {id:'passage',name:'Passage Planner',url:'https://navigator-isle.github.io/',repo:'navigator-isle/navigator-isle.github.io',aliases:['passage plan','passage','route planner','voyage planner','navigator isle']},
   {id:'draft',name:'Quick Draft Calculator',url:'https://draft-calculator.github.io/Draft-Calculator/',repo:'',aliases:['draft calculator','draft calc','quick draft','draft survey']},
-  {id:'hobby',name:'Hobby Isle',url:'https://hobbyisle.com/',repo:'navigator-isle/hobbyisle',aliases:['hobbyisle','hobby site','gundam site','gunpla site','my website']},
+  {id:'hobby',name:'Hobby Isle',url:'https://hobbyisle.com/',repo:'navigator-isle/hobbyisle',analytics:true,aliases:['hobbyisle','hobby site','gundam site','gunpla site','my website']},
   {id:'checklist',name:'Officer Checklist',url:'https://claude.ai/artifact/9j5SkqSG5sMiX8tpC2ieqS',repo:'',aliases:['checklist','officer checklist','ship app','inventory','ship checklist']},
   {id:'sealex',name:'SeaLex',url:'https://claude.ai/artifact/AzwR4SjQNGSKbBcZsiKm9E',repo:'',aliases:['sea lex','maritime hub','imo updates','info bank']},
   {id:'reviewer',name:'Deck Board Reviewer',url:'https://claude.ai/artifact/BcWnWqHA29UWhb2V96yeDM',repo:'',aliases:['reviewer','marina reviewer','exam reviewer','board reviewer']},
@@ -1299,6 +1312,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=1.2?best:null;
  }
  function renderProjects(){
+  renderDashboard();
   const box=$('projList');box.replaceChildren();
   projects().forEach(p=>{
    const st=projStatus[p.id];
@@ -1308,6 +1322,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    const b=document.createElement('b');b.textContent=p.name;
    const sp=document.createElement('span');sp.textContent=/claude\.ai\//.test(p.url)?'Inside Claude · opens with your Claude account':projKind(p)+(st?(st.up===true?' · up ('+(st.ms/1000).toFixed(1)+'s)':st.up===false?' · DOWN'+(st.status?' ('+st.status+')':''):' · '+(st.note||'')):'');
    info.append(b,sp);
+   const ps=projStats[p.id],sales=salesTotals(p.name,'month');
+   if((ps&&!ps.error)||Object.keys(sales).length){const s3=document.createElement('span');s3.className='stats';
+    s3.textContent=[ps&&!ps.error?'Today '+ps.today.visitors+' visitors · '+ps.today.views+' views · 7 days '+ps.week.visitors:'',Object.keys(sales).length?'Sales this month '+totalsText(sales):''].filter(Boolean).join(' · ');info.append(s3)}
    const a=document.createElement('a');a.href=p.url;a.target='_blank';a.rel='noopener';a.textContent='Open';
    row.append(dot,info,a);box.append(row);
   });
@@ -1324,7 +1341,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const name=$('projAddName').value.trim(),url=$('projAddUrl').value.trim(),repo=$('projAddRepo').value.trim();
   if(!name||!/^https?:\/\//.test(url)){alert('Add a name and a web address starting with https://');return}
   if(repo&&!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)){alert('GitHub repo should look like owner/name');return}
-  const l=projects();l.push({id:'p_'+Date.now(),name,url,repo,aliases:[]});saveProjects(l);
+  const l=projects();l.push({id:'p_'+Date.now(),name,url,repo,analytics:$('projAddStats').checked,aliases:[]});saveProjects(l);$('projAddStats').checked=false;
   $('projAddName').value=$('projAddUrl').value=$('projAddRepo').value='';renderProjectEditor();renderProjects();
  };
  async function checkProjects(){
@@ -1402,8 +1419,94 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!r.ok)return data.error||'I couldn’t publish it.';
   return 'Published — pull request '+m.number+' is merged on '+m.name+'. It will go live in a few minutes.';
  }
- $('projCheck').onclick=async()=>{$('projCheck').disabled=true;const s=await checkProjects();$('projCheck').disabled=false;setSub('',s);speak(s)};
+ $('projCheck').onclick=async()=>{$('projCheck').disabled=true;const [s]=await Promise.all([checkProjects(),loadStats(true)]);renderProjects();$('projCheck').disabled=false;setSub('',s);speak(s)};
  $('projRequests').onclick=async()=>{const s=await listRequests({});$('projReqBox').hidden=false;$('projReqBox').textContent=s;setSub('',s);speak(s)};
+
+ // ---------- dashboard: visitors (Cloudflare Web Analytics) and your sales log ----------
+ const projStats={};let statsAt=0,statsProblem='';
+ const hostOf=u=>{try{return new URL(u).hostname.toLowerCase()}catch{return ''}};
+ const dayStart=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x};
+ async function loadStats(force){
+  if(!force&&Date.now()-statsAt<5*60e3)return true;
+  const list=projects().filter(p=>p.analytics&&hostOf(p.url));
+  if(!list.length){statsProblem='none';return false}
+  const now=new Date(),today=dayStart(now),week=new Date(today);week.setDate(week.getDate()-6);
+  try{
+   const {r,data}=await postJson('/api/projects/stats',{hosts:[...new Set(list.map(p=>hostOf(p.url)))],todayFrom:today.toISOString(),weekFrom:week.toISOString(),to:now.toISOString()},30000);
+   if(data&&data.needAnalytics){statsProblem='not connected';return false}
+   if(r.status===404){statsProblem='old backend';return false}
+   if(!r.ok){statsProblem=data.error||'error';return false}
+   (data.results||[]).forEach(x=>{list.filter(p=>hostOf(p.url)===x.host).forEach(p=>projStats[p.id]=x)});
+   statsAt=Date.now();statsProblem='';return true;
+  }catch(e){statsProblem=e.message;return false}
+ }
+ // Sales log: one note per project under Projects › Sales log (so it syncs and backs up like any note).
+ const SALES_CAT='Projects › Sales log';
+ const money=(c,v)=>c+' '+(Math.round(v*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+ function salesEntries(projectName){
+  return getNotes().filter(n=>n.category===SALES_CAT&&(!projectName||n.title==='Sales log — '+projectName)).flatMap(n=>{
+   const proj=n.title.replace(/^Sales log — /,'');
+   return String(n.body||'').split(/<\/p>|<br\s*\/?>|\n/i).map(x=>plain(x).trim().match(/^(\d{4}-\d\d-\d\d) · ([A-Z]{3}) ([\d,]+(?:\.\d+)?)(?: · (.+))?$/)).filter(Boolean).map(m=>({project:proj,date:m[1],currency:m[2],amount:Number(m[3].replace(/,/g,'')),source:(m[4]||'').trim()}));
+  });
+ }
+ const localDate=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+ function periodStart(period){const t=dayStart(new Date());if(period==='week')t.setDate(t.getDate()-6);else if(period==='month')t.setDate(1);else if(period==='year'){t.setMonth(0,1)}else if(period==='all')return '0000-00-00';return localDate(t)}
+ function salesTotals(projectName,period){
+  const from=periodStart(period||'month'),sums={};
+  salesEntries(projectName).filter(e=>e.date>=from).forEach(e=>{sums[e.currency]=(sums[e.currency]||0)+e.amount});
+  return sums;
+ }
+ const totalsText=s=>Object.entries(s).map(([c,v])=>money(c,v)).join(' + ')||'nothing logged';
+ function logSale(d){
+  const p=findProject(d?.project||'')||(projects().length===1?projects()[0]:null);
+  const amount=Number(d?.amount);
+  if(!p)return 'Which project was that sale for?';
+  if(!(amount>0))return 'How much was it?';
+  const cur=(String(d?.currency||'').toUpperCase().match(/^[A-Z]{3}$/)||[salesEntries(p.name).slice(-1)[0]?.currency||'USD'])[0];
+  const date=/^\d{4}-\d\d-\d\d$/.test(d?.date||'')?d.date:localDate(new Date());
+  const src=String(d?.source||'').replace(/[·<>]/g,'').trim().slice(0,40);
+  const all=loadAll();let n=all.find(x=>!x.deleted&&x.category===SALES_CAT&&x.title==='Sales log — '+p.name);
+  if(!n){n={id:newId(),title:'Sales log — '+p.name,category:SALES_CAT,tags:['sales',p.name.toLowerCase()],body:'',source:'max',createdAt:Date.now(),deleted:false};all.push(n)}
+  n.body=(n.body||'')+'<p>'+date+' · '+cur+' '+amount.toFixed(2)+(src?' · '+escHtml(src):'')+'</p>';n.updatedAt=Date.now();
+  putNotes(all);renderProjects();
+  return 'Logged '+money(cur,amount)+(src?' from '+src:'')+' for '+p.name+(date===localDate(new Date())?' today':' on '+fmtWhen(date,true))+'. This month so far: '+totalsText(salesTotals(p.name,'month'))+'.';
+ }
+ function salesSummary(d){
+  const p=findProject(d?.project||'')||null,period=d?.period||'month';
+  const label={today:'today',week:'in the last 7 days',month:'this month',year:'this year',all:'in total'}[period]||'this month';
+  if(p)return p.name+' earned '+totalsText(salesTotals(p.name,period))+' '+label+' (from your sales log).';
+  const per=projects().map(x=>[x.name,salesTotals(x.name,period)]).filter(([,s])=>Object.keys(s).length);
+  if(!per.length)return 'Nothing in your sales log '+label+'. Tell me when you earn something, like “log 4 dollars Amazon sales for Hobby Isle”.';
+  return 'Earnings '+label+': '+per.map(([nm,s])=>nm+' '+totalsText(s)).join('; ')+'.';
+ }
+ async function projectStatsSay(d){
+  const p=d?.project?findProject(d.project):null;
+  const ok=await loadStats(true);renderProjects();
+  if(!ok){
+   if(statsProblem==='not connected')return 'Visitor numbers aren’t connected yet. Add the Cloudflare analytics key — the steps are in SETUP.md. Your sales log works already: '+salesSummary({project:p?.name});
+   if(statsProblem==='none')return 'None of your projects has visitor tracking switched on. Hobby Isle can — check it in Settings, My projects.';
+   return 'I couldn’t get visitor numbers right now. '+statsProblem;
+  }
+  const list=(p?[p]:projects()).filter(x=>projStats[x.id]);
+  if(!list.length)return p?p.name+' has no visitor tracking. Only sites with Cloudflare Web Analytics can show visitors.':'No visitor numbers yet.';
+  return list.map(x=>{const s=projStats[x.id];if(s.error)return x.name+': '+s.error;
+   return x.name+': '+s.today.visitors+' visitor'+(s.today.visitors===1?'':'s')+' today ('+s.today.views+' page views), '+s.week.visitors+' in the last 7 days'+(s.topPages[0]?'. Top page today: '+s.topPages[0].path:'')+(s.countries[0]?'. Most visitors from '+s.countries[0].country:'')+'.'}).join(' ')+
+   (Object.keys(salesTotals(p?.name,'month')).length?' Sales this month: '+totalsText(salesTotals(p?.name,'month'))+'.':'');
+ }
+ function renderDashboard(){
+  const box=$('projDash');if(!box)return;
+  const sites=projects().filter(p=>projStats[p.id]&&!projStats[p.id].error);
+  const vToday=sites.reduce((a,p)=>a+projStats[p.id].today.visitors,0);
+  const sales=salesTotals(null,'month');
+  box.replaceChildren();
+  const tile=(label,value,sub)=>{const d=document.createElement('div');d.className='dash-tile';const v=document.createElement('b');v.textContent=value;const l=document.createElement('span');l.textContent=label;d.append(v,l);if(sub){const s2=document.createElement('small');s2.textContent=sub;d.append(s2)}box.append(d)};
+  tile('visitors today',sites.length?String(vToday):'—',sites.length?sites.length+' site'+(sites.length===1?'':'s')+' tracked':statsProblem==='not connected'?'analytics not connected':'');
+  const SYM={USD:'$',PHP:'₱',EUR:'€',GBP:'£',JPY:'¥'},cur=Object.keys(sales);
+  const short=cur.length===1&&SYM[cur[0]]?SYM[cur[0]]+(Math.round(sales[cur[0]]*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):totalsText(sales);
+  tile('sales this month',cur.length?short:'—',Object.keys(sales).length?'from your sales log':'say “log … sales”');
+  const up=projects().filter(p=>projStatus[p.id]?.up===true).length,down=projects().filter(p=>projStatus[p.id]?.up===false).length;
+  tile('sites up',Object.keys(projStatus).length?up+(down?' · '+down+' down':''):'—',Object.keys(projStatus).length?'':'tap Refresh');
+ }
 
  // ---------- calendar & tasks ----------
  let lastCreated=null;
@@ -1482,6 +1585,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     }
     return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
    }
+   case 'project_stats':setSection('projects');return await projectStatsSay(a.details||{project:a.query});
+   case 'log_sale':return logSale(a.details||{});
+   case 'sales_summary':return salesSummary(a.details||{project:a.query});
    case 'show_projects':setSection('projects');return 'Here are your '+projects().length+' projects. Say “are they up?” to check them.';
    case 'check_projects':setSection('projects');return await checkProjects();
    case 'open_project':{const p=findProject(a.query||a.details?.project||'');return p?openProject(p):'I don’t know that project yet. You can add it in Settings, under My projects.'}
@@ -1610,7 +1716,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

@@ -52,7 +52,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-10-31";
+const WORKER_VERSION = "max-worker-2026-10-31b";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -257,14 +257,14 @@ function officialSource(s) {
   return /imo\.org|\.gov\b|\.gov\.|\.int\b|europa\.eu|marina\.gov\.ph|uscg|mca\.gov|amsa\.gov|mpa\.gov\.sg|classnk|dnv\.|lr\.org|abs-group|eagle\.org|bureauveritas|iacs\.org|ilo\.org|panama-maritime|amp\.gob\.pa|liscr|register-iri/i.test(String(s));
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
   const d = a.details && typeof a.details === "object" ? a.details : null;
   if (d) out.details = {title: cleanText(String(d.title || ""), 200), start: cleanText(String(d.start || ""), 25), end: cleanText(String(d.end || ""), 25),
     due: cleanText(String(d.due || ""), 10), allDay: d.allDay === true, reminderMinutes: Number.isFinite(Number(d.reminderMinutes)) ? Number(d.reminderMinutes) : undefined,
-    project: cleanText(String(d.project || ""), 80), request: cleanText(String(d.request || ""), 2000), number: Number.isFinite(Number(d.number)) ? Math.floor(Number(d.number)) : undefined,
+    project: cleanText(String(d.project || ""), 80), amount: Number.isFinite(Number(d.amount)) ? Number(d.amount) : undefined, currency: cleanText(String(d.currency || ""), 5), date: cleanText(String(d.date || ""), 10), source: cleanText(String(d.source || ""), 40), period: ["today","week","month","year","all"].includes(d.period) ? d.period : undefined, request: cleanText(String(d.request || ""), 2000), number: Number.isFinite(Number(d.number)) ? Math.floor(Number(d.number)) : undefined,
     durationMinutes: Number.isFinite(Number(d.durationMinutes)) ? Number(d.durationMinutes) : undefined, notes: cleanText(String(d.notes || ""), 500), range: ["today","tomorrow","week"].includes(d.range) ? d.range : undefined};
   return out;
 }
@@ -456,6 +456,29 @@ async function calendarRoutes(request, env, url, origin) {
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
+// ---------- visitor numbers (Cloudflare Web Analytics) ----------
+// Needs a Cloudflare secret CF_ANALYTICS_TOKEN: an API token with "Account · Account Analytics · Read" only.
+const CF_ACCOUNT_DEFAULT = "fe65b997a30f62c013810d5ecb34f4ca"; // not secret: the account's public ID
+const statsReady = env => !!env.CF_ANALYTICS_TOKEN;
+const gqlStr = s => JSON.stringify(String(s));
+async function siteStats(env, host, todayFrom, weekFrom, to) {
+  const acc = cleanText(env.CF_ACCOUNT_ID, 40) || CF_ACCOUNT_DEFAULT;
+  const f = from => `{AND:[{datetime_geq:${gqlStr(from)}},{datetime_leq:${gqlStr(to)}},{requestHost:${gqlStr(host)}}]}`;
+  const query = `{viewer{accounts(filter:{accountTag:${gqlStr(acc)}}){
+    today: rumPageloadEventsAdaptiveGroups(limit:1, filter:${f(todayFrom)}){count sum{visits}}
+    week: rumPageloadEventsAdaptiveGroups(limit:1, filter:${f(weekFrom)}){count sum{visits}}
+    pages: rumPageloadEventsAdaptiveGroups(limit:5, filter:${f(todayFrom)}, orderBy:[count_DESC]){count dimensions{requestPath}}
+    countries: rumPageloadEventsAdaptiveGroups(limit:3, filter:${f(weekFrom)}, orderBy:[count_DESC]){count dimensions{countryName}}
+  }}}`;
+  const res = await fetch("https://api.cloudflare.com/client/v4/graphql", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + env.CF_ANALYTICS_TOKEN}, body: JSON.stringify({query})});
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || (data.errors && data.errors.length)) throw new Error("Cloudflare analytics: " + String((data.errors && data.errors[0] && data.errors[0].message) || res.status).slice(0, 200));
+  const a = data?.data?.viewer?.accounts?.[0] || {};
+  const one = g => ({visitors: g?.[0]?.sum?.visits || 0, views: g?.[0]?.count || 0});
+  return {host, today: one(a.today), week: one(a.week),
+    topPages: (a.pages || []).map(x => ({path: x.dimensions?.requestPath || "/", views: x.count})),
+    countries: (a.countries || []).map(x => ({country: x.dimensions?.countryName || "?", views: x.count}))};
+}
 // ---------- your other projects: status checks and GitHub change requests ----------
 // GitHub is optional: add a Cloudflare secret GITHUB_TOKEN (fine-grained, only the repos Max may touch)
 // and a text variable MAX_GITHUB_REPOS, e.g. "navigator-isle/Max-mobile,navigator-isle/hobbyisle".
@@ -489,6 +512,14 @@ async function projectRoutes(request, env, url, origin) {
       finally { clearTimeout(timer); }
     }));
     return json({results, checkedAt: Date.now()}, 200, origin, env);
+  }
+  if (p === "/api/projects/stats" && m === "POST") {
+    if (!statsReady(env)) return json({error: "Visitor numbers aren't connected yet.", needAnalytics: true}, 409, origin, env);
+    const valid = s => typeof s === "string" && !isNaN(Date.parse(s));
+    if (!valid(body.todayFrom) || !valid(body.weekFrom) || !valid(body.to)) return json({error: "todayFrom, weekFrom and to are required."}, 400, origin, env);
+    const hosts = [...new Set((Array.isArray(body.hosts) ? body.hosts : []).map(h => String(h || "").toLowerCase()).filter(h => /^[a-z0-9.-]{3,100}$/.test(h)))].slice(0, 8);
+    const results = await Promise.all(hosts.map(h => siteStats(env, h, new Date(body.todayFrom).toISOString(), new Date(body.weekFrom).toISOString(), new Date(body.to).toISOString()).catch(e => ({host: h, error: String(e.message || e)}))));
+    return json({results}, 200, origin, env);
   }
   if (p === "/api/github/status" && m === "GET") return json({connected: githubReady(env), repos: allowedRepos(env)}, 200, origin, env);
   if (!githubReady(env)) return json({error: "GitHub isn't connected for Max yet.", needGithub: true}, 409, origin, env);
@@ -547,7 +578,8 @@ export default {
         database: env.MAX_MEMORY ? "bound" : "not bound",
         google: !googleConfigured(env) ? "not set up" : auth.enforced ? "linked" : "set up, not signed in",
         login: auth.enforced ? "google" : passcodeSet(env) ? "passcode" : "open",
-        github: githubReady(env) ? "connected (" + allowedRepos(env).length + " repos)" : "not connected"};
+        github: githubReady(env) ? "connected (" + allowedRepos(env).length + " repos)" : "not connected",
+        analytics: statsReady(env) ? "connected" : "not connected"};
       if (request.headers.get("X-Max-Pass") !== null) health.passcode = auth.enforced ? "replaced by Google sign-in" : passcodeOk(request, env) ? "accepted" : "wrong";
       if (auth.session) health.session = auth.session;
       if (auth.ok && (request.headers.get("X-Max-Pass") !== null || auth.via === "google")) health.database = await dbStatus(env);
@@ -684,6 +716,7 @@ export default {
           (calendarOn ? "add_event (a calendar event or a timed reminder; details = {title, start: \"YYYY-MM-DDTHH:MM\" in HIS local time, or start: \"YYYY-MM-DD\" with allDay: true, durationMinutes (default 30), reminderMinutes (default 10; 0 = at the time)}) · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
+          "project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +

@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 343 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 372 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -20,6 +20,29 @@
   - "Any requests for Hobby Isle?"
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
+
+**Dashboard: visitors and sales**
+- **Where:** the Projects screen shows tiles at the top for visitors today, sales this month and sites up. Each project card shows its own numbers.
+- **Things to say:**
+  - "How many visitors on Hobby Isle today?"
+  - "How are my sites doing?"
+  - "Log 4.20 dollars Amazon sales for Hobby Isle"
+  - "How much did I earn this month?"
+- **Sales log:** Amazon doesn't let personal accounts pull sales automatically, so you tell Max what you earned. Each entry is saved as a note under **Projects › Sales log**, so it syncs and backs up like any note.
+
+**Connect visitor numbers (one-time, about 3 minutes)**
+- **Create the key:** Cloudflare → your photo (top right) → **My Profile** → **API Tokens** → **Create Token** → **Create Custom Token**
+  - **Name:** `Max analytics`
+  - **Permissions:** **Account** · **Account Analytics** · **Read** (nothing else)
+  - **Account Resources:** your account
+  - **Continue to summary** → **Create Token**, then copy the key
+- **Give it to Max:** Cloudflare → **Workers & Pages** → **max-ai-backend** → **Settings** → **Variables and Secrets** → **Add**
+  - **Type:** **Secret**
+  - **Name:** `CF_ANALYTICS_TOKEN`
+  - **Value:** the key
+- **What it allows:** this key can only read visitor counts. It can't change any site, DNS or setting.
+- **Needs:** the site must have Cloudflare **Web Analytics** turned on. If Hobby Isle shows 0 visitors all the time, it isn't on yet; turning it on is your choice, and Max doesn't change it.
+- **Other sites:** to track another site, tick **Show visitor numbers** when you add it in Settings → My projects.
 
 **Optional: let Max send change requests to GitHub (about 5 minutes)**
 - **Create the key:** github.com → your photo → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**
