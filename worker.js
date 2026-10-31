@@ -52,7 +52,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-10-30e";
+const WORKER_VERSION = "max-worker-2026-10-31";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -257,13 +257,14 @@ function officialSource(s) {
   return /imo\.org|\.gov\b|\.gov\.|\.int\b|europa\.eu|marina\.gov\.ph|uscg|mca\.gov|amsa\.gov|mpa\.gov\.sg|classnk|dnv\.|lr\.org|abs-group|eagle\.org|bureauveritas|iacs\.org|ilo\.org|panama-maritime|amp\.gob\.pa|liscr|register-iri/i.test(String(s));
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
   const d = a.details && typeof a.details === "object" ? a.details : null;
   if (d) out.details = {title: cleanText(String(d.title || ""), 200), start: cleanText(String(d.start || ""), 25), end: cleanText(String(d.end || ""), 25),
     due: cleanText(String(d.due || ""), 10), allDay: d.allDay === true, reminderMinutes: Number.isFinite(Number(d.reminderMinutes)) ? Number(d.reminderMinutes) : undefined,
+    project: cleanText(String(d.project || ""), 80), request: cleanText(String(d.request || ""), 2000), number: Number.isFinite(Number(d.number)) ? Math.floor(Number(d.number)) : undefined,
     durationMinutes: Number.isFinite(Number(d.durationMinutes)) ? Number(d.durationMinutes) : undefined, notes: cleanText(String(d.notes || ""), 500), range: ["today","tomorrow","week"].includes(d.range) ? d.range : undefined};
   return out;
 }
@@ -455,6 +456,75 @@ async function calendarRoutes(request, env, url, origin) {
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
+// ---------- your other projects: status checks and GitHub change requests ----------
+// GitHub is optional: add a Cloudflare secret GITHUB_TOKEN (fine-grained, only the repos Max may touch)
+// and a text variable MAX_GITHUB_REPOS, e.g. "navigator-isle/Max-mobile,navigator-isle/hobbyisle".
+// Max can then file change requests (GitHub issues), list them with pull requests, and merge a pull
+// request only after you confirm it out loud. He never changes DNS, domains or account settings.
+const allowedRepos = env => String(env.MAX_GITHUB_REPOS || "").split(",").map(s => s.trim()).filter(s => /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(s));
+const githubReady = env => !!env.GITHUB_TOKEN && allowedRepos(env).length > 0;
+async function gh(env, path, opts = {}) {
+  const res = await fetch("https://api.github.com" + path, {...opts, headers: {"Accept": "application/vnd.github+json", "Authorization": "Bearer " + env.GITHUB_TOKEN,
+    "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "Max-assistant", ...(opts.body ? {"Content-Type": "application/json"} : {})}});
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error("GitHub: " + (data.message || res.status));
+  return data;
+}
+async function projectRoutes(request, env, url, origin) {
+  const p = url.pathname, m = request.method;
+  let body = {};
+  if (m === "POST") { try { body = await request.json(); } catch { return json({error: "Invalid JSON body."}, 400, origin, env); } }
+  if (p === "/api/projects/status" && m === "POST") {
+    const list = (Array.isArray(body.projects) ? body.projects : []).slice(0, 15);
+    const results = await Promise.all(list.map(async pr => {
+      const id = cleanText(String(pr && pr.id || ""), 60), u = String(pr && pr.url || "");
+      let target; try { target = new URL(u); } catch { return {id, up: null, note: "no web address"}; }
+      if (!/^https?:$/.test(target.protocol)) return {id, up: null, note: "no web address"};
+      if (/(^|\.)claude\.ai$/.test(target.hostname)) return {id, up: null, note: "inside Claude — open it to check"};
+      const t0 = Date.now(), ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 8000);
+      try {
+        const r = await fetch(target.href, {method: "GET", redirect: "follow", signal: ctl.signal, headers: {"User-Agent": "Max-status-check"}});
+        return {id, up: r.status < 400, status: r.status, ms: Date.now() - t0};
+      } catch (e) { return {id, up: false, note: e.name === "AbortError" ? "no answer within 8 seconds" : "could not connect"}; }
+      finally { clearTimeout(timer); }
+    }));
+    return json({results, checkedAt: Date.now()}, 200, origin, env);
+  }
+  if (p === "/api/github/status" && m === "GET") return json({connected: githubReady(env), repos: allowedRepos(env)}, 200, origin, env);
+  if (!githubReady(env)) return json({error: "GitHub isn't connected for Max yet.", needGithub: true}, 409, origin, env);
+  const repo = cleanText(String(body.repo || url.searchParams.get("repo") || ""), 140);
+  if (!allowedRepos(env).includes(repo)) return json({error: "Max isn't allowed to work on " + (repo || "that project") + ".", repos: allowedRepos(env)}, 403, origin, env);
+  try {
+    if (p === "/api/github/request" && m === "POST") {
+      const title = cleanText(body.title, 140), text = cleanText(body.body, 6000);
+      if (!title) return json({error: "What should change?"}, 400, origin, env);
+      const issue = await gh(env, `/repos/${repo}/issues`, {method: "POST", body: JSON.stringify({title: "[Max] " + title,
+        body: (text || title) + "\n\n---\nRequested by voice through Max on " + new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC.", labels: ["max-request"]})});
+      return json({request: {number: issue.number, title: issue.title, url: issue.html_url}}, 200, origin, env);
+    }
+    if (p === "/api/github/requests" && m === "GET") {
+      const [issues, pulls] = await Promise.all([gh(env, `/repos/${repo}/issues?state=open&per_page=20`), gh(env, `/repos/${repo}/pulls?state=open&per_page=10`)]);
+      return json({requests: issues.filter(i => !i.pull_request).map(i => ({number: i.number, title: i.title, url: i.html_url, fromMax: /^\[Max\]/.test(i.title)})),
+        pulls: pulls.map(x => ({number: x.number, title: x.title, url: x.html_url, branch: x.head?.ref, draft: !!x.draft}))}, 200, origin, env);
+    }
+    if (p === "/api/github/merge" && m === "POST") {
+      const n = Math.floor(Number(body.number));
+      if (!(n > 0)) return json({error: "Which pull request number?"}, 400, origin, env);
+      if (String(body.confirm || "") !== "MERGE " + n) return json({error: "Not merged: Max needs your clear yes first.", needConfirm: true}, 400, origin, env);
+      const pr = await gh(env, `/repos/${repo}/pulls/${n}`);
+      if (pr.state !== "open") return json({error: "That pull request is not open."}, 409, origin, env);
+      if (pr.draft) return json({error: "That pull request is still a draft."}, 409, origin, env);
+      const checks = await gh(env, `/repos/${repo}/commits/${pr.head.sha}/check-runs?per_page=50`).catch(() => ({check_runs: []}));
+      const failed = (checks.check_runs || []).filter(c => c.status === "completed" && !["success", "skipped", "neutral"].includes(c.conclusion));
+      const running = (checks.check_runs || []).filter(c => c.status !== "completed");
+      if (failed.length) return json({error: "Not merged: its tests failed (" + failed.map(c => c.name).join(", ") + ")."}, 409, origin, env);
+      if (running.length) return json({error: "Not merged yet: its tests are still running. Ask me again in a few minutes."}, 409, origin, env);
+      const done = await gh(env, `/repos/${repo}/pulls/${n}/merge`, {method: "PUT", body: JSON.stringify({merge_method: "squash"})});
+      return json({merged: !!done.merged, title: pr.title, number: n}, 200, origin, env);
+    }
+  } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
+  return json({error: "Not found."}, 404, origin, env);
+}
 // "Remember that ..." / "Tandaan mo na ..." saves a memory straight from chat or voice.
 function rememberRequest(message) {
   const m = message.match(/^\s*(?:hey\s+|ok(?:ay)?\s+)?(?:max[\s,:]+)?(?:please\s+)?(?:remember|tandaan(?:\s+mo)?)(?:\s+(?:that|na))?\s*[:,]?\s*([\s\S]{3,})$/i);
@@ -476,7 +546,8 @@ export default {
         geminiKey: env.GEMINI_API_KEY ? "set" : "missing", passcodeRequired: passcodeSet(env),
         database: env.MAX_MEMORY ? "bound" : "not bound",
         google: !googleConfigured(env) ? "not set up" : auth.enforced ? "linked" : "set up, not signed in",
-        login: auth.enforced ? "google" : passcodeSet(env) ? "passcode" : "open"};
+        login: auth.enforced ? "google" : passcodeSet(env) ? "passcode" : "open",
+        github: githubReady(env) ? "connected (" + allowedRepos(env).length + " repos)" : "not connected"};
       if (request.headers.get("X-Max-Pass") !== null) health.passcode = auth.enforced ? "replaced by Google sign-in" : passcodeOk(request, env) ? "accepted" : "wrong";
       if (auth.session) health.session = auth.session;
       if (auth.ok && (request.headers.get("X-Max-Pass") !== null || auth.via === "google")) health.database = await dbStatus(env);
@@ -502,6 +573,7 @@ export default {
       return json({disconnected: true, note: "Google is disconnected. The passcode works again."}, 200, origin, env);
     }
     if (url.pathname.startsWith("/api/calendar") || url.pathname === "/api/tasks") return calendarRoutes(request, env, url, origin);
+    if (url.pathname.startsWith("/api/projects/") || url.pathname.startsWith("/api/github/")) return projectRoutes(request, env, url, origin);
     if (url.pathname === "/api/memory" || url.pathname === "/api/sync" || url.pathname === "/api/talk") {
       if (!passcodeSet(env) && !auth.enforced) return json({error:"Cloud memory is off: add a MAX_PASSCODE secret to the Worker first."}, 403, origin, env);
       if (!env.MAX_MEMORY) return json({error:"Cloud memory is off: the MAX_MEMORY database is not bound to this Worker."}, 503, origin, env);
@@ -577,6 +649,8 @@ export default {
       const allMemories = [...new Set([...cloudMemories.map(m => m.text), ...localMemories])];
       const memoryText = allMemories.join("\n- ");
       const fromPhone = phoneNotes(body.notes);
+      const projectNames = (Array.isArray(body.projects) ? body.projects : []).slice(0, 20).map(x => cleanText(String(x), 60)).filter(Boolean);
+      if (projectNames.length) memoryNote += "\nHIS PROJECTS (apps and websites he built): " + projectNames.join(", ") + ".";
       const seenNotes = new Set(fromPhone.items.map(n => n.id).concat(fromPhone.active ? [fromPhone.active.id] : []).filter(Boolean));
       const seenTitles = new Set(fromPhone.items.map(n => n.title.toLowerCase()).concat(fromPhone.active ? [fromPhone.active.title.toLowerCase()] : []));
       notesUsed = notesUsed.filter(n => !seenNotes.has(n.id) && !seenTitles.has(String(n.title || "").toLowerCase()));
@@ -610,6 +684,8 @@ export default {
           (calendarOn ? "add_event (a calendar event or a timed reminder; details = {title, start: \"YYYY-MM-DDTHH:MM\" in HIS local time, or start: \"YYYY-MM-DD\" with allDay: true, durationMinutes (default 30), reminderMinutes (default 10; 0 = at the time)}) · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
+          "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
+          "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +
           "edit_research (query = his exact change to the research draft) · approve_research · reject_research · save_answer (save your last answer into his notes) · organize_notes (sort notes into topics) · open_settings · go_home (back to just talking) · export_notes. " +
           "Work out dates from the current time below (e.g. 'Friday 9am' = the coming Friday). Only set an action when he clearly wants it; otherwise null. When you set one, 'reply' is a short spoken confirmation. If the app cannot do what he asks, say so honestly. " : "") +

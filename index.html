@@ -200,6 +200,14 @@ body.on-home .top-status{opacity:.7}
 .export-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .export-row .label{margin:0 6px 0 0}
 #editorCategory{background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:9px;padding:10px;font:inherit;min-width:0}
+.proj-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.proj{border:1px solid #1c344c;background:#0b1a2b;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.proj .dot{width:10px;height:10px;border-radius:50%;background:#4a6378;flex:none}
+.proj .dot.up{background:#54e0c9}.proj .dot.down{background:#ff7a85}
+.proj .info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.proj .info b{font-size:.98rem}.proj .info span{font-size:.78rem;color:#8fa8c0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj a{color:#062033;background:#bcecff;border-radius:10px;padding:10px 14px;text-decoration:none;font-weight:700;font-size:.88rem;min-height:24px}
+.open-chip{display:inline-block;background:#bcecff;color:#062033!important;border-radius:999px;padding:8px 14px;font-weight:700;text-decoration:none;font-size:.9rem}
 .quick-menu{position:fixed;inset:0;z-index:90;background:#020914cc;display:flex;align-items:flex-end;justify-content:center}
 .quick-menu[hidden]{display:none}
 .quick-sheet{width:min(100%,520px);background:#0b1a2b;border:1px solid #294861;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -293,6 +301,13 @@ body.on-home .top-status{opacity:.7}
     </section>
   </main>
 
+  <main id="projectsScreen" class="section-screen">
+    <div class="notes-header"><div><h1>My projects</h1><p id="projectsSub">Say “open SeaLex”, “are my apps up?” or “on Hobby Isle, add …”</p></div></div>
+    <div class="notes-tools"><button id="projCheck" class="pill">Check if they’re up</button><button id="projRequests" class="pill">Change requests</button></div>
+    <div id="projList" class="proj-list"></div>
+    <div id="projReqBox" class="banner" hidden></div>
+  </main>
+
   <main id="notesScreen" class="section-screen">
     <div class="notes-header">
       <div><h1>Second brain</h1><p id="notesCount">Max checks these first</p></div>
@@ -352,6 +367,7 @@ body.on-home .top-status{opacity:.7}
     <button data-go="keyboard" class="pill">⌨ Keyboard</button>
     <button data-go="notes" class="pill">▤ Notes</button>
     <button data-go="research" class="pill">⌕ Research</button>
+    <button data-go="projects" class="pill">◆ Projects</button>
     <button data-go="settings" class="pill">⚙ Settings</button>
     <button data-go="close" class="pill">Close</button>
   </div>
@@ -381,6 +397,18 @@ body.on-home .top-status{opacity:.7}
       <div id="memList" style="max-height:34vh;overflow:auto"></div>
       <p class="notes-tip" style="margin-top:12px">Max also keeps your conversations so he can continue where you left off.</p>
       <button id="talkForget" class="home-mic danger-btn" style="padding:8px 14px">Forget all conversations</button>
+    </div>
+    <div id="projectsSection" style="border-top:1px solid #294861;margin-top:12px;padding-top:10px">
+      <strong>My projects</strong>
+      <p class="notes-tip">Apps and websites Max can open, check and pass change requests to. Add one with its web address; the GitHub repo is optional (owner/name).</p>
+      <div id="projEditList"></div>
+      <div style="display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px">
+        <input id="projAddName" placeholder="Name, e.g. Officer Checklist" style="background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit">
+        <input id="projAddUrl" placeholder="Web address, e.g. https://mysite.netlify.app" style="background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit">
+        <input id="projAddRepo" placeholder="GitHub repo (optional), e.g. navigator-isle/hobbyisle" style="background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit">
+        <button id="projAdd" class="home-mic primary">Add project</button>
+      </div>
+      <p id="githubStatus" class="notes-tip" style="margin-top:8px"></p>
     </div>
     <div id="learnedSection" style="border-top:1px solid #294861;margin-top:12px;padding-top:10px">
       <strong>Phrases Max learned</strong>
@@ -694,7 +722,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   closeMenu();
   $('workerUrl').value=workerBase();$('maxPassInput').value=window.maxPass();
   $('connectionResult').textContent=cloud.state==='offline'&&cloud.detail?('Last check failed: '+cloud.detail):'';
-  $('connectionModal').hidden=false;$('connectionModal').classList.add('open');renderMemory();renderLearned();
+  $('connectionModal').hidden=false;$('connectionModal').classList.add('open');renderMemory();renderLearned();renderProjectEditor();
  }
  function closeConnection(){ $('connectionModal').classList.remove('open');$('connectionModal').hidden=true; }
  $('openConnection').onclick=openConnection;$('closeConnection').onclick=closeConnection;
@@ -735,13 +763,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 
  // ---------- screens: talking is the default; everything else opens on command ----------
  function setSection(name){
-  if(!['home','notes','editor','research'].includes(name))name='home';
+  if(!['home','notes','editor','research','projects'].includes(name))name='home';
   screen=name;
-  ['homeScreen','notesScreen','editorScreen','researchScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
+  ['homeScreen','notesScreen','editorScreen','researchScreen','projectsScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
   document.body.classList.toggle('on-home',name==='home');
   $('miniMax').hidden=name==='home';
   if(name==='notes'){renderList();syncNotes()}
   if(name==='research')renderResearch();
+  if(name==='projects')renderProjects();
   window.scrollTo(0,0);
  }
  function setKeyboard(on){
@@ -1141,7 +1170,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // 3) When the AI understands a new way you say something, Max learns that phrase for next time.
  const LEARN_KEY='max_learned_phrases';
  const learned=()=>{try{const v=JSON.parse(localStorage.getItem(LEARN_KEY)||'[]');return Array.isArray(v)?v:[]}catch{return []}};
- const NO_QUERY=new Set(['undo_last','save_note','show_keyboard','hide_keyboard','show_research','approve_research','reject_research','save_answer','organize_notes','open_settings','go_home','export_notes','open_menu']);
+ const NO_QUERY=new Set(['check_projects','show_projects','list_passage_plans','undo_last','save_note','show_keyboard','hide_keyboard','show_research','approve_research','reject_research','save_answer','organize_notes','open_settings','go_home','export_notes','open_menu']);
  function norm(t){
   return String(t||'').toLowerCase().replace(/[“”"’']/g,"'").replace(/[^\p{L}\p{N}' ]+/gu,' ')
    .replace(/^\s*(?:(?:hey|ok(?:ay)?|hi|yo)\s+max\s+|max\s+)?(?:please\s+|pls\s+|can you\s+|could you\s+|would you\s+|will you\s+|i want you to\s+|i need you to\s+|paki(?!ta\b|kita)\s*|pwede\s+(?:mo\s+)?(?:bang\s+)?)*/,'')
@@ -1155,7 +1184,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1163,7 +1192,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function renderLearned(){
   const box=$('learnedList');box.replaceChildren();const list=learned();
   if(!list.length){box.textContent='Nothing yet. Ask Max for things in your own words and he’ll learn them.';return}
-  const label={list_schedule:'read my schedule',read_note:'read a note',show_keyboard:'show keyboard',hide_keyboard:'hide keyboard',show_notes:'open notes',open_note:'open a note',new_note:'new note',research:'research',show_research:'show research',edit_research:'change research',approve_research:'approve research',reject_research:'reject research',save_answer:'save answer to notes',organize_notes:'organize notes',open_settings:'settings',go_home:'back to talking',export_notes:'export notes',open_menu:'menu'};
+  const label={open_project:'open a project',check_projects:'check my projects',show_projects:'show my projects',list_passage_plans:'my passage plans',list_schedule:'read my schedule',read_note:'read a note',show_keyboard:'show keyboard',hide_keyboard:'hide keyboard',show_notes:'open notes',open_note:'open a note',new_note:'new note',research:'research',show_research:'show research',edit_research:'change research',approve_research:'approve research',reject_research:'reject research',save_answer:'save answer to notes',organize_notes:'organize notes',open_settings:'settings',go_home:'back to talking',export_notes:'export notes',open_menu:'menu'};
   list.forEach(l=>{const row=document.createElement('div');row.className='mem-row';const s=document.createElement('span');s.textContent='“'+l.p+'” → '+(label[l.a.type]||l.a.type)+(l.a.query?' ('+l.a.query+')':'');
    const del=document.createElement('button');del.className='home-mic danger-btn';del.textContent='Forget';del.onclick=()=>{try{localStorage.setItem(LEARN_KEY,JSON.stringify(learned().filter(x=>x.p!==l.p)))}catch{}renderLearned()};row.append(s,del);box.append(row)});
  }
@@ -1186,6 +1215,17 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(lastCreated&&Date.now()-lastCreated.at<30*60e3&&has(/^(undo|undo that|undo it|cancel (that|it)|remove (that|it)|delete (that|it)( reminder| event| task)?|that'?s wrong|mali|bawiin|huwag na)( please)?$/))return {type:'undo_last'};
   if(has(/\b(schedule|calendar|agenda|appointments?|meetings?|events?|lakad|gagawin|to-?dos?|tasks?)\b/)&&(QUESTION.test(n)||has(/\b(show|check|read|tell me|list|pakita|ano|anong|ano ang|meron)\b/))&&!has(/\b(notes?|research)\b/)){
    return {type:'list_schedule',query:has(/\b(tomorrow|bukas)\b/)?'tomorrow':has(/\b(week|linggo|next few days|coming days)\b/)?'week':'today'};
+  }
+  if(pendingMerge&&Date.now()-pendingMerge.at<5*60e3){
+   if(has(/^(yes|yeah|yep|oo|opo|sige|confirm|go ahead)\b.*\b(merge|publish|go|do it|ahead|it)\b|^(yes|confirm)$/))return {type:'confirm_merge'};
+   if(has(/^(no|nope|hindi|huwag|cancel|wait|don'?t)\b/))return {type:'cancel_merge'};
+  }
+  if(has(/\b(passage plans?|saved routes?|my routes?|voyage plans?)\b/)&&!has(/\b(add|change|update|fix)\b/))return {type:'list_passage_plans'};
+  if(has(/\b(apps?|sites?|websites?|projects?)\b/)&&has(/\b(up|online|working|down|running|alive|ok(ay)?|status|check)\b/)&&!has(/\b(add|change|make|fix|update|build)\b/))return {type:'check_projects'};
+  if(has(/^(show|list|open|see|what are|pakita)( me)?( all)? (my )?(projects|apps|websites|sites)$/)||n==='my projects'||n==='projects')return {type:'show_projects'};
+  if(has(/^(open|launch|start|go to|pull up|bring up|buksan|show me)\b/)&&!has(/\b(notes?|research|settings?|keyboard|menu)\b/)){
+   const t=n.replace(/^(open|launch|start|go to|pull up|bring up|buksan|show me)\s+(up\s+)?(my |the )?/,'');
+   const p=findProject(t);if(p)return {type:'open_project',query:p.name};
   }
   if(has(/^what do i have (today|tomorrow|this week)|^(am i|are we) (free|busy)\b/))return {type:'list_schedule',query:has(/\btomorrow\b/)?'tomorrow':has(/\bweek\b/)?'week':'today'};
   if(wc>16)return null;
@@ -1233,6 +1273,138 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   getNotes().forEach(n=>{const t=(n.title||'').toLowerCase();let s=t===qn?3:t.includes(qn)||qn.includes(t)&&t.length>3?2:similar(norm(t),norm(qn))*2;if(s>score){score=s;best=n}});
   return score>=0.9?best:null;
  }
+ // ---------- your projects: open by voice, check if they're up, pass on change requests ----------
+ const DEFAULT_PROJECTS=[
+  {id:'max',name:'Max',url:'https://navigator-isle.github.io/Max-mobile/',repo:'navigator-isle/Max-mobile',aliases:['max app','this app','yourself']},
+  {id:'passage',name:'Passage Planner',url:'https://navigator-isle.github.io/',repo:'navigator-isle/navigator-isle.github.io',aliases:['passage plan','passage','route planner','voyage planner','navigator isle']},
+  {id:'draft',name:'Quick Draft Calculator',url:'https://draft-calculator.github.io/Draft-Calculator/',repo:'',aliases:['draft calculator','draft calc','quick draft','draft survey']},
+  {id:'hobby',name:'Hobby Isle',url:'https://hobbyisle.com/',repo:'navigator-isle/hobbyisle',aliases:['hobbyisle','hobby site','gundam site','gunpla site','my website']},
+  {id:'checklist',name:'Officer Checklist',url:'https://claude.ai/artifact/9j5SkqSG5sMiX8tpC2ieqS',repo:'',aliases:['checklist','officer checklist','ship app','inventory','ship checklist']},
+  {id:'sealex',name:'SeaLex',url:'https://claude.ai/artifact/AzwR4SjQNGSKbBcZsiKm9E',repo:'',aliases:['sea lex','maritime hub','imo updates','info bank']},
+  {id:'reviewer',name:'Deck Board Reviewer',url:'https://claude.ai/artifact/BcWnWqHA29UWhb2V96yeDM',repo:'',aliases:['reviewer','marina reviewer','exam reviewer','board reviewer']},
+  {id:'voyage',name:'Voyage Abstract',url:'https://claude.ai/artifact/HQ89zGSMCcU5viJiVMJFbk',repo:'',aliases:['abstract','voyage abstract','noon report']},
+  {id:'money',name:'PH Money Scanner',url:'https://claude.ai/artifact/6qUPgHhXpjdru9Usv8nadd',repo:'',aliases:['money scanner','pse','stock scanner','stocks','trading app']},
+  {id:'sulit',name:'Sulit o Hindi',url:'https://claude.ai/artifact/6JCrJXetpmjKbEYHvoe54B',repo:'',aliases:['sulit','deal finder','deals app','lazada app']}
+ ];
+ const PROJ_KEY='max_projects';
+ function projects(){try{const v=JSON.parse(localStorage.getItem(PROJ_KEY)||'null');return Array.isArray(v)&&v.length?v:DEFAULT_PROJECTS}catch{return DEFAULT_PROJECTS}}
+ const saveProjects=l=>{try{localStorage.setItem(PROJ_KEY,JSON.stringify(l))}catch{}};
+ const projKind=p=>/claude\.ai\//.test(p.url)?'Inside Claude':p.repo?'Website · GitHub':'Website';
+ const projStatus={};
+ let ghInfo=null,pendingMerge=null;
+ function findProject(q){
+  const t=norm(q).replace(/\b(app|site|website|project|page)s?\b/g,'').trim();if(!t)return null;
+  let best=null,score=0;
+  projects().forEach(p=>{[p.name,...(p.aliases||[])].forEach(a=>{const an=norm(a);let s=an===t?3:(t.includes(an)&&an.length>3)||(an.includes(t)&&t.length>3)?2:similar(an,t)*2;if(s>score){score=s;best=p}})});
+  return score>=1.2?best:null;
+ }
+ function renderProjects(){
+  const box=$('projList');box.replaceChildren();
+  projects().forEach(p=>{
+   const st=projStatus[p.id];
+   const row=document.createElement('div');row.className='proj';
+   const dot=document.createElement('span');dot.className='dot'+(st?.up===true?' up':st?.up===false?' down':'');
+   const info=document.createElement('div');info.className='info';
+   const b=document.createElement('b');b.textContent=p.name;
+   const sp=document.createElement('span');sp.textContent=/claude\.ai\//.test(p.url)?'Inside Claude · opens with your Claude account':projKind(p)+(st?(st.up===true?' · up ('+(st.ms/1000).toFixed(1)+'s)':st.up===false?' · DOWN'+(st.status?' ('+st.status+')':''):' · '+(st.note||'')):'');
+   info.append(b,sp);
+   const a=document.createElement('a');a.href=p.url;a.target='_blank';a.rel='noopener';a.textContent='Open';
+   row.append(dot,info,a);box.append(row);
+  });
+ }
+ function renderProjectEditor(){
+  const box=$('projEditList');if(!box)return;box.replaceChildren();
+  projects().forEach(p=>{const row=document.createElement('div');row.className='mem-row';const s=document.createElement('span');s.textContent=p.name+' — '+p.url+(p.repo?' ('+p.repo+')':'');
+   const del=document.createElement('button');del.className='home-mic danger-btn';del.textContent='Remove';
+   del.onclick=()=>{if(!confirm('Remove '+p.name+' from Max’s projects?'))return;saveProjects(projects().filter(x=>x.id!==p.id));renderProjectEditor();renderProjects()};
+   row.append(s,del);box.append(row)});
+  const gs=$('githubStatus');if(gs){const g=cloud.health?.github||'not connected';gs.textContent='GitHub for Max: '+g+(g==='not connected'?' — change requests are saved in your notes until you add a GitHub key (see SETUP.md).':'')}
+ }
+ $('projAdd').onclick=()=>{
+  const name=$('projAddName').value.trim(),url=$('projAddUrl').value.trim(),repo=$('projAddRepo').value.trim();
+  if(!name||!/^https?:\/\//.test(url)){alert('Add a name and a web address starting with https://');return}
+  if(repo&&!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)){alert('GitHub repo should look like owner/name');return}
+  const l=projects();l.push({id:'p_'+Date.now(),name,url,repo,aliases:[]});saveProjects(l);
+  $('projAddName').value=$('projAddUrl').value=$('projAddRepo').value='';renderProjectEditor();renderProjects();
+ };
+ async function checkProjects(){
+  const list=projects();
+  const {r,data}=await postJson('/api/projects/status',{projects:list.map(p=>({id:p.id,url:p.url}))},30000);
+  if(r.status===404)return 'Checking projects needs the newest Max backend.';
+  if(!r.ok)return 'I couldn’t check them right now. '+(data.error||'');
+  (data.results||[]).forEach(x=>projStatus[x.id]=x);renderProjects();
+  const name=id=>list.find(p=>p.id===id)?.name||id;
+  const up=data.results.filter(x=>x.up===true),down=data.results.filter(x=>x.up===false),claude=data.results.filter(x=>x.up===null);
+  let out=down.length?'Heads up: '+down.map(x=>name(x.id)).join(', ')+(down.length===1?' is':' are')+' not answering. ':'';
+  out+=up.length?(down.length?'':'All good. ')+up.map(x=>name(x.id)).join(', ')+(up.length===1?' is':' are')+' up. ':'';
+  if(claude.length)out+=claude.length+' of your apps live inside Claude, so I can’t check those from outside — they open from your Claude account.';
+  return out.trim();
+ }
+ function openProject(p){
+  const w=window.open(p.url,'_blank');
+  const box=$('noteRefs');box.replaceChildren();
+  const a=document.createElement('a');a.className='open-chip';a.href=p.url;a.target='_blank';a.rel='noopener';a.textContent='Open '+p.name+' ↗';box.append(a);box.hidden=false;
+  return w?'Opening '+p.name+'.':'Here’s '+p.name+' — tap the button to open it.';
+ }
+ function readPassagePlans(){
+  let plans=[];try{plans=JSON.parse(localStorage.getItem('pp2_plans')||'[]')}catch{}
+  if(!Array.isArray(plans)||!plans.length)return 'I can’t see any saved passage plans on this phone. I can only read them when Passage Planner was used in this same browser, not the Play Store app.';
+  const l=plans.slice().sort((a,b)=>(b.saved||0)-(a.saved||0));
+  return 'You have '+l.length+' saved passage plan'+(l.length===1?'':'s')+': '+l.slice(0,6).map(p=>(p.name||'Unnamed')+(p.title?', '+p.title:'')+(p.nm?', '+Math.round(p.nm).toLocaleString()+' nautical miles':'')).join('; ')+'.';
+ }
+ async function githubInfo(){
+  if(ghInfo&&Date.now()-ghInfo.at<5*60e3)return ghInfo;
+  try{const {r,data}=await fetchJson(workerBase()+'/api/github/status',{},10000);ghInfo={at:Date.now(),connected:!!(r.ok&&data.connected),repos:data.repos||[]}}catch{ghInfo={at:Date.now(),connected:false,repos:[]}}
+  return ghInfo;
+ }
+ async function projectRequest(d,raw){
+  const p=findProject(d?.project||'')||null;
+  const request=(d?.request||raw||'').trim();
+  if(!p)return 'Which project is that for? Say the name, like “on Hobby Isle, add …”.';
+  if(!request)return 'What should change on '+p.name+'?';
+  const g=await githubInfo();
+  if(g.connected&&p.repo&&g.repos.includes(p.repo)){
+   const {r,data}=await postJson('/api/github/request',{repo:p.repo,title:request.slice(0,120),body:request},20000);
+   if(r.ok)return 'Done — I filed it as change request number '+data.request.number+' on '+p.name+'. When a fix is ready, I’ll ask you before anything goes live.';
+  }
+  const n={id:newId(),title:p.name+': '+request.slice(0,70),category:'Projects › Change requests',tags:['change request',p.name.toLowerCase()],
+   body:'<p><b>Project:</b> '+escHtml(p.name)+'</p><p><b>Request:</b> '+escHtml(request)+'</p><p><b>Status:</b> waiting</p>',source:'max',createdAt:Date.now(),updatedAt:Date.now(),deleted:false};
+  const all=loadAll();all.push(n);putNotes(all);
+  return 'Saved as a change request for '+p.name+' in your notes, under Projects. '+(/claude\.ai/.test(p.url)?p.name+' lives inside Claude, so the change has to be made there — ask Claude to work on Max’s change requests.':'I can’t send it to GitHub myself yet, so ask Claude to work on Max’s change requests.');
+ }
+ async function listRequests(d){
+  const p=findProject(d?.project||'')||null;
+  const local=getNotes().filter(n=>n.category==='Projects › Change requests'&&(!p||n.title.startsWith(p.name+':')));
+  const g=await githubInfo();
+  let out='';
+  const repos=p?(p.repo&&g.repos.includes(p.repo)?[p]:[]):projects().filter(x=>x.repo&&g.repos.includes(x.repo));
+  for(const pr of g.connected?repos:[]){
+   const {r,data}=await fetchJson(workerBase()+'/api/github/requests?repo='+encodeURIComponent(pr.repo),{},15000);
+   if(!r.ok)continue;
+   const reqs=(data.requests||[]).filter(x=>x.fromMax),pulls=data.pulls||[];
+   if(reqs.length||pulls.length)out+=pr.name+': '+(reqs.length?reqs.length+' open request'+(reqs.length===1?'':'s'):'')+(pulls.length?(reqs.length?', and ':'')+pulls.map(x=>'fix ready — pull request '+x.number+', '+x.title.replace(/^\[Max\]\s*/,'')).join('; '):'')+'. ';
+  }
+  if(local.length)out+=local.length+' request'+(local.length===1?' is':'s are')+' saved in your notes: '+local.slice(0,5).map(n=>n.title).join('; ')+'.';
+  return out.trim()||'No open change requests'+(p?' for '+p.name:'')+'.';
+ }
+ async function askMerge(d){
+  const p=findProject(d?.project||'')||null,num=Math.floor(Number(d?.number||0));
+  if(!p||!p.repo)return 'Which project, and which pull request number?';
+  if(!(num>0))return 'Which pull request number should I publish on '+p.name+'?';
+  const g=await githubInfo();if(!g.connected||!g.repos.includes(p.repo))return 'I’m not connected to GitHub for '+p.name+' yet.';
+  pendingMerge={repo:p.repo,number:num,name:p.name,at:Date.now()};
+  return 'Publish pull request '+num+' on '+p.name+'? This puts the change live. Say “yes, merge it” to confirm, or “no”.';
+ }
+ async function doMerge(){
+  const m=pendingMerge;pendingMerge=null;
+  if(!m||Date.now()-m.at>5*60e3)return 'There’s nothing waiting to be published.';
+  const {r,data}=await postJson('/api/github/merge',{repo:m.repo,number:m.number,confirm:'MERGE '+m.number},30000);
+  if(!r.ok)return data.error||'I couldn’t publish it.';
+  return 'Published — pull request '+m.number+' is merged on '+m.name+'. It will go live in a few minutes.';
+ }
+ $('projCheck').onclick=async()=>{$('projCheck').disabled=true;const s=await checkProjects();$('projCheck').disabled=false;setSub('',s);speak(s)};
+ $('projRequests').onclick=async()=>{const s=await listRequests({});$('projReqBox').hidden=false;$('projReqBox').textContent=s;setSub('',s);speak(s)};
+
  // ---------- calendar & tasks ----------
  let lastCreated=null;
  const pad=n=>String(n).padStart(2,'0');
@@ -1310,6 +1482,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     }
     return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
    }
+   case 'show_projects':setSection('projects');return 'Here are your '+projects().length+' projects. Say “are they up?” to check them.';
+   case 'check_projects':setSection('projects');return await checkProjects();
+   case 'open_project':{const p=findProject(a.query||a.details?.project||'');return p?openProject(p):'I don’t know that project yet. You can add it in Settings, under My projects.'}
+   case 'list_passage_plans':return readPassagePlans();
+   case 'project_request':return await projectRequest(a.details||{project:a.query},raw);
+   case 'list_requests':return await listRequests(a.details||{project:a.query});
+   case 'merge_request':return await askMerge(a.details||{});
+   case 'confirm_merge':return await doMerge();
+   case 'cancel_merge':pendingMerge=null;return 'Okay, I won’t publish it.';
    case 'add_event':return await addEvent(a.details);
    case 'add_task':return await addTask(a.details||{title:a.query});
    case 'list_schedule':return await listSchedule(a.details?.range||a.query||'today');
@@ -1421,7 +1602,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(navigator.onLine===false){const o=offlineAnswer(q);talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),projects:projects().map(p=>p.name),
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
@@ -1429,7 +1610,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
@@ -1526,7 +1707,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const go=e.target.closest('[data-go]')?.dataset.go;
   if(e.target===$('quickMenu')||go==='close'){closeMenu();return}
   if(!go)return;closeMenu();
-  if(go==='keyboard')setKeyboard(true);else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='settings')openConnection();
+  if(go==='keyboard')setKeyboard(true);else if(go==='projects')setSection('projects');else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='settings')openConnection();
  });
  $('homeStop').onclick=()=>{greetingDone=true;endConversation(null);stopSpeech();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&convo)endConversation('Standing by.')});

@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 295 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 343 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -9,6 +9,28 @@
 - Gemini Flash first, Flash-Lite as automatic backup.
 - If a `GEMINI_MODEL` variable exists in Cloudflare, it forces that model. Delete it to use Flash.
 - Optional Claude: add a Cloudflare secret `ANTHROPIC_API_KEY`. Max then uses Claude Haiku for conversation and falls back to Gemini. To use Sonnet, add a text variable `CLAUDE_MODEL` set to `claude-sonnet-5-5`.
+
+**Your projects**
+- **Max knows your apps:** Max, Passage Planner, Quick Draft Calculator, Hobby Isle, Officer Checklist, SeaLex, Deck Board Reviewer, Voyage Abstract, PH Money Scanner and Sulit o Hindi. Add or remove them in ⚙ Settings → My projects.
+- **Things to say:**
+  - "Open SeaLex"
+  - "Are my apps up?"
+  - "What passage plans do I have?"
+  - "On Hobby Isle, add a Pokémon menu"
+  - "Any requests for Hobby Isle?"
+  - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
+- **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
+
+**Optional: let Max send change requests to GitHub (about 5 minutes)**
+- **Create the key:** github.com → your photo → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**
+  - **Name:** `Max` · **Expiration:** 1 year
+  - **Repository access:** **Only select repositories** → `Max-mobile`, `hobbyisle`, `navigator-isle.github.io`
+  - **Permissions:** **Issues** read and write · **Pull requests** read and write · **Contents** read and write
+  - **Generate**, then copy the key
+- **Give it to Max:** Cloudflare → **max-ai-backend** → **Settings** → **Variables and Secrets**
+  - **Secret** `GITHUB_TOKEN` = the key
+  - **Text** `MAX_GITHUB_REPOS` = `navigator-isle/Max-mobile,navigator-isle/hobbyisle,navigator-isle/navigator-isle.github.io`
+- **What Max can then do:** file change requests as GitHub issues, list them along with any ready fixes, and publish a fix only after you say "yes, merge it" and its tests have passed. He never touches domains, DNS or account settings.
 
 **Google sign-in + Calendar + Tasks (one-time, about 10 minutes)**
 
