@@ -78,7 +78,7 @@ await p.click("#miniHome");
 // Researcher
 await say("researcher, keep an eye on BWM updates");
 ok(/I’ll keep an eye on BWM/.test(await answer()), "Researcher: watch a topic", await answer());
-await say("check my watch list");
+await say("check my watched topics");
 a = await answer();
 ok(/found updates on 1 topic/.test(a) && /since|last 12 months/.test(researchAsked.at(-1)), "Researcher checks the watch list and puts findings in the inbox", a);
 await say("what did the researcher find");

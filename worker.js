@@ -52,7 +52,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-01c";
+const WORKER_VERSION = "max-worker-2026-11-01d";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -257,7 +257,7 @@ function officialSource(s) {
   return /imo\.org|\.gov\b|\.gov\.|\.int\b|europa\.eu|marina\.gov\.ph|uscg|mca\.gov|amsa\.gov|mpa\.gov\.sg|classnk|dnv\.|lr\.org|abs-group|eagle\.org|bureauveritas|iacs\.org|ilo\.org|panama-maritime|amp\.gob\.pa|liscr|register-iri/i.test(String(s));
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
@@ -270,6 +270,9 @@ function cleanAction(a) {
     find: cleanText(String(d.find || ""), 120), on: cleanText(String(d.on || ""), 10), location: cleanText(String(d.location || ""), 200),
     reminders: Array.isArray(d.reminders) ? d.reminders.map(Number).filter(Number.isFinite).slice(0, 5) : undefined,
     target: cleanText(String(d.target || ""), 200), op: ["archive","unarchive","trash","untrash","read","unread","star","unstar","important","unimportant","label","unlabel"].includes(d.op) ? d.op : undefined, label: cleanText(String(d.label || ""), 60),
+    symbols: Array.isArray(d.symbols) ? d.symbols.map(x => cleanText(String(x), 40)).filter(Boolean).slice(0, 10) : undefined, symbol: cleanText(String(d.symbol || ""), 40), kind: ["pse","crypto","fx"].includes(d.kind) ? d.kind : undefined, tier: cleanText(String(d.tier || ""), 20),
+    direction: ["above","below"].includes(d.direction) ? d.direction : undefined, price: Number.isFinite(Number(d.price)) ? Number(d.price) : undefined, from: cleanText(String(d.from || ""), 20),
+    currencies: Array.isArray(d.currencies) ? d.currencies.map(x => cleanText(String(x), 5).toUpperCase()).filter(Boolean).slice(0, 5) : undefined,
     days: Number.isFinite(Number(d.days)) ? Number(d.days) : undefined, topic: cleanText(String(d.topic || ""), 200), name: cleanText(String(d.name || ""), 80), url: cleanText(String(d.url || ""), 500), skill: cleanText(String(d.skill || ""), 1500)};
   if (out.details) for (const k of Object.keys(out.details)) if (out.details[k] === undefined || out.details[k] === "" || out.details[k] === false) delete out.details[k];
   return out;
@@ -919,6 +922,165 @@ Return ONLY JSON: {"subject": "${subject ? "keep: " + subject.replace(/"/g, "'")
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
+// ---------- markets: crypto (CoinGecko), Philippine stocks (PSE Edge), currencies (Frankfurter / ECB) ----------
+// Prices are reported, never advised on, and Max never trades.
+const UA = "MaxPersonalAssistant/1.0 (personal use; +https://navigator-isle.github.io/Max-mobile/)";
+const mcache = new Map();
+async function cached(key, ms, fn) { const c = mcache.get(key); if (c && Date.now() - c.at < ms) return c.v; const v = await fn(); mcache.set(key, {at: Date.now(), v}); if (mcache.size > 400) mcache.delete(mcache.keys().next().value); return v; }
+const CRYPTO = {btc: "bitcoin", bitcoin: "bitcoin", eth: "ethereum", ethereum: "ethereum", usdt: "tether", tether: "tether", usdc: "usd-coin", bnb: "binancecoin", sol: "solana", solana: "solana", xrp: "ripple", ripple: "ripple",
+  ada: "cardano", cardano: "cardano", doge: "dogecoin", dogecoin: "dogecoin", trx: "tron", tron: "tron", ton: "the-open-network", dot: "polkadot", polkadot: "polkadot", link: "chainlink", chainlink: "chainlink",
+  ltc: "litecoin", litecoin: "litecoin", avax: "avalanche-2", shib: "shiba-inu", pol: "polygon-ecosystem-token", matic: "polygon-ecosystem-token", xlm: "stellar", bch: "bitcoin-cash", sui: "sui", pepe: "pepe", axs: "axie-infinity", slp: "smooth-love-potion", ron: "ronin"};
+const FIAT = ["PHP","USD","EUR","JPY","GBP","SGD","AUD","CAD","CHF","CNY","HKD","KRW","INR","IDR","MYR","THB","NZD","SEK","NOK","DKK","PLN","CZK","HUF","TRY","ZAR","BRL","MXN","ILS","ISK","RON","BGN","AED","SAR","KWD","QAR","TWD","VND"];
+const isFiat = c => FIAT.includes(String(c || "").toUpperCase());
+async function cg(path) {
+  const res = await fetch("https://api.coingecko.com/api/v3" + path, {headers: {Accept: "application/json", "User-Agent": UA}});
+  if (res.status === 429) throw new Error("CoinGecko is busy (too many requests). Try again in a minute.");
+  if (!res.ok) throw new Error("CoinGecko answered " + res.status + ".");
+  return res.json();
+}
+async function cryptoId(sym) {
+  const k = String(sym || "").toLowerCase().trim(); if (CRYPTO[k]) return CRYPTO[k];
+  return cached("cgid:" + k, 864e5, async () => {
+    const r = await cg("/search?query=" + encodeURIComponent(k));
+    const c = (r.coins || []).find(x => x.symbol.toLowerCase() === k || x.id === k || x.name.toLowerCase() === k) || (r.coins || [])[0];
+    if (!c) throw new Error("I couldn't find a coin called " + sym + "."); return c.id; });
+}
+async function fxRates(base) {
+  base = String(base || "USD").toUpperCase();
+  return cached("fx:" + base, 30 * 60e3, async () => {
+    const res = await fetch("https://api.frankfurter.dev/v1/latest?base=" + base, {headers: {"User-Agent": UA}});
+    if (!res.ok) throw new Error("Currency rates unavailable (" + res.status + ").");
+    const d = await res.json(); return {date: d.date, rates: {...d.rates, [base]: 1}};
+  });
+}
+async function convertAmount(amount, from, tos) {
+  from = from.toUpperCase(); const fx = await fxRates(from); const out = {};
+  for (const t of tos) { const T = t.toUpperCase(); if (fx.rates[T]) out[T] = amount * fx.rates[T]; }
+  return {values: out, date: fx.date};
+}
+async function pseCompany(sym) {
+  const k = String(sym || "").toUpperCase().trim();
+  return cached("pse:" + k, 7 * 864e5, async () => {
+    const res = await fetch("https://edge.pse.com.ph/autoComplete/searchCompanyNameSymbol.ax?term=" + encodeURIComponent(k), {headers: {"User-Agent": UA, Accept: "application/json"}});
+    if (!res.ok) throw new Error("PSE Edge answered " + res.status + ".");
+    const list = await res.json().catch(() => []);
+    const c = list.find(x => String(x.symbol).toUpperCase() === k) || list.find(x => String(x.cmpyNm).toUpperCase() === k) || (list.length === 1 ? list[0] : null);
+    if (!c) throw new Error(list.length ? "Which one? " + list.slice(0, 4).map(x => x.symbol + " (" + x.cmpyNm + ")").join(", ") : "No PSE company called " + sym + ".");
+    return {id: String(c.cmpyId), symbol: String(c.symbol).toUpperCase(), name: c.cmpyNm};
+  });
+}
+const mnum = s => { const m = String(s || "").replace(/,/g, "").match(/-?\d+(\.\d+)?/); return m ? Number(m[0]) : null; };
+function stockPage(html) {
+  const f = {}; for (const m of html.matchAll(/<th[^>]*>([\s\S]*?)<\/th>\s*<td[^>]*>([\s\S]*?)<\/td>/gi)) f[m[1].replace(/<[^>]+>|&nbsp;/g, " ").replace(/\s+/g, " ").trim()] = m[2].replace(/<[^>]+>|&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  const sel = html.match(/<select[^>]*name=["']?security_id["']?[^>]*>([\s\S]*?)<\/select>/i)?.[1] || "";
+  const opt = sel.match(/<option[^>]*value=["']?(\d+)["']?[^>]*selected/i) || sel.match(/<option[^>]*value=["']?(\d+)/i);
+  const ch = f["Change(% Change)"] || ""; let change = mnum(ch), pct = mnum((ch.match(/\(([^)]*)%?\)/) || [])[1]);
+  if (/\bdown\b/i.test(ch)) { change = change !== null ? -Math.abs(change) : null; pct = pct !== null ? -Math.abs(pct) : null; }
+  const prev = f["Previous Close and Date"] || "";
+  return {securityId: opt ? opt[1] : "", price: mnum(f["Last Traded Price"]), change, changePct: pct, prevClose: mnum(prev), prevDate: (prev.match(/\(([^)]+)\)/) || [])[1] || "",
+    high52: mnum(f["52-Week High"]), low52: mnum(f["52-Week Low"]), status: f["Status"] || "", volume: mnum(f["Volume"])};
+}
+async function pseQuote(sym) {
+  const c = await pseCompany(sym);
+  return cached("pseq:" + c.id, 5 * 60e3, async () => {
+    const res = await fetch("https://edge.pse.com.ph/companyPage/stockData.do?cmpy_id=" + c.id, {headers: {"User-Agent": UA}});
+    if (!res.ok) throw new Error("PSE Edge answered " + res.status + ".");
+    const q = stockPage(await res.text());
+    if (q.price === null) throw new Error("PSE Edge page changed — no price found.");
+    return {...c, ...q};
+  });
+}
+const mdy = d => String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0") + "-" + d.getUTCFullYear();
+async function pseChart(sym, days) {
+  const q = await pseQuote(sym); if (!q.securityId) throw new Error("No chart id for " + sym + ".");
+  return cached("psec:" + q.id + ":" + days, 30 * 60e3, async () => {
+    const end = new Date(), start = new Date(Date.now() - days * 864e5);
+    const res = await fetch("https://edge.pse.com.ph/common/DisclosureCht.ax", {method: "POST", headers: {"Content-Type": "application/json", "User-Agent": UA}, body: JSON.stringify({cmpy_id: q.id, security_id: q.securityId, startDate: mdy(start), endDate: mdy(end)})});
+    if (!res.ok) throw new Error("PSE Edge chart answered " + res.status + ".");
+    const d = await res.json();
+    return {points: (d.chartData || []).map(r => [Date.parse(String(r.CHART_DATE).replace(/ 00:00:00$/, "") + " UTC"), Number(r.CLOSE)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])).sort((a, b) => a[0] - b[0]), name: q.name, symbol: q.symbol};
+  });
+}
+async function webQuote(env, sym) {
+  // Last resort when PSE Edge is down: Gemini with Google Search, clearly marked as such.
+  const g = await gemini(env, {contents: [{parts: [{text: `Find the latest Philippine Stock Exchange price of the stock with ticker "${sym}". Reply ONLY with JSON {"name": "...", "price": number in PHP, "changePct": number or null, "asOf": "date/time as stated by the source"}. If you can't find it, {"price": null}.`}]}], tools: [{google_search: {}}], generationConfig: {temperature: 0}});
+  const t = (g?.data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
+  const j = JSON.parse((t.match(/\{[\s\S]*\}/) || ["{}"])[0]);
+  if (!Number.isFinite(Number(j.price))) throw new Error("Couldn't find a price for " + sym + ".");
+  return {symbol: sym.toUpperCase(), name: cleanText(String(j.name || sym), 80), price: Number(j.price), changePct: Number.isFinite(Number(j.changePct)) ? Number(j.changePct) : null, asOf: cleanText(String(j.asOf || ""), 60)};
+}
+function guessKind(sym) { const k = String(sym || "").toLowerCase().trim(); if (CRYPTO[k]) return "crypto"; if (isFiat(k) && k.length === 3) return "fx"; return "pse"; }
+async function marketRoutes(request, env, url, origin) {
+  let body = {}; if (request.method === "POST") { try { body = await request.json(); } catch { return json({error: "Invalid JSON body."}, 400, origin, env); } }
+  const curs = [...new Set((Array.isArray(body.currencies) && body.currencies.length ? body.currencies : ["PHP", "USD"]).map(c => String(c).toUpperCase()).filter(isFiat))].slice(0, 5);
+  if (url.pathname === "/api/market/quotes" && request.method === "POST") {
+    const items = (Array.isArray(body.items) ? body.items : []).slice(0, 20).map(x => ({kind: ["crypto", "pse", "fx"].includes(x?.kind) ? x.kind : guessKind(x?.symbol), symbol: cleanText(String(x?.symbol || ""), 40)})).filter(x => x.symbol);
+    const out = [];
+    // crypto: one call for all coins, in every chosen currency
+    const coins = items.filter(x => x.kind === "crypto");
+    if (coins.length) {
+      try {
+        const ids = await Promise.all(coins.map(c => cryptoId(c.symbol).catch(e => ({error: e.message}))));
+        const good = [...new Set(ids.filter(i => typeof i === "string"))];
+        const r = good.length ? await cached("cgp:" + good.join(",") + curs.join(","), 60e3, () => cg("/simple/price?ids=" + good.join(",") + "&vs_currencies=" + curs.map(c => c.toLowerCase()).join(",") + "&include_24hr_change=true&include_last_updated_at=true")) : {};
+        coins.forEach((c, i) => { const id = ids[i];
+          if (typeof id !== "string") return out.push({...c, error: id.error});
+          const p = r[id]; if (!p) return out.push({...c, error: "No price for " + c.symbol + "."});
+          const main = curs[0].toLowerCase();
+          out.push({kind: "crypto", symbol: c.symbol.toUpperCase(), id, name: id.replace(/-/g, " "), price: p[main], currency: curs[0], changePct: p[main + "_24h_change"] ?? null, changeLabel: "24h",
+            equiv: Object.fromEntries(curs.slice(1).filter(x => p[x.toLowerCase()] !== undefined).map(x => [x, p[x.toLowerCase()]])), asOf: p.last_updated_at ? new Date(p.last_updated_at * 1000).toISOString() : "", source: "CoinGecko"}); });
+      } catch (e) { coins.forEach(c => out.push({...c, error: e.message})); }
+    }
+    for (const s of items.filter(x => x.kind === "pse")) {
+      try {
+        let q, source = "PSE Edge", asOf;
+        try { q = await pseQuote(s.symbol); asOf = q.status && /open/i.test(q.status) ? "today (delayed)" : "last close"; }
+        catch (e) { if (/Which one|No PSE company/.test(e.message)) throw e; q = await webQuote(env, s.symbol); source = "web search (may be delayed)"; asOf = q.asOf; }
+        const others = curs.filter(c => c !== "PHP"), conv = others.length ? await convertAmount(q.price, "PHP", others).catch(() => ({values: {}})) : {values: {}};
+        const mainPrice = curs[0] === "PHP" ? q.price : conv.values[curs[0]] ?? q.price;
+        out.push({kind: "pse", symbol: q.symbol, name: q.name, price: mainPrice, currency: conv.values[curs[0]] !== undefined || curs[0] === "PHP" ? curs[0] : "PHP", local: q.price, localCurrency: "PHP", changePct: q.changePct ?? null, change: q.change ?? null, changeLabel: "day",
+          equiv: Object.fromEntries(["PHP", ...others].filter(c => c !== curs[0]).map(c => [c, c === "PHP" ? q.price : conv.values[c]]).filter(x => x[1] !== undefined)), prevClose: q.prevClose ?? null, high52: q.high52 ?? null, low52: q.low52 ?? null, asOf, source});
+      } catch (e) { out.push({...s, error: e.message}); }
+    }
+    for (const s of items.filter(x => x.kind === "fx")) {
+      try { const F = s.symbol.toUpperCase(), c = await convertAmount(1, F, curs.filter(x => x !== F));
+        out.push({kind: "fx", symbol: F, name: "1 " + F, price: c.values[curs.find(x => x !== F)], currency: curs.find(x => x !== F), equiv: c.values, asOf: c.date, source: "ECB rates (Frankfurter)"}); }
+      catch (e) { out.push({...s, error: e.message}); }
+    }
+    return json({quotes: out, currencies: curs}, 200, origin, env);
+  }
+  if (url.pathname === "/api/market/chart" && request.method === "POST") {
+    const sym = cleanText(String(body.symbol || ""), 40), kind = ["crypto", "pse", "fx"].includes(body.kind) ? body.kind : guessKind(sym), days = Math.min(Math.max(Math.round(Number(body.days) || 30), 1), 365), cur = curs[0];
+    try {
+      if (kind === "crypto") {
+        const id = await cryptoId(sym);
+        const d = await cached("cgc:" + id + cur + days, 15 * 60e3, () => cg("/coins/" + id + "/market_chart?vs_currency=" + cur.toLowerCase() + "&days=" + days));
+        let pts = (d.prices || []).map(p => [p[0], p[1]]); if (pts.length > 240) { const k = Math.ceil(pts.length / 240); pts = pts.filter((_, i) => i % k === 0 || i === pts.length - 1); }
+        return json({symbol: sym.toUpperCase(), name: id.replace(/-/g, " "), kind, currency: cur, days, points: pts, source: "CoinGecko"}, 200, origin, env);
+      }
+      if (kind === "pse") {
+        const c = await pseChart(sym, days); let pts = c.points, currency = "PHP";
+        if (cur !== "PHP") { const r = await convertAmount(1, "PHP", [cur]).catch(() => null); if (r?.values[cur]) { pts = pts.map(p => [p[0], p[1] * r.values[cur]]); currency = cur; } }
+        return json({symbol: c.symbol, name: c.name, kind, currency, days, points: pts, source: "PSE Edge (daily closes)"}, 200, origin, env);
+      }
+      const F = sym.toUpperCase(), T = cur === F ? "PHP" : cur, start = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
+      const d = await cached("fxc:" + F + T + days, 3600e3, async () => { const res = await fetch("https://api.frankfurter.dev/v1/" + start + "..?base=" + F + "&symbols=" + T, {headers: {"User-Agent": UA}}); if (!res.ok) throw new Error("Currency history unavailable."); return res.json(); });
+      return json({symbol: F, name: F + " in " + T, kind: "fx", currency: T, days, points: Object.entries(d.rates || {}).map(([day, r]) => [Date.parse(day + "T00:00:00Z"), r[T]]).sort((a, b) => a[0] - b[0]), source: "ECB rates (Frankfurter)"}, 200, origin, env);
+    } catch (e) { return json({error: String(e.message || e).slice(0, 200)}, 502, origin, env); }
+  }
+  if (url.pathname === "/api/market/convert" && request.method === "POST") {
+    const amount = Number(body.amount), from = String(body.from || "").toUpperCase(), to = (Array.isArray(body.to) ? body.to : [body.to]).map(x => String(x || "").toUpperCase()).filter(Boolean);
+    if (!(amount > 0)) return json({error: "How much?"}, 400, origin, env);
+    try {
+      if (isFiat(from)) { const r = await convertAmount(amount, from, to.length ? to : curs); return json({amount, from, values: r.values, asOf: r.date, source: "ECB rates (Frankfurter)"}, 200, origin, env); }
+      const q = await (await marketRoutes(new Request(url.origin + "/api/market/quotes", {method: "POST", body: JSON.stringify({items: [{symbol: from}], currencies: to.length ? to : curs})}), env, new URL(url.origin + "/api/market/quotes"), origin)).json();
+      const x = q.quotes?.[0]; if (!x || x.error) throw new Error(x?.error || "No price.");
+      const values = {[x.currency]: x.price * amount}; for (const [c, v] of Object.entries(x.equiv || {})) values[c] = v * amount;
+      return json({amount, from: x.symbol, values, asOf: x.asOf, source: x.source}, 200, origin, env);
+    } catch (e) { return json({error: String(e.message || e).slice(0, 200)}, 502, origin, env); }
+  }
+  return json({error: "Not found."}, 404, origin, env);
+}
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -964,6 +1126,7 @@ export default {
     }
     if (url.pathname.startsWith("/api/calendar") || url.pathname === "/api/tasks") return calendarRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/gmail/")) return gmailRoutes(request, env, url, origin);
+    if (url.pathname.startsWith("/api/market/")) return marketRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/projects/") || url.pathname.startsWith("/api/github/")) return projectRoutes(request, env, url, origin);
     if (url.pathname === "/api/memory" || url.pathname === "/api/sync" || url.pathname === "/api/talk") {
       if (!passcodeSet(env) && !auth.enforced) return json({error:"Cloud memory is off: add a MAX_PASSCODE secret to the Worker first."}, 403, origin, env);
@@ -1078,7 +1241,7 @@ export default {
             "edit_event (change, move or rename an existing calendar event, or change its reminders; details = {find: words from its title, on: \"YYYY-MM-DD\" if he said which day, then only what changes: title, start, durationMinutes, location, reminders: [minutes before, e.g. 60, 10]}) · delete_event (cancel/remove an event; details = {find, on}) · alarms: an alarm is add_event with title starting \"⏰ \", reminderMinutes 0, durationMinutes 5 · several reminders: add_event with reminders: [60, 10] · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
-          "GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
+          "MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +

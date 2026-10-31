@@ -205,6 +205,7 @@ body.on-home .top-status{opacity:.7}
 .att-img{display:block;max-width:100%;max-height:320px;border-radius:12px;margin:8px 0;object-fit:contain;background:#06101a}
 .att-text{white-space:pre-wrap;overflow-wrap:anywhere;background:#06101a;border:1px solid #1c344c;border-radius:10px;padding:10px;color:#c8d9e9;font-size:.85rem;max-height:420px;overflow:auto}
 #attachBtn.pulse{box-shadow:0 0 0 3px #54e0c9}
+.mkt-chart{display:block;width:100%;height:120px;margin:8px 0}.mkt-chart.big{height:240px}
 .disp{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .disp-card{border:1px solid #1c344c;background:#0b1a2b;border-radius:16px;padding:14px;min-width:0}
 .disp-card.warn{border-color:#7a3b3b}
@@ -1229,7 +1230,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1250,6 +1251,19 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- markets ----
+  if(has(/\b(watch ?list|watchlist)\b/)&&!has(/\b(topics?|research|researcher|updates on)\b/)){
+   if(has(/\b(add|put|include|isama|idagdag)\b/)){const m=raw.match(/\b(?:add|put|include|isama|idagdag)\s+(.+?)\s+(?:to|in|on|sa)\s+(?:my |the )?watch ?list(?:\s+(?:as|under|in)\s+(.+))?/i);if(m){const sy=symbolsIn(m[1])[0]||{symbol:m[1].replace(/^(the|a)\s+/i,'').trim().toUpperCase()};return {type:'watchlist_add',details:{symbol:sy.symbol,kind:sy.kind,tier:m[2]||''}}}}
+   if(has(/\b(remove|delete|take|drop|alisin|tanggalin)\b/)){const m=raw.match(/\b(?:remove|delete|take|drop|alisin|tanggalin)\s+(.+?)\s+(?:from|off|out of|sa)\s+(?:my |the )?watch ?list/i);if(m){const sy=symbolsIn(m[1])[0]||{symbol:m[1].trim().toUpperCase()};return {type:'watchlist_remove',details:{symbol:sy.symbol}}}}
+   return {type:'show_watchlist'};
+  }
+  if(has(/\b(price alerts?|my alerts)\b/)&&!has(/\b(set|add|create)\b/))return {type:'list_alerts'};
+  if(has(/\b(show|display|use|set|change)\b.*\b(prices?|currenc(y|ies))\b.*\b(in|to)\b/)&&Object.keys(CUR_WORDS).some(w=>n.includes(w)))return {type:'set_currencies',query:raw};
+  if(/\d/.test(n)&&has(/\b(to|in|into|sa)\b/)&&new RegExp('\\d\\s*(k|thousand|million|m)?\\s*('+Object.keys(CUR_WORDS).concat(Object.keys(CRYPTO_WORDS)).join('|')+')\\b').test(n.replace(/,/g,''))&&!has(/\b(remind|alarm|meeting|log|sale|sales|earned)\b/))return {type:'convert_currency',query:raw};
+  {const sy=symbolsIn(raw).filter(x=>x.kind==='crypto'||watchlist().some(w=>w.symbol===x.symbol));
+   if(sy.length&&has(/\b(chart|graph|trend)\b/))return {type:'market_chart',details:{symbol:sy[0].symbol,kind:sy[0].kind,days:has(/\byear\b|12 months/)?365:has(/\b(3|three) months\b/)?90:has(/\bweek\b|7 days/)?7:30}};
+   if(sy.length&&has(/\b(price|prices|presyo|how much|worth|value|trading|doing|magkano|quote|up or down|today)\b/)&&!has(/\b(alert|tell me if|let me know|notify|buy|sell|should i)\b/))return {type:'market_quote',details:{symbols:sy.map(x=>x.symbol)}};}
+  if(has(/\b(keep an eye on|watch|follow|monitor|track)\b/)&&symbolsIn(raw).some(x=>x.kind==='crypto')&&!has(/\b(updates?|news|rules?)\b/)){const sy=symbolsIn(raw).find(x=>x.kind==='crypto');return {type:'watchlist_add',details:{symbol:sy.symbol,kind:'crypto'}}}
   // ---- yes / no / which one ----
   if(confirmFresh()&&wc<=7){
    if(has(/^(yes|yeah|yep|yup|sure|confirm(ed)?|go ahead|do it|proceed|ok(ay)?|sige|oo|opo|tama|correct|affirmative)\b/)&&!NEG.test(n))return {type:'confirm_yes'};
@@ -1289,7 +1303,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(brief me|briefing|morning report|daily report|status report|sitrep|what did i miss|what'?s my day( like)?|ano meron ngayon)\b/))return {type:'briefing'};
   if(has(/\b(deadlines?|expir(y|ing|es|ation)|due dates?|what'?s due|renewals?)\b/)&&!has(/\b(add|remind me|research|look up)\b/))return {type:'deadlines',details:{days:has(/\b(year|12 months)\b/)?365:has(/\b(3|three) months\b/)?90:60}};
   if(has(/\b(stop|don'?t|no longer) (watching|following|tracking|monitoring)\b|\bremove .* from (the |my )?watch ?list\b/))return {type:'unwatch_topic',query:raw.replace(/^.*?\b(watching|following|tracking|monitoring|remove)\b/i,'').replace(/\bfrom (the |my )?watch ?list\b/i,'').trim()};
-  if(has(/\b(check|run|update) (my |the )?watch ?list\b|\bany (new )?(updates|news) on (my )?(watched|watch)/))return {type:'check_watch'};
+  if(has(/\b(check|run|update) (my |the )?(research watch ?list|watched topics|topics)\b|\bany (new )?(updates|news) on (my )?(watched|watch|topics)/))return {type:'check_watch'};
   if(has(/\b(keep an eye on|watch|follow|monitor|keep track of|bantayan)\b/)&&!has(/\bwatch ?list\b/)&&!has(/\b(visitors?|traffic|sales|video|youtube|movie)\b/)&&!has(/^(what|show|list)/)){const t=raw.replace(/^.*?\b(keep an eye on|watch|follow|monitor|keep track of|bantayan)\b/i,'').trim();if(t.length>2)return {type:'watch_topic',query:t}}
   if(has(/\b(check|run|update) (my |the )?watch ?list\b|\bany (new )?(updates|news) on (my )?(watched|watch)/))return {type:'check_watch'};
   if(has(/\b(research inbox|what did the researcher find|researcher'?s? (updates|findings))\b/))return {type:'research_inbox'};
@@ -2125,6 +2139,171 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return {op,label:label.replace(/\b(label|folder)$/,'').trim(),target};
  }
 
+ // ================= MARKETS: prices, watchlist, charts, currency equivalents, alerts (no advice, no trading) =================
+ const WL_KEY='max_watchlist',CUR_KEY='max_currencies',ALERT_KEY='max_price_alerts';
+ const CRYPTO_WORDS={bitcoin:'BTC',btc:'BTC',ethereum:'ETH',ether:'ETH',eth:'ETH',tether:'USDT',usdt:'USDT',usdc:'USDC',solana:'SOL',sol:'SOL',xrp:'XRP',ripple:'XRP',cardano:'ADA',ada:'ADA',dogecoin:'DOGE',doge:'DOGE',bnb:'BNB',binance:'BNB',litecoin:'LTC',ltc:'LTC',tron:'TRX',polkadot:'DOT',chainlink:'LINK',shiba:'SHIB',pepe:'PEPE',sui:'SUI',avalanche:'AVAX',stellar:'XLM',toncoin:'TON',axie:'AXS',ronin:'RON'};
+ const CUR_WORDS={peso:'PHP',pesos:'PHP',php:'PHP',piso:'PHP',dollar:'USD',dollars:'USD',usd:'USD',euro:'EUR',euros:'EUR',eur:'EUR',yen:'JPY',jpy:'JPY',pound:'GBP',pounds:'GBP',gbp:'GBP','sg dollar':'SGD','singapore dollar':'SGD','singapore dollars':'SGD',sgd:'SGD','australian dollar':'AUD',aud:'AUD','canadian dollar':'CAD',cad:'CAD',yuan:'CNY',rmb:'CNY',cny:'CNY',won:'KRW',krw:'KRW',dirham:'AED',dirhams:'AED',aed:'AED',riyal:'SAR',sar:'SAR','hk dollar':'HKD',hkd:'HKD',baht:'THB',thb:'THB',ringgit:'MYR',myr:'MYR',rupee:'INR',rupees:'INR',inr:'INR',franc:'CHF',chf:'CHF','nt dollar':'TWD',twd:'TWD',dong:'VND',vnd:'VND',rupiah:'IDR',idr:'IDR'};
+ const SYMBOL={PHP:'₱',USD:'$',EUR:'€',JPY:'¥',GBP:'£',KRW:'₩',INR:'₹',CNY:'¥',THB:'฿',VND:'₫'};
+ const watchlist=()=>jget(WL_KEY,[{symbol:'BTC',kind:'crypto',tier:''},{symbol:'ETH',kind:'crypto',tier:''}]);
+ const currencies=()=>{const c=jget(CUR_KEY,['PHP','USD']);return Array.isArray(c)&&c.length?c:['PHP','USD']};
+ function fmtM(cur,v){if(v===null||v===undefined||!Number.isFinite(+v))return '—';const a=Math.abs(v),d=a>=1000?0:a>=1?2:a>=0.01?4:8;
+  try{return new Intl.NumberFormat('en-PH',{style:'currency',currency:cur,minimumFractionDigits:d,maximumFractionDigits:d}).format(v)}catch{return (SYMBOL[cur]||cur+' ')+(+v).toFixed(d)}}
+ const spokenM=(cur,v)=>{const a=Math.abs(v);const n=a>=1e6?(v/1e6).toFixed(2).replace(/\.?0+$/,'')+' million':a>=1000?Math.round(v).toLocaleString('en-US'):a>=1?(+v).toFixed(2):(+v).toPrecision(3);return n+' '+({PHP:'pesos',USD:'dollars',EUR:'euros',JPY:'yen',GBP:'pounds',SGD:'Singapore dollars',AUD:'Australian dollars'}[cur]||cur)};
+ const pct=v=>v===null||v===undefined?'':(v>0?'+':'')+(+v).toFixed(2)+'%';
+ const quoteLine=q=>fmtM(q.currency,q.price)+(q.changePct!==null&&q.changePct!==undefined?'  '+pct(q.changePct)+' '+(q.changeLabel||''):'');
+ const equivLine=q=>Object.entries(q.equiv||{}).map(([c,v])=>fmtM(c,v)).join(' · ');
+ function symbolsIn(text){
+  const t=' '+String(text||'').toLowerCase().replace(/[?.!,]/g,' ')+' ',out=[];
+  Object.entries(CRYPTO_WORDS).forEach(([w,s])=>{if(t.includes(' '+w+' ')&&!out.some(x=>x.symbol===s))out.push({symbol:s,kind:'crypto'})});
+  watchlist().forEach(x=>{const k=' '+x.symbol.toLowerCase()+' ',nm=x.name?' '+x.name.toLowerCase().split(/\s+/).slice(0,2).join(' ')+' ':'';if((t.includes(k)||(nm.trim().length>3&&t.includes(nm)))&&!out.some(y=>y.symbol===x.symbol))out.push({symbol:x.symbol,kind:x.kind})});
+  (String(text||'').match(/\b[A-Z]{2,5}\b/g)||[]).forEach(w=>{if(!out.some(x=>x.symbol===w)&&!['PSE','USD','PHP','EUR','JPY','I','OK','ETF','AND','THE'].includes(w))out.push({symbol:w,kind:CRYPTO_WORDS[w.toLowerCase()]?'crypto':'pse'})});
+  return out;
+ }
+ async function getQuotes(items){
+  const {r,data}=await postJson('/api/market/quotes',{items,currencies:currencies()},40000);
+  if(r.status===404)throw new Error('Prices need the newest Max backend.');
+  if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  return data.quotes||[];
+ }
+ const chartCache=new Map();
+ async function getChart(item,days){
+  const key=item.symbol+item.kind+days+currencies()[0];const c=chartCache.get(key);if(c&&Date.now()-c.at<10*60e3)return c.v;
+  const {r,data}=await postJson('/api/market/chart',{symbol:item.symbol,kind:item.kind,days,currencies:currencies()},40000);
+  if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  chartCache.set(key,{at:Date.now(),v:data});return data;
+ }
+ function drawChart(cv,pts,cur){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth||300,H=cv.clientHeight||150;cv.width=W*dpr;cv.height=H*dpr;
+  const g=cv.getContext('2d');g.scale(dpr,dpr);g.clearRect(0,0,W,H);
+  if(!pts||pts.length<2){g.fillStyle='#6f8aa3';g.font='13px system-ui';g.fillText('Not enough data for a chart',10,H/2);return}
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),lo=Math.min(...ys),hi=Math.max(...ys),pad=(hi-lo)*0.08||hi*0.01||1;
+  const L=6,R=W-6,T=18,B=H-18,X=x=>L+(x-x0)/(x1-x0||1)*(R-L),Y=y=>B-(y-(lo-pad))/((hi+pad)-(lo-pad))*(B-T);
+  const up=ys[ys.length-1]>=ys[0],col=up?'#4fd1a5':'#ff7a7a';
+  const grad=g.createLinearGradient(0,T,0,B);grad.addColorStop(0,up?'rgba(79,209,165,.30)':'rgba(255,122,122,.30)');grad.addColorStop(1,'rgba(0,0,0,0)');
+  g.beginPath();pts.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.lineTo(X(x1),B);g.lineTo(X(x0),B);g.closePath();g.fillStyle=grad;g.fill();
+  g.beginPath();pts.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.strokeStyle=col;g.lineWidth=2;g.stroke();
+  g.fillStyle='#8fa8c0';g.font='11px system-ui';g.textAlign='left';g.fillText('High '+fmtM(cur,hi),L,12);g.textAlign='right';g.fillText('Low '+fmtM(cur,lo),R,12);
+  const dt=x=>new Date(x).toLocaleDateString('en-GB',{day:'numeric',month:'short'});g.textAlign='left';g.fillText(dt(x0),L,H-4);g.textAlign='right';g.fillText(dt(x1),R,H-4);
+ }
+ function chartInto(card,item,days,big){
+  const cv=document.createElement('canvas');cv.className='mkt-chart'+(big?' big':'');card.insertBefore(cv,card.querySelector('.notes-tools'));
+  return getChart(item,days).then(d=>{drawChart(cv,d.points,d.currency);const first=d.points[0]?.[1],last=d.points.at(-1)?.[1];return {d,change:first?((last-first)/first*100):null}}).catch(e=>{const g=cv.getContext('2d');cv.width=cv.clientWidth;cv.height=cv.clientHeight;g.fillStyle='#ffd59a';g.font='12px system-ui';g.fillText('Chart unavailable: '+e.message.slice(0,60),8,30);return null});
+ }
+ async function marketQuote(d,raw){
+  let items=(d?.symbols||[]).map(s=>({symbol:String(s).toUpperCase().replace(/^PSE:/,''),kind:d.kind||(CRYPTO_WORDS[String(s).toLowerCase()]?'crypto':undefined)}));
+  if(!items.length)items=symbolsIn(raw||d?.symbol||'');
+  if(!items.length&&d?.symbol)items=[{symbol:d.symbol.toUpperCase(),kind:d.kind}];
+  if(!items.length)return 'Which stock or coin? For example “price of Bitcoin” or “how much is SM?”.';
+  setSection('display');$('dispTitle').textContent='Checking prices…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  try{
+   const qs=await getQuotes(items.slice(0,8));
+   renderQuotes(qs,'Prices',items.length===1?30:0);
+   checkAlerts(qs);
+   return qs.map(q=>q.error?q.symbol+': '+q.error:(q.kind==='fx'?'1 '+q.symbol+' is '+spokenM(q.currency,q.price):q.name.replace(/\b\w/g,c=>c.toUpperCase())+' ('+q.symbol+') is '+spokenM(q.currency,q.price))+(q.changePct!==null&&q.changePct!==undefined?', '+(q.changePct>=0?'up ':'down ')+Math.abs(q.changePct).toFixed(1)+'% '+(q.changeLabel==='24h'?'in 24 hours':'today'):'')+(Object.keys(q.equiv||{}).length?' — about '+Object.entries(q.equiv).slice(0,2).map(([c,v])=>spokenM(c,v)).join(' or '):'')+(q.kind==='pse'?' ('+q.asOf+')':'')).join('. ')+'.';
+  }catch(e){$('dispTitle').textContent='Prices';$('dispSub').textContent=e.message;return 'I couldn’t get prices. '+e.message}
+ }
+ function renderQuotes(qs,title,chartDays){
+  const wl=watchlist();
+  showDisplay(title,'In '+currencies().join(' · ')+' · prices only, not advice',qs.map(q=>q.error?{badge:q.symbol,badgeClass:'badge-web',title:q.symbol,lines:[{text:q.error,cls:'miss'}]}:{
+   badge:(q.kind==='pse'?'PSE · ':q.kind==='crypto'?'CRYPTO · ':'FX · ')+q.symbol,badgeClass:q.changePct>0?'badge-note':q.changePct<0?'badge-web':'badge-res',meta:(wl.find(x=>x.symbol===q.symbol)?.tier||'')+(q.asOf?' · '+(q.kind==='crypto'&&/T/.test(q.asOf)?'as of '+new Date(q.asOf).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):q.asOf):''),
+   title:(q.name||q.symbol).replace(/\b\w/g,c=>c.toUpperCase())+' — '+quoteLine(q),
+   lines:[equivLine(q)&&'≈ '+equivLine(q),q.kind==='pse'&&q.high52?'52-week range '+fmtM('PHP',q.low52)+' – '+fmtM('PHP',q.high52):'',q.prevClose?'Previous close '+fmtM('PHP',q.prevClose):'',/web search/.test(q.source)?{text:'From a web search — may be delayed',cls:'miss'}:'Source: '+q.source].filter(Boolean),
+   buttons:[['Chart',()=>marketChart({symbol:q.symbol,kind:q.kind,days:30}).then(t=>{setSub('',t);speak(t)})],...(wl.some(x=>x.symbol===q.symbol)?[]:[['Add to watchlist',()=>{const t=watchAdd({symbol:q.symbol,kind:q.kind,name:q.name});setSub('',t);speak(t)}]])],_q:q}));
+  if(chartDays){const cards=[...$('dispBody').children];qs.forEach((q,i)=>{if(!q.error&&cards[i])chartInto(cards[i],q,chartDays)})}
+ }
+ async function showWatchlist(withCharts){
+  const wl=watchlist();
+  if(!wl.length)return 'Your watchlist is empty. Say “add Bitcoin to my watchlist” or “add SM as blue chip”.';
+  setSection('display');$('dispTitle').textContent='Loading your watchlist…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  let qs;try{qs=await getQuotes(wl.map(x=>({symbol:x.symbol,kind:x.kind})))}catch(e){$('dispTitle').textContent='Watchlist';$('dispSub').textContent=e.message;return 'I couldn’t load your watchlist. '+e.message}
+  const order={'blue chip':0,'middle':1,'speculative':2,'':3},tierOf=s=>wl.find(x=>x.symbol===s)?.tier||'';
+  qs.sort((a,b)=>(order[tierOf(a.symbol)]??3)-(order[tierOf(b.symbol)]??3));
+  renderQuotes(qs,'My watchlist',0);
+  $('dispSub').textContent=wl.length+' item'+(wl.length===1?'':'s')+' · in '+currencies().join(' · ')+' · prices only, not advice';
+  if(withCharts!==false){const cards=[...$('dispBody').children];for(let i=0;i<qs.length;i++){if(!qs[i].error&&cards[i]){await chartInto(cards[i],qs[i],30);if(qs[i].kind==='crypto')await new Promise(r=>setTimeout(r,300))}}}
+  const fired=checkAlerts(qs);
+  const ok=qs.filter(q=>!q.error),upN=ok.filter(q=>q.changePct>0).length,dn=ok.filter(q=>q.changePct<0).length;
+  return 'Your watchlist: '+ok.slice(0,5).map(q=>q.symbol+' '+spokenM(q.currency,q.price)+(q.changePct!==null&&q.changePct!==undefined?' ('+(q.changePct>=0?'up ':'down ')+Math.abs(q.changePct).toFixed(1)+'%)':'')).join('; ')+(ok.length>5?' and '+(ok.length-5)+' more':'')+'. '+upN+' up, '+dn+' down.'+(fired.length?' Alert: '+fired.join('; ')+'.':'');
+ }
+ async function marketChart(d){
+  const item=d?.symbol?{symbol:String(d.symbol).toUpperCase(),kind:d.kind||(CRYPTO_WORDS[String(d.symbol).toLowerCase()]?'crypto':watchlist().find(x=>x.symbol===String(d.symbol).toUpperCase())?.kind||(/^[A-Z]{3}$/.test(String(d.symbol).toUpperCase())&&CUR_WORDS[String(d.symbol).toLowerCase()]?'fx':'pse'))}:null;
+  if(!item)return await showWatchlist(true);
+  const days=Math.min(Math.max(+d.days||30,1),365);
+  setSection('display');$('dispTitle').textContent='Loading chart…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  showDisplay(item.symbol+' — '+(days>=365?'1 year':days>=90?Math.round(days/30)+' months':days+' days'),'In '+currencies()[0]+' · prices only, not advice',[{badge:'CHART',title:item.symbol,lines:[],buttons:[['7 days',()=>marketChart({...item,days:7})],['30 days',()=>marketChart({...item,days:30})],['1 year',()=>marketChart({...item,days:365})]]}]);
+  const res=await chartInto($('dispBody').firstElementChild,item,days,true);
+  if(!res)return 'I couldn’t load that chart.';
+  const {d:cd,change}=res,pts=cd.points,last=pts.at(-1)?.[1],hi=Math.max(...pts.map(p=>p[1])),lo=Math.min(...pts.map(p=>p[1]));
+  $('dispBody').querySelector('h2').textContent=(cd.name||item.symbol).replace(/\b\w/g,c=>c.toUpperCase())+' — '+fmtM(cd.currency,last);
+  let ul=$('dispBody').querySelector('.disp-lines');if(!ul){ul=document.createElement('ul');ul.className='disp-lines';const cd2=$('dispBody').firstElementChild;cd2.insertBefore(ul,cd2.querySelector('.notes-tools'))}[('Change over the period '+pct(change)),'High '+fmtM(cd.currency,hi)+' · Low '+fmtM(cd.currency,lo),'Source: '+cd.source].forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.append(li)});
+  return (cd.name||item.symbol).replace(/\b\w/g,c=>c.toUpperCase())+' over '+(days>=365?'the last year':'the last '+days+' days')+': '+(change>=0?'up ':'down ')+Math.abs(change).toFixed(1)+'%, now '+spokenM(cd.currency,last)+'. High '+spokenM(cd.currency,hi)+', low '+spokenM(cd.currency,lo)+'.';
+ }
+ function tierOfText(t){t=String(t||'').toLowerCase();return /blue|bluechip|big|top/.test(t)?'blue chip':/mid|middle|second/.test(t)?'middle':/spec|basura|penny|small|junk|third/.test(t)?'speculative':''}
+ function watchAdd(d){
+  let s=String(d?.symbol||'').toUpperCase().trim().replace(/^PSE:/,'');if(CRYPTO_WORDS[s.toLowerCase()])s=CRYPTO_WORDS[s.toLowerCase()];
+  if(!s)return 'Which stock or coin should I add?';
+  const kind=d.kind||(Object.values(CRYPTO_WORDS).includes(s)?'crypto':'pse'),tier=tierOfText(d.tier);
+  const wl=watchlist(),old=wl.find(x=>x.symbol===s);
+  if(old){if(tier){old.tier=tier;jset(WL_KEY,wl);return s+' is now in your '+tier+' list.'}return s+' is already on your watchlist.'}
+  if(wl.length>=25)return 'Your watchlist is full (25). Remove one first.';
+  wl.push({symbol:s,kind,tier,name:d.name||''});jset(WL_KEY,wl);
+  return 'Added '+s+(kind==='pse'?' (PSE)':' (crypto)')+' to your watchlist'+(tier?' as '+tier:'')+'. Say “show my watchlist” to see prices and charts.';
+ }
+ function watchRemove(d){
+  let s=String(d?.symbol||'').toUpperCase().trim();if(CRYPTO_WORDS[s.toLowerCase()])s=CRYPTO_WORDS[s.toLowerCase()];
+  const wl=watchlist(),i=wl.findIndex(x=>x.symbol===s);if(i<0)return s+' isn’t on your watchlist.';
+  wl.splice(i,1);jset(WL_KEY,wl);return 'Removed '+s+' from your watchlist.';
+ }
+ function priceAlert(d){
+  let s=String(d?.symbol||'').toUpperCase().trim();if(CRYPTO_WORDS[s.toLowerCase()])s=CRYPTO_WORDS[s.toLowerCase()];
+  const price=Number(d?.price),dir=d?.direction==='above'?'above':d?.direction==='below'?'below':'';
+  if(!s||!(price>0)||!dir)return 'Tell me the coin or stock, above or below, and the price — for example “tell me if Bitcoin goes below 5 million pesos”.';
+  const cur=String(d.currency||currencies()[0]).toUpperCase(),list=jget(ALERT_KEY,[]);
+  list.push({id:newId(),symbol:s,kind:d.kind||(Object.values(CRYPTO_WORDS).includes(s)?'crypto':'pse'),direction:dir,price,currency:cur,created:Date.now(),fired:0});jset(ALERT_KEY,list.slice(-30));
+  if(!watchlist().some(x=>x.symbol===s))watchAdd({symbol:s,kind:d.kind});
+  return 'Alert set: I’ll tell you when '+s+' goes '+dir+' '+fmtM(cur,price)+'. I check whenever Max is open and in your briefing.';
+ }
+ function listAlerts(){
+  const list=jget(ALERT_KEY,[]);
+  showDisplay('Price alerts',list.length+' alert'+(list.length===1?'':'s'),list.length?list.map(a=>({badge:a.fired?'TRIGGERED':'WATCHING',badgeClass:a.fired?'badge-draft':'badge-note',title:a.symbol+' '+a.direction+' '+fmtM(a.currency,a.price),lines:[a.fired?'Triggered '+new Date(a.fired).toLocaleString():'Set '+new Date(a.created).toLocaleDateString()],buttons:[['Remove',()=>{jset(ALERT_KEY,jget(ALERT_KEY,[]).filter(x=>x.id!==a.id));listAlerts()}]]})):[{title:'No alerts',lines:['Say “tell me if Bitcoin goes below 5 million pesos”.']}]);
+  return list.length?'You have '+list.length+' price alert'+(list.length===1?'':'s')+': '+list.map(a=>a.symbol+' '+a.direction+' '+spokenM(a.currency,a.price)+(a.fired?' (triggered)':'')).join('; ')+'.':'You have no price alerts.';
+ }
+ function checkAlerts(qs){
+  const list=jget(ALERT_KEY,[]),fired=[];let changed=false;
+  list.forEach(a=>{if(a.fired)return;const q=qs.find(x=>x.symbol===a.symbol&&!x.error);if(!q)return;
+   const v=q.currency===a.currency?q.price:q.equiv?.[a.currency];if(!Number.isFinite(v))return;
+   if((a.direction==='below'&&v<=a.price)||(a.direction==='above'&&v>=a.price)){a.fired=Date.now();changed=true;fired.push(a.symbol+' is '+(a.direction==='below'?'below ':'above ')+fmtM(a.currency,a.price)+' (now '+fmtM(a.currency,v)+')')}});
+  if(changed)jset(ALERT_KEY,list);
+  return fired;
+ }
+ async function alertsDue(){
+  const list=jget(ALERT_KEY,[]).filter(a=>!a.fired);if(!list.length)return [];
+  try{return checkAlerts(await getQuotes([...new Map(list.map(a=>[a.symbol,{symbol:a.symbol,kind:a.kind}])).values()]))}catch{return []}
+ }
+ async function convertCurrency(d,raw){
+  let amount=Number(d?.amount),from=String(d?.from||'').toUpperCase(),to=(d?.to?[].concat(d.to):[]).map(x=>String(x).toUpperCase());
+  if(!(amount>0)||!from){const m=String(raw||'').toLowerCase().replace(/,/g,'').match(/(\d+(?:\.\d+)?)\s*(k|thousand|million|m)?\s*([a-z ]+?)\s+(?:to|in|into|sa)\s+([a-z ,]+?)[?.!]*$/);
+   if(m){amount=+m[1]*(/^(k|thousand)$/.test(m[2]||'')?1e3:/^(m|million)$/.test(m[2]||'')?1e6:1);const f=m[3].trim();from=CUR_WORDS[f]||CRYPTO_WORDS[f]||f.toUpperCase();to=m[4].split(/,| and /).map(x=>CUR_WORDS[x.trim()]||x.trim().toUpperCase()).filter(Boolean)}}
+  if(!(amount>0)||!from)return 'Tell me the amount and currencies, like “100 dollars to pesos”.';
+  try{
+   const {r,data}=await postJson('/api/market/convert',{amount,from,to:to.length?to:currencies().filter(c=>c!==from)},30000);
+   if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+   const vals=Object.entries(data.values).filter(([c])=>c!==from);
+   showDisplay('Conversion',(data.source||'')+(data.asOf?' · '+(/T/.test(data.asOf)?new Date(data.asOf).toLocaleString():data.asOf):''),[{badge:'CONVERT',title:(isNaN(+from)&&from.length===3&&CUR_WORDS[from.toLowerCase()]?fmtM(from,amount):amount+' '+from),lines:vals.map(([c,v])=>'= '+fmtM(c,v))}]);
+   return amount.toLocaleString('en-US')+' '+from+' is about '+vals.map(([c,v])=>spokenM(c,v)).join(', or ')+'.';
+  }catch(e){return 'I couldn’t convert that. '+e.message}
+ }
+ function setCurrencies(d,raw){
+  let list=(d?.currencies||[]).map(x=>String(x).toUpperCase());
+  if(!list.length){const t=' '+String(raw||'').toLowerCase()+' ';list=[...new Set(Object.entries(CUR_WORDS).filter(([w])=>t.includes(' '+w+' ')||t.includes(' '+w+',')).map(([,c])=>c))]}
+  list=list.filter(c=>/^[A-Z]{3}$/.test(c)).slice(0,5);
+  if(!list.length)return 'Which currencies? For example “show prices in pesos, dollars and euros”.';
+  jset(CUR_KEY,list);chartCache.clear();
+  return 'Okay — prices in '+list.join(', ')+'. The first one is the main currency.';
+ }
+ // check alerts every 15 minutes while Max is open
+ setInterval(()=>{if(document.visibilityState==='visible')alertsDue().then(f=>{if(f.length){const t='Price alert: '+f.join('; ')+'.';setSub('',t);speak(t)}})},15*60e3);
+
  // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
  const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
  const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
@@ -2192,7 +2371,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const tasks=[checkProjects().catch(()=>''),loadStats(false).catch(()=>false)];
   const sched=/^linked/.test(cloud.google||'')?listSchedule('today').catch(()=>''):Promise.resolve('');
   const mail=gmailOn()?postJson('/api/gmail/inbox',{query:'in:inbox is:unread newer_than:1d',max:10},30000).then(x=>x.r.ok?x.data:null).catch(()=>null):Promise.resolve(null);
-  const [schedText,,mailData]=await Promise.all([Promise.race([sched,new Promise(r=>setTimeout(()=>r(''),15000))]),Promise.race([Promise.all(tasks),new Promise(r=>setTimeout(r,15000))]),Promise.race([mail,new Promise(r=>setTimeout(()=>r(null),20000))])]);
+  const mkt=getQuotes(watchlist().slice(0,10).map(x=>({symbol:x.symbol,kind:x.kind}))).catch(()=>null);
+  const [schedText,,mailData,mktData]=await Promise.all([Promise.race([sched,new Promise(r=>setTimeout(()=>r(''),15000))]),Promise.race([Promise.all(tasks),new Promise(r=>setTimeout(r,15000))]),Promise.race([mail,new Promise(r=>setTimeout(()=>r(null),20000))]),Promise.race([mkt,new Promise(r=>setTimeout(()=>r(null),20000))])]);
+  const mktFired=mktData?checkAlerts(mktData):[];
   const dl=findDeadlines(30),wait=waitingItems(),list=projects();
   const down=list.filter(p=>projStatus[p.id]?.up===false).map(p=>p.name);
   const visitors=list.filter(p=>projStats[p.id]&&!projStats[p.id].error).map(p=>p.name+' '+projStats[p.id].today.visitors);
@@ -2204,7 +2385,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    ...(mailData?[{badge:'EMAIL',badgeClass:'badge-res',title:'Unread email (last 24 h)',lines:mailData.items?.length?[mailData.say,...mailData.items.filter(x=>x.priority==='high').slice(0,4).map(x=>({text:'• '+x.from+' — '+x.subject,cls:'miss'}))]:['No new email.'],buttons:mailData.items?.length?[['Open inbox',()=>checkEmail('unread today').then(t=>{setSub('',t);speak(t)})]]:[]}]:[]),
    {badge:'WAITING',badgeClass:'badge-draft',title:'Waiting for you',lines:wait.length?wait.map(x=>'• '+x):['Nothing waiting.']},
    {badge:'WEBMASTER',badgeClass:'badge-res',title:'Your projects',lines:[down.length?{text:'Down: '+down.join(', '),cls:'miss'}:{text:'All sites I can check are up.',cls:'ok'},visitors.length?'Visitors today: '+visitors.join(' · '):statsProblem==='not connected'?'Visitor numbers not connected.':'',Object.keys(sales).length?'Sales this month: '+totalsText(sales):'No sales logged this month.'].filter(Boolean)},
-   {badge:'RESEARCHER',badgeClass:'badge-res',title:'Watch list',lines:watch.length?watch.map(t=>'🔎 '+t.topic+(t.lastChecked?' — checked '+whenText(localDate(new Date(t.lastChecked))):' — not checked yet')):['Nothing on the watch list. Say “keep an eye on BWM updates”.']}];
+   ...(mktData&&mktData.length?[{badge:'MARKETS',badgeClass:'badge-res',title:'Watchlist',lines:[...mktFired.map(t=>({text:'🔔 '+t,cls:'miss'})),...mktData.filter(q=>!q.error).slice(0,6).map(q=>q.symbol+' '+quoteLine(q))],buttons:[['Open watchlist',()=>showWatchlist(true).then(t=>{setSub('',t);speak(t)})]]}]:[]),
+   {badge:'RESEARCHER',badgeClass:'badge-res',title:'Watched topics',lines:watch.length?watch.map(t=>'🔎 '+t.topic+(t.lastChecked?' — checked '+whenText(localDate(new Date(t.lastChecked))):' — not checked yet')):['No watched topics. Say “keep an eye on BWM updates”.']}];
   showDisplay(hi+', Mark',new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}),cards);
   jset('max_last_brief',todayKey());
   const due=watch.filter(t=>!t.lastChecked||Date.now()-t.lastChecked>7*864e5);
@@ -2212,6 +2394,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return hi+'. '+(schedText&&!/clear/.test(schedText)?schedText+' ':'')+
    (dl.length?dl.length+' deadline'+(dl.length===1?'':'s')+' in the next 30 days, first: '+dl[0].what+', '+whenText(dl[0].date)+'. ':'No deadlines in the next 30 days. ')+
    (mailData?.items?.length?'Email: '+mailData.say+' ':'')+
+   (mktFired.length?'Price alert: '+mktFired.join('; ')+'. ':'')+
    (wait.length?'Waiting for you: '+wait.join('; ')+'. ':'')+
    (down.length?'Heads up: '+down.join(' and ')+(down.length===1?' is':' are')+' down. ':'')+
    (visitors.length?'Visitors today: '+visitors.join(', ')+'. ':'')+
@@ -2226,7 +2409,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const w=jget(WATCH_KEY,[]);if(w.some(x=>norm(x.topic)===norm(t)))return 'Researcher: already watching '+t+'.';
   if(w.length>=10)return 'Researcher: the watch list is full (10 topics). Remove one first.';
   w.push({topic:t,added:Date.now(),lastChecked:0});jset(WATCH_KEY,w);if(screen==='crew')renderCrew();
-  return 'Researcher: I’ll keep an eye on '+t+' and check it every week. Anything new waits for your approval before it goes in your notes. Say “check my watch list” to look now.';
+  return 'Researcher: I’ll keep an eye on '+t+' and check it every week. Anything new waits for your approval before it goes in your notes. Say “check my watched topics” to look now.';
  }
  function unwatchTopic(t){
   const w=jget(WATCH_KEY,[]),k=norm(String(t||'').replace(/\b(updates?|news|watching|on|about|the)\b/gi,' '));
@@ -2358,7 +2541,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const run=(type,q)=>()=>doAction({type,query:q||''},'').then(t=>{if(t){setSub('',t);speak(t)}});
   const crew=[
    {badge:'SECRETARY',title:'📋 Secretary',meta:'deadlines · briefing · schedule',lines:dl.length?dl.slice(0,3).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['No deadlines in the next 30 days.'],buttons:[['Brief me',run('briefing')],['Deadlines',run('deadlines')]]},
-   {badge:'RESEARCHER',badgeClass:'badge-res',title:'🔎 Researcher',meta:'research · watch list · fact-checks',lines:[...(inbox.length?[{text:inbox.length+' update'+(inbox.length===1?'':'s')+' waiting for approval',cls:'miss'}]:[]),...(watch.length?watch.map(t=>'Watching: '+t.topic+(t.lastChecked?' (checked '+whenText(localDate(new Date(t.lastChecked)))+')':' (not checked yet)')):['Nothing on the watch list. Say “keep an eye on BWM updates”.'])],
+   {badge:'RESEARCHER',badgeClass:'badge-res',title:'🔎 Researcher',meta:'research · watch list · fact-checks',lines:[...(inbox.length?[{text:inbox.length+' update'+(inbox.length===1?'':'s')+' waiting for approval',cls:'miss'}]:[]),...(watch.length?watch.map(t=>'Watching: '+t.topic+(t.lastChecked?' (checked '+whenText(localDate(new Date(t.lastChecked)))+')':' (not checked yet)')):['No watched topics. Say “keep an eye on BWM updates”.'])],
     buttons:[...inbox.slice(0,3).map(it=>['Open: '+it.topic,()=>{const t=openInbox(it.id);setSub('',t);speak(t)}]),...(watch.length?[['Check now',run('check_watch')]]:[])]},
    {badge:'LIBRARIAN',badgeClass:'badge-res',title:'🗂 Librarian',meta:'filing · duplicates · tidy-ups',lines:[notes.length+' notes'+(unsorted?' · '+unsorted+' not filed':' · all filed')],buttons:[['Library report',run('library_report')],['Duplicates',run('find_duplicates')],...(unsorted?[['Organize',run('organize_notes')]]:[])]},
    {badge:'SKILLS',badgeClass:'badge-draft',title:'🧠 Skills you taught Max',meta:skills.length+' skill'+(skills.length===1?'':'s'),lines:skills.length?skills.map(n=>'• '+n.title.replace(/^Skill:\s*/,'')):['Say “new skill …” to teach me one.'],buttons:skills.length?[['Show skills',run('show_skills')]]:[]}];
@@ -2454,6 +2637,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'draft_email':return await draftEmail(a.details||{instruction:a.query},raw);
    case 'send_email':return await sendEmail(/\b(send|ipadala|ipasa|yes)\b/i.test(raw)&&!/\b(don'?t|do not|not yet|huwag|wait)\b/i.test(raw));
    case 'cancel_email':return await cancelEmail();
+   case 'market_quote':return await marketQuote(a.details||{},raw);
+   case 'show_watchlist':return await showWatchlist(true);
+   case 'market_chart':return await marketChart(a.details||{symbol:a.query});
+   case 'watchlist_add':return watchAdd(a.details||{symbol:a.query});
+   case 'watchlist_remove':return watchRemove(a.details||{symbol:a.query});
+   case 'price_alert':return priceAlert(a.details||{});
+   case 'list_alerts':return listAlerts();
+   case 'convert_currency':return await convertCurrency(a.details||{},raw);
+   case 'set_currencies':return setCurrencies(a.details||{},raw);
    case 'briefing':return await briefing();
    case 'deadlines':return deadlinesSay(a.details||{});
    case 'show_crew':setSection('crew');return 'Here’s your crew: the Secretary, the Researcher and the Librarian. Name one and tell them what you need.';
@@ -2612,7 +2804,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

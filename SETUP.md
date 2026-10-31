@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 560 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 604 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -21,6 +21,20 @@
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
 
+**📈 Markets: stocks, crypto, currencies**
+- **Things to say:**
+  - **Prices:** "How much is Bitcoin?", "how much is SM?", "ETH price today"
+  - **Watchlist:** "Add SM to my watchlist as blue chip" (tiers: blue chip, middle, speculative), "remove ETH from my watchlist", "show my watchlist" (prices plus a 30-day chart for each)
+  - **Charts:** "Chart Bitcoin for 3 months" (also 7 days, 30 days, 1 year)
+  - **Currencies:** "Show prices in pesos, dollars and euros" sets the equivalents shown. The first currency is the main one.
+  - **Conversion:** "How much is 100 dollars in pesos?", "convert 0.5 bitcoin to pesos"
+  - **Alerts:** "Tell me if Bitcoin goes below 5 million pesos", "my price alerts". Alerts are checked while Max is open, every 15 minutes, and in your briefing.
+- **Where the prices come from:**
+  - **Crypto:** CoinGecko, live
+  - **PSE stocks:** PSE Edge, delayed or end of day. Max says which. If PSE Edge is down, he uses a web search and says so.
+  - **Currencies:** ECB reference rates, updated once a day
+- **Limits:** Max reports prices only. He never buys or sells and doesn't give buy or sell advice.
+
 **👥 Max's crew**
 - **How it works:** talk to Max as always. To give a job to one crew member, say their name first, for example "secretary, brief me". Open the crew screen from the menu with **👥 Crew**.
 - **📋 Secretary:**
@@ -29,7 +43,7 @@
   - **Greeting:** the first time you open Max each day, he greets you with what's due.
 - **🔎 Researcher:**
   - **Research:** "researcher, look up …"
-  - **Watch list:** "keep an eye on MARPOL Annex VI updates". He checks each topic weekly; "check my watch list" checks now.
+  - **Watched topics:** "keep an eye on MARPOL Annex VI updates". He checks each topic weekly; "check my watched topics" checks now. (Your "watchlist" is for stocks and crypto.)
   - **Findings:** they wait in the research inbox ("what did the researcher find?") until you approve them.
   - **Fact-checks:** "fact check my ballast note"
 - **🗂 Librarian:**
