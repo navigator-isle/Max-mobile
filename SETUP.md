@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 515 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 560 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -167,14 +167,19 @@
 - "What's on my schedule today / tomorrow / this week?"
 - "Remind me Friday at 9 to renew my passport" adds a calendar event, and your phone notifies you at that time
 - "Add buy safety shoes to my to-do list" adds it to Google Tasks
-- "Undo" removes the last thing Max added
+- "Undo" removes the last thing Max added, or reverses the last change
+- "Move my dentist appointment to Friday 3pm", "rename my 10am meeting to Crew briefing", "remind me a day and an hour before the dentist". Max shows the change and does it after you say "yes".
+- "Cancel my meeting tomorrow": Max asks "Delete …? Say yes". "Undo" puts it back.
+- "Set an alarm for 5:30 tomorrow": a calendar alert that rings at that exact time. For a louder sound, set the Google Calendar app's notification sound.
 - "Any important emails?" / "check my email from the agency"
 - "Read number 1", then "reply that I confirm the joining date"
 - "Make it shorter", then "yes, send it" (or tap **Send**). "Don't send it" deletes the draft.
 - "Email Captain Reyes that I'll be there at 0800" (Max finds the address from past emails)
+- "Archive number 2", "delete this email", "trash all emails from Shop", "mark all emails from the agency as read", "star it", "label this email as Contracts". Max always asks "yes?" first. "Undo" reverses it.
 
 **Gmail rules**
-- **Access:** Max can read your mail and save drafts. He has no permission to delete emails or change your mailbox settings.
+- **Signed in before this update?** Open ⚙ Settings and tap **Update Google permissions** once, so Max can organize your email.
+- **Access:** Max can read, draft, archive, label and move emails to Trash. Trash keeps them for 30 days. He can never delete an email permanently or change your Gmail settings.
 - **Sending:** an email goes out only after you hear or see the draft and say "yes, send it" (or tap Send).
 - **Instructions inside emails:** treated as text to report, never as orders to Max.
 

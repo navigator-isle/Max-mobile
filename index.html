@@ -696,7 +696,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   inBtn.hidden=outBtn.hidden=disc.hidden=true;
   if(cloud.state==='offline'){st.textContent='Offline — connect to the internet to manage Google.';return}
   if(g==='not set up'){st.textContent='Not set up yet. Follow the Google steps in SETUP.md (one time, about 10 minutes). Then Max can use your Calendar and Tasks, and you sign in with Google instead of the passcode.';return}
-  if(cloud.signedIn){const gm=/gmail/.test(g);st.textContent='Signed in with Google ✓ — Calendar, Tasks'+(gm?' and Gmail':'')+' are connected. The passcode is no longer used.'+(gm?'':' Gmail isn’t allowed yet: tap “Add Gmail”.');if(!gm){inBtn.hidden=false;inBtn.textContent='Add Gmail'}outBtn.hidden=false;disc.hidden=false;return}
+  if(cloud.signedIn){const gm=/gmail/.test(g),old=/sign in again/.test(g);st.textContent='Signed in with Google ✓ — Calendar, Tasks'+(gm?' and Gmail':'')+' are connected. The passcode is no longer used.'+(old?' New permissions are available: tap “Update Google permissions”.':'');if(old){inBtn.hidden=false;inBtn.textContent='Update Google permissions'}outBtn.hidden=false;disc.hidden=false;return}
   if(g.startsWith('linked')){st.textContent='Google is connected, but this phone is not signed in. Sign in to use Max here.';inBtn.hidden=false;return}
   st.textContent='Ready. Sign in once with your Google account to connect Calendar and Tasks.';inBtn.hidden=false;
  }
@@ -1229,7 +1229,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1250,6 +1250,17 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- yes / no / which one ----
+  if(confirmFresh()&&wc<=7){
+   if(has(/^(yes|yeah|yep|yup|sure|confirm(ed)?|go ahead|do it|proceed|ok(ay)?|sige|oo|opo|tama|correct|affirmative)\b/)&&!NEG.test(n))return {type:'confirm_yes'};
+   if(has(/^(no|nope|cancel|stop|never ?mind|don'?t|do not|huwag|wag|hindi|leave it)\b/))return {type:'confirm_no'};
+  }
+  if(pendingPick&&Date.now()-pendingPick.at<5*60e3){const m=n.match(/\b(\d{1,2}|first|second|third|fourth|fifth|last)\b/);if(m&&wc<=6){const w={first:1,second:2,third:3,fourth:4,fifth:5,last:pendingPick.list.length};return {type:'choose_pick',query:String(+m[1]||w[m[1]])}}if(has(/^(no|cancel|never ?mind|none)\b/))return {type:'confirm_no'}}
+  if(has(/^(undo|undo that|undo it|reverse (that|it)|put (it|them) back|ibalik)( please)?$/)&&(lastChange||lastMailOp))return {type:'undo_last'};
+  // calendar changes go to the brain (it works out the new time), but never to "show my schedule"
+  if(has(/\b(move|reschedule|rename|postpone|push back|bring forward|change|edit|update|cancel|delete|remove|ilipat|burahin|ikansela)\b/)&&has(/\b(meeting|appointment|event|calendar|schedule|reminder|alarm|call|flight|class|dentist|doctor|check-?up|interview)s?\b/)&&!has(/\b(e-?mails?|inbox|notes?)\b/))return null;
+  // ---- email organizing ----
+  if((has(/\b(e-?mails?|mails?|messages?|inbox|promotions|newsletters?)\b/)||(attachFresh()&&pendingAttach.email&&screen==='display')||(lastInbox.length&&screen==='display'&&$('dispTitle').textContent==='Email'))&&has(/\b(archive|trash|delete|remove|throw (it|them|those|these) (away|out)|mark|star|unstar|un-?star|label|move (it|them|this|that|these|those) to|burahin|itapon)\b/)&&!has(/\b(draft|reply|write|compose|note|notes)\b/)){const op=emailOp(raw);if(op)return {type:'modify_email',details:op}}
   // ---- email ----
   if(pendingDraft&&Date.now()-pendingDraft.at<30*60e3){
    if(has(/^(yes,? |ok(ay)?,? |sige,? )?(please )?(send( it| the email| that| it now| now)?|go ahead and send( it)?|ipadala( mo)?( na)?|ipasa( mo)?( na)?)( please| now| na)?$/)&&!NEG.test(n))return {type:'send_email'};
@@ -1301,7 +1312,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   // reminders and new events need date understanding: let Max's AI handle them
   if(has(/^(please )?(remind|set (a |an )?(reminder|alarm)|schedule|book|add .*\b(calendar|to-?do|task|reminder)s?\b|put .*\b(calendar|to-?do)\b|paalala|ipaalala)/))return null;
   if(lastCreated&&Date.now()-lastCreated.at<30*60e3&&has(/^(undo|undo that|undo it|cancel (that|it)|remove (that|it)|delete (that|it)( reminder| event| task)?|that'?s wrong|mali|bawiin|huwag na)( please)?$/))return {type:'undo_last'};
-  if(has(/\b(schedule|calendar|agenda|appointments?|meetings?|events?|lakad|gagawin|to-?dos?|tasks?)\b/)&&(QUESTION.test(n)||has(/\b(show|check|read|tell me|list|pakita|ano|anong|ano ang|meron)\b/))&&!has(/\b(notes?|research)\b/)){
+  if(has(/\b(schedule|calendar|agenda|appointments?|meetings?|events?|lakad|gagawin|to-?dos?|tasks?)\b/)&&(QUESTION.test(n)||has(/\b(show|check|read|tell me|list|pakita|ano|anong|ano ang|meron)\b/))&&!has(/\b(notes?|research|move|reschedule|rename|postpone|change|edit|update|cancel|delete|remove|add|set|create|put|ilipat|burahin)\b/)){
    return {type:'list_schedule',query:has(/\b(tomorrow|bukas)\b/)?'tomorrow':has(/\b(week|linggo|next few days|coming days)\b/)?'week':'today'};
   }
   if(pendingMerge&&Date.now()-pendingMerge.at<5*60e3){
@@ -1953,7 +1964,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    const {r,data}=await postJson('/api/gmail/draft',body,60000);
    const prob=gmailProblem(data);if(prob){$('dispTitle').textContent='Email';$('dispSub').textContent=prob;return prob}
    if(!r.ok){$('dispTitle').textContent='Draft email';$('dispSub').textContent=data.error||'';return data.error||'I couldn’t write that email.'}
-   pendingDraft={...data.draft,replyTo:revising?pendingDraft.replyTo:replyTo,at:Date.now()};renderDraft();
+   pendingDraft={...data.draft,replyTo:revising?pendingDraft.replyTo:replyTo,at:Date.now()};pendingConfirm=null;renderDraft();
    return 'Here’s the draft to '+nameOf2(pendingDraft.to)+': '+pendingDraft.body.replace(/\s+/g,' ').slice(0,260)+(pendingDraft.body.length>260?'…':'')+' Say “yes, send it”, or tell me what to change.';
   }catch(e){return 'I couldn’t write that email. '+e.message}
  }
@@ -1976,6 +1987,143 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   setSection('home');return 'Okay, I won’t send it. The draft is deleted.';
  }
  const draftShowing=()=>!!(pendingDraft&&Date.now()-pendingDraft.at<30*60e3&&screen==='display'&&/^Draft email/.test($('dispTitle').textContent));
+
+ // ---------- changing things safely: Max asks "yes?" first, and can undo ----------
+ let pendingConfirm=null,pendingPick=null,lastChange=null,lastMailOp=null;
+ const confirmFresh=()=>!!(pendingConfirm&&Date.now()-pendingConfirm.at<5*60e3);
+ function askConfirm(say,run,cards,title){
+  pendingConfirm={say,run,at:Date.now()};pendingPick=null;
+  if(cards)showDisplay(title||'Please confirm','Say “yes” to go ahead, or “no” to cancel',cards.map(c=>({...c,buttons:[['Yes',()=>confirmYes().then(t=>{setSub('',t);speak(t)})],['No',()=>{const t=confirmNo();setSub('',t);speak(t)}]]})));
+  return say+' Say yes to go ahead, or no to cancel.';
+ }
+ async function confirmYes(){if(!confirmFresh())return 'There’s nothing waiting for a yes.';const c=pendingConfirm;pendingConfirm=null;try{return await c.run()}catch(e){return 'That didn’t go through, so nothing was changed. '+(e.message||'')}}
+ function confirmNo(){if(!pendingConfirm&&!pendingPick)return 'Okay.';pendingConfirm=null;pendingPick=null;return 'Okay, I left it as it was.'}
+ const tzName=()=>Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC';
+ const localIso=dt=>{const d=new Date(dt);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes())};
+ const evWhen=e=>e.allDay?fmtWhen(e.start,true)+' (all day)':fmtWhen(e.start);
+ const remText=list=>!list||!list.length?'no reminder':list.map(m=>m===0?'at the time':m%1440===0?(m/1440)+' day'+(m===1440?'':'s')+' before':m%60===0?(m/60)+' hour'+(m===60?'':'s')+' before':m+' min before').join(', ');
+ async function findEvents(d){
+  const find=String(d.find||d.title||'').replace(/\b(my|the|a|an|appointment|meeting|event|schedule|calendar|reminder)\b/gi,' ').replace(/\s+/g,' ').trim();
+  let from='',to='';
+  if(/^\d{4}-\d\d-\d\d$/.test(d.on||'')){from=new Date(d.on+'T00:00:00').toISOString();to=new Date(d.on+'T23:59:59').toISOString()}
+  const q=new URLSearchParams({...(find?{q:find}:{}),...(from?{from,to}:{})});
+  const {r,data}=await fetchJson(workerBase()+'/api/calendar/find?'+q,{},20000);
+  if(data&&data.needGoogle)throw Object.assign(new Error(needGoogleMsg),{plain:true});
+  if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  return {events:data.events||[],find};
+ }
+ function pickFrom(list,what,next){
+  pendingPick={list,next,at:Date.now()};pendingConfirm=null;
+  showDisplay('Which one?','Say “number 1”, “number 2” …',list.slice(0,8).map((e,i)=>({badge:'NUMBER '+(i+1),title:e.title,lines:[evWhen(e)],buttons:[['This one',()=>choosePick(i+1).then(t=>{setSub('',t);speak(t)})]]})));
+  return 'I found '+list.length+' '+what+': '+list.slice(0,4).map((e,i)=>(i+1)+', '+e.title+' '+evWhen(e)).join('; ')+'. Which one?';
+ }
+ async function choosePick(n){if(!pendingPick||Date.now()-pendingPick.at>5*60e3)return 'Which one? I don’t have a list open.';const e=pendingPick.list[n-1];if(!e)return 'There’s no number '+n+'.';const p=pendingPick;pendingPick=null;return await p.next(e)}
+ async function editEvent(d){
+  d=d||{};
+  if(!d.find&&!d.title)return 'Which event should I change?';
+  try{
+   const {events,find}=await findEvents(d.find?d:{...d,find:d.title});
+   if(!events.length)return 'I couldn’t find “'+(find||d.title)+'” in your calendar'+(d.on?' on '+fmtWhen(d.on,true):'')+'.';
+   const go=e=>confirmEdit(e,d);
+   return events.length===1?await go(events[0]):pickFrom(events,'events',go);
+  }catch(e){return e.plain?e.message:'I couldn’t check your calendar. '+e.message}
+ }
+ async function confirmEdit(e,d){
+  const ch={},parts=[];
+  if(d.title&&d.find&&d.title.toLowerCase()!==e.title.toLowerCase()){ch.title=d.title;parts.push('rename it to “'+d.title+'”')}
+  if(d.start){ch.start=d.start;if(d.allDay)ch.allDay=true;parts.push('move it to '+fmtWhen(d.start,!!d.allDay||!/T/.test(d.start)))}
+  if(d.durationMinutes){ch.durationMinutes=d.durationMinutes;parts.push('make it '+d.durationMinutes+' minutes')}
+  if(d.location){ch.location=d.location;parts.push('set the place to '+d.location)}
+  if(d.reminders||Number.isFinite(d.reminderMinutes)){ch.reminders=d.reminders||[d.reminderMinutes];parts.push('remind you '+remText(ch.reminders))}
+  if(!parts.length)return 'What should I change on “'+e.title+'” — the time, the name, the place or the reminders?';
+  return askConfirm('Change “'+e.title+'” ('+evWhen(e)+'): '+parts.join(', ')+'?',async()=>{
+   const {r,data}=await fetchJson(workerBase()+'/api/calendar/event',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:e.id,...ch,tz:tzName()})},20000);
+   if(!r.ok)return 'I couldn’t change it. '+(data.error||'');
+   lastChange={kind:'edit',before:data.before,at:Date.now()};
+   const n=data.event;showDisplay('Updated ✓','',[{badge:'CALENDAR',title:n.title,lines:[evWhen(n),'Reminders: '+remText(n.reminders)]}]);
+   return 'Done — “'+n.title+'” is now '+evWhen(n)+(n.reminders?', reminders '+remText(n.reminders):'')+'. Say “undo” if that’s wrong.';
+  },[{badge:'CHANGE',title:e.title,lines:['Now: '+evWhen(e)+' · reminders: '+remText(e.reminders),...parts.map(p=>({text:'→ '+p,cls:'miss'}))]}],'Change this event?');
+ }
+ async function deleteEvent(d){
+  d=d||{};
+  if(!d.find&&!d.title&&!d.on)return 'Which event should I delete?';
+  try{
+   const {events,find}=await findEvents(d.find?d:{...d,find:d.title});
+   if(!events.length)return 'I couldn’t find “'+(find||'that')+'” in your calendar'+(d.on?' on '+fmtWhen(d.on,true):'')+'.';
+   const go=async e=>askConfirm('Delete “'+e.title+'” on '+evWhen(e)+(e.recurring?' (only this one time, not the whole series)':'')+'?',async()=>{
+    const {r,data}=await fetchJson(workerBase()+'/api/calendar/event?id='+encodeURIComponent(e.id),{method:'DELETE'},20000);
+    if(!r.ok)return 'I couldn’t delete it. '+(data.error||'');
+    lastChange={kind:'deleted',event:e,at:Date.now()};
+    showDisplay('Deleted','',[{badge:'CALENDAR',title:e.title,lines:[evWhen(e)+' — removed']}]);
+    return 'Deleted “'+e.title+'”. Say “undo” to put it back.';
+   },[{badge:'DELETE',badgeClass:'badge-web',title:e.title,lines:[evWhen(e)]}],'Delete this event?');
+   return events.length===1?await go(events[0]):pickFrom(events,'events',go);
+  }catch(e){return e.plain?e.message:'I couldn’t check your calendar. '+e.message}
+ }
+ // ----- email organizing -----
+ const MAIL_OPS={trash:'move to trash',archive:'archive',read:'mark as read',unread:'mark as unread',star:'star',unstar:'unstar',important:'mark as important',unimportant:'mark as not important',label:'label',unlabel:'remove the label from'};
+ async function modifyEmail(d){
+  d=d||{};const op=d.op;if(!MAIL_OPS[op])return 'What should I do with it — archive, move to trash, mark as read, star, or label it?';
+  if((op==='label'||op==='unlabel')&&!d.label)return 'Which label?';
+  const t=String(d.target||'').trim().toLowerCase();let items=[];
+  try{
+   if((!t||/^(this|it|that|this one|this email|that email)$/.test(t))&&attachFresh()&&pendingAttach.email)items=[{id:pendingAttach.email.id,from:nameOf2(pendingAttach.email.from),subject:pendingAttach.email.subject}];
+   else if(!t||/^(this|it|that|this one|this email|that email)$/.test(t))return 'Which emails? Open one first (“read number 1”), or say for example “archive number 2” or “trash all emails from Shop”.';
+   else if(/^(all|all of them|all these|these|them|everything)( emails)?$/.test(t)&&lastInbox.length)items=lastInbox.slice();
+   else if(/\d|first|second|third|last/.test(t)&&lastInbox.length&&!/:/.test(t)){
+    const words={first:1,second:2,third:3,fourth:4,fifth:5,last:lastInbox.length};
+    const nums=[...new Set([...t.matchAll(/\d{1,2}|first|second|third|fourth|fifth|last/g)].map(m=>+m[0]||words[m[0]]))];
+    items=nums.map(n=>lastInbox[n-1]).filter(Boolean);
+   }else if(t){
+    const fm=t.match(/\bfrom\s+(.+)$/);
+    const query=/:/.test(t)?t:fm?'from:('+fm[1].trim()+')':/promotions?|promos?|ads/.test(t)?'category:promotions':/social/.test(t)?'category:social':t;
+    const {r,data}=await postJson('/api/gmail/find',{query,max:50},30000);
+    const prob=gmailProblem(data);if(prob)return prob;
+    if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+    items=data.items||[];
+   }
+  }catch(e){return 'I couldn’t find those emails. '+e.message}
+  if(!items.length)return 'Which emails? Open one, or say “check my email” first, then for example “archive number 2”.';
+  const label=d.label||'',n=items.length,what=MAIL_OPS[op]+(op==='label'?' “'+label+'”':op==='unlabel'?' “'+label+'”':'');
+  return askConfirm((op==='label'?'Label ':op==='unlabel'?'Remove the label “'+label+'” from ':what.charAt(0).toUpperCase()+what.slice(1)+' ')+n+' email'+(n===1?'':'s')+(op==='label'?' as “'+label+'”':'')+': '+items.slice(0,3).map(x=>x.from+' — '+x.subject).join('; ')+(n>3?' and '+(n-3)+' more':'')+'?'+(op==='trash'?' You can get them back from Trash for 30 days.':''),async()=>{
+   const {r,data}=await postJson('/api/gmail/modify',{ids:items.map(x=>x.id),op,label,confirm:'MODIFY '+op+' '+n},45000);
+   if(data&&data.needGmailModify)return 'Google hasn’t allowed me to organize your email yet. Open Settings and tap “Update Google permissions”, then try again.';
+   if(!r.ok)return 'Nothing was changed. '+(data.error||'');
+   lastMailOp={...data.undo,n,at:Date.now()};
+   if(['trash','archive'].includes(op))lastInbox=lastInbox.filter(x=>!items.some(y=>y.id===x.id));
+   if(op==='trash'&&attachFresh()&&pendingAttach.email&&items.some(x=>x.id===pendingAttach.email.id)){pendingAttach=null;saveAttach()}
+   showDisplay('Done ✓','',[{badge:'EMAIL',title:n+' email'+(n===1?'':'s')+': '+what,lines:items.slice(0,8).map(x=>x.from+' — '+x.subject)}]);
+   return 'Done — '+n+' email'+(n===1?'':'s')+' '+({trash:'moved to trash',archive:'archived',read:'marked as read',unread:'marked as unread',star:'starred',unstar:'unstarred',important:'marked important',unimportant:'marked not important',label:'labelled “'+label+'”',unlabel:'unlabelled'}[op])+'. Say “undo” to reverse it.';
+  },[{badge:op==='trash'?'TRASH':'EMAIL',badgeClass:op==='trash'?'badge-web':'badge-draft',title:what.charAt(0).toUpperCase()+what.slice(1)+' · '+n+' email'+(n===1?'':'s'),lines:items.slice(0,10).map(x=>x.from+' — '+x.subject)}],'Change these emails?');
+ }
+ async function undoChange(){try{return await undoChangeInner()}catch(e){return 'I couldn’t undo it. '+(e.message||'')}}
+ async function undoChangeInner(){
+  const c=[lastCreated&&{k:'created',at:lastCreated.at},lastChange&&{k:'change',at:lastChange.at},lastMailOp&&{k:'mail',at:lastMailOp.at}].filter(x=>x&&Date.now()-x.at<30*60e3).sort((a,b)=>b.at-a.at)[0];
+  if(!c)return 'There’s nothing recent for me to undo.';
+  if(c.k==='created')return await undoLast();
+  if(c.k==='mail'){
+   const u=lastMailOp;lastMailOp=null;
+   const {r,data}=await postJson('/api/gmail/modify',{ids:u.ids,op:u.op,label:u.label,confirm:'MODIFY '+u.op+' '+u.ids.length},45000);
+   return r.ok?'Undone — '+u.ids.length+' email'+(u.ids.length===1?'':'s')+' put back.':'I couldn’t undo it. '+(data.error||'');
+  }
+  const ch=lastChange;lastChange=null;
+  if(ch.kind==='edit'){const b=ch.before;
+   const {r,data}=await fetchJson(workerBase()+'/api/calendar/event',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:b.id,title:b.title,start:b.allDay?b.start:localIso(b.start),end:b.allDay?b.end:localIso(b.end),allDay:b.allDay,...(b.reminders?{reminders:b.reminders.length?b.reminders:[10]}:{}),tz:tzName()})},20000);
+   return r.ok?'Undone — “'+b.title+'” is back to '+evWhen(b)+'.':'I couldn’t undo it. '+(data.error||'');}
+  const e=ch.event;
+  const {r,data}=await postJson('/api/calendar/event',{title:e.title,start:e.allDay?e.start:localIso(e.start),end:e.allDay?e.end:localIso(e.end),allDay:e.allDay,durationMinutes:e.allDay?undefined:Math.max(5,Math.round((new Date(e.end)-new Date(e.start))/60000)),reminders:e.reminders&&e.reminders.length?e.reminders:undefined,reminderMinutes:e.reminders&&e.reminders.length?e.reminders[0]:10,location:e.location||'',notes:e.notes||'',tz:tzName()},20000);
+  return r.ok?'Put back — “'+e.title+'” '+evWhen(e)+'.':'I couldn’t put it back. '+(data.error||'');
+ }
+ function emailOp(raw){
+  const s=String(raw||'').toLowerCase();
+  const op=/\b(un-?star)\b/.test(s)?'unstar':/\bstar\b/.test(s)?'star':/\bmark\b.*\bunread\b|\bunread\b.*\bmark/.test(s)?'unread':/\bmark\b.*\bread\b|\bread\b.*\bmark\b/.test(s)?'read':/\barchive\b/.test(s)?'archive':/\b(trash|delete|remove|throw (it|them|those|these) (away|out)|bin|burahin|itapon)\b/.test(s)?'trash':/\bnot important\b/.test(s)?'unimportant':/\b(mark|flag)\b.*\bimportant\b/.test(s)?'important':/\b(label|move (it|them|this|that|these|those) to|put (it|them) in)\b/.test(s)?'label':'';
+  if(!op)return null;
+  const label=op==='label'?((s.match(/\b(?:label(?:led|ed)?(?: (?:it|them|this|that|these|those|all))?(?: (?:email|emails|mail|message|messages|one))?(?: as| with)?|move (?:it|them|this|that|these|those)(?: (?:email|emails|mail|message|messages))? to|put (?:it|them) in)\s+(?:the |my )?["“]?([\w &-]{2,40}?)["”]?(?: label| folder)?\s*$/)||[])[1]||''):'';
+  let target=s.replace(/^(please |max,? |can you |could you )+/,'').replace(/\b(archive|trash|delete|remove|throw (it|them|those|these) (away|out)|move to (the )?trash|to (the )?trash|mark( as)?|as|read|unread|un-?star|star|flag|important|not important|label(led|ed)?( as| with)?|move|put|in|to|the|my|email|emails|mail|message|messages|please|burahin|itapon)\b/g,' ').replace(/^\s*all\s+(?=from\b)/,' ').replace(/\s+/g,' ').trim();
+  if(label)target=target.replace(new RegExp('\\b'+label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i'),'').trim();
+  if(/^(it|this|that|this one|that one)?$/.test(target))target='this';
+  return {op,label:label.replace(/\b(label|folder)$/,'').trim(),target};
+ }
 
  // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
  const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
@@ -2342,7 +2490,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'add_event':return await addEvent(a.details);
    case 'add_task':return await addTask(a.details||{title:a.query});
    case 'list_schedule':return await listSchedule(a.details?.range||a.query||'today');
-   case 'undo_last':return await undoLast();
+   case 'undo_last':return await undoChange();
+   case 'confirm_yes':return await confirmYes();
+   case 'confirm_no':return confirmNo();
+   case 'choose_pick':return await choosePick(+a.query);
+   case 'edit_event':return await editEvent(a.details||{find:a.query});
+   case 'delete_event':return await deleteEvent(a.details||{find:a.query});
+   case 'modify_email':return await modifyEmail(a.details||{target:a.query});
    case 'read_note':{
     const n=a.query?findNote(a.query)||rankNotes(a.query,1)[0]:(screen==='editor'&&currentNote())||(lastNote.id&&getNotes().find(x=>x.id===lastNote.id));
     if(n)return readNote(n);
@@ -2458,7 +2612,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
@@ -2595,7 +2749,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
 
  // For testing on a computer: window.MaxDebug.understand("show me my notes on ballast")
- window.MaxDebug={understand:t=>matchLearned(norm(t))||matchCommand(t),norm};
+ window.MaxDebug={understand:t=>matchLearned(norm(t))||matchCommand(t),norm,waiting:()=>({confirm:confirmFresh(),pick:!!pendingPick,draft:!!pendingDraft})};
 
  // ---------- startup: each step is separate, so one failure cannot freeze the whole app ----------
  function step(name,fn){try{fn()}catch(e){console.error('Max startup step failed: '+name,e);window.maxShowProblem('Startup step "'+name+'" failed: '+(e&&e.message||e))}}

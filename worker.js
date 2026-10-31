@@ -52,13 +52,13 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-01b";
+const WORKER_VERSION = "max-worker-2026-11-01c";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
   return {
     "Access-Control-Allow-Origin": accepted,
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Max-Pass, X-Max-Session, X-File-Name, X-File-Type, X-Question, X-Topics",
     "Vary": "Origin",
     "Content-Type": "application/json; charset=utf-8",
@@ -257,7 +257,7 @@ function officialSource(s) {
   return /imo\.org|\.gov\b|\.gov\.|\.int\b|europa\.eu|marina\.gov\.ph|uscg|mca\.gov|amsa\.gov|mpa\.gov\.sg|classnk|dnv\.|lr\.org|abs-group|eagle\.org|bureauveritas|iacs\.org|ilo\.org|panama-maritime|amp\.gob\.pa|liscr|register-iri/i.test(String(s));
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
@@ -265,7 +265,13 @@ function cleanAction(a) {
   if (d) out.details = {title: cleanText(String(d.title || ""), 200), start: cleanText(String(d.start || ""), 25), end: cleanText(String(d.end || ""), 25),
     due: cleanText(String(d.due || ""), 10), allDay: d.allDay === true, reminderMinutes: Number.isFinite(Number(d.reminderMinutes)) ? Number(d.reminderMinutes) : undefined,
     project: cleanText(String(d.project || ""), 80), amount: Number.isFinite(Number(d.amount)) ? Number(d.amount) : undefined, currency: cleanText(String(d.currency || ""), 5), date: cleanText(String(d.date || ""), 10), source: cleanText(String(d.source || ""), 40), period: ["today","week","month","year","all"].includes(d.period) ? d.period : undefined, request: cleanText(String(d.request || ""), 2000), number: Number.isFinite(Number(d.number)) ? Math.floor(Number(d.number)) : undefined,
-    durationMinutes: Number.isFinite(Number(d.durationMinutes)) ? Number(d.durationMinutes) : undefined, notes: cleanText(String(d.notes || ""), 500), range: ["today","tomorrow","week"].includes(d.range) ? d.range : undefined};
+    durationMinutes: Number.isFinite(Number(d.durationMinutes)) ? Number(d.durationMinutes) : undefined, notes: cleanText(String(d.notes || ""), 500), range: ["today","tomorrow","week"].includes(d.range) ? d.range : undefined,
+    to: cleanText(String(d.to || ""), 200), subject: cleanText(String(d.subject || ""), 200), instruction: cleanText(String(d.instruction || ""), 1500), reply: d.reply === true, revise: d.revise === true,
+    find: cleanText(String(d.find || ""), 120), on: cleanText(String(d.on || ""), 10), location: cleanText(String(d.location || ""), 200),
+    reminders: Array.isArray(d.reminders) ? d.reminders.map(Number).filter(Number.isFinite).slice(0, 5) : undefined,
+    target: cleanText(String(d.target || ""), 200), op: ["archive","unarchive","trash","untrash","read","unread","star","unstar","important","unimportant","label","unlabel"].includes(d.op) ? d.op : undefined, label: cleanText(String(d.label || ""), 60),
+    days: Number.isFinite(Number(d.days)) ? Number(d.days) : undefined, topic: cleanText(String(d.topic || ""), 200), name: cleanText(String(d.name || ""), 80), url: cleanText(String(d.url || ""), 500), skill: cleanText(String(d.skill || ""), 1500)};
+  if (out.details) for (const k of Object.keys(out.details)) if (out.details[k] === undefined || out.details[k] === "" || out.details[k] === false) delete out.details[k];
   return out;
 }
 // Notes sent straight from the phone with each question (the phone always has the newest copy).
@@ -289,7 +295,7 @@ function phoneNotes(raw) {
 // ---------- Google: sign-in (replaces the passcode once linked) + Calendar + Tasks ----------
 // Needs Cloudflare secrets GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and a plain variable MAX_OWNER_EMAIL.
 // Only that Google account can sign in. Until it signs in once, the passcode keeps working.
-const GOOGLE_SCOPES = "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose";
+const GOOGLE_SCOPES = "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/gmail.modify";
 const SESSION_DAYS = 180;
 const googleConfigured = env => !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.MAX_OWNER_EMAIL && env.MAX_MEMORY);
 const ownerEmail = env => String(env.MAX_OWNER_EMAIL || "").trim().toLowerCase();
@@ -397,12 +403,21 @@ const isoLocal = s => /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d)?$/.test(String(s || "")
 const isDate = s => /^\d{4}-\d\d-\d\d$/.test(String(s || ""));
 const addDays = (d, n) => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
 function addMinutes(local, mins) { const x = new Date(local + "Z"); x.setUTCMinutes(x.getUTCMinutes() + mins); return x.toISOString().slice(0, 19); }
+const reminderList = (list, fallback) => { const l = (Array.isArray(list) && list.length ? list : [fallback]).map(Number).filter(Number.isFinite).map(n => Math.min(Math.max(Math.round(n), 0), 40320));
+  return [...new Set(l)].slice(0, 5).map(minutes => ({method: "popup", minutes})); };
+const eventOut = e => ({id: e.id, title: e.summary || "(no title)", start: e.start?.dateTime || e.start?.date, end: e.end?.dateTime || e.end?.date, allDay: !!e.start?.date, location: e.location || "", notes: e.description || "",
+  reminders: e.reminders?.useDefault ? null : (e.reminders?.overrides || []).map(r => r.minutes), recurring: !!e.recurringEventId, tz: e.start?.timeZone || ""});
 async function calendarRoutes(request, env, url, origin) {
   const p = url.pathname, m = request.method;
   if (!(await googleRow(env))) return json({error: "Google Calendar is not connected yet. Sign in with Google in ⚙ Settings.", needGoogle: true}, 409, origin, env);
   let body = {};
   if (m === "POST") { try { body = await request.json(); } catch { return json({error: "Invalid JSON body."}, 400, origin, env); } }
   try {
+    if (p === "/api/calendar/event" && m === "GET") {
+      const id = String(url.searchParams.get("id") || "");
+      if (!/^[A-Za-z0-9_-]{5,200}$/.test(id)) return json({error: "A valid event id is required."}, 400, origin, env);
+      return json({event: eventOut(await gapi(env, CAL + "/" + id))}, 200, origin, env);
+    }
     if (p === "/api/calendar" && m === "GET") {
       const from = url.searchParams.get("from"), to = url.searchParams.get("to");
       if (!from || !to || isNaN(Date.parse(from)) || isNaN(Date.parse(to))) return json({error: "from and to are required."}, 400, origin, env);
@@ -427,11 +442,47 @@ async function calendarRoutes(request, env, url, origin) {
         ev = {summary: title, start: {dateTime: start, timeZone: tz}, end: {dateTime: end, timeZone: tz}};
       }
       const mins = Number.isFinite(Number(body.reminderMinutes)) ? Math.min(Math.max(Math.round(Number(body.reminderMinutes)), 0), 40320) : 10;
-      ev.reminders = {useDefault: false, overrides: [{method: "popup", minutes: mins}]};
+      ev.reminders = {useDefault: false, overrides: reminderList(body.reminders, mins)};
+      if (body.location) ev.location = cleanText(String(body.location), 200);
       if (body.notes) ev.description = cleanText(body.notes, 2000) + "\n\n— added by Max";
       else ev.description = "Added by Max";
       const made = await gapi(env, CAL, {method: "POST", body: JSON.stringify(ev)});
       return json({event: {id: made.id, title: made.summary, start: made.start?.dateTime || made.start?.date, allDay: !!made.start?.date, reminderMinutes: mins, link: made.htmlLink}}, 200, origin, env);
+    }
+    if (p === "/api/calendar/find" && m === "GET") {
+      // Find events by words and/or day, to change or delete them.
+      const q = cleanText(url.searchParams.get("q") || "", 120), from = url.searchParams.get("from"), to = url.searchParams.get("to");
+      const f = from && !isNaN(Date.parse(from)) ? new Date(from) : new Date(Date.now() - 864e5), t = to && !isNaN(Date.parse(to)) ? new Date(to) : new Date(Date.now() + 120 * 864e5);
+      const ev = await gapi(env, CAL + "?" + new URLSearchParams({timeMin: f.toISOString(), timeMax: t.toISOString(), singleEvents: "true", orderBy: "startTime", maxResults: "50", ...(q ? {q} : {})}));
+      return json({events: (ev.items || []).filter(e => e.status !== "cancelled").slice(0, 20).map(eventOut)}, 200, origin, env);
+    }
+    if (p === "/api/calendar/event" && m === "PATCH") {
+      // Change an event: new time, title, place or reminders. Keeps its length when only the start moves.
+      let body2; try { body2 = await request.json(); } catch { return json({error: "Invalid JSON body."}, 400, origin, env); }
+      const id = String(body2.id || ""), tz = cleanText(body2.tz, 60) || "UTC";
+      if (!/^[A-Za-z0-9_-]{5,200}$/.test(id)) return json({error: "A valid event id is required."}, 400, origin, env);
+      const cur = await gapi(env, CAL + "/" + id), patch = {};
+      if (body2.title) patch.summary = cleanText(String(body2.title), 200);
+      if (typeof body2.location === "string") patch.location = cleanText(body2.location, 200);
+      if (body2.notes) patch.description = cleanText(String(body2.notes), 2000);
+      if (body2.start) {
+        if (body2.allDay || (isDate(body2.start) && !isoLocal(body2.start))) {
+          const d = isDate(body2.start) ? body2.start : String(body2.start).slice(0, 10);
+          if (!isDate(d)) return json({error: "I need a date."}, 400, origin, env);
+          patch.start = {date: d}; patch.end = {date: isDate(body2.end) && body2.end > d ? body2.end : addDays(d, 1)};
+        } else {
+          const start = isoLocal(body2.start); if (!start) return json({error: "I need a date and time."}, 400, origin, env);
+          const oldLen = cur.start?.dateTime && cur.end?.dateTime ? Math.round((Date.parse(cur.end.dateTime) - Date.parse(cur.start.dateTime)) / 60000) : 30;
+          const len = Number(body2.durationMinutes) > 0 ? Math.min(Number(body2.durationMinutes), 1440) : Math.min(Math.max(oldLen, 5), 1440);
+          patch.start = {dateTime: start, timeZone: tz}; patch.end = {dateTime: isoLocal(body2.end) && isoLocal(body2.end) > start ? isoLocal(body2.end) : addMinutes(start, len), timeZone: tz};
+        }
+      } else if (Number(body2.durationMinutes) > 0 && cur.start?.dateTime) {
+        patch.end = {dateTime: new Date(Date.parse(cur.start.dateTime) + Math.min(Number(body2.durationMinutes), 1440) * 60000).toISOString()};
+      }
+      if (Array.isArray(body2.reminders) || Number.isFinite(Number(body2.reminderMinutes))) patch.reminders = {useDefault: false, overrides: reminderList(body2.reminders, Number(body2.reminderMinutes))};
+      if (!Object.keys(patch).length) return json({error: "What should I change?"}, 400, origin, env);
+      const made = await gapi(env, CAL + "/" + id, {method: "PATCH", body: JSON.stringify(patch)});
+      return json({event: eventOut(made), before: eventOut(cur)}, 200, origin, env);
     }
     if (p === "/api/calendar/event" && m === "DELETE") {
       const id = String(url.searchParams.get("id") || "");
@@ -728,6 +779,7 @@ async function fileRoutes(request, env, url, origin) {
 // ---------- Gmail: read, search, draft — and send only after his spoken "yes" ----------
 const GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me";
 const hasGmail = row => /gmail\.(readonly|compose|modify)|mail\.google\.com/.test(String(row?.scopes || ""));
+const canModifyMail = row => /gmail\.modify|mail\.google\.com/.test(String(row?.scopes || ""));
 const b64url = s => { const b = new TextEncoder().encode(s); let o = ""; for (let i = 0; i < b.length; i += 32768) o += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(o).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
 const unb64url = s => { try { const bin = atob(String(s || "").replace(/-/g, "+").replace(/_/g, "/")); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); } catch { return ""; } };
 const hdr = (m, n) => (m?.payload?.headers || []).find(h => h.name.toLowerCase() === n.toLowerCase())?.value || "";
@@ -773,6 +825,36 @@ ${items.map((x, i) => `[${i + 1}] From: ${x.from} <${x.fromEmail}> | Subject: ${
         say = cleanText(String(r.say || ""), 700); (r.items || []).forEach(x => { if (items[x.n - 1]) picks[x.n - 1] = {why: cleanText(String(x.why || ""), 120), priority: ["high", "normal", "low"].includes(x.priority) ? x.priority : "normal"}; });
       } catch {}
       return json({query: q, items: items.map((x, i) => ({...x, ...(picks[i] || {})})), say: say || items.length + " email" + (items.length === 1 ? "" : "s") + ": " + items.slice(0, 3).map(x => x.from + " — " + x.subject).join("; ") + "."}, 200, origin, env);
+    }
+    if (p === "/api/gmail/find" && m === "POST") {
+      // Plain search (no AI): used to pick the emails to archive, label or move to trash.
+      const q = cleanText(String(body.query || ""), 200); if (!q) return json({error: "What should I look for?"}, 400, origin, env);
+      const list = await gapi(env, GMAIL + "/messages?" + new URLSearchParams({q, maxResults: String(Math.min(Math.max(Number(body.max) || 25, 1), 50))}));
+      const msgs = await Promise.all((list.messages || []).slice(0, 50).map(x => gapi(env, GMAIL + "/messages/" + x.id + "?format=metadata&metadataHeaders=From&metadataHeaders=Subject")));
+      return json({items: msgs.map(x => ({id: x.id, from: nameOf(hdr(x, "From")), subject: hdr(x, "Subject") || "(no subject)", unread: (x.labelIds || []).includes("UNREAD")})), more: !!list.nextPageToken}, 200, origin, env);
+    }
+    if (p === "/api/gmail/modify" && m === "POST") {
+      // Archive, trash (recoverable for 30 days), read/unread, star, important, labels. Never a permanent delete.
+      if (!canModifyMail(row)) return json({error: "To let Max organize your email, sign in with Google again in ⚙ Settings and allow it.", needGmailModify: true}, 409, origin, env);
+      const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String).filter(x => /^[A-Za-z0-9]{6,40}$/.test(x)))].slice(0, 50);
+      const op = String(body.op || ""), label = cleanText(String(body.label || ""), 60);
+      if (!ids.length) return json({error: "Which emails?"}, 400, origin, env);
+      if (body.confirm !== "MODIFY " + op + " " + ids.length) return json({error: "Max changes your email only after you say yes.", needConfirm: true}, 400, origin, env);
+      const SYS = {archive: [[], ["INBOX"]], unarchive: [["INBOX"], []], read: [[], ["UNREAD"]], unread: [["UNREAD"], []], star: [["STARRED"], []], unstar: [[], ["STARRED"]], important: [["IMPORTANT"], []], unimportant: [[], ["IMPORTANT"]]};
+      const UNDO = {archive: "unarchive", unarchive: "archive", read: "unread", unread: "read", star: "unstar", unstar: "star", important: "unimportant", unimportant: "important", trash: "untrash", untrash: "trash", label: "unlabel", unlabel: "label"};
+      if (op === "trash" || op === "untrash") {
+        for (const id of ids) await gapi(env, GMAIL + "/messages/" + id + "/" + op, {method: "POST", body: "{}"});
+      } else if (SYS[op]) {
+        await gapi(env, GMAIL + "/messages/batchModify", {method: "POST", body: JSON.stringify({ids, addLabelIds: SYS[op][0], removeLabelIds: SYS[op][1]})});
+      } else if (op === "label" || op === "unlabel") {
+        if (!label) return json({error: "Which label?"}, 400, origin, env);
+        const labels = (await gapi(env, GMAIL + "/labels")).labels || [];
+        let l = labels.find(x => x.name.toLowerCase() === label.toLowerCase());
+        if (!l && op === "label") l = await gapi(env, GMAIL + "/labels", {method: "POST", body: JSON.stringify({name: label, labelListVisibility: "labelShow", messageListVisibility: "show"})});
+        if (!l) return json({error: "There's no label called “" + label + "”."}, 404, origin, env);
+        await gapi(env, GMAIL + "/messages/batchModify", {method: "POST", body: JSON.stringify({ids, ...(op === "label" ? {addLabelIds: [l.id]} : {removeLabelIds: [l.id]})})});
+      } else return json({error: "I can archive, move to trash, mark read or unread, star, mark important, or label emails."}, 400, origin, env);
+      return json({done: ids.length, op, label, undo: {op: UNDO[op], ids, label}}, 200, origin, env);
     }
     if (p === "/api/gmail/message" && m === "GET") {
       const id = String(url.searchParams.get("id") || "");
@@ -852,7 +934,7 @@ export default {
       const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env), brain: env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini", version:WORKER_VERSION,
         geminiKey: env.GEMINI_API_KEY ? "set" : "missing", passcodeRequired: passcodeSet(env),
         database: env.MAX_MEMORY ? "bound" : "not bound",
-        google: !googleConfigured(env) ? "not set up" : auth.enforced ? "linked" + (hasGmail(await googleRow(env)) ? " (calendar, tasks, gmail)" : " (calendar, tasks — sign in again to add Gmail)") : "set up, not signed in",
+        google: !googleConfigured(env) ? "not set up" : auth.enforced ? "linked" + (canModifyMail(await googleRow(env)) ? " (calendar, tasks, gmail)" : hasGmail(await googleRow(env)) ? " (calendar, tasks, gmail read-only — sign in again to let Max organize email)" : " (calendar, tasks — sign in again to add Gmail)") : "set up, not signed in",
         login: auth.enforced ? "google" : passcodeSet(env) ? "passcode" : "open",
         github: githubReady(env) ? "connected (" + allowedRepos(env).length + " repos)" : "not connected",
         analytics: statsReady(env) ? "connected" : "not connected"};
@@ -993,9 +1075,10 @@ export default {
           "Reply ONLY with JSON: {\"reply\": \"what you say to the user\", \"used_notes\": [\"exact titles of his notes you used, or empty\"], \"remember\": [\"fact\", ...]" + (actionsOn ? ", \"action\": null or {\"type\": \"...\", \"query\": \"...\", \"details\": {...}}" : "") + "}. " : "") +
         (actionsOn ? `APP CONTROL: you control the Max app screen. The user is on the "${screen}" screen. If he asks — in ANY wording, English, Filipino or Taglish — for something the app can do, set "action": ` +
           (calendarOn ? "add_event (a calendar event or a timed reminder; details = {title, start: \"YYYY-MM-DDTHH:MM\" in HIS local time, or start: \"YYYY-MM-DD\" with allDay: true, durationMinutes (default 30), reminderMinutes (default 10; 0 = at the time)}) · " +
+            "edit_event (change, move or rename an existing calendar event, or change its reminders; details = {find: words from its title, on: \"YYYY-MM-DD\" if he said which day, then only what changes: title, start, durationMinutes, location, reminders: [minutes before, e.g. 60, 10]}) · delete_event (cancel/remove an event; details = {find, on}) · alarms: an alarm is add_event with title starting \"⏰ \", reminderMinutes 0, durationMinutes 5 · several reminders: add_event with reminders: [60, 10] · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
-          "GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
+          "GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +

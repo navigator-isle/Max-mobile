@@ -7,7 +7,7 @@ class D1 { constructor(db) { this.db = db; } prepare(s) { return new Stmt(this.d
   async batch(st) { this.db.exec("BEGIN"); try { for (const s of st) /^\s*(select|pragma)/i.test(s.sql) ? await s.all() : await s.run(); this.db.exec("COMMIT"); } catch (e) { this.db.exec("ROLLBACK"); throw e; } } }
 const b64u = o => Buffer.from(JSON.stringify(o)).toString("base64url");
 const _unused=0;let googleEmail = "mark@example.com", tokenCalls = [], gcal = [], gtasks = [], lastChat = null, refreshOk = true;
-let scope = "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose", gm = [], gemini = [];
+let scope = "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/gmail.modify", gm = [], gemini = [];
 const raw = s => Buffer.from(s).toString("base64url");
 const MSG = { id: "m1abcdef", threadId: "t1abcdef", labelIds: ["INBOX", "UNREAD", "IMPORTANT"], snippet: "Your joining date is 15 November. Please confirm.",
   payload: { headers: [{ name: "From", value: "\"Crewing Dept\" <crewing@agency.ph>" }, { name: "To", value: "mark@example.com" }, { name: "Subject", value: "Joining instructions" }, { name: "Date", value: "Fri, 30 Oct 2026 08:00:00 +0800" }, { name: "Message-ID", value: "<abc@agency.ph>" }],
@@ -47,7 +47,7 @@ const link = async () => { let r = await call("/auth/google/start?return=" + enc
   return { scopeAsked: g.searchParams.get("scope"), session: (r.location.match(/#max_session=([\w-]+)/) || [])[1] }; };
 
 let { scopeAsked, session } = await link();
-ok(/gmail\.readonly/.test(scopeAsked) && /gmail\.compose/.test(scopeAsked) && !/mail\.google\.com|gmail\.modify|gmail\.send\b/.test(scopeAsked), "sign-in asks only for read + drafts (no full mailbox control)", scopeAsked);
+ok(/gmail\.readonly/.test(scopeAsked) && /gmail\.compose/.test(scopeAsked) && /gmail\.modify/.test(scopeAsked) && !/mail\.google\.com/.test(scopeAsked), "sign-in asks for read, drafts and organize — never full mailbox control (no permanent delete)", scopeAsked);
 let r = await call("/health", { session });
 ok(r.data.google === "linked (calendar, tasks, gmail)", "health shows Gmail connected", r.data.google);
 r = await call("/api/gmail/inbox", { method: "POST", session, body: { query: "in:inbox newer_than:2d" } });
