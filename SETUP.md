@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 372 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 386 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -20,6 +20,27 @@
   - "Any requests for Hobby Isle?"
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
+
+**Display screen**
+- **What it does:** say "show me … on the screen" or "display …". Max checks your notes first and shows them. If your notes have nothing, he looks it up on the web.
+- **Saving:** web findings go into your notes only after you say "approve".
+- **Things to say:**
+  - "Show me SOLAS chapter II-2 on the screen"
+  - "Display my Gundam list"
+  - "Search the web too" (while something is on the screen)
+  - "Search about the BWM D-2 standard and add it to my notes"
+
+**Projects overview**
+- **Things to say:**
+  - "How many projects do I have?"
+  - "How are my projects doing?"
+  - "What's missing on Hobby Isle?"
+- **In the menu:** hold the circle, then tap **▦ Overview**.
+- **What each project's card shows:**
+  - Whether it's online
+  - Visitors and sales
+  - Notes about it
+  - What's missing, for example no GitHub repo, no visitor tracking, change requests waiting, no sales logged, or living inside Claude where Max can't manage it
 
 **Dashboard: visitors and sales**
 - **Where:** the Projects screen shows tiles at the top for visitors today, sales this month and sites up. Each project card shows its own numbers.

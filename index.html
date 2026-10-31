@@ -200,6 +200,15 @@ body.on-home .top-status{opacity:.7}
 .export-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .export-row .label{margin:0 6px 0 0}
 #editorCategory{background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:9px;padding:10px;font:inherit;min-width:0}
+.disp{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.disp-card{border:1px solid #1c344c;background:#0b1a2b;border-radius:16px;padding:14px;min-width:0}
+.disp-card.warn{border-color:#7a3b3b}
+.disp-card h2{margin:6px 0 8px;font-size:1.1rem;color:#e8f3ff}
+.disp-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.disp-text{color:#c8d9e9;line-height:1.5;overflow-wrap:anywhere}.disp-text a{color:#9fdcff}
+.disp-text ul,.disp-text ol{padding-left:20px}
+.disp-lines{list-style:none;padding:0;margin:0 0 6px;display:flex;flex-direction:column;gap:4px;font-size:.9rem}
+.disp-lines .ok{color:#9ff0e0}.disp-lines .miss{color:#ffd59a}
 .dash{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
 .dash-tile{border:1px solid #1c344c;background:#0b1a2b;border-radius:14px;padding:12px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .dash-tile b{font-size:1.25rem;color:#e8f3ff;overflow-wrap:anywhere;line-height:1.2}
@@ -314,6 +323,11 @@ body.on-home .top-status{opacity:.7}
     <div id="projReqBox" class="banner" hidden></div>
   </main>
 
+  <main id="displayScreen" class="section-screen">
+    <div class="notes-header"><div><h1 id="dispTitle">Display</h1><p id="dispSub">Say “show me … on the screen” and Max puts it here — your notes first, then the web.</p></div></div>
+    <div id="dispBody" class="disp"></div>
+  </main>
+
   <main id="notesScreen" class="section-screen">
     <div class="notes-header">
       <div><h1>Second brain</h1><p id="notesCount">Max checks these first</p></div>
@@ -374,6 +388,7 @@ body.on-home .top-status{opacity:.7}
     <button data-go="notes" class="pill">▤ Notes</button>
     <button data-go="research" class="pill">⌕ Research</button>
     <button data-go="projects" class="pill">◆ Projects</button>
+    <button data-go="overview" class="pill">▦ Overview</button>
     <button data-go="settings" class="pill">⚙ Settings</button>
     <button data-go="close" class="pill">Close</button>
   </div>
@@ -770,9 +785,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 
  // ---------- screens: talking is the default; everything else opens on command ----------
  function setSection(name){
-  if(!['home','notes','editor','research','projects'].includes(name))name='home';
+  if(!['home','notes','editor','research','projects','display'].includes(name))name='home';
   screen=name;
-  ['homeScreen','notesScreen','editorScreen','researchScreen','projectsScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
+  ['homeScreen','notesScreen','editorScreen','researchScreen','projectsScreen','displayScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
   document.body.classList.toggle('on-home',name==='home');
   $('miniMax').hidden=name==='home';
   if(name==='notes'){renderList();syncNotes()}
@@ -1191,7 +1206,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1228,11 +1243,20 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(has(/^(no|nope|hindi|huwag|cancel|wait|don'?t)\b/))return {type:'cancel_merge'};
   }
   if(has(/\b(visitors?|visits|traffic|page ?views|analytics|stats|statistics|dashboard)\b/)&&!has(/\b(add|change|make|fix|build|log)\b/)){const pr=projects().find(x=>findProject(x.name)&&n.includes(norm(x.name)))||projects().find(x=>(x.aliases||[]).some(al=>n.includes(norm(al))));return {type:'project_stats',query:pr?.name||''}}
-  if(has(/\bhow (is|are|'?s)\b.*\b(doing|going|performing)\b/)){const pr=projects().find(x=>n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al))));if(pr||has(/\b(sites?|websites?|projects?|apps?)\b/))return {type:'project_stats',query:pr?.name||''}}
+  if(has(/\bhow (is|are|'?s)\b.*\b(doing|going|performing)\b/)){const pr=projects().find(x=>n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al))));if(pr||has(/\b(sites?|websites?)\b/))return {type:'project_stats',query:pr?.name||''}}
   if(has(/\b(how much|what) (did|have) i (earn|earned|make|made|sell|sold)\b|\b(my )?(earnings|income|sales|kita|benta)\b/)&&!has(/\b(log|add|record|put|i earned|i made)\b/)&&!/\d/.test(n)){
    const pr=projects().find(x=>n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al))));
    return {type:'sales_summary',details:{project:pr?.name||'',period:has(/\btoday\b/)?'today':has(/\bweek\b/)?'week':has(/\byear\b/)?'year':has(/\b(all time|total|ever)\b/)?'all':'month'}};
   }
+  if(has(/\bhow many (projects|apps|websites|sites)\b|\b(projects?|apps?) (overview|summary|report|status report)\b|\b(overview|summary|report) of (all )?(my )?(projects|apps)\b|\bwhat'?s missing\b|\bwhat (is|needs|do i need|should i)\b.*\b(missing|fix(ed)?|improve[d]?|upgrade[d]?|work on)\b|\borgani[sz]e (all )?(my )?(projects|apps)\b|\bhow (are|is) (all )?(my )?(projects|apps) doing\b/)&&!has(/\b(notes?|research)\b/)){
+   const pr=projects().find(x=>n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al))));
+   if(pr||has(/\b(projects?|apps?|sites?|websites?)\b/))return {type:'projects_overview',query:pr?.name||''};
+  }
+  if(has(/\b(on|to) (the |my |your )?(screen|display)\b|^(display|ipakita|i display)\b|^(show|put|bring up|pull up) (me )?(everything|all) (about|on)\b/)){
+   const t=raw.replace(/^\s*(max,?\s*)?(can you |could you |please |pakita mo |)?(display|show( me)?|put|bring up|pull up|ipakita|i display)\s+/i,'').trim();
+   if(t&&!/^(the )?(notes?|research|projects?|settings?|menu|keyboard)( screen)?$/i.test(t.replace(/\b(on|to) (the |my |your )?(screen|display)\b/ig,'').trim()))return {type:'display',query:t};
+  }
+  if(screen==='display'&&has(/\b(search|look it up on|check) (the )?(web|internet|online)( too| also| as well)?\b/)){let q='';try{q=localStorage.getItem(DISPLAY_KEY)||''}catch{}if(q)return {type:'research',query:q}}
   if(has(/\b(passage plans?|saved routes?|my routes?|voyage plans?)\b/)&&!has(/\b(add|change|update|fix)\b/))return {type:'list_passage_plans'};
   if(has(/\b(apps?|sites?|websites?|projects?)\b/)&&has(/\b(up|online|working|down|running|alive|ok(ay)?|status|check)\b/)&&!has(/\b(add|change|make|fix|update|build)\b/))return {type:'check_projects'};
   if(has(/^(show|list|open|see|what are|pakita)( me)?( all)? (my )?(projects|apps|websites|sites)$/)||n==='my projects'||n==='projects')return {type:'show_projects'};
@@ -1250,8 +1274,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(export|download|back ?up)\b/)&&has(/\b(notes?|everything|all|it|this|that|second brain)\b/))return {type:'export_notes',query:has(/\b(this|it|that)\b/)&&screen==='editor'?'this':''};
   if(has(/\b(organi[sz]e|sort|arrange|clean up|tidy( up)?|categori[sz]e|group|file|ayusin)\b/)&&has(/\b(notes?|second brain|library)\b/))return {type:'organize_notes'};
   if(has(/\b(show|open|see|display|back to|go to|let me see|pakita|tingnan|where'?s|bring up|pull up)\b.*\b(research|findings|what you found)\b|^(your |the )?research$/))return {type:'show_research'};
-  if(!has(/\b(my notes?|notes|second brain)\b/)&&has(/\b(research|look up|look into|search (the )?(web|internet|online)|find out|check online|google|verify|double ?check|i ?research|alamin)\b/)){
-   let topic=raw.replace(/^.*?\b(research(?:ing)?|look(?:ing)? (?:up|into)|search(?:ing)? (?:the )?(?:web|internet|online)(?: for)?|find(?:ing)? out|check(?:ing)? online|google|verify|double ?check|i ?research|alamin)\b/i,'').trim();
+  const addToNotes=/\b(and |then )?(add|save|put|keep|store|file)( it| that| this| them)? (in|into|to|on) (my |the )?(notes?|second brain)\b/i;
+  if((!has(/\b(my notes?|notes|second brain)\b/)||addToNotes.test(raw))&&has(/\b(research|look up|look into|search (the )?(web|internet|online)|search (about|for|up)|find out|check online|google|verify|double ?check|i ?research|alamin)\b/)){
+   let topic=raw.replace(addToNotes,'').replace(/^.*?\b(research(?:ing)?|look(?:ing)? (?:up|into)|search(?:ing)? (?:the )?(?:web|internet|online)(?: for| about)?|search(?:ing)? (?:about|for|up)|find(?:ing)? out|check(?:ing)? online|google|verify|double ?check|i ?research|alamin)\b/i,'').trim();
    topic=topic.replace(/^(?:about|on|for|regarding|if|whether|that|the latest|tungkol sa|kung)\s+/i,'').replace(/[?.!]+$/,'').trim();
    if(/^(it|that|this|more|deeper|again)?$/i.test(topic)){topic=hasDraft?draft.question||draft.title:(talkHistory.filter(m=>m.role==='user').slice(-1)[0]?.text||'')}
    return topic&&topic.length>2?{type:'research',query:topic}:null;
@@ -1291,13 +1316,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   {id:'max',name:'Max',url:'https://navigator-isle.github.io/Max-mobile/',repo:'navigator-isle/Max-mobile',aliases:['max app','this app','yourself']},
   {id:'passage',name:'Passage Planner',url:'https://navigator-isle.github.io/',repo:'navigator-isle/navigator-isle.github.io',aliases:['passage plan','passage','route planner','voyage planner','navigator isle']},
   {id:'draft',name:'Quick Draft Calculator',url:'https://draft-calculator.github.io/Draft-Calculator/',repo:'',aliases:['draft calculator','draft calc','quick draft','draft survey']},
-  {id:'hobby',name:'Hobby Isle',url:'https://hobbyisle.com/',repo:'navigator-isle/hobbyisle',analytics:true,aliases:['hobbyisle','hobby site','gundam site','gunpla site','my website']},
+  {id:'hobby',name:'Hobby Isle',url:'https://hobbyisle.com/',repo:'navigator-isle/hobbyisle',analytics:true,earns:true,aliases:['hobbyisle','hobby site','gundam site','gunpla site','my website']},
   {id:'checklist',name:'Officer Checklist',url:'https://claude.ai/artifact/9j5SkqSG5sMiX8tpC2ieqS',repo:'',aliases:['checklist','officer checklist','ship app','inventory','ship checklist']},
   {id:'sealex',name:'SeaLex',url:'https://claude.ai/artifact/AzwR4SjQNGSKbBcZsiKm9E',repo:'',aliases:['sea lex','maritime hub','imo updates','info bank']},
-  {id:'reviewer',name:'Deck Board Reviewer',url:'https://claude.ai/artifact/BcWnWqHA29UWhb2V96yeDM',repo:'',aliases:['reviewer','marina reviewer','exam reviewer','board reviewer']},
+  {id:'reviewer',name:'Deck Board Reviewer',url:'https://claude.ai/artifact/BcWnWqHA29UWhb2V96yeDM',repo:'',earns:true,aliases:['reviewer','marina reviewer','exam reviewer','board reviewer']},
   {id:'voyage',name:'Voyage Abstract',url:'https://claude.ai/artifact/HQ89zGSMCcU5viJiVMJFbk',repo:'',aliases:['abstract','voyage abstract','noon report']},
   {id:'money',name:'PH Money Scanner',url:'https://claude.ai/artifact/6qUPgHhXpjdru9Usv8nadd',repo:'',aliases:['money scanner','pse','stock scanner','stocks','trading app']},
-  {id:'sulit',name:'Sulit o Hindi',url:'https://claude.ai/artifact/6JCrJXetpmjKbEYHvoe54B',repo:'',aliases:['sulit','deal finder','deals app','lazada app']}
+  {id:'sulit',name:'Sulit o Hindi',url:'https://claude.ai/artifact/6JCrJXetpmjKbEYHvoe54B',repo:'',earns:true,aliases:['sulit','deal finder','deals app','lazada app']}
  ];
  const PROJ_KEY='max_projects';
  function projects(){try{const v=JSON.parse(localStorage.getItem(PROJ_KEY)||'null');return Array.isArray(v)&&v.length?v:DEFAULT_PROJECTS}catch{return DEFAULT_PROJECTS}}
@@ -1428,7 +1453,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const dayStart=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x};
  async function loadStats(force){
   if(!force&&Date.now()-statsAt<5*60e3)return true;
-  const list=projects().filter(p=>p.analytics&&hostOf(p.url));
+  const list=projects().filter(p=>pflag(p,'analytics')&&hostOf(p.url));
   if(!list.length){statsProblem='none';return false}
   const now=new Date(),today=dayStart(now),week=new Date(today);week.setDate(week.getDate()-6);
   try{
@@ -1508,6 +1533,93 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   tile('sites up',Object.keys(projStatus).length?up+(down?' · '+down+' down':''):'—',Object.keys(projStatus).length?'':'tap Refresh');
  }
 
+ // ---------- display screen: Max shows anything you ask — your notes first, then the web ----------
+ const pflag=(p,k)=>p[k]??DEFAULT_PROJECTS.find(d=>d.id===p.id)?.[k];
+ const SAFE_TAGS=new Set(['P','BR','B','STRONG','I','EM','U','UL','OL','LI','H1','H2','H3','H4','BLOCKQUOTE','PRE','CODE','A','TABLE','THEAD','TBODY','TR','TD','TH','HR','SPAN','DIV']);
+ function safeFragment(html){
+  const t=document.createElement('template');t.innerHTML=html||'';
+  const walk=el=>{[...el.children].forEach(c=>{
+   if(!SAFE_TAGS.has(c.tagName)){c.replaceWith(document.createTextNode(c.textContent));return}
+   [...c.attributes].forEach(a=>{if(!(c.tagName==='A'&&a.name==='href'&&/^https?:/i.test(a.value)))c.removeAttribute(a.name)});
+   if(c.tagName==='A'){c.target='_blank';c.rel='noopener noreferrer'}
+   walk(c);
+  })};
+  walk(t.content);return t.content;
+ }
+ function showDisplay(title,sub,cards){
+  setSection('display');
+  $('dispTitle').textContent=title;$('dispSub').textContent=sub||'';
+  const box=$('dispBody');box.replaceChildren();
+  cards.forEach(c=>{
+   const card=document.createElement('article');card.className='disp-card'+(c.tone?' '+c.tone:'');
+   const head=document.createElement('div');head.className='disp-head';
+   if(c.badge){const b=document.createElement('span');b.className='badge '+(c.badgeClass||'badge-note');b.textContent=c.badge;head.append(b)}
+   if(c.meta){const m=document.createElement('span');m.className='muted small';m.textContent=c.meta;head.append(m)}
+   const h=document.createElement('h2');h.textContent=c.title;card.append(head,h);
+   if(c.html){const d=document.createElement('div');d.className='disp-text';d.append(safeFragment(c.html));card.append(d)}
+   if(c.lines&&c.lines.length){const ul=document.createElement('ul');ul.className='disp-lines';c.lines.forEach(l=>{const li=document.createElement('li');if(typeof l==='string')li.textContent=l;else{li.textContent=l.text;if(l.cls)li.className=l.cls}ul.append(li)});card.append(ul)}
+   if(c.buttons&&c.buttons.length){const row=document.createElement('div');row.className='notes-tools';c.buttons.forEach(([label,fn])=>{const b=document.createElement('button');b.className='pill';b.textContent=label;b.onclick=fn;row.append(b)});card.append(row)}
+   box.append(card);
+  });
+ }
+ const DISPLAY_KEY='max_last_display';
+ async function displayThing(q){
+  q=String(q||'').replace(/\b(on|in|to) (the |my |your )?(screen|display)\b/ig,'').replace(/^(about|of|the|everything (about|on)|all about|what (i|my notes) (have|say) (about|on))\s+/i,'').replace(/[?.!]+$/,'').trim();
+  if(!q)return 'What should I put on the screen?';
+  if(/^(my )?(projects?|apps?|sites?|websites?)( overview| status| report| summary)?$/i.test(q))return await projectsOverview({});
+  const found=rankNotes(q,5);
+  if(found.length){
+   try{localStorage.setItem(DISPLAY_KEY,q)}catch{}
+   showDisplay(q.charAt(0).toUpperCase()+q.slice(1),'From your notes — '+found.length+' note'+(found.length===1?'':'s')+'. Say “search the web too” for more.',
+    found.map(n=>({badge:n.source==='research'?'RESEARCH ✓':'MY NOTE',badgeClass:n.source==='research'?'badge-res':'badge-note',meta:n.category||'',title:n.title||'Untitled',html:n.body,buttons:[['Open note',()=>loadNote(n.id)]]})));
+   lastNote={id:found[0].id,at:Date.now()};
+   return 'From your notes, '+found[0].title+': '+bestSentences(noteText(found[0]),q,2);
+  }
+  return 'Nothing in your notes about '+q+', so I looked it up on the web. '+await startResearch(q);
+ }
+ // ---------- projects overview: how many, how each is doing, what's missing ----------
+ const isClaudeHosted=p=>/^https:\/\/claude\.ai\//.test(p.url||'');
+ function projectReport(p,gh){
+  const st=projStatus[p.id],ps=projStats[p.id],claude=isClaudeHosted(p),miss=[],good=[];
+  if(claude)miss.push('Lives inside Claude, so Max can’t check it or change it. Moving it to GitHub Pages would let Max manage it.');
+  else if(st?.up===false)miss.push('Site is not answering'+(st.status?' (error '+st.status+')':'')+'.');
+  else if(st?.up===true)good.push('Online'+(st.ms?' · answered in '+(st.ms/1000).toFixed(1)+' s':''));
+  if(!claude&&!p.repo)miss.push('No GitHub repo linked, so Max can’t send it changes.');
+  if(p.repo&&!(gh.connected&&gh.repos.some(r=>r.toLowerCase()===p.repo.toLowerCase())))miss.push('GitHub key not set up for this repo; change requests are only saved in your notes.');
+  if(!claude){
+   if(!pflag(p,'analytics'))miss.push('No visitor tracking.');
+   else if(statsProblem==='not connected')miss.push('Visitor numbers not connected yet (Cloudflare key).');
+   else if(ps&&!ps.error)good.push('Today '+ps.today.visitors+' visitors · 7 days '+ps.week.visitors);
+   else if(ps?.error)miss.push('Visitor numbers: '+ps.error);
+  }
+  const sales=salesTotals(p.name,'month');
+  if(Object.keys(sales).length)good.push('Sales this month '+totalsText(sales));
+  else if(pflag(p,'earns'))miss.push('No sales logged this month.');
+  const reqs=getNotes().filter(n=>n.category==='Projects › Change requests'&&(n.title||'').startsWith(p.name+':'));
+  if(reqs.length)miss.push(reqs.length+' change request'+(reqs.length===1?'':'s')+' waiting: '+reqs.slice(0,3).map(n=>n.title.slice(p.name.length+1).trim()).join('; ')+'.');
+  const names=[p.name,...(p.aliases||[])].map(norm).filter(x=>x.length>3);
+  const notes=getNotes().filter(n=>!/^Projects › (Change requests|Sales log)$/.test(n.category||'')&&(()=>{const hay=' '+norm([n.title,n.category,(n.tags||[]).join(' '),plain(n.body).slice(0,3000)].join(' '))+' ';return names.some(x=>hay.includes(' '+x+' '))})());
+  if(notes.length)good.push(notes.length+' note'+(notes.length===1?'':'s')+' about it');
+  else miss.push('No notes about it yet — tell me the plan and I’ll keep track.');
+  return {p,claude,miss,good,notes,status:claude?'inside Claude':st?.up===true?'online':st?.up===false?'down':'not checked'};
+ }
+ async function projectsOverview(d){
+  const one=d?.project?findProject(d.project):null;
+  setSection('display');$('dispTitle').textContent='Checking your projects…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  const [gh]=await Promise.all([githubInfo(),checkProjects().catch(()=>''),loadStats(false).catch(()=>false)]);
+  const list=(one?[one]:projects()).map(p=>projectReport(p,gh));
+  const web=list.filter(x=>!x.claude).length,down=list.filter(x=>x.status==='down');
+  showDisplay(one?one.name:'My projects',one?'':list.length+' projects · '+web+' websites · '+(list.length-web)+' inside Claude'+(down.length?' · '+down.length+' down':''),
+   list.map(x=>({badge:x.status.toUpperCase(),badgeClass:x.status==='online'?'badge-note':x.status==='down'?'badge-web':'badge-res',meta:x.p.repo||'',title:x.p.name,tone:x.status==='down'?'warn':'',
+    lines:[...x.good.map(t=>({text:'✓ '+t,cls:'ok'})),...x.miss.map(t=>({text:'• '+t,cls:'miss'}))],
+    buttons:[['Open',()=>openProject(x.p)],...(x.notes.length?[['Notes',()=>displayThing(x.p.name)]]:[])]})));
+  if(one){const x=list[0];return x.p.name+' is '+x.status+'. '+(x.good.length?x.good.join('. ')+'. ':'')+(x.miss.length?'What’s missing: '+x.miss.join(' '):'Nothing missing that I can see.')}
+  const gaps=list.filter(x=>x.miss.length).sort((a,b)=>b.miss.length-a.miss.length);
+  return 'You have '+list.length+' projects: '+web+' websites and '+(list.length-web)+' inside Claude. '+
+   (down.length?down.map(x=>x.p.name).join(' and ')+(down.length===1?' is':' are')+' down. ':'All the websites I can check are up. ')+
+   (gaps.length?'Most to do: '+gaps.slice(0,3).map(x=>x.p.name+' ('+x.miss.length+')').join(', ')+'. Everything is on the screen.':'Nothing missing that I can see.');
+ }
+
  // ---------- calendar & tasks ----------
  let lastCreated=null;
  const pad=n=>String(n).padStart(2,'0');
@@ -1585,6 +1697,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     }
     return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
    }
+   case 'display':return await displayThing(a.query||a.details?.topic||raw);
+   case 'projects_overview':return await projectsOverview(a.details||{project:a.query});
    case 'project_stats':setSection('projects');return await projectStatsSay(a.details||{project:a.query});
    case 'log_sale':return logSale(a.details||{});
    case 'sales_summary':return salesSummary(a.details||{project:a.query});
@@ -1716,7 +1830,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
@@ -1813,7 +1927,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const go=e.target.closest('[data-go]')?.dataset.go;
   if(e.target===$('quickMenu')||go==='close'){closeMenu();return}
   if(!go)return;closeMenu();
-  if(go==='keyboard')setKeyboard(true);else if(go==='projects')setSection('projects');else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='settings')openConnection();
+  if(go==='keyboard')setKeyboard(true);else if(go==='projects')setSection('projects');else if(go==='overview'){closeMenu();doAction({type:'projects_overview'},'').then(t=>{if(t){setSub('',t);speak(t)}})}else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='settings')openConnection();
  });
  $('homeStop').onclick=()=>{greetingDone=true;endConversation(null);stopSpeech();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&convo)endConversation('Standing by.')});

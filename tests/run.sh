@@ -25,4 +25,5 @@ run "Phone: notes & offline" tests/e2e4.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: Google & calendar" tests/e2e5.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: projects"      tests/e2e6.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: dashboard"     tests/e2e7.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: display & overview" tests/e2e8.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

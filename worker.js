@@ -52,7 +52,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-10-31b";
+const WORKER_VERSION = "max-worker-2026-10-31c";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -257,7 +257,7 @@ function officialSource(s) {
   return /imo\.org|\.gov\b|\.gov\.|\.int\b|europa\.eu|marina\.gov\.ph|uscg|mca\.gov|amsa\.gov|mpa\.gov\.sg|classnk|dnv\.|lr\.org|abs-group|eagle\.org|bureauveritas|iacs\.org|ilo\.org|panama-maritime|amp\.gob\.pa|liscr|register-iri/i.test(String(s));
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
@@ -716,7 +716,7 @@ export default {
           (calendarOn ? "add_event (a calendar event or a timed reminder; details = {title, start: \"YYYY-MM-DDTHH:MM\" in HIS local time, or start: \"YYYY-MM-DD\" with allDay: true, durationMinutes (default 30), reminderMinutes (default 10; 0 = at the time)}) · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
-          "project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
+          "display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +
