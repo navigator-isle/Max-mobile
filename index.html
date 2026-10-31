@@ -200,6 +200,9 @@ body.on-home .top-status{opacity:.7}
 .export-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .export-row .label{margin:0 6px 0 0}
 #editorCategory{background:#071421;color:var(--max-text);border:1px solid #24465d;border-radius:9px;padding:10px;font:inherit;min-width:0}
+.att-img{display:block;max-width:100%;max-height:320px;border-radius:12px;margin:8px 0;object-fit:contain;background:#06101a}
+.att-text{white-space:pre-wrap;overflow-wrap:anywhere;background:#06101a;border:1px solid #1c344c;border-radius:10px;padding:10px;color:#c8d9e9;font-size:.85rem;max-height:420px;overflow:auto}
+#attachBtn.pulse{box-shadow:0 0 0 3px #54e0c9}
 .disp{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .disp-card{border:1px solid #1c344c;background:#0b1a2b;border-radius:16px;padding:14px;min-width:0}
 .disp-card.warn{border-color:#7a3b3b}
@@ -266,7 +269,8 @@ body.on-home .top-status{opacity:.7}
 <div class="app-shell">
   <header class="topbar">
     <div class="brand">MAX</div>
-    <div style="display:flex;align-items:center;gap:8px"><div class="top-status" id="globalStatus">Local mode</div><button id="openConnection" class="icon-btn" aria-label="Settings" title="Settings">⚙</button></div>
+    <div style="display:flex;align-items:center;gap:8px"><div class="top-status" id="globalStatus">Local mode</div><button id="attachBtn" class="icon-btn" aria-label="Send Max a file or photo" title="Send Max a file or photo">📎</button><button id="openConnection" class="icon-btn" aria-label="Settings" title="Settings">⚙</button></div>
+    <input id="attachInput" type="file" accept="image/*,application/pdf,.pdf,.txt,.md,.csv,.heic,.heif" hidden>
   </header>
 
   <!-- Max minimized: shown on every screen except the circle screen. Keeps talking and showing subtitles. -->
@@ -877,7 +881,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const dl=$('topicList');dl.replaceChildren();
   [...new Set([...allTopics(),'Maritime','Work procedures','Projects','Learning','Personal','Ideas','Reference','Unsorted'])].forEach(t=>{const o=document.createElement('option');o.value=t;dl.append(o)});
  }
- const badgeFor=n=>n.source==='research'?['RESEARCH ✓','badge badge-res']:['MY NOTE','badge badge-note'];
+ const badgeFor=n=>n.source==='research'?['RESEARCH ✓','badge badge-res']:n.source==='attachment'?['FROM FILE','badge badge-res']:['MY NOTE','badge badge-note'];
  function matchesQuery(n,q){
   if(!q)return true;
   const hay=(n.title+' '+plain(n.body)+' '+n.category+' '+(n.tags||[]).join(' ')+' '+(n.analysis?.summary||'')).toLowerCase();
@@ -1159,6 +1163,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!items.length&&/\b(notes?|wrote|written|saved|second brain|nota|isinulat)\b/i.test(q)&&all.length<=6)items=all;
   let active=null;
   if(screen==='editor'&&(activeNoteId||$('editorBody').innerText.trim()))active={id:activeNoteId||'unsaved',title:$('editorTitle').value.trim()||'Untitled (not saved yet)',category:$('editorCategory').value||'Unsorted',text:plain($('editorBody').innerHTML)};
+  else if(attachFresh()&&(screen==='display'||/\b(file|document|pdf|photo|picture|screenshot|attachment|certificate|receipt|letter|form|it|this|that)\b/i.test(q))){const a=pendingAttach;active={id:'attachment',title:'The file he just sent: '+a.title+' ('+a.name+')',category:a.topic,text:[a.summary,...a.points,...a.dates.map(d=>d.what+': '+d.date),...a.amounts.map(x=>x.what+': '+x.currency+' '+x.amount),'Full text:',a.text].join('\n')}}
   else if(lastNote.id&&Date.now()-lastNote.at<20*60e3&&/\b(this|that|the|last) note\b|\b(it|ito|iyan|yan)\b/i.test(q)){const n=all.find(x=>x.id===lastNote.id);if(n)active={id:n.id,title:n.title,category:n.category,text:noteText(n)}}
   return {index:all.slice(0,400).map(n=>({t:n.title||'Untitled',c:n.category})),items:items.map(n=>({id:n.id,title:n.title||'Untitled',category:n.category,text:noteText(n)})),active};
  }
@@ -1206,7 +1211,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1227,6 +1232,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  if(has(/\b(attach|upload|send you|scan|read|check|look at)\b.*\b(file|document|pdf|photo|picture|screenshot|certificate|receipt|letter|form)\b/)&&!attachFresh()&&!has(/\bnotes?\b/)||has(/^(attach|upload)( a| the)? (file|photo|picture|document|pdf)/))return {type:'attach_file'};
+  if(attachFresh()&&(screen==='display'||has(/\b(file|document|pdf|photo|picture|screenshot|attachment|certificate|receipt|letter)\b/))){
+   if(has(/\b(save|keep|store|file|add|put|approve[sd]?|i ?save|isave|ilagay)\b/)&&(has(/^(save|keep|file|approve)( it| this| that)?( now| please)?$/)||has(/\b(notes?|second brain)\b/)||has(/\b(it|this|that|the (file|document|pdf|photo|picture|screenshot))\b/))&&!QUESTION.test(n))return {type:'save_attachment'};
+   if(has(/\b(discard|delete|throw (it|that|this) away|don'?t save|do not save|cancel|scrap|forget (it|that|this))\b/))return {type:'discard_attachment'};
+   if(has(/^(show|open|back to)( me)? (the |that )?(file|document|pdf|photo|picture|attachment)$/))return {type:'show_attachment'};
+  }
   if(hasDraft&&(screen==='research'||has(/\b(research|draft|findings)\b/))){
    if(has(/\b(approve[sd]?|looks good|that'?s good|go ahead|save it|save (the|this|that) research|keep it|i'?ll take it|sige|ok na|okay na|tama yan|good,? save|yes,? save|ok(ay)?,? save)\b/))return {type:'approve_research'};
    if(has(/\b(reject|discard|scrap|throw (it|that|this) away|don'?t save|do not save|cancel (it|that|this|the research)|delete (it|that|this|the research|the draft)|huwag (na )?(i ?save|isave))\b/))return {type:'reject_research'};
@@ -1620,6 +1631,87 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    (gaps.length?'Most to do: '+gaps.slice(0,3).map(x=>x.p.name+' ('+x.miss.length+')').join(', ')+'. Everything is on the screen.':'Nothing missing that I can see.');
  }
 
+ // ---------- attachments: send Max a photo, screenshot, PDF or text file ----------
+ const ATT_KEY='max_pending_attachment';
+ let pendingAttach=null,attachURL='';
+ try{pendingAttach=JSON.parse(localStorage.getItem(ATT_KEY)||'null')}catch{}
+ const saveAttach=()=>{try{pendingAttach?localStorage.setItem(ATT_KEY,JSON.stringify(pendingAttach)):localStorage.removeItem(ATT_KEY)}catch{}};
+ const fullDate=d=>{try{return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}catch{return d}};
+ const attachFresh=()=>!!(pendingAttach&&Date.now()-(pendingAttach.at||0)<60*60e3);
+ const fileToB64=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).replace(/^data:[^,]*,/,''));r.onerror=()=>no(new Error('Could not read the file.'));r.readAsDataURL(f)});
+ async function shrinkImage(f){
+  // Phone photos are big: resize to at most 2000 px so they upload fast. Falls back to the original.
+  try{
+   const bmp=await createImageBitmap(f);const k=Math.min(1,2000/Math.max(bmp.width,bmp.height));
+   if(k===1&&f.size<4e6&&/jpe?g|png|webp/.test(f.type))return {mime:f.type,data:await fileToB64(f)};
+   const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
+   c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+   const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.85));if(!blob)throw 0;
+   return {mime:'image/jpeg',data:await fileToB64(blob)};
+  }catch{return {mime:f.type||'image/jpeg',data:await fileToB64(f)}}
+ }
+ function attachMime(f){
+  const t=(f.type||'').toLowerCase(),ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(t.startsWith('image/'))return t;
+  if(t==='application/pdf'||ext==='pdf')return 'application/pdf';
+  if(t==='text/csv'||ext==='csv')return 'text/csv';
+  if(t==='text/markdown'||ext==='md')return 'text/markdown';
+  if(t.startsWith('text/')||['txt','log'].includes(ext))return 'text/plain';
+  if(['heic','heif'].includes(ext))return 'image/heic';
+  return '';
+ }
+ async function readAttachment(f){
+  const mime=attachMime(f);
+  if(!mime)return 'I can read photos, screenshots, PDFs and text files. For Word or Excel files, save them as PDF first.';
+  if(f.size>19e6)return 'That file is too big for me (over 19 MB). Send a smaller one, or a few pages at a time.';
+  setSection('display');$('dispTitle').textContent='Reading '+f.name+'…';$('dispSub').textContent='This takes a few seconds for big files.';$('dispBody').replaceChildren();
+  try{
+   const {mime:m,data}=mime.startsWith('image/')&&mime!=='image/heic'?await shrinkImage(f):{mime,data:await fileToB64(f)};
+   const {r,data:res}=await postJson('/api/attachment',{name:f.name,mime:m,data,topics:allTopics()},120000);
+   if(r.status===404)throw new Error('Reading files needs the newest Max backend.');
+   if(!r.ok)throw new Error(res.error||('HTTP '+r.status));
+   if(attachURL)URL.revokeObjectURL(attachURL);
+   attachURL=mime.startsWith('image/')?URL.createObjectURL(f):'';
+   pendingAttach={...res.attachment,at:Date.now()};saveAttach();
+   renderAttachment();
+   const d=pendingAttach.dates[0];
+   return (pendingAttach.say||pendingAttach.summary||'Here’s what’s in it.')+(d&&!/\d{4}-\d\d-\d\d|\b(expir|due|deadline)/i.test(pendingAttach.say||'')?' '+d.what+': '+fullDate(d.date)+'.':'')+' Say “save it” to put it in your notes, or ask me anything about it.';
+  }catch(e){$('dispTitle').textContent='Couldn’t read the file';$('dispSub').textContent=e.message;return 'I couldn’t read that file. '+e.message}
+ }
+ function renderAttachment(){
+  const a=pendingAttach;if(!a)return;
+  const lines=[...a.points.map(t=>({text:'• '+t})),...a.dates.map(d=>({text:'⏰ '+d.what+': '+fullDate(d.date),cls:'miss'})),...a.amounts.map(x=>({text:'💰 '+x.what+': '+money(x.currency||'',x.amount),cls:'ok'}))];
+  showDisplay(a.title,'📎 '+a.name+' · '+a.kind+' · not in your notes yet',[{badge:'FROM FILE',badgeClass:'badge-draft',meta:'Will be filed under '+a.topic,title:a.summary||a.title,lines,
+   buttons:[['Save to notes',()=>{const s=saveAttachment();setSub('',s);speak(s)}],['Show full text',()=>{const el=$('attText');if(el)el.hidden=!el.hidden}],['Discard',()=>{const s=discardAttachment();setSub('',s);speak(s)}]]}]);
+  const card=$('dispBody').firstElementChild;
+  if(attachURL){const img=document.createElement('img');img.src=attachURL;img.alt=a.title;img.className='att-img';card.insertBefore(img,card.children[1])}
+  if(a.answer){const p=document.createElement('p');p.className='disp-text';p.textContent='Your question: '+a.answer;card.append(p)}
+  const pre=document.createElement('pre');pre.id='attText';pre.className='att-text';pre.hidden=true;pre.textContent=a.text||'(no text)';card.append(pre);
+ }
+ function saveAttachment(){
+  const a=pendingAttach;if(!a)return 'There’s no file waiting to be saved. Tap the 📎 at the top to send me one.';
+  const topic=splitPath(a.topic).join(' › ')||'Inbox';
+  const body='<p><i>📎 From file: '+escHtml(a.name)+' ('+escHtml(a.kind)+')</i></p>'+(a.summary?'<p>'+escHtml(a.summary)+'</p>':'')+
+   (a.points.length?'<ul>'+a.points.map(p=>'<li>'+escHtml(p)+'</li>').join('')+'</ul>':'')+
+   (a.dates.length?'<h3>Dates</h3><ul>'+a.dates.map(d=>'<li>'+escHtml(d.what)+': '+d.date+'</li>').join('')+'</ul>':'')+
+   (a.amounts.length?'<h3>Amounts</h3><ul>'+a.amounts.map(x=>'<li>'+escHtml(x.what)+': '+escHtml(money(x.currency||'',x.amount))+'</li>').join('')+'</ul>':'')+
+   (a.text?'<h3>Full text</h3><pre>'+escHtml(a.text)+'</pre>':'');
+  const n={id:newId(),title:a.title,category:topic,tags:[...new Set(a.tags.map(t=>t.toLowerCase()))].slice(0,6),body,source:'attachment',file:{name:a.name,kind:a.kind},analysis:{summary:a.summary,fullText:a.points.join('\n')},createdAt:Date.now(),updatedAt:Date.now(),deleted:false};
+  const all=loadAll();all.push(n);putNotes(all);
+  pendingAttach=null;saveAttach();loadNote(n.id);lastNote={id:n.id,at:Date.now()};
+  return 'Saved to your notes under '+topic+'.';
+ }
+ function discardAttachment(){
+  if(!pendingAttach)return 'There’s no file to discard.';
+  pendingAttach=null;saveAttach();if(screen==='display')setSection('home');
+  return 'Discarded. Nothing was saved.';
+ }
+ $('attachBtn').onclick=()=>$('attachInput').click();
+ $('attachInput').onchange=async()=>{
+  const f=$('attachInput').files[0];$('attachInput').value='';if(!f)return;
+  const s=await readAttachment(f);setSub('📎 '+f.name,s);speak(s);
+ };
+
  // ---------- calendar & tasks ----------
  let lastCreated=null;
  const pad=n=>String(n).padStart(2,'0');
@@ -1697,6 +1789,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     }
     return found.length?'I found '+found.length+' note'+(found.length===1?'':'s')+' about '+a.query+'.':'I couldn’t find notes about '+a.query+'. Want me to research it?';
    }
+   case 'attach_file':$('attachBtn').classList.add('pulse');setTimeout(()=>$('attachBtn').classList.remove('pulse'),6000);return 'Tap the 📎 at the top, then pick a photo, screenshot or PDF. I’ll read it for you.';
+   case 'save_attachment':return saveAttachment();
+   case 'discard_attachment':return discardAttachment();
+   case 'show_attachment':if(!attachFresh())return 'There’s no file open. Tap the 📎 at the top to send me one.';renderAttachment();return 'Here’s the file again.';
    case 'display':return await displayThing(a.query||a.details?.topic||raw);
    case 'projects_overview':return await projectsOverview(a.details||{project:a.query});
    case 'project_stats':setSection('projects');return await projectStatsSay(a.details||{project:a.query});
@@ -1830,7 +1926,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

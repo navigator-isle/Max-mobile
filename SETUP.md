@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 386 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 420 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -20,6 +20,18 @@
   - "Any requests for Hobby Isle?"
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
+
+**📎 Send Max a file**
+- **How:** tap 📎 at the top, then pick a photo, screenshot, PDF or text file.
+- **What Max does:**
+  - Reads it and says what it is, plus the key deadline
+  - Shows the key facts, dates and amounts on screen
+- **Then say:**
+  - "When does it expire?" or any other question about the file
+  - "Save it" to file it in your notes under the right topic, with the full text
+  - "Discard it" to throw it away
+- **Rules:** nothing is saved until you say so. Word and Excel files: save them as PDF first. Up to about 19 MB.
+- **Cost:** free on Gemini Flash.
 
 **Display screen**
 - **What it does:** say "show me … on the screen" or "display …". Max checks your notes first and shows them. If your notes have nothing, he looks it up on the web.
