@@ -1907,6 +1907,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 
  // ---------- Gmail: inbox, reading, replies — sending only after "yes, send it" ----------
  let lastInbox=[],pendingDraft=null;
+ // Saves brain calls: the same inbox question within a few minutes reuses the last answer.
+ const postCache=new Map();
+ async function cachedPost(path,body,ms,timeout){const k=path+JSON.stringify(body),c=postCache.get(k);if(c&&Date.now()-c.at<ms)return c.v;const v=await postJson(path,body,timeout);if(v.r.ok)postCache.set(k,{at:Date.now(),v});return v}
  const gmailOn=()=>/gmail/.test(cloud.google||'');
  const gmailProblem=d=>d&&d.needGoogle?'Gmail isn’t connected yet. Sign in with Google in Settings first.':d&&d.needGmail?'Google is connected, but not Gmail. Open Settings and tap “Add Gmail” to allow it.':'';
  function gmailQuery(t){
@@ -1922,7 +1925,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   setSection('display');$('dispTitle').textContent='Checking your email…';$('dispSub').textContent='';$('dispBody').replaceChildren();
   try{
    const query=gmailQuery(text);
-   const {r,data}=await postJson('/api/gmail/inbox',{query},45000);
+   const {r,data}=await cachedPost('/api/gmail/inbox',{query},3*60e3,45000);
    const prob=gmailProblem(data);if(prob){$('dispTitle').textContent='Email';$('dispSub').textContent=prob;return prob}
    if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
    lastInbox=data.items||[];
@@ -2103,7 +2106,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    const {r,data}=await postJson('/api/gmail/modify',{ids:items.map(x=>x.id),op,label,confirm:'MODIFY '+op+' '+n},45000);
    if(data&&data.needGmailModify)return 'Google hasn’t allowed me to organize your email yet. Open Settings and tap “Update Google permissions”, then try again.';
    if(!r.ok)return 'Nothing was changed. '+(data.error||'');
-   lastMailOp={...data.undo,n,at:Date.now()};
+   lastMailOp={...data.undo,n,at:Date.now()};postCache.clear();
    if(['trash','archive'].includes(op))lastInbox=lastInbox.filter(x=>!items.some(y=>y.id===x.id));
    if(op==='trash'&&attachFresh()&&pendingAttach.email&&items.some(x=>x.id===pendingAttach.email.id)){pendingAttach=null;saveAttach()}
    showDisplay('Done ✓','',[{badge:'EMAIL',title:n+' email'+(n===1?'':'s')+': '+what,lines:items.slice(0,8).map(x=>x.from+' — '+x.subject)}]);
@@ -2370,7 +2373,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   setSection('display');$('dispTitle').textContent='Preparing your briefing…';$('dispSub').textContent='';$('dispBody').replaceChildren();
   const tasks=[checkProjects().catch(()=>''),loadStats(false).catch(()=>false)];
   const sched=/^linked/.test(cloud.google||'')?listSchedule('today').catch(()=>''):Promise.resolve('');
-  const mail=gmailOn()?postJson('/api/gmail/inbox',{query:'in:inbox is:unread newer_than:1d',max:10},30000).then(x=>x.r.ok?x.data:null).catch(()=>null):Promise.resolve(null);
+  const mail=gmailOn()?cachedPost('/api/gmail/inbox',{query:'in:inbox is:unread newer_than:1d',max:10},10*60e3,30000).then(x=>x.r.ok?x.data:null).catch(()=>null):Promise.resolve(null);
   const mkt=getQuotes(watchlist().slice(0,10).map(x=>({symbol:x.symbol,kind:x.kind}))).catch(()=>null);
   const [schedText,,mailData,mktData]=await Promise.all([Promise.race([sched,new Promise(r=>setTimeout(()=>r(''),15000))]),Promise.race([Promise.all(tasks),new Promise(r=>setTimeout(r,15000))]),Promise.race([mail,new Promise(r=>setTimeout(()=>r(null),20000))]),Promise.race([mkt,new Promise(r=>setTimeout(()=>r(null),20000))])]);
   const mktFired=mktData?checkAlerts(mktData):[];

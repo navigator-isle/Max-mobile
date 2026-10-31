@@ -13,6 +13,56 @@ const modelChain = env => { const own = cleanText(env.GEMINI_MODEL, 80); return 
 const modelFor = env => lastGood || modelChain(env)[0];
 const skipUntil = new Map(); // models that recently failed are skipped for a while
 let lastGood = "";
+// ---------- backup brains (free): Groq, then Cloudflare Workers AI — used only when every Gemini model is out ----------
+// They get text only: photos, PDFs, videos and web search still need Gemini.
+const GROQ_MODELS = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
+const WAI_MODELS = ["@cf/zai-org/glm-4.7-flash", "@cf/google/gemma-4-26b-a4b-it", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"];
+const backupSkip = new Map();
+function textOnly(payload) {
+  if (payload.tools && payload.tools.length) return null;
+  const msgs = [];
+  const sys = (payload.systemInstruction?.parts || []).map(p => p.text || "").join("\n").trim();
+  for (const c of payload.contents || []) {
+    if ((c.parts || []).some(p => p.inline_data || p.inlineData || p.file_data || p.fileData)) return null;
+    const text = (c.parts || []).map(p => p.text || "").join("\n");
+    msgs.push({role: c.role === "model" ? "assistant" : "user", content: text});
+  }
+  const wantJson = payload.generationConfig?.responseMimeType === "application/json";
+  const sysAll = [sys, wantJson ? "Reply with one valid JSON object only — no code fences, no text before or after it." : ""].filter(Boolean).join("\n\n");
+  return {messages: [...(sysAll ? [{role: "system", content: sysAll}] : []), ...msgs], wantJson, maxTokens: Math.min(Number(payload.generationConfig?.maxOutputTokens) || 2048, 8192), temperature: payload.generationConfig?.temperature ?? 0.4};
+}
+function asGemini(text, model, wantJson) {
+  let t = String(text || "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  t = t.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  if (wantJson || /^\s*\{/.test(t) || /\{\s*"reply"\s*:/.test(t)) { const m = t.match(/\{[\s\S]*\}/); if (m) t = m[0]; }
+  return {ok: true, status: 200, model, backup: true, data: {candidates: [{content: {parts: [{text: t}]}}]}};
+}
+async function backupBrain(env, payload) {
+  const req = textOnly(payload); if (!req) return null;
+  const now = Date.now();
+  if (env.GROQ_API_KEY) for (const m of GROQ_MODELS) {
+    if (backupSkip.get(m) > now) continue;
+    try {
+      const body = {model: m, messages: req.messages, max_tokens: req.maxTokens, temperature: req.temperature, ...(req.wantJson ? {response_format: {type: "json_object"}} : {})};
+      let res = await fetch("https://api.groq.com/openai/v1/chat/completions", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + env.GROQ_API_KEY}, body: JSON.stringify(body)});
+      if (res.status === 400 && req.wantJson) { delete body.response_format; res = await fetch("https://api.groq.com/openai/v1/chat/completions", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + env.GROQ_API_KEY}, body: JSON.stringify(body)}); }
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.choices?.[0]?.message?.content) return asGemini(d.choices[0].message.content, "groq:" + m, req.wantJson);
+      if ([401, 403].includes(res.status)) break;
+      backupSkip.set(m, now + (res.status === 429 ? 10 * 60e3 : 30 * 60e3));
+    } catch { /* try the next one */ }
+  }
+  if (env.AI && typeof env.AI.run === "function") for (const m of WAI_MODELS) {
+    if (backupSkip.get(m) > now) continue;
+    try {
+      const r = await env.AI.run(m, {messages: req.messages, max_tokens: Math.min(req.maxTokens, 4096), temperature: req.temperature});
+      const text = typeof r === "string" ? r : r?.response ?? r?.choices?.[0]?.message?.content ?? r?.output_text ?? "";
+      if (text) return asGemini(typeof text === "string" ? text : JSON.stringify(text), "workers-ai:" + m, req.wantJson);
+      backupSkip.set(m, now + 30 * 60e3);
+    } catch (e) { backupSkip.set(m, now + (/capacity|3040|429|neurons|limit/i.test(String(e?.message)) ? 15 * 60e3 : 60 * 60e3)); }
+  }
+  return null;
+}
 async function gemini(env, payload) {
   const chain = modelChain(env), now = Date.now();
   const usable = chain.filter(m => !(skipUntil.get(m) > now));
@@ -31,6 +81,11 @@ async function gemini(env, payload) {
     if (modelProblem) { skipUntil.set(m, now + (res.status === 429 ? 10 * 60e3 : 60 * 60e3)); continue; }
     if (res.status >= 500) continue;
     break; // a problem with the request itself: another model would fail the same way
+  }
+  // Every Gemini model is out (daily limit, busy or unreachable): try the free backups for text work.
+  if (!last || last.status === 429 || last.status >= 500 || [403, 404].includes(last.status) || networkError) {
+    const b = await backupBrain(env, payload).catch(() => null);
+    if (b) return b;
   }
   if (!last && networkError) throw new Error("network");
   return last;
@@ -52,7 +107,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-01d";
+const WORKER_VERSION = "max-worker-2026-11-01e";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -1093,7 +1148,7 @@ export default {
     const auth = await authenticate(request, env);
     if (url.pathname === "/health" && request.method === "GET") {
       // Public check: says what is configured, never any secret value or stored data.
-      const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env), brain: env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini", version:WORKER_VERSION,
+      const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env), brain: (env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini") + (env.GROQ_API_KEY || env.AI ? " · free backups: " + [env.GROQ_API_KEY ? "groq" : "", env.AI ? "workers-ai" : ""].filter(Boolean).join(", ") : ""), version:WORKER_VERSION,
         geminiKey: env.GEMINI_API_KEY ? "set" : "missing", passcodeRequired: passcodeSet(env),
         database: env.MAX_MEMORY ? "bound" : "not bound",
         google: !googleConfigured(env) ? "not set up" : auth.enforced ? "linked" + (canModifyMail(await googleRow(env)) ? " (calendar, tasks, gmail)" : hasGmail(await googleRow(env)) ? " (calendar, tasks, gmail read-only — sign in again to let Max organize email)" : " (calendar, tasks — sign in again to add Gmail)") : "set up, not signed in",

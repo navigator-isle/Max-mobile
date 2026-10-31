@@ -17,5 +17,7 @@
       "database_id": "ff30b39a-aea5-4d5a-ba42-0a2274789967"
     }
   ],
+  // Free backup brain (Cloudflare Workers AI) — used only when Gemini's daily limit is used up.
+  "ai": { "binding": "AI" },
   "observability": { "enabled": true }
 }

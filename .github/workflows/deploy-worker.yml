@@ -86,7 +86,7 @@ jobs:
             node -e '
               const fs=require("fs"),j=fs.readFileSync("wrangler.jsonc","utf8").replace(/^\s*\/\/.*$/gm,"");const c=JSON.parse(j);
               fs.writeFileSync("metadata.json",JSON.stringify({main_module:c.main,compatibility_date:c.compatibility_date,
-                bindings:(c.d1_databases||[]).map(d=>({type:"d1",name:d.binding,id:d.database_id})),
+                bindings:[...(c.d1_databases||[]).map(d=>({type:"d1",name:d.binding,id:d.database_id})),...(c.ai?[{type:"ai",name:c.ai.binding}]:[])],
                 keep_bindings:["secret_text","plain_text","secret_key"],observability:c.observability||{enabled:true}}));'
             curl -sS -X PUT "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/max-ai-backend" \
               -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \

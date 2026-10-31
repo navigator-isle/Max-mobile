@@ -1,12 +1,14 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 604 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 612 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
 **Brain**
-- Gemini Flash first, Flash-Lite as automatic backup.
+- **Order:** Gemini Flash first, then Flash-Lite, then two free backups: **Groq** (needs the secret `GROQ_API_KEY`) and **Cloudflare Workers AI** (already on; no key needed).
+- **What the backups can't do:** they only answer text. Reading photos, PDFs or videos and web research still need Gemini, and Max says so when Gemini's daily limit is used up.
+- **Groq key (free):** console.groq.com → sign in with Google → **API Keys** → **Create API Key**. Add it in Cloudflare → max-ai-backend → **Settings** → **Variables and Secrets** as **Secret** `GROQ_API_KEY`.
 - If a `GEMINI_MODEL` variable exists in Cloudflare, it forces that model. Delete it to use Flash.
 - Optional Claude: add a Cloudflare secret `ANTHROPIC_API_KEY`. Max then uses Claude Haiku for conversation and falls back to Gemini. To use Sonnet, add a text variable `CLAUDE_MODEL` set to `claude-sonnet-5-5`.
 
