@@ -1,0 +1,751 @@
+[
+ {
+  "sym": "AC",
+  "tier": "blue",
+  "name": "Ayala Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "ACEN",
+  "tier": "blue",
+  "name": "ACEN CORPORATION",
+  "rows": 3255,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "AEV",
+  "tier": "blue",
+  "name": "Aboitiz Equity Ventures, Inc.",
+  "rows": 3256,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "AGI",
+  "tier": "blue",
+  "name": "Alliance Global Group, Inc.",
+  "rows": 3256,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "ALI",
+  "tier": "blue",
+  "name": "Ayala Land, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "AREIT",
+  "tier": "blue",
+  "name": "AREIT, Inc.",
+  "rows": 1635,
+  "from": "Aug 13, 2020 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "BDO",
+  "tier": "blue",
+  "name": "BDO Unibank, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "BLOOM",
+  "tier": "blue",
+  "name": "Bloomberry Resorts Corporation",
+  "rows": 3258,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "BPI",
+  "tier": "blue",
+  "name": "Bank of the Philippine Islands",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "CBC",
+  "tier": "blue",
+  "name": "China Banking Corporation",
+  "rows": 3211,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "CNPF",
+  "tier": "blue",
+  "name": "Century Pacific Food, Inc.",
+  "rows": 3174,
+  "from": "May 06, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "CNVRG",
+  "tier": "blue",
+  "name": "Converge Information and Communications Technology Solutions, Inc.",
+  "rows": 1585,
+  "from": "Oct 26, 2020 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "DMC",
+  "tier": "blue",
+  "name": "DMCI Holdings, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "EMI",
+  "tier": "blue",
+  "name": "Emperador Inc.",
+  "rows": 3253,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "GLO",
+  "tier": "blue",
+  "name": "Globe Telecom, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "GTCAP",
+  "tier": "blue",
+  "name": "GT Capital Holdings, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "ICT",
+  "tier": "blue",
+  "name": "International Container Terminal Services, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "JFC",
+  "tier": "blue",
+  "name": "Jollibee Foods Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "JGS",
+  "tier": "blue",
+  "name": "JG Summit Holdings, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "LTG",
+  "tier": "blue",
+  "name": "LT Group, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MBT",
+  "tier": "blue",
+  "name": "Metropolitan Bank & Trust Company",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MER",
+  "tier": "blue",
+  "name": "Manila Electric Company",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MONDE",
+  "tier": "blue",
+  "name": "Monde Nissin Corporation",
+  "rows": 1444,
+  "from": "Jun 01, 2021 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "PGOLD",
+  "tier": "blue",
+  "name": "Puregold Price Club, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SCC",
+  "tier": "blue",
+  "name": "Semirara Mining and Power Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SM",
+  "tier": "blue",
+  "name": "SM Investments Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SMC",
+  "tier": "blue",
+  "name": "San Miguel Corporation",
+  "rows": 3258,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SMPH",
+  "tier": "blue",
+  "name": "SM Prime Holdings, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "TEL",
+  "tier": "blue",
+  "name": "PLDT Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "URC",
+  "tier": "blue",
+  "name": "Universal Robina Corporation",
+  "rows": 3256,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "CEB",
+  "tier": "middle",
+  "name": "Cebu Air, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "FGEN",
+  "tier": "middle",
+  "name": "First Gen Corporation",
+  "rows": 3253,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MWC",
+  "tier": "middle",
+  "name": "Manila Water Company, Inc.",
+  "rows": 3250,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "PCOR",
+  "tier": "middle",
+  "name": "Petron Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SECB",
+  "tier": "middle",
+  "name": "Security Bank Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "RRHI",
+  "tier": "middle",
+  "name": "Robinsons Retail Holdings, Inc.",
+  "rows": 3180,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Jul 10, 2026 00:00:00"
+ },
+ {
+  "sym": "WLCON",
+  "tier": "middle",
+  "name": "Wilcon Depot, Inc.",
+  "rows": 2453,
+  "from": "Mar 31, 2017 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "DNL",
+  "tier": "middle",
+  "name": "D&L Industries, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "FB",
+  "tier": "middle",
+  "name": "San Miguel Food and Beverage, Inc.",
+  "rows": 3245,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "NIKL",
+  "tier": "middle",
+  "name": "Nickel Asia Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "PX",
+  "tier": "middle",
+  "name": "Philex Mining Corporation",
+  "rows": 3256,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "AP",
+  "tier": "middle",
+  "name": "Aboitiz Power Corporation",
+  "rows": 3258,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "FLI",
+  "tier": "middle",
+  "name": "Filinvest Land, Inc.",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MEG",
+  "tier": "middle",
+  "name": "Megaworld Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "RLC",
+  "tier": "middle",
+  "name": "Robinsons Land Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "CLI",
+  "tier": "middle",
+  "name": "Cebu Landmasters, Inc.",
+  "rows": 2413,
+  "from": "Jun 02, 2017 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "VREIT",
+  "tier": "middle",
+  "name": "VistaREIT, Inc.",
+  "rows": 1041,
+  "from": "Jun 15, 2022 00:00:00",
+  "to": "Jun 01, 2026 00:00:00"
+ },
+ {
+  "sym": "DDMPR",
+  "tier": "middle",
+  "name": "DDMP REIT, Inc.",
+  "rows": 1489,
+  "from": "Mar 24, 2021 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SPNEC",
+  "tier": "middle",
+  "name": "SP New Energy Corporation",
+  "rows": 1156,
+  "from": "Dec 17, 2021 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "AXLM",
+  "tier": "middle",
+  "name": "Axelum Resources Corp.",
+  "rows": 1786,
+  "from": "Oct 07, 2019 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "CREIT",
+  "tier": "middle",
+  "name": "Citicore Energy REIT Corp.",
+  "rows": 1246,
+  "from": "Feb 22, 2022 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "FILRT",
+  "tier": "middle",
+  "name": "Filinvest REIT Corp.",
+  "rows": 1393,
+  "from": "Aug 12, 2021 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "CNPF",
+  "tier": "middle",
+  "name": "Century Pacific Food, Inc.",
+  "rows": 3174,
+  "from": "May 06, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "PNB",
+  "tier": "middle",
+  "name": "Philippine National Bank",
+  "rows": 3258,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "EW",
+  "tier": "middle",
+  "name": "East West Banking Corporation",
+  "rows": 3259,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "RCB",
+  "tier": "middle",
+  "name": "Rizal Commercial Banking Corporation",
+  "rows": 3154,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "PSB",
+  "tier": "middle",
+  "name": "Philippine Savings Bank",
+  "rows": 2792,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "COSCO",
+  "tier": "middle",
+  "name": "Cosco Capital, Inc.",
+  "rows": 3256,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SSI",
+  "tier": "middle",
+  "name": "SSI Group, Inc.",
+  "rows": 3045,
+  "from": "Nov 07, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MAXS",
+  "tier": "middle",
+  "name": "Max's Group, Inc.",
+  "rows": 3226,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "PIZZA",
+  "tier": "middle",
+  "name": "Shakey's Pizza Asia Ventures, Inc.",
+  "rows": 2501,
+  "from": "Dec 15, 2016 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "ALLHC",
+  "tier": "middle",
+  "name": "AyalaLand Logistics Holdings Corp.",
+  "rows": 3167,
+  "from": "Jan 13, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "DITO",
+  "tier": "spec",
+  "name": "DITO CME Holdings Corp.",
+  "rows": 3197,
+  "from": "Jan 03, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "LPZ",
+  "tier": "spec",
+  "name": "Lopez Holdings Corporation",
+  "rows": 3106,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "APX",
+  "tier": "spec",
+  "name": "Apex Mining Co., Inc.",
+  "rows": 3181,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "TECH",
+  "tier": "spec",
+  "name": "Cirtek Holdings Philippines Corporation",
+  "rows": 3253,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MAC",
+  "tier": "spec",
+  "name": "MacroAsia Corporation",
+  "rows": 3074,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "ATN",
+  "tier": "spec",
+  "name": "ATN Holdings, Inc.",
+  "rows": 3038,
+  "from": "Jan 06, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "IMI",
+  "tier": "spec",
+  "name": "Integrated Micro-Electronics, Inc.",
+  "rows": 3240,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "NOW",
+  "tier": "spec",
+  "name": "Now Corporation",
+  "rows": 3162,
+  "from": "Jan 03, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "DWC",
+  "tier": "spec",
+  "name": "Discovery World Corporation ",
+  "rows": 1945,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 29, 2026 00:00:00"
+ },
+ {
+  "sym": "ABA",
+  "tier": "spec",
+  "name": "AbaCore Capital Holdings, Inc.",
+  "rows": 3244,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "BEL",
+  "tier": "spec",
+  "name": "Belle Corporation",
+  "rows": 3244,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "ROCK",
+  "tier": "spec",
+  "name": "Rockwell Land Corporation",
+  "rows": 3157,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "PHN",
+  "tier": "spec",
+  "name": "Phinma Corporation",
+  "rows": 2738,
+  "from": "Jan 14, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SGI",
+  "tier": "spec",
+  "name": "Solid Group, Inc.",
+  "rows": 2935,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SLI",
+  "tier": "spec",
+  "name": "Sta. Lucia Land, Inc.",
+  "rows": 3178,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MRSGI",
+  "tier": "spec",
+  "name": "Metro Retail Stores Group, Inc.",
+  "rows": 2761,
+  "from": "Nov 24, 2015 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "GSMI",
+  "tier": "spec",
+  "name": "Ginebra San Miguel,  Inc.",
+  "rows": 3034,
+  "from": "Jan 03, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "VLL",
+  "tier": "spec",
+  "name": "Vista Land & Lifescapes, Inc.",
+  "rows": 3150,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Jun 01, 2026 00:00:00"
+ },
+ {
+  "sym": "CEI",
+  "tier": "spec",
+  "name": "Crown Equities, Inc.",
+  "rows": 2999,
+  "from": "Jan 24, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "PLUS",
+  "tier": "spec",
+  "name": "DigiPlus Interactive Corp.",
+  "rows": 3249,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MEDIC",
+  "tier": "spec",
+  "name": "Medilines Distributors Incorporated",
+  "rows": 1250,
+  "from": "Dec 07, 2021 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "CA",
+  "tier": "spec",
+  "name": "Concrete Aggregates Corporation",
+  "rows": 1550,
+  "from": "Jan 10, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "ANS",
+  "tier": "spec",
+  "name": "A. Soriano Corporation",
+  "rows": 3067,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "ECVC",
+  "tier": "spec",
+  "name": "East Coast Vulcan Mining Corporation",
+  "rows": 3004,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "HOUSE",
+  "tier": "spec",
+  "error": "not found"
+ },
+ {
+  "sym": "PAL",
+  "tier": "spec",
+  "name": "PAL Holdings, Inc.",
+  "rows": 2930,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "MA",
+  "tier": "spec",
+  "name": "Manila Mining Corporation",
+  "rows": 2789,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "BCOR",
+  "tier": "spec",
+  "name": "Berjaya Philippines Inc.",
+  "rows": 1843,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "SHLPH",
+  "tier": "spec",
+  "name": "Shell Pilipinas Corporation",
+  "rows": 2560,
+  "from": "Nov 03, 2016 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "STI",
+  "tier": "spec",
+  "name": "STI Education Systems Holdings, Inc.",
+  "rows": 3209,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "LODE",
+  "tier": "spec",
+  "name": "Lodestar Investment Holdings Corporation",
+  "rows": 2832,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ },
+ {
+  "sym": "OPM",
+  "tier": "spec",
+  "name": "Oriental Petroleum and Minerals Corporation",
+  "rows": 3017,
+  "from": "Jan 02, 2014 00:00:00",
+  "to": "Oct 30, 2026 00:00:00"
+ }
+]
