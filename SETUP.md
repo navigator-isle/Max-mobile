@@ -1,7 +1,7 @@
 **Max — setup notes (updated 30 Oct 2026)**
 
 **How updates work now**
-- Every change on GitHub (`main`) is tested automatically: 666 checks covering the backend, voice commands and phone screens.
+- Every change on GitHub (`main`) is tested automatically: 685 checks covering the backend, voice commands and phone screens.
 - The backend deploys to Cloudflare only if all tests pass. The website updates through GitHub Pages.
 - Nothing is pasted by hand anymore.
 
@@ -22,6 +22,13 @@
   - "Any requests for Hobby Isle?"
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
+
+**📴 Offline**
+- **Works offline:** your notes and second brain, answers from your notes, routines, skills, deadlines, the sales log, and all screen commands.
+- **From saved copies:** your calendar for the week, the last watchlist prices, and the last inbox summary. Max says when the copy was saved.
+- **Waits for the internet:** reminders, calendar changes, questions for the brain, research, email and the Play Store go into an **outbox**. When you're back online Max does them by himself, in order, and tells you what he did. He also tells the brain when you originally asked, so "tomorrow" stays correct.
+- **Things to say:** "What's waiting?" shows the outbox, and each item can be cancelled. The top of the screen shows "Offline · 2 waiting".
+- **Voice offline:** Android's offline speech must be installed: Settings → Google → Search, Assistant & Voice → Voice → Offline speech recognition → download English (and Filipino). Without it, Max opens the keyboard when you're offline.
 
 **▶ Google Play (Passage Planner listing)**
 - **Things to say:**

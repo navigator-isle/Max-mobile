@@ -663,7 +663,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function workerBase(){return window.maxWorker()}
  function refreshConnectionLabel(){
   const labels={checking:'Connecting…',online:'Connected',memory:'Connected · memory on',needpass:'Connected · passcode needed',needlogin:'Sign in needed',offline:'Offline',local:'Local mode'};
-  $('globalStatus').textContent=labels[cloud.memory?'memory':cloud.state]||'Local mode';
+  let w=0;try{w=(JSON.parse(localStorage.getItem('max_outbox')||'[]')||[]).length}catch{}
+  $('globalStatus').textContent=(labels[cloud.memory?'memory':cloud.state]||'Local mode')+(w?' · '+w+' waiting':'');
  }
  async function fetchJson(url,opts={},ms=15000){
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),ms);
@@ -1259,6 +1260,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(has(/\b(change|update|rewrite|edit|improve|make|add|set|write|release notes|what'?s new)\b/))return null; // the brain works out what to change
    return {type:'play_overview',details:{project:pr?.name||''}};
   }
+  // ---- offline outbox ----
+  if(has(/\b(what'?s waiting|waiting (list|for internet)|outbox|offline (queue|requests?|list))\b/))return {type:'show_outbox'};
+  if(has(/\bwhat did you do (while|when) (i was |we were )?offline\b/))return {type:'offline_results'};
   // ---- routine in progress ----
   if(routineActive()&&wc<=5){
    if(has(/^(done|did it|finished|finish|next|ok(ay)? next|tapos|tapos na|check|ok(ay)? done|yes done)\b/))return {type:'routine_step',query:'done'};
@@ -1960,10 +1964,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   setSection('display');$('dispTitle').textContent='Checking your email…';$('dispSub').textContent='';$('dispBody').replaceChildren();
   try{
    const query=gmailQuery(text);
-   const {r,data}=await cachedPost('/api/gmail/inbox',{query},3*60e3,45000);
+   let r,data;
+   try{({r,data}=await cachedPost('/api/gmail/inbox',{query},3*60e3,45000))}
+   catch(e){const c=jget('max_cache_inbox',null);if(!c)return 'We’re offline and I don’t have a saved copy of your inbox yet.';
+    lastInbox=c.items||[];showDisplay('Email (saved copy)','From '+new Date(c.at).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+' — we’re offline',lastInbox.map((x,i)=>({badge:(x.priority==='high'?'IMPORTANT':'EMAIL')+' · '+(i+1),badgeClass:x.priority==='high'?'badge-draft':'badge-res',meta:x.from,title:x.subject,lines:[x.why||x.snippet||'']})));
+    return 'We’re offline. From my saved copy of '+new Date(c.at).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+': '+(c.say||lastInbox.length+' emails')+' Reading or replying will work when we’re back online.'}
    const prob=gmailProblem(data);if(prob){$('dispTitle').textContent='Email';$('dispSub').textContent=prob;return prob}
    if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
-   lastInbox=data.items||[];
+   lastInbox=data.items||[];jset('max_cache_inbox',{query,items:lastInbox,say:data.say,at:Date.now()});
    const order={high:0,normal:1,low:2};const sorted=lastInbox.map((x,i)=>({...x,n:i+1})).sort((a,b)=>(order[a.priority]??1)-(order[b.priority]??1));
    showDisplay('Email',lastInbox.length+' email'+(lastInbox.length===1?'':'s')+' · '+query.replace(/^in:inbox\s*/,''),sorted.length?sorted.map(x=>({badge:(x.priority==='high'?'IMPORTANT':x.unread?'UNREAD':'EMAIL')+' · '+x.n,badgeClass:x.priority==='high'?'badge-draft':x.unread?'badge-note':'badge-res',meta:x.from,title:x.subject,lines:[x.why?{text:x.why,cls:x.priority==='high'?'miss':''}:x.snippet].filter(Boolean),
     buttons:[['Read',()=>readEmail(String(x.n)).then(t=>{setSub('',t);speak(t)})],['Reply',()=>{const t='Tell me what to say — for example “reply that I’ll call tomorrow”.';openEmailFor(x.id).then(()=>{setSub('',t);speak(t)})}]]})):[{title:'Nothing here',lines:['No emails matched.']}]);
@@ -2198,7 +2206,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return out;
  }
  async function getQuotes(items){
-  const {r,data}=await postJson('/api/market/quotes',{items,currencies:currencies()},40000);
+  let r,data;
+  try{({r,data}=await postJson('/api/market/quotes',{items,currencies:currencies()},40000))}
+  catch(e){const c=jget('max_cache_quotes',{});const out=items.map(it=>c[String(it.symbol).toUpperCase()]).filter(Boolean);
+   if(!out.length)throw new Error('We’re offline and I have no saved prices for that yet.');
+   return out.map(x=>({...x.q,asOf:'saved '+new Date(x.at).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+' (offline)',source:x.q.source+' — saved copy'}))}
+  if(r.ok){const c=jget('max_cache_quotes',{});(data.quotes||[]).filter(q=>!q.error).forEach(q=>c[q.symbol]={q,at:Date.now()});const keys=Object.keys(c);if(keys.length>60)keys.sort((a,b)=>c[a].at-c[b].at).slice(0,keys.length-60).forEach(k=>delete c[k]);jset('max_cache_quotes',c)}
   if(r.status===404)throw new Error('Prices need the newest Max backend.');
   if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
   return data.quotes||[];
@@ -2562,6 +2575,70 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   }catch(e){return e.plain?e.message:'I couldn’t read the reviews. '+e.message}
  }
 
+ // ================= OFFLINE: an outbox for things that need the internet, replayed when you're back online =================
+ const OUTBOX='max_outbox',OFF_RESULTS='max_offline_results';
+ const isOffline=()=>navigator.onLine===false||cloud.state==='offline';
+ // Commands that need the internet. Asked offline, they wait in the outbox and run as soon as Max is back online.
+ const QUEUE_TYPES=new Set(['add_event','add_task','edit_event','delete_event','research','check_watch','verify_note','read_email','draft_email','modify_email','read_link','project_request','list_requests','check_projects','project_stats','play_overview','play_update','play_notes','play_reviews','coach_checkin','convert_currency','market_chart','organize_notes','new_routine_cal']);
+ // Commands that answer from Max's saved copy while offline.
+ const CACHED_TYPES=new Set(['list_schedule','market_quote','show_watchlist','check_email','briefing']);
+ const outbox=()=>jget(OUTBOX,[]);
+ function queueItem(raw,local){
+  const list=outbox().filter(x=>Date.now()-x.at<7*864e5);
+  list.push({id:newId(),raw:String(raw).slice(0,1000),local:local||null,at:Date.now(),now:new Date().toString().slice(0,24),tz:tzName()});
+  jset(OUTBOX,list.slice(-30));refreshConnectionLabel();
+  return list.length;
+ }
+ function queuedReply(raw,local){
+  const n=queueItem(raw,local);
+  return 'We’re offline, so I’ve saved that and I’ll do it as soon as we’re back online'+(n>1?' ('+n+' things waiting)':'')+'.';
+ }
+ let flushing=false;
+ async function flushOutbox(){
+  if(flushing||isOffline()||!workerBase())return;
+  const items=outbox();if(!items.length)return;
+  flushing=true;const done=[];
+  try{
+   for(const it of items){
+    let result='',keep=false;
+    try{
+     if(it.local){result=await doAction(it.local,it.raw)||'Done.'}
+     else{
+      const {r,data}=await fetchJson(workerBase()+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:it.raw+' (I asked this while offline at '+it.now+'.)',history:[],allowActions:true,voice:false,screen:'home',notes:notesContext(it.raw),projects:projects().map(p=>p.name),now:it.now,tz:it.tz})},45000);
+      if(!r.ok)throw Object.assign(new Error(data.error||'HTTP '+r.status),{offline:r.status>=500||r.status===0});
+      result=data.reply||'';
+      if(data.action&&data.action.type){const said=await doAction(data.action,it.raw);if(said)result=said}
+     }
+    }catch(e){if(e.offline||isOffline()){keep=true}else result='I couldn’t do it: '+(e.message||e)}
+    if(keep)break;
+    done.push({raw:it.raw,result,at:it.at});
+    jset(OUTBOX,outbox().filter(x=>x.id!==it.id));refreshConnectionLabel();
+   }
+  }finally{flushing=false}
+  if(!done.length)return;
+  jset(OFF_RESULTS,[...jget(OFF_RESULTS,[]),...done].slice(-30));
+  const t='Back online — I did '+done.length+' thing'+(done.length===1?'':'s')+' you asked while offline. '+done.slice(0,3).map(d=>'“'+d.raw.slice(0,60)+'”: '+d.result.slice(0,160)).join(' ');
+  const quiet=convo||$('maxOrb').classList.contains('speaking')||$('maxOrb').classList.contains('processing')||screen==='editor';
+  if(!quiet){showOfflineResults();setSub('',t);speak(t)}else status('Back online — '+done.length+' offline request'+(done.length===1?'':'s')+' done');
+ }
+ function showOfflineResults(){
+  const list=jget(OFF_RESULTS,[]);if(!list.length)return 'Nothing was waiting from while you were offline.';
+  showDisplay('While you were offline',list.length+' request'+(list.length===1?'':'s')+' done after reconnecting',list.slice().reverse().map(d=>({badge:'DONE',badgeClass:'badge-note',meta:'asked '+new Date(d.at).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'}),title:d.raw,lines:[d.result]})));
+  jset(OFF_RESULTS,[]);
+  return 'Here’s what I did after we came back online.';
+ }
+ function showOutbox(){
+  const list=outbox();
+  showDisplay('Waiting for internet',list.length+' request'+(list.length===1?'':'s'),list.length?list.map(it=>({badge:'WAITING',badgeClass:'badge-draft',meta:'asked '+new Date(it.at).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'}),title:it.raw,buttons:[['Cancel',()=>{jset(OUTBOX,outbox().filter(x=>x.id!==it.id));refreshConnectionLabel();showOutbox()}]]})):[{title:'Nothing waiting',lines:['Everything you asked has been done.']}]);
+  return list.length?list.length+' thing'+(list.length===1?' is':'s are')+' waiting for the internet: '+list.slice(0,3).map(x=>'“'+x.raw.slice(0,60)+'”').join(', ')+'.':'Nothing is waiting.';
+ }
+ // keep a copy of your week so the schedule works offline
+ const CAL_CACHE='max_cache_calendar';
+ async function prefetchOffline(){
+  if(isOffline()||!/^linked/.test(cloud.google||''))return;
+  try{await listSchedule('week')}catch{}
+ }
+
  // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
  const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
  const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
@@ -2857,14 +2934,23 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(range==='tomorrow'){from=new Date(start);from.setDate(from.getDate()+1);to=new Date(from);to.setDate(to.getDate()+1)}
   else if(range==='week'){from=now;to=new Date(start);to.setDate(to.getDate()+7)}
   else to.setDate(to.getDate()+1);
-  const {r,data}=await fetchJson(workerBase()+'/api/calendar?from='+encodeURIComponent(from.toISOString())+'&to='+encodeURIComponent(to.toISOString()),{},20000);
+  let r,data,saved='';
+  try{({r,data}=await fetchJson(workerBase()+'/api/calendar?from='+encodeURIComponent(from.toISOString())+'&to='+encodeURIComponent(to.toISOString()),{},20000))}
+  catch(e){
+   // offline: answer from the saved copy of your calendar
+   const c=jget(CAL_CACHE,null);if(!c)return 'We’re offline and I don’t have a saved copy of your calendar yet. I’ll be able to answer once we’ve been online.';
+   r={ok:true};data={events:(c.events||[]).filter(e=>{const t=Date.parse(e.start);return t>=from.getTime()-864e5*(e.allDay?1:0)&&t<to.getTime()}),tasks:c.tasks||[]};
+   saved=' (From my saved copy of '+new Date(c.at).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+' — we’re offline.)';
+  }
   if(data&&data.needGoogle)return needGoogleMsg;
   if(!r.ok)return 'I couldn’t read your calendar. '+(data.error||'');
+  if(!saved&&range==='week'){const old=jget(CAL_CACHE,{events:[]});const keep=(old.events||[]).filter(e=>Date.parse(e.start)<from.getTime()&&Date.parse(e.start)>Date.now()-864e5);jset(CAL_CACHE,{at:Date.now(),events:[...keep,...(data.events||[])],tasks:data.tasks||[]})}
   const label=range==='tomorrow'?'Tomorrow':range==='week'?'This week':'Today';
   const ev=data.events||[],tk=(data.tasks||[]).slice(0,5);
   let out=ev.length?label+' you have '+ev.length+' thing'+(ev.length===1?'':'s')+': '+ev.slice(0,8).map(e=>(e.allDay?(range==='week'?fmtWhen(e.start,true)+', all day':'all day'):(range==='week'?fmtWhen(e.start):new Date(e.start).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})))+' — '+e.title).join('; ')+'.':label+' your calendar is clear.';
   if(tk.length)out+=' Open to-dos: '+tk.map(t=>t.title+(t.due?' (due '+fmtWhen(t.due,true)+')':'')).join('; ')+'.';
-  return out;
+  const pending=outbox().filter(x=>/remind|calendar|event|meeting|appointment|alarm/i.test(x.raw));if(saved&&pending.length)out+=' Also waiting to be added: '+pending.map(x=>'“'+x.raw.slice(0,50)+'”').join(', ')+'.';
+  return out+saved;
  }
  async function undoLast(){
   if(!lastCreated||Date.now()-lastCreated.at>30*60e3)return 'There’s nothing recent for me to undo.';
@@ -2904,6 +2990,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'play_update':return await playUpdate(a.details||{instruction:raw});
    case 'play_notes':return await playNotes(a.details||{instruction:raw});
    case 'play_reviews':return await playReviews(a.details||{project:a.query});
+   case 'show_outbox':return showOutbox();
+   case 'offline_results':return showOfflineResults();
    case 'new_routine':return await newRoutine(a.details||{},raw);
    case 'start_routine':return startRoutine(a.details||{name:a.query});
    case 'routine_step':return routineStep(a.query||'done');
@@ -3062,6 +3150,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   $('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
   try{
    const local=matchLearned(norm(q))||matchCommand(q);
+   if(local&&isOffline()&&QUEUE_TYPES.has(local.type)){const said=queuedReply(q,local);talkHistory.push({role:'user',text:q},{role:'model',text:said});showAnswer(said,finish);return}
    if(local){
     const said=await doAction(local,q);
     talkHistory.push({role:'user',text:q},{role:'model',text:said});
@@ -3070,7 +3159,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   }catch(e){console.error('Command failed',e)}
   const base=workerBase();
   if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.',finish);return}
-  if(navigator.onLine===false){const o=offlineAnswer(q);talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
+  if(navigator.onLine===false){const o=offlineAnswer(q);if(!o.refs.length)o.text=queuedReply(q,null)+' Meanwhile your notes and commands still work.';talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),projects:projects().map(p=>p.name),skills:getSkills().slice(0,20).map(n=>({name:n.title.replace(/^Skill:\s*/,''),text:plain(n.body).slice(0,1500)})),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
@@ -3092,7 +3181,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(remembered)setTimeout(()=>{$('memoryBadge').textContent='✓ Noted in memory';$('memoryBadge').hidden=false;setTimeout(()=>$('memoryBadge').hidden=true,5000)},200);
   }catch(err){
    $('maxOrb').classList.remove('processing');
-   if(err.offline){cloud.state='offline';cloud.memory=false;refreshConnectionLabel();const o=offlineAnswer(q);talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
+   if(err.offline){cloud.state='offline';cloud.memory=false;const o=offlineAnswer(q);if(!o.refs.length)o.text=queuedReply(q,null)+' Meanwhile your notes and commands still work.';refreshConnectionLabel();talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
    endConversation(null);showAnswer('I could not reach my AI service. '+err.message,finish)}
   });
  }
@@ -3254,7 +3343,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!window.__maxErrors.length&&cloud.state==='needlogin')status('Ready · sign in with Google (hold the circle → Settings)');
  });
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkCloud().then(()=>{if(cloud.memory)syncNotes()})});
- window.addEventListener('online',()=>checkCloud().then(()=>{if(cloud.memory)syncNotes()}));
+ window.addEventListener('online',()=>checkCloud().then(()=>{if(cloud.memory)syncNotes();flushOutbox();prefetchOffline()}));
+ setInterval(()=>{if(outbox().length&&navigator.onLine!==false){if(cloud.state==='offline')checkCloud().then(()=>flushOutbox());else flushOutbox()}},60e3);
+ setTimeout(()=>{flushOutbox();prefetchOffline()},6000);setInterval(prefetchOffline,3*3600e3);
 })();
 </script>
 </body></html>
