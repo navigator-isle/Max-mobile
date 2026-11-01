@@ -1263,6 +1263,11 @@ export default {
       if (request.headers.get("X-Max-Pass") !== null) health.passcode = auth.enforced ? "replaced by Google sign-in" : passcodeOk(request, env) ? "accepted" : "wrong";
       if (auth.session) health.session = auth.session;
       if (auth.ok && (request.headers.get("X-Max-Pass") !== null || auth.via === "google")) health.database = await dbStatus(env);
+      // ?deep=1: really try the Play Store key (reads nothing, changes nothing — opens an edit and throws it away).
+      if (url.searchParams.get("deep") === "1" && env.PLAY_SERVICE_ACCOUNT) {
+        try { const a = playApp(env, "passage planner"); const e = await papi(env, a.pkg + "/edits", {method: "POST", body: "{}"}); await papi(env, a.pkg + "/edits/" + e.id, {method: "DELETE"}).catch(() => {}); health.play = "connected — Passage Planner reachable"; }
+        catch (e) { health.play = "key saved, but: " + String(e.message || e).replace(/app\.[\w.]+/g, "the app").slice(0, 160); }
+      }
       return json(health, 200, origin, env);
     }
     if (origin && env.ALLOWED_ORIGIN && origin !== env.ALLOWED_ORIGIN) {

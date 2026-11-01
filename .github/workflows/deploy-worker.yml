@@ -103,6 +103,6 @@ jobs:
       - name: Check the live Worker
         run: |
           sleep 5
-          out=$(curl -fsS https://max-ai-backend.mjgaly-mg.workers.dev/health)
+          out=$(curl -fsS "https://max-ai-backend.mjgaly-mg.workers.dev/health?deep=1")
           echo "$out"
           echo "::notice::health: $out"
