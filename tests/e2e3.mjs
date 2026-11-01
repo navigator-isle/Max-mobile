@@ -32,7 +32,7 @@ const sP = http.createServer((q, r) => { r.writeHead(200, { "Content-Type": q.ur
 let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
 const b = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), args: ["--no-sandbox"] });
 const mock = () => { window.__spoken = []; window.__q = [];
-  class R { start() { const t = window.__q.shift(); setTimeout(() => { if (t) this.onresult && this.onresult({ results: [[{ transcript: t }]] }); else this.onerror && this.onerror({ error: "no-speech" }); this.onend && this.onend(); }, 80); } stop() {} abort() {} }
+  class R { start() { if (this.continuous) return; const t = window.__q.shift(); setTimeout(() => { if (t) this.onresult && this.onresult({ results: [[{ transcript: t }]] }); else this.onerror && this.onerror({ error: "no-speech" }); this.onend && this.onend(); }, 80); } stop() {} abort() {} }
   window.webkitSpeechRecognition = R; window.SpeechRecognition = R;
   Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { speak(u) { window.__spoken.push(u.text); u.onstart && u.onstart(); setTimeout(() => u.onend && u.onend(), 60); }, cancel() {}, getVoices() { return []; } } });
   window.SpeechSynthesisUtterance = function (t) { this.text = t; }; };

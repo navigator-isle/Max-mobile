@@ -23,6 +23,13 @@
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
 
+**👂 Hands-free and interrupting**
+- Say "hands-free on" (or hold the circle → 👂 Hands-free). Then just say "Hey Max, …" — with or without a question after it. Follow-ups don't need "Max"; "that's all" sends him back to waiting
+- Works while Max is open on screen; he keeps the screen awake. Locking the phone or switching apps turns the microphone off, and it comes back when you return. It stays on after you reopen Max
+- Interrupt: while he talks, say "stop", "wait" or "teka" — or just ask something new — and he goes quiet and listens. His own words don't trigger it
+- "Turn off voice interrupt" if he stops himself by mistake; "hands-free off" to stop listening
+- Uses more battery while on. Some Android phones play a short beep each time the microphone restarts — that's the phone, not Max
+
 **🌤 Weather & sea**
 - "Weather in Batangas", "forecast for Manila tomorrow", "marine weather at Longview", "how windy is it"
 - Wind in knots and Beaufort, gusts, pressure, visibility, plus waves and swell for coastal places (free, from Open-Meteo)

@@ -23,7 +23,7 @@ const sP = http.createServer((q, r) => { r.writeHead(200, { "Content-Type": q.ur
 let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
 const b = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), args: ["--no-sandbox"] });
 const mock = () => { window.__spoken = []; window.__q = []; window.__starts = 0; window.__listening = false;
-  class R { start() { window.__starts++; window.__listening = true; const t = window.__q.shift();
+  class R { start() { if (this.continuous) return; window.__starts++; window.__listening = true; const t = window.__q.shift();
       if (window.__speaking) window.__heardWhileSpeaking = true;
       setTimeout(() => { window.__listening = false; if (t) this.onresult && this.onresult({ results: [[{ transcript: t }]] }); else this.onerror && this.onerror({ error: "no-speech" }); this.onend && this.onend(); }, 120); }
     stop() {} abort() {} }

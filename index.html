@@ -59,6 +59,7 @@ body{background:var(--max-bg)!important;color:var(--max-text)!important}
 .max-orb:before,.max-orb:after{content:"";position:absolute;inset:-13px;border-radius:50%;border:1px solid #77d7ff33;animation:orbPulse 4s ease-out infinite}
 .max-orb:after{inset:-28px;animation-delay:1.3s}
 .max-orb.speaking{box-shadow:0 0 45px #39c9ff66,inset 0 0 50px #64d6ff45;animation:orbSpeak .8s ease-in-out infinite alternate}
+.max-orb.waiting:not(.listening):not(.speaking):not(.processing){box-shadow:0 0 30px #54e0c933;animation:orbWait 3s ease-in-out infinite alternate}@keyframes orbWait{from{filter:brightness(.9)}to{filter:brightness(1.12)}}
 .max-orb.listening{box-shadow:0 0 55px #54e0c966,inset 0 0 45px #54e0c933;animation:orbListen 1.1s ease-in-out infinite alternate}
 .max-orb.processing{animation:orbSpeak 1.4s ease-in-out infinite alternate}
 .orb-core{width:38%;height:38%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e9fbff,#80dcff 35%,#3185b4 65%,#16415f);box-shadow:0 0 30px #78dcff99}
@@ -412,6 +413,7 @@ body[data-coach]::after{content:attr(data-coach);position:fixed;top:8px;left:50%
     <button data-go="projects" class="pill">◆ Projects</button>
     <button data-go="overview" class="pill">▦ Overview</button>
     <button data-go="crew" class="pill">👥 Crew</button>
+    <button data-go="handsfree" class="pill" id="hfMenu">👂 Hands-free</button>
     <button data-go="settings" class="pill">⚙ Settings</button>
     <button data-go="close" class="pill">Close</button>
   </div>
@@ -1253,6 +1255,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- hands-free & interrupt ----
+  if(has(/^(?:turn\s+)?(?:on\s+)?(?:hands ?free|always listen(?:ing)?|wake word|hey max mode)(?:\s+(?:mode))?(?:\s+on)?$|^(?:turn on|start|enable)\s+(?:hands ?free|always listening|wake word|hey max)/))return {type:'hands_free',details:{on:'on'}};
+  if(has(/^(?:turn\s+)?(?:off\s+)?(?:hands ?free|always listen(?:ing)?|wake word)(?:\s+(?:mode))?\s+off$|^(?:turn off|stop|disable)\s+(?:hands ?free|always listening|wake word|hey max)/))return {type:'hands_free',details:{on:'off'}};
+  if(has(/\b(turn off|disable|stop)\s+(?:voice\s+)?(interrupt|interruptions|barge in)\b/))return {type:'barge_setting',details:{on:'off'}};
+  if(has(/\b(turn on|enable|allow)\s+(?:voice\s+)?(interrupt|interruptions|barge in)\b/))return {type:'barge_setting',details:{on:'on'}};
   // ---- weather, personality, usage ----
   {const wm=n.match(/^(?:set|change|make)\s+(?:my\s+)?(?:home\s+|default\s+)?(?:weather|forecast)\s+(?:place|location|city|port|spot)\s+(?:to|as)\s+(.{2,60})$/);
    if(wm)return {type:'set_weather_place',details:{location:wm[1]}};}
@@ -3131,6 +3138,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'set_weather_place':return await setWeatherPlace(a.details||{location:a.query});
    case 'set_personality':return setPersonality(a.details||{name:a.query});
    case 'usage':return usageReport();
+   case 'hands_free':return handsFree(a.details?.on!=='off');
+   case 'barge_setting':jset('max_barge',a.details?.on!=='off');return a.details?.on!=='off'?'Voice interrupt is on — say “stop” or just start talking while I speak.':'Voice interrupt is off. Tap the circle to stop me while I speak.';
    case 'whatsapp_draft':return whatsappDraft(a.details||{text:a.query});
    case 'deadlines':return deadlinesSay(a.details||{});
    case 'show_crew':setSection('crew');return 'Here’s your crew: the Secretary, the Researcher, the Librarian, and your six coaches. Name one and tell them what you need.';
@@ -3224,7 +3233,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return out.length?out:[String(text)];
  }
  function stopSpeech(){
-  speakToken++;clearTimeout(speakGuard);
+  speakToken++;clearTimeout(speakGuard);bargeStop();
   const f=pendingDone;pendingDone=null;
   if('speechSynthesis' in window)try{window.speechSynthesis.cancel()}catch{}
   stopSpeakingLook();f&&f();
@@ -3234,7 +3243,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   stopSpeech();
   const token=speakToken,chunks=splitSpeech(text),v=chooseRegularVoice();
   pendingDone=onDone||null;let i=0;
-  const done=()=>{if(token!==speakToken)return;speakToken++;stopSpeakingLook();status('Ready');const f=pendingDone;pendingDone=null;f&&f()};
+  if((convo||hf.on)&&bargeOn())bargeStart(text,token);
+  const done=()=>{if(token!==speakToken)return;speakToken++;bargeStop();stopSpeakingLook();status('Ready');const f=pendingDone;pendingDone=null;f&&f()};
   const next=()=>{
    if(token!==speakToken)return;
    if(i>=chunks.length){done();return}
@@ -3321,6 +3331,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(recognition)try{recognition.abort()}catch{}
   $('maxOrb').classList.remove('listening');
   if(msg)status(msg);
+  hfResume();
  }
  function listenOnce(){
   if(!convo)return;
@@ -3329,15 +3340,17 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(recognition)try{recognition.abort()}catch{}
   recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;recognition.maxAlternatives=1;
   let heard=false,fatal=false;
-  recognition.onresult=async e=>{
+  const take=async q=>{
    if(token!==listenToken)return;
    heard=true;misses=0;
-   const q=(e.results[0][0].transcript||'').trim();
+   q=String(q||'').trim();
    if(!q)return;
-   if(END_WORDS.test(q)){setSub(q,'');endConversation(null);showAnswer('Very well. I’ll be here when you need me.');return}
+   if(END_WORDS.test(q)){setSub(q,'');endConversation(null);showAnswer('Very well. I’ll be here when you need me.',()=>hfResume());return}
    await handleUtterance(q,true);
    if(convo&&token===listenToken)setTimeout(()=>{if(token===listenToken)listenOnce()},350);
   };
+  if(bargeQ){const q=bargeQ;bargeQ=null;take(q);return}
+  recognition.onresult=e=>take(e.results[0][0].transcript);
   recognition.onerror=e=>{
    if(token!==listenToken)return;
    if(e.error==='no-speech'||e.error==='aborted')return;
@@ -3351,13 +3364,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    $('maxOrb').classList.remove('listening');
    if(heard||fatal||!convo)return;
    misses++;
-   if(misses>=3){endConversation('Standing by. Tap the circle when you need me.');return}
+   if(misses>=3){endConversation(hf.on?'Standing by — say “Hey Max” when you need me.':'Standing by. Tap the circle when you need me.');hfResume();return}
    setTimeout(()=>{if(token===listenToken)listenOnce()},250);
   };
   try{recognition.start();$('maxOrb').classList.add('listening');status('Listening…')}
   catch(e){endConversation('Voice input could not start. Tap the circle to try again.')}
  }
  function startConversation(){
+  hfPause();
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){status('Voice input is not supported here. Hold the circle and choose Keyboard to type.');return}
   greetingDone=true; // never talk over the user
@@ -3365,6 +3379,84 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   convo=true;misses=0;setTalkButton();listenOnce();
  }
  function startTalk(){startConversation()}
+
+ // ---------- hands-free: say "Hey Max" · interrupt him by voice ----------
+ // Hands-free keeps the microphone open while Max's screen is on, waiting for his name.
+ // Interrupt: while he speaks, say "stop", "wait" or "Max" (or just start talking) and he goes quiet and listens.
+ // Echo guard: words that match what Max himself is saying are ignored, so he doesn't interrupt himself.
+ const hf={on:false,rec:null,token:0,timer:null,lock:null,fails:0};
+ let bargeQ=null,barge=null;
+ const SRc=()=>window.SpeechRecognition||window.webkitSpeechRecognition;
+ const WAKE=/(?:^\s*|\b(?:hey|hi|hello|ok(?:ay)?|oy|uy|hoy|yo)\s+)max\b[\s,.!?]*(.*)$/i;
+ const BARGE_WORDS=/\b(stop|wait|hold on|max|quiet|enough|excuse me|pause|shut up|sandali|teka|tama na|tumigil)\b/i;
+ const bargeOn=()=>jget('max_barge',true)!==false;
+ const spokenWords=t=>norm(t).split(' ').filter(Boolean);
+ function isEcho(heard,said){const h=spokenWords(heard),s=new Set(spokenWords(said));if(!h.length)return true;const hit=h.filter(w=>s.has(w)).length;return hit/h.length>=0.6}
+ function chime(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;hf.ac=hf.ac||new C();const a=hf.ac,o=a.createOscillator(),g=a.createGain();o.frequency.value=880;g.gain.setValueAtTime(0.0001,a.currentTime);g.gain.exponentialRampToValueAtTime(0.15,a.currentTime+0.02);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.25);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+0.3)}catch{}}
+ async function keepAwake(on){try{if(on&&'wakeLock' in navigator&&document.visibilityState==='visible'){if(!hf.lock||hf.lock.released)hf.lock=await navigator.wakeLock.request('screen')}else if(!on&&hf.lock){await hf.lock.release();hf.lock=null}}catch{}}
+ function handsFree(on){
+  if(on&&!SRc())return 'Hands-free needs voice input, which this browser doesn’t have. Try Chrome.';
+  hf.on=!!on;jset('max_handsfree',hf.on);hf.fails=0;
+  $('hfMenu')&&($('hfMenu').textContent=hf.on?'👂 Hands-free: on':'👂 Hands-free');
+  document.body.classList.toggle('hands-free',hf.on);
+  if(hf.on){keepAwake(true);setTimeout(hfResume,1200);return 'Hands-free is on. Say “Hey Max” anytime while my screen is open — I’ll keep the screen awake. Say “hands-free off” to stop.'}
+  hfPause();keepAwake(false);status('Ready');return 'Hands-free is off. Tap the circle when you need me.';
+ }
+ function hfPause(){hf.token++;clearTimeout(hf.timer);if(hf.rec){const r=hf.rec;hf.rec=null;try{r.abort()}catch{}}if($('maxOrb'))$('maxOrb').classList.remove('waiting')}
+ function hfResume(){
+  if(!hf.on)return;clearTimeout(hf.timer);
+  hf.timer=setTimeout(()=>{
+   if(!hf.on||document.visibilityState==='hidden')return;
+   const busyNow=convo||$('maxOrb').classList.contains('speaking')||$('maxOrb').classList.contains('processing')||!$('quickMenu').hidden||modalOpen();
+   if(busyNow){hfResume();return}
+   hfListen();
+  },700);
+ }
+ function hfListen(){
+  const SR=SRc();if(!SR||!hf.on)return;
+  hfPause();const token=hf.token;
+  const rec=new SR();hf.rec=rec;rec.lang='en-PH';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+  let done=false;
+  rec.onresult=e=>{
+   if(token!==hf.token||done)return;
+   for(let i=e.resultIndex;i<e.results.length;i++){
+    const t=(e.results[i][0].transcript||'').trim(),m=t.match(WAKE);
+    if(!m||!e.results[i].isFinal)continue;
+    done=true;hf.fails=0;hfPause();
+    const rest=m[1].replace(/^[,.\s]+/,'').trim();
+    greetingDone=true;stopSpeech();
+    convo=true;misses=0;setTalkButton();
+    if(rest.split(/\s+/).filter(Boolean).length>=2){bargeQ=rest;listenOnce();}
+    else{chime();setSub('Hey Max','');listenOnce();}
+    return;
+   }
+  };
+  rec.onerror=e=>{if(token!==hf.token)return;if(e.error==='not-allowed'||e.error==='service-not-allowed'){hf.fails=9;status('Hands-free needs the microphone. Tap the circle once to wake me.')}else if(e.error!=='no-speech'&&e.error!=='aborted')hf.fails++};
+  rec.onend=()=>{if(token!==hf.token||done)return;hf.rec=null;if(hf.fails>=5){$('maxOrb').classList.remove('waiting');if(hf.fails<9)status('Hands-free paused — the microphone keeps stopping. Tap the circle to talk.');return}clearTimeout(hf.timer);hf.timer=setTimeout(()=>{if(token===hf.token)hfListen()},400)};
+  try{rec.start();$('maxOrb').classList.add('waiting');status('Hands-free — say “Hey Max”')}catch(e){hf.fails++;hfResume()}
+ }
+ function bargeStart(text,speakTok){
+  const SR=SRc();if(!SR)return;bargeStop();
+  const rec=new SR(),me={rec,tok:speakTok,starts:0};barge=me;rec.lang='en-PH';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+  rec.onresult=e=>{
+   if(barge!==me)return;
+   for(let i=e.resultIndex;i<e.results.length;i++){
+    const t=(e.results[i][0].transcript||'').trim();if(!t)continue;
+    const w=t.match(BARGE_WORDS);
+    if(w&&!new RegExp('\\b'+w[1]+'\\b','i').test(text)){interrupt(null);return}
+    if(e.results[i].isFinal&&spokenWords(t).length>=3&&!isEcho(t,text)){interrupt(t);return}
+   }
+  };
+  rec.onerror=()=>{};
+  rec.onend=()=>{if(barge!==me||me.tok!==speakToken)return;if(++me.starts>6)return;setTimeout(()=>{if(barge===me&&me.tok===speakToken)try{rec.start()}catch{}},250)};
+  setTimeout(()=>{if(barge===me)try{rec.start()}catch{}},300);
+ }
+ function bargeStop(){if(barge){const r=barge.rec;barge=null;try{r.abort()}catch{}}}
+ function interrupt(said){
+  bargeStop();bargeQ=said&&spokenWords(said).length>=3?said:null;
+  const wasConvo=convo;stopSpeech();$('maxOrb').classList.remove('speaking');status('Listening…');
+  if(!wasConvo){convo=true;misses=0;setTalkButton();listenOnce()}
+ }
  // One tap on the circle (big or mini): start talking · interrupt Max · or end the conversation.
  function orbTap(){
   if($('maxOrb').classList.contains('speaking')){
@@ -3389,10 +3481,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const go=e.target.closest('[data-go]')?.dataset.go;
   if(e.target===$('quickMenu')||go==='close'){closeMenu();return}
   if(!go)return;closeMenu();
-  if(go==='keyboard')setKeyboard(true);else if(go==='projects')setSection('projects');else if(go==='crew')setSection('crew');else if(go==='overview'){closeMenu();doAction({type:'projects_overview'},'').then(t=>{if(t){setSub('',t);speak(t)}})}else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='settings')openConnection();
+  if(go==='keyboard')setKeyboard(true);else if(go==='projects')setSection('projects');else if(go==='crew')setSection('crew');else if(go==='overview'){closeMenu();doAction({type:'projects_overview'},'').then(t=>{if(t){setSub('',t);speak(t)}})}else if(go==='notes')setSection('notes');else if(go==='research')setSection('research');else if(go==='handsfree'){const t=hf.on?handsFree(false):handsFree(true);setSub('',t);speak(t)}else if(go==='settings')openConnection();
  });
- $('homeStop').onclick=()=>{greetingDone=true;endConversation(null);stopSpeech();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.')};
- document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&convo)endConversation('Standing by.')});
+ $('homeStop').onclick=()=>{greetingDone=true;endConversation(null);stopSpeech();$('maxOrb').classList.remove('listening','speaking','processing');status('Stopped.');hfResume()};
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){if(convo)endConversation('Standing by.');hfPause()}else if(hf.on)hfResume()});
  // Typing, for when you can't talk out loud ("show keyboard", or hold the circle).
  async function sendTyped(){
   const q=$('typeInput').value.trim();if(!q)return;
@@ -3440,6 +3532,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  step('greeting',armGreeting);
  step('circle',()=>requestAnimationFrame(orbLoop));
  // Works offline: the app itself is kept on the phone, notes are already stored here.
+ step('handsfree',()=>{if(jget('max_handsfree',false))handsFree(true)});
  step('offline',()=>{if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{})});
  step('shared',()=>{setTimeout(()=>takeShared().catch(()=>{}),800)});
  // Self-update: when a new version of Max is published, he reloads himself the next time you come back to him (never mid-conversation).
