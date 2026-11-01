@@ -1232,7 +1232,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status','weather','set_weather_place','set_personality','whatsapp_draft'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1253,6 +1253,18 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- weather, personality, usage ----
+  {const wm=n.match(/^(?:set|change|make)\s+(?:my\s+)?(?:home\s+|default\s+)?(?:weather|forecast)\s+(?:place|location|city|port|spot)\s+(?:to|as)\s+(.{2,60})$/);
+   if(wm)return {type:'set_weather_place',details:{location:wm[1]}};}
+  if(has(/\b(weather|forecast|panahon|sea state|marine weather|sea conditions|waves|swell|how windy|wind forecast|wind speed)\b/)&&!has(/\b(remind|note|notes|task|calendar|schedule|research|email|watch)\b/)&&wc<=12){
+   const pm=n.match(/\b(?:in|at|for|sa|near|off|around)\s+([a-z0-9 .'-]+?)(?:\s+(?:today|tomorrow|now|tonight|this week|ngayon|bukas|right now))?$/);
+   const place=pm&&!/^(the )?(moment|morning|afternoon|evening|week|weekend|today|tomorrow)$/.test(pm[1])?pm[1].trim():'';
+   return {type:'weather',details:{location:place,on:has(/\b(tomorrow|bukas)\b/)?'tomorrow':has(/\b(this week|3 days|three days|next days)\b/)?'week':'today'}};
+  }
+  {const pm=n.match(/^(?:be|switch to|use|change to|set (?:your )?(?:personality|style|mode) to|talk|speak)\s+(?:more\s+)?(?:like\s+(?:a|an|the)\s+)?(butler|concise|short|brief|witty|sarcastic|funny|formal|normal|default|regular|friendly)(?:\s+(?:mode|style|personality|ly))?(?:\s+(?:please|max))?$/)||n.match(/^(?:personality|style)\s+(butler|concise|witty|formal|normal|default)$/);
+   if(pm)return {type:'set_personality',details:{name:pm[1]}};
+   if(has(/\b(what|which)\b.*\b(personality|style)\b.*\b(are you|using|on)\b/))return {type:'set_personality',details:{name:''}};}
+  if(has(/\b(usage|how much (?:ai|gemini|brain)|which brain|what brain|which model|what model|how many (?:questions|requests|answers))\b/)&&!has(/\b(note|remind|task)\b/))return {type:'usage'};
   // ---- app builds: new version to the Play closed test ----
   {const nm=raw.match(/\b(?:release notes?|notes?|saying|what'?s new)\s*[:,-]?\s*(.{3,})$/i),head=nm?norm(raw.slice(0,nm.index)):n,h=re=>re.test(head);
    const pr=projects().find(x=>x.androidRepo&&(head.includes(norm(x.name))||(x.aliases||[]).some(al=>head.includes(norm(al)))));
@@ -2734,13 +2746,79 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(wait.length)bits.push(wait.length+' thing'+(wait.length===1?'':'s')+' waiting for you');
   return hi+', Mark. '+(bits.length?bits.join('; ')+'. Say “brief me” for the full report.':'I’m Max — nothing urgent today. I’m ready when you are.');
  }
+ // ---------- weather and sea state ----------
+ const WX_PLACE='max_weather_place',WX_CACHE='max_cache_weather';
+ function wxLine(w,i){const d=w.days[i];if(!d)return '';return d.sky+', '+Math.round(d.lo)+' to '+Math.round(d.hi)+'°C'+(d.rain>=30?', '+d.rain+'% chance of rain':'')+', wind '+(d.windDir?d.windDir+' ':'')+'up to '+Math.round(d.wind)+' knots'+(d.gusts>d.wind+8?' gusting '+Math.round(d.gusts):'')+(d.waves!=null?', waves up to '+d.waves.toFixed(1)+' m':'')}
+ async function getWeather(place){
+  const q=place&&place.lat!=null?'lat='+place.lat+'&lon='+place.lon+(place.name?'&place='+encodeURIComponent(place.name):''):'place='+encodeURIComponent(place?.name||place||'');
+  const cache=jget(WX_CACHE,{}),key=q.toLowerCase();
+  if(cache[key]&&Date.now()-cache[key].at<20*60e3)return cache[key].w;
+  try{const {r,data}=await fetchJson(workerBase()+'/api/weather?'+q,{},20000);if(!r.ok)throw Object.assign(new Error(data.error||'HTTP '+r.status),{plain:!!data.error&&r.status<500});
+   cache[key]={at:Date.now(),w:data};cache[('lat='+data.lat+'&lon='+data.lon+'&place='+encodeURIComponent(data.place)).toLowerCase()]={at:Date.now(),w:data};const ks=Object.keys(cache);if(ks.length>8)delete cache[ks.sort((a,b)=>cache[a].at-cache[b].at)[0]];jset(WX_CACHE,cache);return data}
+  catch(e){if(cache[key]&&!e.plain)return {...cache[key].w,stale:cache[key].at};throw e}
+ }
+ const herePlace=()=>new Promise(res=>{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:+p.coords.latitude.toFixed(3),lon:+p.coords.longitude.toFixed(3),name:'',here:true}),()=>res(null),{timeout:8000,maximumAge:30*60e3})});
+ async function weatherNow(d){
+  let place=String(d?.location||'').trim();let target=place?{name:place}:jget(WX_PLACE,null);
+  if(!target){setSub('','Checking where you are…');target=await herePlace();if(!target)return 'Where should I check? Say “weather in Manila”, or “set my weather place to Batangas”.'}
+  setSection('display');$('dispTitle').textContent='Checking the weather…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  let w;try{w=await getWeather(target)}catch(e){$('dispTitle').textContent='Weather';$('dispSub').textContent=e.message;return e.plain?e.message:'I couldn’t get the weather right now. '+e.message}
+  const n=w.now,name=target.here&&!place?'your location':w.place,i=d?.on==='tomorrow'?1:0;
+  const stale=w.stale?' (offline — from '+new Date(w.stale).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+')':'';
+  showDisplay('Weather — '+(target.here&&!place?'here':w.place),(w.country||'')+(stale?stale:' · Open-Meteo'),[
+   {badge:'NOW',badgeClass:'badge-res',title:Math.round(n.temp)+'°C, '+n.sky,lines:['Feels like '+Math.round(n.feels)+'°C · humidity '+n.humidity+'%','Wind '+(n.windDir||'')+' '+Math.round(n.wind)+' kn (Beaufort '+n.bft+')'+(n.gusts?', gusts '+Math.round(n.gusts)+' kn':''),n.pressure?'Pressure '+Math.round(n.pressure)+' hPa'+(n.visibilityKm!=null?' · visibility '+n.visibilityKm+' km':''):'']},
+   ...(w.sea?[{badge:'SEA',badgeClass:'badge-draft',title:'Waves '+w.sea.waves.toFixed(1)+' m'+(w.sea.waveDir?' from '+w.sea.waveDir:''),lines:[w.sea.period?'Wave period '+Math.round(w.sea.period)+' s':'',w.sea.swell!=null?'Swell '+w.sea.swell.toFixed(1)+' m'+(w.sea.swellDir?' from '+w.sea.swellDir:'')+(w.sea.swellPeriod?', '+Math.round(w.sea.swellPeriod)+' s':''):'','Model forecast — not for navigation; check official warnings.']}]:[]),
+   ...w.days.map((x,k)=>({badge:k===0?'TODAY':k===1?'TOMORROW':new Date(x.date+'T12:00').toLocaleDateString('en-GB',{weekday:'short'}).toUpperCase(),title:Math.round(x.lo)+'–'+Math.round(x.hi)+'°C · '+x.sky,lines:['Rain chance '+(x.rain??0)+'%','Wind '+(x.windDir||'')+' up to '+Math.round(x.wind)+' kn, gusts '+Math.round(x.gusts)+' kn',x.waves!=null?'Waves up to '+x.waves.toFixed(1)+' m'+(x.swell!=null?', swell '+x.swell.toFixed(1)+' m':''):'']}))]);
+  if(d?.on==='week')return 'Next three days in '+name+': '+w.days.map((x,k)=>(k===0?'today':k===1?'tomorrow':new Date(x.date+'T12:00').toLocaleDateString('en-GB',{weekday:'long'}))+' '+wxLine(w,k)).join('. ')+'.'+stale;
+  return (i===1?'Tomorrow in '+name+': '+wxLine(w,1):'Right now in '+name+': '+Math.round(n.temp)+'°C and '+n.sky+', wind '+(n.windDir?n.windDir+' ':'')+Math.round(n.wind)+' knots'+(n.gusts>n.wind+8?' gusting '+Math.round(n.gusts):'')+(w.sea?', waves '+w.sea.waves.toFixed(1)+' metres':'')+'. Today: '+wxLine(w,0))+'.'+stale;
+ }
+ async function setWeatherPlace(d){
+  const place=String(d?.location||'').trim();if(!place)return 'Which place should I use for your weather?';
+  if(/^(here|my location|current location|where i am)$/i.test(place)){jset(WX_PLACE,null);try{localStorage.removeItem(WX_PLACE)}catch{}return 'Okay — I’ll use your phone’s location for the weather.'}
+  try{const w=await getWeather({name:place});jset(WX_PLACE,{name:w.place,lat:w.lat,lon:w.lon});return 'Done. Your weather place is now '+w.place+(w.country?', '+w.country:'')+'. It will be in your morning briefing too.'}
+  catch(e){return e.plain?e.message:'I couldn’t check that place right now.'}
+ }
+ // ---------- personality ----------
+ const PERSONAS={butler:'Butler (default)',concise:'Concise',witty:'Witty',formal:'Formal'};
+ const personality=()=>{const p=jget('max_personality','butler');return PERSONAS[p]?p:'butler'};
+ function setPersonality(d){
+  const map={butler:'butler',normal:'butler',default:'butler',regular:'butler',friendly:'butler',concise:'concise',short:'concise',brief:'concise',witty:'witty',sarcastic:'witty',funny:'witty',formal:'formal'};
+  const id=map[String(d?.name||'').toLowerCase()];
+  if(!id)return 'I’m in '+PERSONAS[personality()]+' mode. I can be butler, concise, witty or formal — say “be concise”.';
+  jset('max_personality',id);
+  return {butler:'Back to my usual self, Mark.',concise:'Understood. Short answers from now on.',witty:'Very well. I’ll allow myself a little more wit — still honest, of course.',formal:'Certainly. I shall keep things formal.'}[id];
+ }
+ // ---------- usage meter ----------
+ function countUsage(model){if(!model)return;const u=jget('max_usage',{});const day=todayKey();if(u.day!==day){u.day=day;u.counts={}}u.counts[model]=(u.counts[model]||0)+1;u.last=model;u.lastAt=Date.now();jset('max_usage',u)}
+ function brainName(m){m=String(m||'');return /lite/.test(m)?'Gemini Flash-Lite':/gemini/.test(m)?'Gemini Flash':/gpt-oss|llama-3\.3-70b-versatile/.test(m)?'Groq backup':/@cf\//.test(m)?'Cloudflare backup':/claude/.test(m)?'Claude':m}
+ function usageReport(){
+  const u=jget('max_usage',{}),c=u.day===todayKey()?u.counts||{}:{},total=Object.values(c).reduce((a,b)=>a+b,0);
+  const by={};for(const [m,k] of Object.entries(c))by[brainName(m)]=(by[brainName(m)]||0)+k;
+  const backups=Object.entries(by).filter(([k])=>/backup/.test(k)).reduce((a,[,v])=>a+v,0);
+  showDisplay('Usage today','Answers from my AI brains on this phone',[{badge:'TODAY',badgeClass:'badge-res',title:total+' AI answer'+(total===1?'':'s'),lines:Object.keys(by).length?Object.entries(by).map(([k,v])=>'• '+k+': '+v):['No AI answers yet today — commands I understand myself don’t count.']},
+   {badge:'LAST',title:u.last?brainName(u.last):'—',lines:[u.lastAt?'Answered '+new Date(u.lastAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'',backups?'The free backups stepped in '+backups+' time'+(backups===1?'':'s')+' — Gemini was busy or at its daily limit.':'Gemini handled everything today.','Backups can’t read files or search the web.']}]);
+  if(!total)return 'No AI answers yet today. Commands I understand on my own, like reminders and prices, don’t use the AI at all.';
+  return 'Today I used the AI '+total+' time'+(total===1?'':'s')+': '+Object.entries(by).map(([k,v])=>k+' '+v).join(', ')+'.'+(backups?' The free backups covered '+backups+', so Gemini was busy or at its limit.':' All from Gemini — no backups needed.');
+ }
+ // ---------- WhatsApp drafts: Max writes it, you tap send ----------
+ function whatsappDraft(d){
+  const text=String(d?.text||d?.instruction||'').trim().slice(0,1500);if(!text)return 'What should the message say?';
+  const num=String(d?.to||'').replace(/[^\d+]/g,'').replace(/^\+/,'').replace(/^0(?=9\d{9}$)/,'63');
+  const who=String(d?.to||'').trim(),link='https://wa.me/'+(num.length>=8?num:'')+'?text='+encodeURIComponent(text);
+  showDisplay('WhatsApp message',who&&num.length<8?'For '+who+' — pick the chat in WhatsApp':who?'To '+who:'Pick the chat in WhatsApp',[{badge:'DRAFT',badgeClass:'badge-draft',title:who?'To '+who:'Message',html:'<p>'+escHtml(text).replace(/\n/g,'<br>')+'</p>',lines:['WhatsApp opens with this filled in — you tap send.'],buttons:[['Open WhatsApp',()=>{window.open(link,'_blank')}],['Copy text',()=>{navigator.clipboard?.writeText(text).catch(()=>{})}]]}]);
+  lastWhatsApp={link,at:Date.now()};
+  return 'Here’s the message'+(who?' for '+who:'')+': “'+text+'”. Tap Open WhatsApp, '+(num.length>=8?'then send.':'pick the chat, then send.');
+ }
+ let lastWhatsApp=null;
  async function briefing(){
   setSection('display');$('dispTitle').textContent='Preparing your briefing…';$('dispSub').textContent='';$('dispBody').replaceChildren();
   const tasks=[checkProjects().catch(()=>''),loadStats(false).catch(()=>false)];
   const sched=/^linked/.test(cloud.google||'')?listSchedule('today').catch(()=>''):Promise.resolve('');
   const mail=gmailOn()?cachedPost('/api/gmail/inbox',{query:'in:inbox is:unread newer_than:1d',max:10},10*60e3,30000).then(x=>x.r.ok?x.data:null).catch(()=>null):Promise.resolve(null);
   const mkt=getQuotes(watchlist().slice(0,10).map(x=>({symbol:x.symbol,kind:x.kind}))).catch(()=>null);
+  const wxPlace=jget(WX_PLACE,null),wxP=wxPlace?Promise.race([getWeather(wxPlace).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),15000))]):Promise.resolve(null);
   const [schedText,,mailData,mktData]=await Promise.all([Promise.race([sched,new Promise(r=>setTimeout(()=>r(''),15000))]),Promise.race([Promise.all(tasks),new Promise(r=>setTimeout(r,15000))]),Promise.race([mail,new Promise(r=>setTimeout(()=>r(null),20000))]),Promise.race([mkt,new Promise(r=>setTimeout(()=>r(null),20000))])]);
+  const wx=await wxP;
   const mktFired=mktData?checkAlerts(mktData):[];
   const dl=findDeadlines(30),wait=waitingItems(),list=projects();
   const down=list.filter(p=>projStatus[p.id]?.up===false).map(p=>p.name);
@@ -2751,6 +2829,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    {badge:'SECRETARY',title:'Today',lines:[schedText||(/^linked/.test(cloud.google||'')?'Calendar: couldn’t read it right now.':'Calendar not connected (Google is off) — I only know what’s in your notes.')]},
    {badge:'SECRETARY',title:'Deadlines — next 30 days',lines:dl.length?dl.slice(0,6).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['Nothing due.'],buttons:dl.length?[['All deadlines',()=>doAction({type:'deadlines'},'').then(t=>{setSub('',t);speak(t)})]]:[]},
    ...(mailData?[{badge:'EMAIL',badgeClass:'badge-res',title:'Unread email (last 24 h)',lines:mailData.items?.length?[mailData.say,...mailData.items.filter(x=>x.priority==='high').slice(0,4).map(x=>({text:'• '+x.from+' — '+x.subject,cls:'miss'}))]:['No new email.'],buttons:mailData.items?.length?[['Open inbox',()=>checkEmail('unread today').then(t=>{setSub('',t);speak(t)})]]:[]}]:[]),
+   ...(wx?[{badge:'WEATHER',badgeClass:'badge-res',title:wx.place+' — '+Math.round(wx.now.temp)+'°C, '+wx.now.sky,lines:['Today: '+wxLine(wx,0),'Tomorrow: '+wxLine(wx,1)],buttons:[['Full forecast',()=>weatherNow({location:wxPlace.name}).then(t=>{setSub('',t);speak(t)})]]}]:[]),
    {badge:'WAITING',badgeClass:'badge-draft',title:'Waiting for you',lines:wait.length?wait.map(x=>'• '+x):['Nothing waiting.']},
    {badge:'WEBMASTER',badgeClass:'badge-res',title:'Your projects',lines:[down.length?{text:'Down: '+down.join(', '),cls:'miss'}:{text:'All sites I can check are up.',cls:'ok'},visitors.length?'Visitors today: '+visitors.join(' · '):statsProblem==='not connected'?'Visitor numbers not connected.':'',Object.keys(sales).length?'Sales this month: '+totalsText(sales):'No sales logged this month.'].filter(Boolean)},
    ...(mktData&&mktData.length?[{badge:'MARKETS',badgeClass:'badge-res',title:'Watchlist',lines:[...mktFired.map(t=>({text:'🔔 '+t,cls:'miss'})),...mktData.filter(q=>!q.error).slice(0,6).map(q=>q.symbol+' '+quoteLine(q))],buttons:[['Open watchlist',()=>showWatchlist(true).then(t=>{setSub('',t);speak(t)})]]}]:[]),
@@ -2762,6 +2841,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const due=watch.filter(t=>!t.lastChecked||Date.now()-t.lastChecked>7*864e5);
   if(due.length)setTimeout(()=>checkWatch(false).then(t=>{if(t&&/found/.test(t))setSub('',t)}).catch(()=>{}),500);
   return hi+'. '+(schedText&&!/clear/.test(schedText)?schedText+' ':'')+
+   (wx?'Weather in '+wx.place+': '+wxLine(wx,0)+'. ':'')+
    (dl.length?dl.length+' deadline'+(dl.length===1?'':'s')+' in the next 30 days, first: '+dl[0].what+', '+whenText(dl[0].date)+'. ':'No deadlines in the next 30 days. ')+
    (mailData?.items?.length?'Email: '+mailData.say+' ':'')+
    (mktFired.length?'Price alert: '+mktFired.join('; ')+'. ':'')+
@@ -3047,6 +3127,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'convert_currency':return await convertCurrency(a.details||{},raw);
    case 'set_currencies':return setCurrencies(a.details||{},raw);
    case 'briefing':return await briefing();
+   case 'weather':return await weatherNow(a.details||{location:a.query});
+   case 'set_weather_place':return await setWeatherPlace(a.details||{location:a.query});
+   case 'set_personality':return setPersonality(a.details||{name:a.query});
+   case 'usage':return usageReport();
+   case 'whatsapp_draft':return whatsappDraft(a.details||{text:a.query});
    case 'deadlines':return deadlinesSay(a.details||{});
    case 'show_crew':setSection('crew');return 'Here’s your crew: the Secretary, the Researcher, the Librarian, and your six coaches. Name one and tell them what you need.';
    case 'watch_topic':return watchTopic(a.query||a.details?.topic);
@@ -3197,16 +3282,17 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(navigator.onLine===false){const o=offlineAnswer(q);if(!o.refs.length)o.text=queuedReply(q,null)+' Meanwhile your notes and commands still work.';talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),projects:projects().map(p=>p.name),skills:getSkills().slice(0,20).map(n=>({name:n.title.replace(/^Skill:\s*/,''),text:plain(n.body).slice(0,1500)})),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),projects:projects().map(p=>p.name),skills:getSkills().slice(0,20).map(n=>({name:n.title.replace(/^Skill:\s*/,''),text:plain(n.body).slice(0,1500)})),personality:personality(),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
    if(r.status===401){cloud.memory=false;if(data.needLogin==='google'){cloud.state='needlogin';refreshConnectionLabel();throw new Error('Please sign in with Google first: hold the circle, then Settings.')}cloud.state='needpass';refreshConnectionLabel();throw new Error('Max needs the passcode. Tap ⚙ and enter it.')}
    if(!r.ok)throw new Error((data.error||'AI request failed')+(data.savedMemory?' (Your memory was still saved.)':''));
+   countUsage(data.model);
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','weather','set_weather_place','set_personality','usage','whatsapp_draft'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

@@ -44,4 +44,5 @@ run "Phone: Google Play"   tests/e2e16.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: self-update"  tests/e2e17.mjs "$PWD/index.html"
 run "Phone: offline & outbox" tests/e2e18.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: app builds"    tests/e2e19.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: weather, style, usage, WhatsApp" tests/e2e20.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

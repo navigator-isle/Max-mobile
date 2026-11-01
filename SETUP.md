@@ -23,6 +23,17 @@
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
 
+**🌤 Weather & sea**
+- "Weather in Batangas", "forecast for Manila tomorrow", "marine weather at Longview", "how windy is it"
+- Wind in knots and Beaufort, gusts, pressure, visibility, plus waves and swell for coastal places (free, from Open-Meteo)
+- "Set my weather place to Batangas" — then it's in your morning briefing too. With no place set, Max asks to use the phone's location
+- Model forecast only — not for navigation; always check official warnings
+
+**🎭 Style, usage and WhatsApp**
+- "Be concise", "be witty", "be formal", "back to normal" — "what personality are you using?"
+- "How much AI did you use today?" — answers per brain, and whether the free backups had to step in
+- "WhatsApp Ana that I'm running late" — Max writes it and opens WhatsApp with the message filled in; you pick the chat and tap send. A phone number like 0917… goes straight to that chat
+
 **📴 Offline**
 - **Works offline:** your notes and second brain, answers from your notes, routines, skills, deadlines, the sales log, and all screen commands.
 - **From saved copies:** your calendar for the week, the last watchlist prices, and the last inbox summary. Max says when the copy was saved.
