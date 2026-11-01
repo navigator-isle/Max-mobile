@@ -1,0 +1,20 @@
+name: PSE history (research)
+on:
+  push:
+    branches: [research/pse-history]
+    paths: [research/fetch-pse.mjs, .github/workflows/pse-history.yml]
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node research/fetch-pse.mjs
+      - name: Save the data to this branch
+        run: |
+          git config user.name "Max research bot"; git config user.email "max-bot@users.noreply.github.com"
+          git add research/data && git commit -m "PSE price history $(date -u +%F) [skip ci]" && git push || echo "nothing new"
