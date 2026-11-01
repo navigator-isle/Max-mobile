@@ -1383,6 +1383,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(passage plans?|saved routes?|my routes?|voyage plans?)\b/)&&!has(/\b(add|change|update|fix)\b/))return {type:'list_passage_plans'};
   if(has(/\b(apps?|sites?|websites?|projects?)\b/)&&has(/\b(up|online|working|down|running|alive|ok(ay)?|status|check)\b/)&&!has(/\b(add|change|make|fix|update|build)\b/))return {type:'check_projects'};
   if(has(/^(show|list|open|see|what are|pakita)( me)?( all)? (my )?(projects|apps|websites|sites)$/)||n==='my projects'||n==='projects')return {type:'show_projects'};
+  if(/^\s*(open|launch|start|run|buksan)( up)?( the)? max( app)?[.!]*\s*$/i.test(raw))return {type:'open_project',query:'Max'};
   if(has(/^(open|launch|start|go to|pull up|bring up|buksan|show me)\b/)&&!has(/\b(notes?|research|settings?|keyboard|menu)\b/)){
    const t=n.replace(/^(open|launch|start|go to|pull up|bring up|buksan|show me)\s+(up\s+)?(my |the )?/,'');
    const p=findProject(t);if(p)return {type:'open_project',query:p.name};
@@ -1506,6 +1507,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return out.trim();
  }
  function openProject(p){
+  // Max himself: never open a second copy (two copies fight over the microphone).
+  try{if(p.id==='max'||new URL(p.url,location.href).pathname.replace(/\/index\.html$/,'/')===location.pathname.replace(/\/index\.html$/,'/')){setSection('home');return 'I’m already here, Mark.'}}catch{}
   const w=window.open(p.url,'_blank');
   const box=$('noteRefs');box.replaceChildren();
   const a=document.createElement('a');a.className='open-chip';a.href=p.url;a.target='_blank';a.rel='noopener';a.textContent='Open '+p.name+' ↗';box.append(a);box.hidden=false;

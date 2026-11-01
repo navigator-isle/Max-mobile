@@ -59,6 +59,9 @@ const answer = async () => (await vis("#homeAnswer")) ? p.locator("#homeAnswer")
 let g = gem.length; await say("open SeaLex");
 ok(gem.length === g && (await p.evaluate(() => window.__opened.at(-1))).includes("claude.ai/artifact/AzwR4") && (await answer()).includes("Opening SeaLex"), "“open SeaLex” opens it instantly (no AI)");
 ok(await p.locator("#noteRefs a", { hasText: "Open SeaLex" }).count() === 1, "an Open button is shown too (in case the phone blocks pop-ups)");
+const opened = await p.evaluate(() => window.__opened.length);
+await say("open max");
+ok(/I’m already here/.test(await answer()) && await p.evaluate(() => window.__opened.length) === opened, "“open Max” never opens a second copy of Max");
 await say("are my apps up?");
 const a1 = await answer();
 ok(await vis("#projectsScreen") && /Quick Draft Calculator is not answering/.test(a1) && /Hobby Isle/.test(a1) && /inside Claude/.test(a1), "“are my apps up?” → checks sites, reports the one that's down, honest about Claude apps", a1);

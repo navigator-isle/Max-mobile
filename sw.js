@@ -1,6 +1,6 @@
 // Max offline support: keeps the app on the phone so it opens without internet.
 // The page is always fetched fresh when online (so updates arrive), and the saved copy is used offline.
-const CACHE = "max-app-v2";
+const CACHE = "max-app-v3";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png"];
 
 self.addEventListener("install", e => {
@@ -30,6 +30,7 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (req.method !== "GET" || url.origin !== self.location.origin) return; // Max's AI calls always go to the network
+  if (url.searchParams.has("v")) return; // Max checking for a new version: always ask the website itself
   const isPage = req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html");
   if (!isPage) return;
   e.respondWith((async () => {
