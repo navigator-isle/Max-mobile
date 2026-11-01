@@ -23,6 +23,17 @@
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
 
+**💻 Max on a laptop**
+- Same link, in Chrome or Edge: navigator-isle.github.io/Max-mobile/ — sign in the first time (Google or passcode)
+- Wide screens: Max stays on the left (circle, what he says, a typing box), whatever you open shows on the right in columns
+- Keys: Enter sends · Ctrl+K types · Ctrl+Space talks · Esc stops him
+- Chrome can install it as an app: the install icon at the right of the address bar
+
+**🔄 Phone ↔ laptop sync**
+- Notes, sales, routines, skills and memory were already shared. Now also: watchlist, price alerts, currencies, routine streaks, watched topics, the Researcher's inbox, your projects list, phrases Max learned, weather place, personality, voice-interrupt setting
+- Syncs a few seconds after a change, every minute while open, and whenever you come back to Max. If the same thing changed on both, the newest change wins
+- Kept per device on purpose: sign-in/passcode, hands-free, cached prices/calendar, and anything typed while offline (sent when that device is back online)
+
 **👂 Hands-free and interrupting**
 - Say "hands-free on" (or hold the circle → 👂 Hands-free). Then just say "Hey Max, …" — with or without a question after it. Follow-ups don't need "Max"; "that's all" sends him back to waiting
 - Works while Max is open on screen; he keeps the screen awake. Locking the phone or switching apps turns the microphone off, and it comes back when you return. It stays on after you reopen Max

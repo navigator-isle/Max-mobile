@@ -234,6 +234,33 @@ body[data-coach]::after{content:attr(data-coach);position:fixed;top:8px;left:50%
 .quick-menu[hidden]{display:none}
 .quick-sheet{width:min(100%,520px);background:#0b1a2b;border:1px solid #294861;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .quick-sheet [data-go=close]{grid-column:1/-1}
+
+/* ---------- laptop and desktop: Max on the left, the screen on the right ---------- */
+.kbd-hint{display:none}
+@media (min-width:1100px){
+ .app-shell{max-width:1480px!important;display:grid!important;grid-template-columns:400px minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:32px;padding:0 28px 24px!important}
+ .topbar{grid-column:1/-1}
+ #miniMax{display:none!important}
+ body.on-home #homeScreen{grid-column:1/-1}
+ body:not(.on-home) #homeScreen{display:flex!important;flex-direction:column;align-items:center;gap:12px;min-width:0;overflow:hidden;grid-column:1;grid-row:2;position:sticky;top:12px;align-self:start;height:calc(100dvh - 90px);border-right:1px solid #16304a;padding-right:24px}
+ body:not(.on-home) #homeScreen .max-orb{width:250px;height:250px}
+ body:not(.on-home) #homeScreen .orb-stage{flex:0 0 auto;padding-top:8px}
+ body:not(.on-home) #homeScreen .subtitles{min-height:0;flex:1;overflow:auto;max-width:none}
+ body:not(.on-home) #homeScreen .home-answer{max-height:none}
+ body:not(.on-home) .section-screen.active:not(#homeScreen){grid-column:2;grid-row:2;min-width:0}
+ #typeRow[hidden]{display:flex!important}
+ #homeScreen .type-row{max-width:none;flex:0 0 auto}
+ body.on-home #homeScreen .type-row{max-width:640px}
+ .kbd-hint{display:block;color:#5d7a93;font-size:.78rem;text-align:center;margin-top:6px}
+ .disp{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));align-items:start;gap:14px!important}
+ .disp-card:has(.disp-text p:nth-of-type(3)),.disp-card.wide{grid-column:1/-1}
+ .proj-list{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+ .dash{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))!important}
+ .note-layout{grid-template-columns:320px minmax(0,1fr)!important}
+ .note-list{max-height:calc(100dvh - 220px)!important}
+ .section-screen h1{font-size:1.7rem}
+}
+@media (min-width:1600px){.app-shell{grid-template-columns:440px minmax(0,1fr)}}
 </style></head>
 <body>
 <script>
@@ -302,6 +329,7 @@ body[data-coach]::after{content:attr(data-coach);position:fixed;top:8px;left:50%
       <input id="typeInput" placeholder="Type to Max…" autocomplete="off" enterkeyhint="send" aria-label="Type a message to Max">
       <button id="typeSend" class="send-btn" aria-label="Send">➤</button>
     </div>
+    <div class="kbd-hint">Enter to send · Ctrl+K to type · Ctrl+Space to talk · Esc to stop</div>
     <div hidden><button id="homeTalk">Talk</button><button id="homeStop">Stop</button></div>
   </main>
 
@@ -713,6 +741,46 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   catch(e){alert('Could not disconnect: '+e.message)}
  };
 
+ // ---------- phone ↔ laptop sync of everything else (watchlist, routines progress, projects, settings) ----------
+ // Notes, sales, routines and skills already sync as notes. These lists sync too; the newest change wins.
+ // Not synced on purpose: passcode/sign-in, hands-free (each device decides), caches, the offline outbox.
+ const SYNC_KEYS=['max_watchlist','max_price_alerts','max_currencies','max_routine_state','max_watch','max_crew_inbox','max_projects','max_learned_phrases','max_weather_place','max_personality','max_barge','max_pp_speed','max_last_brief'];
+ const SYNC_META='max_sync_meta';
+ const strHash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h+':'+t.length};
+ function syncMeta(){try{return JSON.parse(localStorage.getItem(SYNC_META)||'null')}catch{return null}}
+ function collectSettings(){
+  let meta=syncMeta();const first=!meta;meta=meta||{};const out=[];
+  for(const k of SYNC_KEYS){
+   let raw=null;try{raw=localStorage.getItem(k)}catch{}
+   if(raw==null)continue;
+   const h=strHash(raw);
+   if(!meta[k])meta[k]={h,u:first?0:Date.now()};      // first sync on a device: let the other device's data win
+   else if(meta[k].h!==h)meta[k]={h,u:Date.now()};    // changed here since last sync
+   out.push({key:k,value:raw,updated:meta[k].u});
+  }
+  try{localStorage.setItem(SYNC_META,JSON.stringify(meta))}catch{}
+  return out;
+ }
+ function applySettings(list){
+  const meta=syncMeta()||{},changed=[];
+  for(const x of list){
+   if(!SYNC_KEYS.includes(x.key)||typeof x.value!=='string')continue;
+   let raw=null;try{raw=localStorage.getItem(x.key)}catch{}
+   const mine=meta[x.key];
+   if(raw===x.value){meta[x.key]={h:strHash(raw),u:Math.max(mine?.u||0,x.updated)};continue}
+   if(mine&&raw!=null&&mine.u>x.updated)continue;      // my change is newer — it goes up next sync
+   try{localStorage.setItem(x.key,x.value)}catch{continue}
+   meta[x.key]={h:strHash(x.value),u:x.updated};changed.push(x.key);
+  }
+  try{localStorage.setItem(SYNC_META,JSON.stringify(meta))}catch{}
+  if(changed.length){
+   if(screen==='projects'&&typeof renderProjects==='function')renderProjects();
+   if(screen==='crew'&&typeof renderCrew==='function')renderCrew();
+  }
+  return changed;
+ }
+ setInterval(()=>{if(document.visibilityState==='visible'&&cloud.memory&&navigator.onLine!==false)syncNotes().catch(()=>{})},60000);
+
  // ---------- notes cloud sync ----------
  let syncTimer=null,syncing=false;
  function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNotes().catch(()=>{}),1500)}
@@ -720,12 +788,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!cloud.memory||syncing)return false;
   syncing=true;
   try{
-   const {r,data}=await fetchJson(workerBase()+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes:loadAll()})},20000);
+   const settings=collectSettings();
+   const {r,data}=await fetchJson(workerBase()+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes:loadAll(),settings})},20000);
    if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
    const merged=new Map(loadAll().map(n=>[n.id,n]));
    (data.notes||[]).map(normNote).filter(Boolean).forEach(s=>{const l=merged.get(s.id);if(!l||s.updatedAt>l.updatedAt)merged.set(s.id,s)});
    localStorage.setItem(KEY,JSON.stringify([...merged.values()]));
    localStorage.setItem('max_last_sync',String(Date.now()));
+   if(Array.isArray(data.settings))applySettings(data.settings);
    if(screen==='notes')renderList();
    return true;
   }catch(e){console.warn('Max notes sync failed',e);return false}
@@ -824,7 +894,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function setKeyboard(on){
   keyboardOn=!!on;$('typeRow').hidden=!keyboardOn;
-  if(keyboardOn&&screen!=='home')setSection('home');
+  if(keyboardOn&&screen!=='home'&&!wideScreen.matches)setSection('home');
  }
  const screenName=()=>screen==='home'&&keyboardOn?'keyboard':screen;
  $('miniHome').onclick=()=>setSection('home');
@@ -881,13 +951,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    g.fillStyle='rgba('+accent+','+al.toFixed(2)+')';g.beginPath();g.arc(c+rr*Math.cos(a),c+rr*Math.sin(a),sz,0,Math.PI*2);g.fill();
   }
  }
+ const wideScreen=matchMedia('(min-width:1100px)');
  function orbLoop(ts){
   const t=ts/1000,st=orbState();
   const target={speaking:1,listening:0.35,thinking:0.5,idle:0.12}[st];
   orb.kick*=0.9;orb.energy+=(Math.min(1.2,target+orb.kick)-orb.energy)*0.08;
   const en=orb.energy*(orb.reduce?0.4:1);
   if(!document.hidden){
-   if(screen==='home')drawOrb($('orbCanvas'),t,st,en,48);
+   if(screen==='home'||wideScreen.matches)drawOrb($('orbCanvas'),t,st,en,48);
    else drawOrb($('miniCanvas'),t,st,en,20);
   }
   requestAnimationFrame(orbLoop);
@@ -1483,7 +1554,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  ];
  const PROJ_KEY='max_projects';
  function projects(){try{const v=JSON.parse(localStorage.getItem(PROJ_KEY)||'null');return Array.isArray(v)&&v.length?v:DEFAULT_PROJECTS}catch{return DEFAULT_PROJECTS}}
- const saveProjects=l=>{try{localStorage.setItem(PROJ_KEY,JSON.stringify(l))}catch{}};
+ const saveProjects=l=>{try{localStorage.setItem(PROJ_KEY,JSON.stringify(l))}catch{}scheduleSync()};
  const projKind=p=>/claude\.ai\//.test(p.url)?'Inside Claude':p.repo?'Website · GitHub':'Website';
  const projStatus={};
  let ghInfo=null,pendingMerge=null;
@@ -2693,7 +2764,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 
  // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
  const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
- const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+ const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}if(SYNC_KEYS.includes(k))scheduleSync()};
  const todayKey=()=>localDate(new Date());
  const daysUntil=d=>Math.round((new Date(d+'T12:00:00')-new Date(localDate(new Date())+'T12:00:00'))/864e5);
  const whenText=d=>{const k=daysUntil(d);return k===0?'today':k===1?'tomorrow':k===-1?'yesterday':k<0?(-k)+' days ago':k<=14?'in '+k+' days':fullDate(d)};
@@ -3379,6 +3450,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   convo=true;misses=0;setTalkButton();listenOnce();
  }
  function startTalk(){startConversation()}
+ // Laptop keys: Ctrl/Cmd+K type · Ctrl/Cmd+Space talk · Esc stop him
+ document.addEventListener('keydown',e=>{
+  const mod=e.ctrlKey||e.metaKey,inField=/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||'')||document.activeElement?.isContentEditable;
+  if(mod&&e.key.toLowerCase()==='k'){e.preventDefault();setKeyboard(true);$('typeInput').focus();return}
+  if(mod&&e.code==='Space'){e.preventDefault();orbTap();return}
+  if(e.key==='Escape'&&!inField&&($('maxOrb').classList.contains('speaking')||convo)){e.preventDefault();$('homeStop').click()}
+ });
 
  // ---------- hands-free: say "Hey Max" · interrupt him by voice ----------
  // Hands-free keeps the microphone open while Max's screen is on, waiting for his name.

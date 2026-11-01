@@ -107,7 +107,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-05a";
+const WORKER_VERSION = "max-worker-2026-11-06a";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -147,7 +147,8 @@ const TABLES = {
   max_notes: ["id","title","category","tags","body","analysis","created_at","updated_at","deleted"],
   max_talk: ["id","role","text","created_at"],
   max_sessions: ["id","email","created_at","expires_at","last_used"],
-  max_google: ["owner","email","refresh_enc","scopes","updated_at"]
+  max_google: ["owner","email","refresh_enc","scopes","updated_at"],
+  max_settings: ["key","value","updated_at"]
 };
 let schemaReady = false;
 async function ensureSchema(db) {
@@ -157,7 +158,8 @@ async function ensureSchema(db) {
     db.prepare("CREATE TABLE IF NOT EXISTS max_notes (id TEXT PRIMARY KEY, title TEXT, category TEXT, tags TEXT, body TEXT, analysis TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0)"),
     db.prepare("CREATE TABLE IF NOT EXISTS max_talk (id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)"),
     db.prepare("CREATE TABLE IF NOT EXISTS max_sessions (id TEXT PRIMARY KEY, email TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, last_used INTEGER)"),
-    db.prepare("CREATE TABLE IF NOT EXISTS max_google (owner TEXT PRIMARY KEY, email TEXT NOT NULL, refresh_enc TEXT NOT NULL, scopes TEXT, updated_at INTEGER NOT NULL)")
+    db.prepare("CREATE TABLE IF NOT EXISTS max_google (owner TEXT PRIMARY KEY, email TEXT NOT NULL, refresh_enc TEXT NOT NULL, scopes TEXT, updated_at INTEGER NOT NULL)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS max_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL)")
   ]);
   // If an older table with the same name exists but different columns, stop with a clear message.
   for (const [table, cols] of Object.entries(TABLES)) {
@@ -1375,9 +1377,15 @@ export default {
           let body; try { body = await request.json(); } catch { return json({error:"Invalid JSON body."}, 400, origin, env); }
           const notes = Array.isArray(body.notes) ? body.notes.slice(0, 2000) : [];
           const mems = Array.isArray(body.memories) ? body.memories.slice(0, 500) : [];
-          const stmts = [...notes.map(n => upsertNoteStmt(db, n)), ...mems.map(m => upsertMemoryStmt(db, m))].filter(Boolean);
+          // Phone ↔ laptop: watchlist, routines progress, projects, settings… newest change wins, per item.
+          const now = Date.now(), settings = (Array.isArray(body.settings) ? body.settings.slice(0, 60) : [])
+            .filter(x => x && /^max_[a-z0-9_]{1,40}$/.test(String(x.key)) && typeof x.value === "string" && x.value.length <= 300000 && Number.isFinite(Number(x.updated)))
+            .map(x => db.prepare("INSERT INTO max_settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at WHERE excluded.updated_at > max_settings.updated_at")
+              .bind(String(x.key), x.value, Math.max(0, Math.min(Math.floor(Number(x.updated)), now + 60000))));
+          const stmts = [...notes.map(n => upsertNoteStmt(db, n)), ...mems.map(m => upsertMemoryStmt(db, m)), ...settings].filter(Boolean);
           for (let i = 0; i < stmts.length; i += 50) await db.batch(stmts.slice(i, i + 50));
-          return json({notes: await listNotes(db), memories: await listMemories(db, true), serverTime: Date.now()}, 200, origin, env);
+          const rows = await db.prepare("SELECT key, value, updated_at FROM max_settings").all();
+          return json({notes: await listNotes(db), memories: await listMemories(db, true), settings: (rows.results || []).map(r => ({key: r.key, value: r.value, updated: r.updated_at})), serverTime: now}, 200, origin, env);
         }
         return json({error:"Method not allowed."}, 405, origin, env);
       } catch (e) {
