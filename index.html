@@ -1232,7 +1232,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1253,6 +1253,16 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- app builds: new version to the Play closed test ----
+  {const nm=raw.match(/\b(?:release notes?|notes?|saying|what'?s new)\s*[:,-]?\s*(.{3,})$/i),head=nm?norm(raw.slice(0,nm.index)):n,h=re=>re.test(head);
+   const pr=projects().find(x=>x.androidRepo&&(head.includes(norm(x.name))||(x.aliases||[]).some(al=>head.includes(norm(al)))));
+   const solo=projects().filter(x=>x.androidRepo).length===1?projects().find(x=>x.androidRepo):null;
+   const target=/\b(new version|new build|closed test|alpha|test track|testers?|android|apk|aab|play ?store|google play)\b/;
+   if(h(/\b(build|upload|publish|release|send|push|ship)\b/)&&(h(target)||(pr&&h(/\bapp\b/)))&&!h(/\b(description|listing|title|screenshots?|reviews?|change|rewrite|edit|status|how'?s|how is|how did|finished|done)\b/)&&(pr||solo))
+    return {type:'play_build',details:{project:(pr||solo).name,notes:nm?nm[1].trim():''}};
+   if(h(/\b(the|app|latest|android|last|new) build\b|\bbuilds\b/)&&h(/\b(status|how'?s|how is|how did|done|finished|ready|progress|kumusta|go)\b/)&&(pr||solo))
+    return {type:'build_status',details:{project:(pr||solo).name}};
+  }
   // ---- google play ----
   if(has(/\b(play ?store|google play|play console|store listing)\b/)){
    const pr=projects().find(x=>n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al))));
@@ -1442,7 +1452,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- your projects: open by voice, check if they're up, pass on change requests ----------
  const DEFAULT_PROJECTS=[
   {id:'max',name:'Max',url:'https://navigator-isle.github.io/Max-mobile/',repo:'navigator-isle/Max-mobile',aliases:['max app','this app','yourself']},
-  {id:'passage',name:'Passage Planner',url:'https://navigator-isle.github.io/',repo:'navigator-isle/navigator-isle.github.io',aliases:['passage plan','passage','route planner','voyage planner','navigator isle']},
+  {id:'passage',name:'Passage Planner',url:'https://navigator-isle.github.io/',repo:'navigator-isle/navigator-isle.github.io',androidRepo:'navigator-isle/passage-planner-android',aliases:['passage plan','passage','route planner','voyage planner','navigator isle']},
   {id:'draft',name:'Quick Draft Calculator',url:'https://draft-calculator.github.io/Draft-Calculator/',repo:'',aliases:['draft calculator','draft calc','quick draft','draft survey']},
   {id:'hobby',name:'Hobby Isle',url:'https://hobbyisle.com/',repo:'navigator-isle/hobbyisle',analytics:true,earns:true,aliases:['hobbyisle','hobby site','gundam site','gunpla site','my website']},
   {id:'checklist',name:'Officer Checklist',url:'https://claude.ai/artifact/9j5SkqSG5sMiX8tpC2ieqS',repo:'',aliases:['checklist','officer checklist','ship app','inventory','ship checklist']},
@@ -2534,6 +2544,29 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const playAppName=d=>{const p=findProject(d?.project||d?.app||'');return p?p.name:(d?.project||'Passage Planner')};
  const FIELD_NAME={title:'title',shortDescription:'short description',fullDescription:'full description',releaseNotes:'release notes'};
  async function playCall(path,body,ms){const {r,data}=await postJson(path,body,ms||45000);if(data&&data.needPlay)throw Object.assign(new Error('Google Play isn’t connected to Max yet. The steps are in SETUP.md, under Play Store.'),{plain:true});if(r.status===404)throw new Error('This needs the newest Max backend.');if(!r.ok)throw new Error(data.error||'HTTP '+r.status);return data}
+ // ---------- app builds: a new version from the latest website, straight to the Play closed test ----------
+ function buildProject(d){const all=projects().filter(x=>x.androidRepo);return findProject(d?.project||'')?.androidRepo?findProject(d.project):all.length===1?all[0]:null}
+ const ago=t=>{const m=Math.max(0,Math.round((Date.now()-Date.parse(t))/60e3));return m<1?'just now':m<60?m+' minute'+(m===1?'':'s')+' ago':m<1440?Math.round(m/60)+' hour'+(Math.round(m/60)===1?'':'s')+' ago':Math.round(m/1440)+' day'+(Math.round(m/1440)===1?'':'s')+' ago'};
+ async function playBuild(d){
+  const p=buildProject(d);if(!p)return 'Which app should I build? Right now only Passage Planner has a Play build.';
+  const g=await githubInfo();if(!g.connected||!g.repos.includes(p.androidRepo))return 'I can’t start builds yet. Add the Android repository to my GitHub key first — the steps are in SETUP.md, under GitHub.';
+  const notes=String(d?.notes||'').slice(0,500);
+  return askConfirm('Build a new version of '+p.name+' from the live website and send it to your closed test on Google Play?'+(notes?' Release notes: “'+notes+'”.':'')+' Production isn’t touched. Say yes or no.',async()=>{
+   const {r,data}=await postJson('/api/github/build',{repo:p.androidRepo,track:'alpha',notes,confirm:'BUILD '+p.androidRepo},30000);
+   if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+   return 'Started. The new '+p.name+' build takes about ten minutes, then it goes to your closed testers. Ask me “how’s the build?” anytime.';
+  },[{badge:'NEW BUILD',badgeClass:'badge-draft',title:p.name+' → closed test (Alpha)',lines:['Built from the live website','Version number: automatic',notes?'What’s new: '+notes:'No release notes','Production: never touched']}],'Send a new version to testers?');
+ }
+ async function buildStatus(d){
+  const p=buildProject(d);if(!p)return 'Which app?';
+  const g=await githubInfo();if(!g.connected||!g.repos.includes(p.androidRepo))return 'I can’t see the builds yet. Add the Android repository to my GitHub key first.';
+  const {r,data}=await fetchJson(workerBase()+'/api/github/builds?repo='+encodeURIComponent(p.androidRepo),{},15000);
+  if(!r.ok)return data.error||'I couldn’t check the builds.';
+  const b=(data.builds||[])[0];if(!b)return 'There are no '+p.name+' builds yet.';
+  const word=b.status!=='completed'?'still running — started '+ago(b.started):b.conclusion==='success'?'finished '+ago(b.updated)+' and went to your closed test':'failed '+ago(b.updated)+'. Nothing was sent to Google Play';
+  showDisplay(p.name+' builds','Google Play closed test',(data.builds||[]).map(x=>({badge:x.status!=='completed'?'RUNNING':x.conclusion==='success'?'DONE':'FAILED',badgeClass:x.status!=='completed'?'badge-draft':x.conclusion==='success'?'badge-res':'badge-note',title:'Build '+x.number+' · version 1.0.'+x.number,lines:['Started '+ago(x.started),x.status==='completed'?'Ended '+ago(x.updated):'Usually takes about 10 minutes'],html:'<p><a href="'+escHtml(x.url)+'" target="_blank" rel="noopener">Open on GitHub</a></p>'})));
+  return 'The latest '+p.name+' build, version 1.0.'+b.number+', '+word+'.';
+ }
  async function playOverview(d){
   const app=playAppName(d);setSection('display');$('dispTitle').textContent='Checking Google Play…';$('dispSub').textContent='';$('dispBody').replaceChildren();
   try{
@@ -2988,6 +3021,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'cancel_email':return await cancelEmail();
    case 'play_overview':return await playOverview(a.details||{project:a.query});
    case 'play_update':return await playUpdate(a.details||{instruction:raw});
+   case 'play_build':return await playBuild(a.details||{});
+   case 'build_status':return await buildStatus(a.details||{});
    case 'play_notes':return await playNotes(a.details||{instruction:raw});
    case 'play_reviews':return await playReviews(a.details||{project:a.query});
    case 'show_outbox':return showOutbox();
@@ -3171,7 +3206,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

@@ -172,16 +172,17 @@
 - **Needs:** the site must have Cloudflare **Web Analytics** turned on. If Hobby Isle shows 0 visitors all the time, it isn't on yet; turning it on is your choice, and Max doesn't change it.
 - **Other sites:** to track another site, tick **Show visitor numbers** when you add it in Settings → My projects.
 
-**Optional: let Max send change requests to GitHub (about 5 minutes)**
+**Optional: let Max send change requests to GitHub and build the Play app (about 5 minutes)**
 - **Create the key:** github.com → your photo → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**
   - **Name:** `Max` · **Expiration:** 1 year
-  - **Repository access:** **Only select repositories** → `Max-mobile`, `hobbyisle`, `navigator-isle.github.io`
-  - **Permissions:** **Issues** read and write · **Pull requests** read and write · **Contents** read and write
+  - **Repository access:** **Only select repositories** → `Max-mobile`, `hobbyisle`, `navigator-isle.github.io`, `passage-planner-android`
+  - **Permissions:** **Issues** read and write · **Pull requests** read and write · **Contents** read and write · **Actions** read and write
   - **Generate**, then copy the key
 - **Give it to Max:** Cloudflare → **max-ai-backend** → **Settings** → **Variables and Secrets**
   - **Secret** `GITHUB_TOKEN` = the key
-  - **Text** `MAX_GITHUB_REPOS` = `navigator-isle/Max-mobile,navigator-isle/hobbyisle,navigator-isle/navigator-isle.github.io`
+  - **Text** `MAX_GITHUB_REPOS` = `navigator-isle/Max-mobile,navigator-isle/hobbyisle,navigator-isle/navigator-isle.github.io,navigator-isle/passage-planner-android`
 - **What Max can then do:** file change requests as GitHub issues, list them along with any ready fixes, and publish a fix only after you say "yes, merge it" and its tests have passed. He never touches domains, DNS or account settings.
+- **Play app builds:** say "send a new version of Passage Planner to the closed test" (add "release notes: …" if you like). Max shows what will happen and waits for your yes, then starts **Build Android app**, which uploads to the Alpha closed test about 10 minutes later. Ask "how's the build?" to check. Production is never touched; the Android repo also needs its own secret `PLAY_SERVICE_ACCOUNT` (same JSON as Cloudflare) for the upload step.
 
 **Google sign-in + Calendar + Tasks + Gmail (one-time, about 10 minutes)**
 
