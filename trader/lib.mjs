@@ -267,7 +267,13 @@ export function rebalanceMaster(master, books, weights, ctx, events) {
   for (const [id, w] of Object.entries(weights)) {
     const b = books[id]; if (!b || b.status !== 'active') continue;
     const be = b.equity.at(-1)?.[1] || b.start; const scale = w * eq / be;
-    for (const [sym, p] of Object.entries(b.positions)) { target[sym] = (target[sym] || 0) + p.qty * scale; reason[sym] ||= `${id}: ${p.why || 'signal'}`; }
+    // what the book will hold after tomorrow's open: today's positions, minus its pending sells, plus its pending buys
+    const hold = Object.fromEntries(Object.entries(b.positions).map(([sym, p]) => [sym, { qty: p.qty, why: p.why }]));
+    for (const od of b.pending || []) {
+      if (od.side === 'sell') delete hold[od.sym];
+      else { const c = px(od.sym); if (c && od.amount) hold[od.sym] = { qty: Math.min(od.amount, b.cash) / c, why: od.why }; }
+    }
+    for (const [sym, h] of Object.entries(hold)) { target[sym] = (target[sym] || 0) + h.qty * scale; reason[sym] ||= `${id}: ${h.why || 'signal'}`; }
   }
   if (master.halt) for (const sym in target) target[sym] = Math.min(target[sym], master.positions[sym]?.qty || 0);
   for (const sym of new Set([...Object.keys(target), ...Object.keys(master.positions)])) {
