@@ -89,7 +89,7 @@ ok(/Alert: BTC is below ₱6,000,000 \(now ₱5,800,000\)/.test(await answer()),
 await p.click("#miniHome");
 await say("brief me");
 ok((await p.locator("#dispBody").textContent()).includes("Watchlist") && /SM ₱847\.00/.test(await p.locator("#dispBody").textContent()), "briefing includes the watchlist");
-ok(!seen.some(u => /trade|order|buy|sell/i.test(u)), "no trading calls of any kind");
+ok(!seen.filter(u => !u.startsWith("https://raw.githubusercontent.com/navigator-isle/Max-mobile/trader-data/")).some(u => /trade|order|buy|sell/i.test(u)), "no trading calls of any kind (reading the paper-trading summary is allowed)");
 ok(errs.length === 0, "no script errors", errs.join(" | "));
 await ctx.close(); await b.close(); sW.close(); sP.close();
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

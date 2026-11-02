@@ -23,6 +23,16 @@
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
 
+**📈 Paper trading (pretend money only)**
+- Two pretend accounts of ₱100,000: PSE stocks with COL Financial fees (0.25% commission, min ₱20, + VAT, PSE/SCCP fees, 0.1% sales tax on sells, board lots) and crypto with Binance spot fees (0.1%), held in USDT
+- Runs by itself on GitHub (workflow "Max paper trader"): PSE every weekday 4:30 pm Manila, crypto daily 8:20 am Manila, the strategy researcher every Sunday. Accounts are saved on the `trader-data` branch (public, like this repo)
+- Strategies compete: each has its own pretend account; the main account follows the ones winning in the current market (bull / bear / sideways), max 40% each, losers get nothing. Orders are decided after the close and filled at the next open — the same price you'd get copying them
+- Risk limits: max 1% risk per trade, max 25% in one stock or coin, stops on every breakout/dip trade; if the account falls 20% from its peak, new buys pause until it's back within 10%
+- The researcher tests variations each week on 2 years of data and only adds one if it wins on data it didn't see; new ones start on trial and earn weight by trading well. Weakest strategies retire
+- Say "how's my paper trading?" (or "show my crypto paper trading"). It's in the morning briefing too
+- Emails: an hourly check sends new updates (orders for the next open, closed trades, strategy changes, risk alerts, the weekly review) to MAX_OWNER_EMAIL only. "Turn off trading emails" / "turn on trading emails"
+- Nothing is connected to COL or Binance — no real order can ever be placed. Copying a trade is always your own decision. Not financial advice
+
 **💻 Max on a laptop**
 - Same link, in Chrome or Edge: navigator-isle.github.io/Max-mobile/ — sign in the first time (Google or passcode)
 - Wide screens: Max stays on the left (circle, what he says, a typing box), whatever you open shows on the right in columns

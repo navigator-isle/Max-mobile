@@ -1,0 +1,48 @@
+name: Max paper trader
+# PAPER MONEY ONLY — no broker or exchange account is connected anywhere.
+on:
+  schedule:
+    - cron: '30 8 * * 1-5'   # PSE: 4:30 pm Manila, after the close
+    - cron: '20 0 * * *'     # Crypto: just after Binance's daily candle closes (8:20 am Manila)
+    - cron: '0 2 * * 0'      # Researcher: Sunday 10:00 am Manila
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'bootstrap, pse, crypto or research'
+        default: 'pse'
+permissions:
+  contents: write
+concurrency:
+  group: paper-trader
+  cancel-in-progress: false
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Get the paper accounts
+        run: |
+          if git ls-remote --exit-code --heads origin trader-data >/dev/null; then
+            git clone --depth 1 --branch trader-data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" trader-data
+          else
+            mkdir trader-data && cd trader-data && git init -q -b trader-data && git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          fi
+      - name: Run
+        env:
+          MODE_IN: ${{ inputs.mode }}
+          SCHED: ${{ github.event.schedule }}
+        run: |
+          MODE="$MODE_IN"
+          if [ -z "$MODE" ]; then case "$SCHED" in "30 8 * * 1-5") MODE=pse;; "20 0 * * *") MODE=crypto;; "0 2 * * 0") MODE=research;; esac; fi
+          case "$MODE" in bootstrap|pse|crypto|research) ;; *) echo "unknown mode"; exit 1;; esac
+          [ -f trader-data/state.json ] || MODE=bootstrap
+          echo "Mode: $MODE"
+          node trader/run.mjs "$MODE" trader-data
+      - name: Save
+        run: |
+          cd trader-data
+          git config user.name "Max paper trader"; git config user.email "max-bot@users.noreply.github.com"
+          git add -A && git commit -qm "paper trader $(date -u +%F) [skip ci]" && git push -q origin HEAD:trader-data || echo "nothing new"

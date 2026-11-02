@@ -1305,7 +1305,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status','weather','set_weather_place','set_personality','whatsapp_draft'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status','trading_emails','weather','set_weather_place','set_personality','whatsapp_draft'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1326,6 +1326,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- paper trading ----
+  if(has(/\b(trading|trade|trades)\b.*\b(emails?|mails?|notifications?)\b|\b(emails?|notifications?)\b.*\btrading\b/)&&has(/\b(off|stop|disable|no more|on|enable|start|resume)\b/))return {type:'trading_emails',details:{on:has(/\b(off|stop|disable|no more)\b/)?'off':'on'}};
+  if(has(/\bpaper (trading|trade|trades|account|portfolio)\b|\b(my|your|max'?s?) (trades|trading|portfolio)\b|\btrading (account|update|updates|status|results?)\b|\bwhat did you (buy|sell|trade)\b|\b(orders?) for (tomorrow|the open|monday)\b/)&&!has(/\b(research|note|remind)\b/))return {type:'trading_status',details:{project:has(/\bcrypto|bitcoin|binance\b/)?'crypto':has(/\b(pse|stocks?|col)\b/)?'pse':''}};
   // ---- hands-free & interrupt ----
   if(has(/^(?:turn\s+)?(?:on\s+)?(?:hands ?free|always listen(?:ing)?|wake word|hey max mode)(?:\s+(?:mode))?(?:\s+on)?$|^(?:turn on|start|enable)\s+(?:hands ?free|always listening|wake word|hey max)/))return {type:'hands_free',details:{on:'on'}};
   if(has(/^(?:turn\s+)?(?:off\s+)?(?:hands ?free|always listen(?:ing)?|wake word)(?:\s+(?:mode))?\s+off$|^(?:turn off|stop|disable)\s+(?:hands ?free|always listening|wake word|hey max)/))return {type:'hands_free',details:{on:'off'}};
@@ -1787,6 +1790,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(c.meta){const m=document.createElement('span');m.className='muted small';m.textContent=c.meta;head.append(m)}
    const h=document.createElement('h2');h.textContent=c.title;card.append(head,h);
    if(c.html){const d=document.createElement('div');d.className='disp-text';d.append(safeFragment(c.html));card.append(d)}
+   if(c.node instanceof Element)card.append(c.node); // built by Max's own code (never from outside text)
    if(c.lines&&c.lines.length){const ul=document.createElement('ul');ul.className='disp-lines';c.lines.forEach(l=>{const li=document.createElement('li');if(typeof l==='string')li.textContent=l;else{li.textContent=l.text;if(l.cls)li.className=l.cls}ul.append(li)});card.append(ul)}
    if(c.buttons&&c.buttons.length){const row=document.createElement('div');row.className='notes-tools';c.buttons.forEach(([label,fn])=>{const b=document.createElement('button');b.className='pill';b.textContent=label;b.onclick=fn;row.append(b)});card.append(row)}
    box.append(card);
@@ -2824,6 +2828,48 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(wait.length)bits.push(wait.length+' thing'+(wait.length===1?'':'s')+' waiting for you');
   return hi+', Mark. '+(bits.length?bits.join('; ')+'. Say “brief me” for the full report.':'I’m Max — nothing urgent today. I’m ready when you are.');
  }
+ // ---------- paper trading (pretend money; the trader runs in the cloud on a schedule) ----------
+ const TR_CACHE='max_cache_trader';
+ async function traderSummary(fresh){
+  try{const {r,data}=await fetchJson(workerBase()+'/api/trader/summary'+(fresh?'?fresh=1':''),{},20000);if(!r.ok)throw Object.assign(new Error(data.error||'HTTP '+r.status),{plain:r.status===404});jset(TR_CACHE,{at:Date.now(),data});return data}
+  catch(e){const c=jget(TR_CACHE,null);if(c&&!e.plain)return {...c.data,stale:c.at};throw e}
+ }
+ const trMoney=(m,x,fx)=>m.ccy==='USDT'?Math.round(x*fx).toLocaleString('en-US',{style:'currency',currency:'PHP',maximumFractionDigits:0})+' ('+x.toFixed(2)+' USDT)':Math.round(x).toLocaleString('en-US',{style:'currency',currency:'PHP',maximumFractionDigits:0});
+ const trPct=x=>(x>=0?'+':'')+(x*100).toFixed(1)+'%';
+ function sparkline(curve,start){
+  if(!curve||curve.length<2)return null;
+  const NS='http://www.w3.org/2000/svg',mk=(t,at)=>{const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);return e};
+  const v=curve.map(p=>p[1]),lo=Math.min(...v,start),hi=Math.max(...v,start),W=320,H=70,x=i=>i/(v.length-1)*W,y=val=>H-4-(val-lo)/((hi-lo)||1)*(H-8);
+  const svg=mk('svg',{viewBox:'0 0 '+W+' '+H,width:'100%',height:'70',role:'img','aria-label':'Account value over time'});
+  svg.append(mk('line',{x1:0,x2:W,y1:y(start).toFixed(1),y2:y(start).toFixed(1),stroke:'#5d7a93','stroke-dasharray':'3 3'}),mk('polyline',{fill:'none',stroke:v.at(-1)>=start?'#54e0c9':'#ff9a8a','stroke-width':2,points:v.map((val,i)=>x(i).toFixed(1)+','+y(val).toFixed(1)).join(' ')}));
+  return svg;
+ }
+ async function tradingStatus(d){
+  setSection('display');$('dispTitle').textContent='Checking your paper trading…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  let s;try{s=await traderSummary(true)}catch(e){$('dispTitle').textContent='Paper trading';$('dispSub').textContent=e.message;return e.plain?e.message:'I couldn’t read the paper-trading accounts right now. '+e.message}
+  const fx=s.fx||58,want=d?.project&&s.markets[d.project]?[d.project]:Object.keys(s.markets),cards=[],said=[];
+  for(const k of want){
+   const m=s.markets[k];if(!m)continue;
+   const name=k==='pse'?'PSE stocks':'Crypto';
+   cards.push({badge:k==='pse'?'PSE · COL FEES':'CRYPTO · BINANCE FEES',badgeClass:'badge-res',meta:'through '+m.lastDate+' · market '+m.regime+(m.halted?' · new buys paused':''),title:name+': '+trMoney(m,m.equity,fx)+' ('+trPct(m.returnPct)+')',node:sparkline(m.curve,m.start),
+    lines:['Started with '+trMoney(m,m.start,fx)+' of pretend money · cash '+trMoney(m,m.cash,fx),...(m.orders?.length?m.orders.map(o=>({text:'Next open: '+o.side.toUpperCase()+' '+(k==='pse'?Math.round(o.qty).toLocaleString('en-US'):+o.qty.toFixed(6))+' '+o.sym+' — '+o.why,cls:'miss'})):[])]});
+   cards.push({badge:'HOLDINGS',title:m.positions.length?m.positions.length+' open position'+(m.positions.length===1?'':'s'):'All in cash',lines:m.positions.map(p=>({text:p.sym+' · '+(k==='pse'?p.qty.toLocaleString('en-US'):+p.qty.toFixed(6))+' @ '+p.entry+' → '+(+p.last).toFixed(k==='pse'?2:4)+' ('+trPct(p.pnlPct)+')',cls:p.pnlPct>=0?'ok':'miss'}))});
+   cards.push({badge:'STRATEGIES',badgeClass:'badge-draft',title:'Who gets the money',lines:m.strategies.filter(x=>x.status==='active').slice(0,8).map(x=>(x.weight?Math.round(x.weight*100)+'% ':'0% ')+x.id+' — '+x.kind+(x.score!=null?' · score '+x.score:'')+' · '+trPct(x.returnPct)+(x.trades?' · '+x.wins+'/'+x.trades+' wins':''))});
+   const t=m.trades.slice(0,6);if(t.length)cards.push({badge:'RECENT TRADES',title:'Last '+t.length,lines:t.map(x=>x.date+' '+x.side.toUpperCase()+' '+x.sym+' @ '+x.price+(x.pnl!=null?' ('+(x.pnl>=0?'+':'')+trMoney(m,x.pnl,fx)+')':''))});
+   said.push(name+': '+trMoney(m,m.equity,fx).replace(/\s*\(.*\)/,'')+', '+trPct(m.returnPct)+' since start, '+m.positions.length+' open'+(m.orders?.length?', '+m.orders.length+' order'+(m.orders.length===1?'':'s')+' for the next open':''));
+  }
+  const ev=(s.events||[]).filter(e=>want.includes(e.market)).slice(0,6);
+  if(ev.length)cards.push({badge:'UPDATES',title:'Latest',lines:ev.map(e=>e.day+' · '+e.text)});
+  if(s.replay)cards.push({badge:'TEST RUN',title:'Same engine on 2026 so far',lines:Object.entries(s.replay).map(([k,r])=>(k==='pse'?'PSE':'Crypto')+': '+trPct(r.returnPct)+' vs '+trPct(r.buyHoldPct)+' buy-and-hold ('+r.from+' to '+r.to+')')});
+  cards.push({badge:'NOTE',title:'Pretend money only',lines:['Nothing real is bought or sold. Copying a trade is always your own decision.','Trading emails are '+(s.emails?'on':'off')+' — say “turn '+(s.emails?'off':'on')+' trading emails”.']});
+  showDisplay('Paper trading',(s.stale?'Offline — from '+new Date(s.stale).toLocaleString():'Updated '+new Date(s.updated).toLocaleString()),cards);
+  return said.join('. ')+'. Pretend money only.';
+ }
+ async function tradingEmails(on){
+  const {r,data}=await postJson('/api/trader/email',{on},15000);
+  if(!r.ok)return data.error||'I couldn’t change that.';
+  return on?'Trading emails are on. You’ll get one whenever the paper trader places orders, closes a trade, changes strategies or hits a risk limit.':'Trading emails are off. Ask me anytime how the paper trading is doing.';
+ }
  // ---------- weather and sea state ----------
  const WX_PLACE='max_weather_place',WX_CACHE='max_cache_weather';
  function wxLine(w,i){const d=w.days[i];if(!d)return '';return d.sky+', '+Math.round(d.lo)+' to '+Math.round(d.hi)+'°C'+(d.rain>=30?', '+d.rain+'% chance of rain':'')+', wind '+(d.windDir?d.windDir+' ':'')+'up to '+Math.round(d.wind)+' knots'+(d.gusts>d.wind+8?' gusting '+Math.round(d.gusts):'')+(d.waves!=null?', waves up to '+d.waves.toFixed(1)+' m':'')}
@@ -2894,9 +2940,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const sched=/^linked/.test(cloud.google||'')?listSchedule('today').catch(()=>''):Promise.resolve('');
   const mail=gmailOn()?cachedPost('/api/gmail/inbox',{query:'in:inbox is:unread newer_than:1d',max:10},10*60e3,30000).then(x=>x.r.ok?x.data:null).catch(()=>null):Promise.resolve(null);
   const mkt=getQuotes(watchlist().slice(0,10).map(x=>({symbol:x.symbol,kind:x.kind}))).catch(()=>null);
+  const trP=Promise.race([traderSummary(false).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),12000))]);
   const wxPlace=jget(WX_PLACE,null),wxP=wxPlace?Promise.race([getWeather(wxPlace).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),15000))]):Promise.resolve(null);
   const [schedText,,mailData,mktData]=await Promise.all([Promise.race([sched,new Promise(r=>setTimeout(()=>r(''),15000))]),Promise.race([Promise.all(tasks),new Promise(r=>setTimeout(r,15000))]),Promise.race([mail,new Promise(r=>setTimeout(()=>r(null),20000))]),Promise.race([mkt,new Promise(r=>setTimeout(()=>r(null),20000))])]);
-  const wx=await wxP;
+  const wx=await wxP,tr=await trP;
   const mktFired=mktData?checkAlerts(mktData):[];
   const dl=findDeadlines(30),wait=waitingItems(),list=projects();
   const down=list.filter(p=>projStatus[p.id]?.up===false).map(p=>p.name);
@@ -2907,6 +2954,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    {badge:'SECRETARY',title:'Today',lines:[schedText||(/^linked/.test(cloud.google||'')?'Calendar: couldn’t read it right now.':'Calendar not connected (Google is off) — I only know what’s in your notes.')]},
    {badge:'SECRETARY',title:'Deadlines — next 30 days',lines:dl.length?dl.slice(0,6).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['Nothing due.'],buttons:dl.length?[['All deadlines',()=>doAction({type:'deadlines'},'').then(t=>{setSub('',t);speak(t)})]]:[]},
    ...(mailData?[{badge:'EMAIL',badgeClass:'badge-res',title:'Unread email (last 24 h)',lines:mailData.items?.length?[mailData.say,...mailData.items.filter(x=>x.priority==='high').slice(0,4).map(x=>({text:'• '+x.from+' — '+x.subject,cls:'miss'}))]:['No new email.'],buttons:mailData.items?.length?[['Open inbox',()=>checkEmail('unread today').then(t=>{setSub('',t);speak(t)})]]:[]}]:[]),
+   ...(tr&&tr.markets?[{badge:'PAPER TRADING',badgeClass:'badge-res',title:'Pretend accounts',lines:Object.entries(tr.markets).map(([k,m])=>(k==='pse'?'PSE':'Crypto')+': '+trPct(m.returnPct)+' · '+m.positions.length+' open'+(m.orders?.length?' · '+m.orders.length+' order(s) for the next open':'')),buttons:[['Open',()=>tradingStatus({}).then(t=>{setSub('',t);speak(t)})]]}]:[]),
    ...(wx?[{badge:'WEATHER',badgeClass:'badge-res',title:wx.place+' — '+Math.round(wx.now.temp)+'°C, '+wx.now.sky,lines:['Today: '+wxLine(wx,0),'Tomorrow: '+wxLine(wx,1)],buttons:[['Full forecast',()=>weatherNow({location:wxPlace.name}).then(t=>{setSub('',t);speak(t)})]]}]:[]),
    {badge:'WAITING',badgeClass:'badge-draft',title:'Waiting for you',lines:wait.length?wait.map(x=>'• '+x):['Nothing waiting.']},
    {badge:'WEBMASTER',badgeClass:'badge-res',title:'Your projects',lines:[down.length?{text:'Down: '+down.join(', '),cls:'miss'}:{text:'All sites I can check are up.',cls:'ok'},visitors.length?'Visitors today: '+visitors.join(' · '):statsProblem==='not connected'?'Visitor numbers not connected.':'',Object.keys(sales).length?'Sales this month: '+totalsText(sales):'No sales logged this month.'].filter(Boolean)},
@@ -3209,6 +3257,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'set_weather_place':return await setWeatherPlace(a.details||{location:a.query});
    case 'set_personality':return setPersonality(a.details||{name:a.query});
    case 'usage':return usageReport();
+   case 'trading_status':return await tradingStatus(a.details||{});
+   case 'trading_emails':return await tradingEmails(a.details?.on!=='off');
    case 'hands_free':return handsFree(a.details?.on!=='off');
    case 'barge_setting':jset('max_barge',a.details?.on!=='off');return a.details?.on!=='off'?'Voice interrupt is on — say “stop” or just start talking while I speak.':'Voice interrupt is off. Tap the circle to stop me while I speak.';
    case 'whatsapp_draft':return whatsappDraft(a.details||{text:a.query});
@@ -3373,7 +3423,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','weather','set_weather_place','set_personality','usage','whatsapp_draft'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','weather','set_weather_place','set_personality','usage','whatsapp_draft'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

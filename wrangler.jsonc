@@ -19,5 +19,7 @@
   ],
   // Free backup brain (Cloudflare Workers AI) — used only when Gemini's daily limit is used up.
   "ai": { "binding": "AI" },
+  // Hourly at :45 — emails you new paper-trading updates (only if you keep trading emails on).
+  "triggers": { "crons": ["45 * * * *"] },
   "observability": { "enabled": true }
 }

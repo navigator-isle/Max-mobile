@@ -93,6 +93,9 @@ jobs:
               -F "metadata=@metadata.json;type=application/json" \
               -F "worker.js=@worker.js;type=application/javascript+module" > upload.json || true
             if node -e 'const r=JSON.parse(require("fs").readFileSync("upload.json","utf8"));if(!r.success){for(const e of r.errors||[])console.log("::error::Cloudflare: "+e.code+" "+e.message);process.exit(1)}console.log("::notice::Uploaded directly to Cloudflare (script API)")'; then ok=1; fi
+            # keep the hourly trading-email check scheduled (wrangler does this itself on the normal route)
+            crons=$(node -e 'const c=JSON.parse(require("fs").readFileSync("wrangler.jsonc","utf8").replace(/^\s*\/\/.*$/gm,""));console.log(JSON.stringify((c.triggers?.crons||[]).map(cron=>({cron}))))')
+            curl -sS -X PUT "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/max-ai-backend/schedules" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" -d "$crons" | grep -q '"success":true' && echo "::notice::Schedule set: $crons" || echo "::warning::Could not set the hourly schedule"
           fi
           if [ $ok -ne 1 ]; then
             grep -iE "error|✘|failed|authentication|permission|not found|code: [0-9]+" deploy.log | grep -v "CLOUDFLARE_API_TOKEN" | head -15 | while IFS= read -r line; do echo "::error::$line"; done
