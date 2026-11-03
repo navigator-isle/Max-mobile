@@ -23,6 +23,13 @@
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
 
+**🗂 Notes like Obsidian**
+- Notes screen = your vault: folders inside folders (any depth) with arrows, guide lines, "My vault · N files, M folders", and a bottom bar: ✎ new note (inside the folder you tapped), 🗀+ new folder, ⇅ sort A–Z / newest, collapse all, ⋯ more
+- Opening a note shows it like Obsidian's reading view: folder path, big title, #tags, numbered steps, bold, tables, ☐/☑ tasks, and [[links]] you can tap. ✎ Edit to change it
+- Import your Obsidian vault: in My Files, long-press the vault folder → Compress (zip). Then ⋯ → Import Obsidian vault (or send the zip with 📎, or say "import my Obsidian vault"). Max shows how many notes and folders first and waits for your yes; importing again updates notes with the same name instead of duplicating them
+- ⋯ → Export vault downloads a zip you can unzip and open as a vault in Obsidian
+- A note's folder is its topic (e.g. Work › Ship's Apps and Tool › AMOS), so Max still files, searches and answers from them as before
+
 **📈 Paper trading (pretend money only)**
 - Two pretend accounts of ₱100,000: PSE stocks with COL Financial fees (0.25% commission, min ₱20, + VAT, PSE/SCCP fees, 0.1% sales tax on sells, board lots) and crypto with Binance spot fees (0.1%), held in USDT
 - Runs by itself on GitHub (workflow "Max paper trader"): PSE every weekday 4:30 pm Manila, crypto daily 8:20 am Manila, the strategy researcher every Sunday. Accounts are saved on the `trader-data` branch (public, like this repo)

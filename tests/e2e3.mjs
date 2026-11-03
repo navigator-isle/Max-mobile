@@ -82,9 +82,9 @@ await say("pull up what I have on ballast in my notes");
 ok(await vis("#notesScreen") && await vis("#miniMax") && await p.inputValue("#notesSearch") === "ballast", "notes opened by voice, search filled, Max minimized at the top");
 ok((await lastSpoken()).includes("2 notes about ballast") && (await p.locator("#miniSay").textContent()).includes("2 notes"), "Max says how many he found (subtitle in mini Max)", await lastSpoken());
 await p.fill("#notesSearch", ""); await p.dispatchEvent("#notesSearch", "input");
-const tops = await p.locator(".topic > summary > span:first-child").allTextContents();
-ok(tops[0] === "Maritime" && tops.at(-1) === "Unsorted" && tops.includes("Personal"), "notes grouped by topic like Obsidian (Unsorted last)", tops.join(","));
-ok(await p.locator(".sub-name", { hasText: "Ballast" }).count() === 1 && await p.locator(".sub-name", { hasText: "Mooring" }).count() === 1, "subtopics inside Maritime");
+const tops = await p.locator("#noteList > .tree-folder > summary > span").allTextContents();
+ok(tops.includes("Maritime") && tops.includes("Personal") && !tops.includes("Unsorted") && await p.locator("#noteList > .tree-note").count() >= 1, "notes in folders like Obsidian (unfiled notes sit at the top level)", tops.join(","));
+ok(await p.locator('.tree-folder[data-path="Maritime › Ballast"]').count() === 1 && await p.locator('.tree-folder[data-path="Maritime › Mooring"]').count() === 1, "subfolders inside Maritime");
 await p.screenshot({ path: process.env.SHOT_DIR + "/v3-notes.png" });
 
 // 5. talk from mini Max: open a note
@@ -132,7 +132,7 @@ await p.waitForFunction(() => /filed/.test(document.getElementById("organizeBann
 const cats = await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).filter(n => !n.deleted).map(n => n.title + "=" + n.category));
 ok(!cats.some(c => c.endsWith("=Unsorted")) && cats.includes("Mooring rope idea=Maritime › Mooring"), "“organise my notes” → all unsorted notes filed", cats.join(" | "));
 // export all
-const [dl2] = await Promise.all([p.waitForEvent("download"), p.click("#exportAll")]);
+const [dl2] = await Promise.all([p.waitForEvent("download"), p.click("#vaultMoreBtn").then(() => p.click("#exportAll"))]);
 const all = fs.readFileSync(await dl2.path(), "utf8");
 ok(/^Max-notes-\d{4}-\d\d-\d\d\.md$/.test(dl2.suggestedFilename()) && all.includes("## Maritime › Ballast") && all.includes("### Family birthdays"), "export all notes as one file, grouped by topic");
 

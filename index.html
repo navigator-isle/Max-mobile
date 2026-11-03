@@ -261,6 +261,61 @@ body[data-coach]::after{content:attr(data-coach);position:fixed;top:8px;left:50%
  .section-screen h1{font-size:1.7rem}
 }
 @media (min-width:1600px){.app-shell{grid-template-columns:440px minmax(0,1fr)}}
+
+/* ---------- Obsidian-style vault ---------- */
+#notesScreen.vault,#editorScreen{--v-bg:#1e1f2e;--v-text:#dcdde8;--v-muted:#9a9cb3;--v-accent:#a88bfa;--v-guide:#3a3c52;--v-hover:#2a2c40}
+#notesScreen.vault .vault-head h1{font-size:1.5rem}
+.vault-tree{display:block!important;padding:6px 0 10px!important;font-size:1.06rem;color:var(--v-text)}
+.vault-tree details>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:9px 6px;border-radius:8px;cursor:pointer;color:var(--v-text);-webkit-tap-highlight-color:transparent}
+.vault-tree details>summary::-webkit-details-marker{display:none}
+.vault-tree details>summary::before{content:'';width:9px;height:9px;flex:0 0 9px;border-right:2px solid var(--v-muted);border-bottom:2px solid var(--v-muted);transform:rotate(-45deg);margin:0 4px 0 2px;transition:transform .15s}
+.vault-tree details[open]>summary::before{transform:rotate(45deg);margin-top:-4px}
+.vault-tree details>summary.sel,.vault-tree .tree-note.sel{background:var(--v-hover)}
+.vault-tree .tree-kids{margin-left:12px;padding-left:16px;border-left:1px solid var(--v-guide)}
+.vault-tree .tree-note{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 6px 9px 28px;border-radius:8px;cursor:pointer;color:var(--v-text);min-height:24px}
+.vault-tree .tree-kids .tree-note{padding-left:6px}
+.vault-tree .tree-note strong{font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vault-tree .tree-note:hover,.vault-tree details>summary:hover{background:var(--v-hover)}
+.vault-tree .tree-note .tag{font-size:.7rem;color:var(--v-muted)}
+.vault-tree .tree-hit{color:var(--v-accent)}
+.vault-bar{position:sticky;bottom:52px;display:flex;justify-content:space-around;gap:6px;padding:8px 6px;background:var(--v-bg);border-top:1px solid var(--v-guide)}
+.vault-bar button{all:unset;cursor:pointer;color:var(--v-muted);font-size:1.45rem;padding:6px 12px;border-radius:10px;line-height:1}
+.vault-bar button:hover,.vault-bar button:focus-visible{background:var(--v-hover);color:var(--v-text)}
+.vault-bar sup{font-size:.7rem}
+.vault-more{display:flex;flex-direction:column;gap:8px;padding:8px 0}
+.vault-more[hidden]{display:none}
+.vault-foot{position:sticky;bottom:0;display:flex;flex-direction:column;padding:8px 6px 12px;background:var(--v-bg);color:var(--v-text)}
+.vault-foot b{font-size:1.25rem}.vault-foot span{color:var(--v-muted);font-size:.9rem}
+.tree-new{display:flex;gap:8px;align-items:center;margin:6px 0}
+.tree-new[hidden]{display:none}
+.tree-new input{flex:1;min-width:0;background:#141522;color:var(--v-text);border:1px solid var(--v-guide);border-radius:10px;padding:10px 12px;font:inherit}
+.note-read{padding:8px 4px 24px;color:var(--v-text);line-height:1.6;font-size:1.06rem}
+.note-read[hidden]{display:none}
+.read-path{color:var(--v-muted);font-size:.85rem;margin-bottom:6px}
+.read-title{font-size:2rem;line-height:1.2;margin:4px 0 16px;color:#e8e2ff}
+.read-body ol,.read-body ul{padding-left:1.6em;margin:.4em 0}
+.read-body li{margin:.35em 0}
+.read-body li::marker{color:var(--v-muted)}
+.read-body a,.read-body .wikilink{color:var(--v-accent);text-decoration:none;cursor:pointer}
+.read-body em,.read-body i{color:#cfd0e6}
+.read-body pre{background:#141522;padding:10px;border-radius:8px;overflow:auto}
+.read-body blockquote{border-left:3px solid var(--v-accent);margin:.6em 0;padding:.2em .9em;color:#cfd0e6}
+.read-body table{border-collapse:collapse}.read-body td,.read-body th{border:1px solid var(--v-guide);padding:4px 8px}
+#editorScreen.reading .full-editor>*:not(.editor-bottom):not(#editorLinksWrap):not(.export-row){display:none!important}
+body.vault-mode{background:#1e1f2e!important}
+body.vault-mode .topbar,body.vault-mode .mini-max{background:transparent}
+body.vault-mode .mini-max{border-color:#3a3c52;background:#25263a}
+body.vault-mode .search-box{background:#25263a;border-color:#3a3c52}
+.vault-tree .tree-folder{border:0!important;background:transparent!important;border-radius:0!important;margin:0!important;overflow:visible!important}
+.vault-tree .tree-folder>summary{justify-content:flex-start!important;font-weight:400!important;padding:9px 6px!important;color:var(--v-text)!important}
+.vault-tree .tree-note{border-top:0!important}
+.vault-tree .tree-note strong{font-size:1.02rem!important;font-weight:400!important}
+#editorScreen.reading #editorPageHeading,#editorScreen.reading #editorBadge{display:none}
+#editorScreen.reading .full-editor{background:transparent!important;border:0!important;min-height:0!important;flex:0 0 auto!important;padding:0 4px!important}
+#editorScreen.reading .editor-bottom{border-top:1px solid #3a3c52;padding-top:10px}
+.read-tags{display:flex;flex-wrap:wrap;gap:6px;margin:-8px 0 14px}.read-tags span{color:var(--v-accent);background:#2d2a45;border-radius:999px;padding:2px 10px;font-size:.85rem}
+#editorScreen.reading #editorAnalysis,#editorScreen.reading #editorSave,#editorScreen.reading #editorDictate{display:none!important}
+.read-toggle{margin-left:auto}
 </style></head>
 <body>
 <script>
@@ -302,7 +357,7 @@ body[data-coach]::after{content:attr(data-coach);position:fixed;top:8px;left:50%
   <header class="topbar">
     <div class="brand">MAX</div>
     <div style="display:flex;align-items:center;gap:8px"><div class="top-status" id="globalStatus">Local mode</div><button id="attachBtn" class="icon-btn" aria-label="Send Max a file or photo" title="Send Max a file or photo">📎</button><button id="openConnection" class="icon-btn" aria-label="Settings" title="Settings">⚙</button></div>
-    <input id="attachInput" type="file" accept="image/*,video/*,audio/*,application/pdf,.pdf,.txt,.md,.csv,.json,.html,.htm,.heic,.heif,.docx,.xlsx,.xlsm,.pptx,.doc,.xls,.ppt,.mp3,.m4a,.wav,.ogg,.aac,.amr,.mp4,.mov,.webm,.3gp" hidden>
+    <input id="attachInput" type="file" accept="image/*,video/*,audio/*,application/pdf,.pdf,.zip,application/zip,.txt,.md,.csv,.json,.html,.htm,.heic,.heif,.docx,.xlsx,.xlsm,.pptx,.doc,.xls,.ppt,.mp3,.m4a,.wav,.ogg,.aac,.amr,.mp4,.mov,.webm,.3gp" hidden>
   </header>
 
   <!-- Max minimized: shown on every screen except the circle screen. Keeps talking and showing subtitles. -->
@@ -370,25 +425,43 @@ body[data-coach]::after{content:attr(data-coach);position:fixed;top:8px;left:50%
     <div id="dispBody" class="disp"></div>
   </main>
 
-  <main id="notesScreen" class="section-screen">
-    <div class="notes-header">
-      <div><h1>Second brain</h1><p id="notesCount">Max checks these first</p></div>
+  <main id="notesScreen" class="section-screen vault">
+    <div class="notes-header vault-head">
+      <div><h1>My vault</h1><p id="notesCount">Max checks these first</p></div>
     </div>
     <label class="search-box"><span aria-hidden="true">⌕</span><input id="notesSearch" placeholder="Search notes…" aria-label="Search notes"></label>
-    <div class="notes-tools">
-      <button id="organizeBtn" class="pill">Organize with Max</button>
-      <button id="exportAll" class="pill">Export all</button>
-    </div>
     <div id="organizeBanner" class="banner" hidden></div>
-    <div id="noteList" class="note-list note-list-page"></div>
-    <button id="newNote" class="add-note-bottom"><span>＋</span> New note</button>
+    <div id="newFolderRow" class="tree-new" hidden><span aria-hidden="true">🗀</span><input id="newFolderName" placeholder="New folder name" aria-label="New folder name" enterkeyhint="done"><button id="newFolderOk" class="pill">Add</button></div>
+    <div id="noteList" class="vault-tree note-list-page" role="tree" aria-label="Notes and folders"></div>
+    <div class="vault-bar" role="toolbar" aria-label="Vault actions">
+      <button id="newNote" title="New note" aria-label="New note">✎</button>
+      <button id="newFolder" title="New folder" aria-label="New folder">🗀<sup>+</sup></button>
+      <button id="sortNotes" title="Sort" aria-label="Change sort order">⇅</button>
+      <button id="collapseAll" title="Collapse all folders" aria-label="Collapse all folders">⌃⌄</button>
+      <button id="vaultMoreBtn" title="More" aria-label="More vault actions">⋯</button>
+    </div>
+    <div id="vaultMore" class="vault-more" hidden>
+      <button id="importVault" class="pill">⤓ Import Obsidian vault (.zip or .md files)</button>
+      <button id="exportVault" class="pill">⤒ Export vault (.zip for Obsidian)</button>
+      <button id="exportAll" class="pill">Export all as one file</button>
+      <button id="organizeBtn" class="pill">Organize with Max</button>
+    </div>
+    <div class="vault-foot"><b>My vault</b><span id="vaultStats"></span></div>
+    <input id="vaultInput" type="file" accept=".zip,.md,text/markdown,application/zip" multiple hidden>
   </main>
 
   <main id="editorScreen" class="section-screen">
     <div class="notes-header">
       <button id="editorBack" class="home-mic">← Notes</button>
+      <button id="readToggle" class="home-mic read-toggle" title="Switch between reading and editing" aria-label="Edit this note">✎ Edit</button>
       <div style="text-align:right"><h1 id="editorPageHeading">New note</h1><p id="editorBadge" class="muted small">Write it your way</p></div>
     </div>
+    <article id="noteRead" class="note-read" hidden>
+      <div id="readPath" class="read-path"></div>
+      <h1 id="readTitle" class="read-title"></h1>
+      <div id="readTags" class="read-tags"></div>
+      <div id="readBody" class="read-body"></div>
+    </article>
     <section class="notes-editor full-editor">
       <input id="editorTitle" placeholder="Title" aria-label="Note title">
       <div class="editor-meta">
@@ -744,7 +817,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- phone ↔ laptop sync of everything else (watchlist, routines progress, projects, settings) ----------
  // Notes, sales, routines and skills already sync as notes. These lists sync too; the newest change wins.
  // Not synced on purpose: passcode/sign-in, hands-free (each device decides), caches, the offline outbox.
- const SYNC_KEYS=['max_watchlist','max_price_alerts','max_currencies','max_routine_state','max_watch','max_crew_inbox','max_projects','max_learned_phrases','max_weather_place','max_personality','max_barge','max_pp_speed','max_last_brief'];
+ const SYNC_KEYS=['max_folders','max_watchlist','max_price_alerts','max_currencies','max_routine_state','max_watch','max_crew_inbox','max_projects','max_learned_phrases','max_weather_place','max_personality','max_barge','max_pp_speed','max_last_brief'];
  const SYNC_META='max_sync_meta';
  const strHash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h+':'+t.length};
  function syncMeta(){try{return JSON.parse(localStorage.getItem(SYNC_META)||'null')}catch{return null}}
@@ -885,6 +958,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   screen=name;
   ['homeScreen','notesScreen','editorScreen','researchScreen','projectsScreen','displayScreen','crewScreen'].forEach(id=>$(id).classList.toggle('active',id===name+'Screen'));
   document.body.classList.toggle('on-home',name==='home');
+  document.body.classList.toggle('vault-mode',name==='notes'||name==='editor');
   $('miniMax').hidden=name==='home';
   if(name==='notes'){renderList();syncNotes()}
   if(name==='research')renderResearch();
@@ -981,33 +1055,78 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hay=(n.title+' '+plain(n.body)+' '+n.category+' '+(n.tags||[]).join(' ')+' '+(n.analysis?.summary||'')).toLowerCase();
   return q.split(/\s+/).filter(Boolean).every(w=>hay.includes(w));
  }
- function renderList(){
-  const list=$('noteList'),q=$('notesSearch').value.toLowerCase().trim(),notes=getNotes().sort((a,b)=>b.updatedAt-a.updatedAt);
-  list.replaceChildren();refreshTopicList();
-  const found=notes.filter(n=>matchesQuery(n,q));
-  $('notesCount').textContent=notes.length+' note'+(notes.length===1?'':'s')+(q?' · '+found.length+' found':' · Max checks these first');
-  if(!found.length){const p=document.createElement('p');p.className='notes-tip';p.style.padding='18px';p.textContent=notes.length?'No matching notes.':'No notes yet. Tap + New note below to begin.';list.append(p);return}
-  const groups=new Map();
-  found.forEach(n=>{const {top,sub}=topicOf(n);if(!groups.has(top))groups.set(top,new Map());const g=groups.get(top);if(!g.has(sub))g.set(sub,[]);g.get(sub).push(n)});
-  const tops=[...groups.keys()].sort((a,b)=>(a==='Unsorted')-(b==='Unsorted')||[...groups.get(b).values()].flat().length-[...groups.get(a).values()].flat().length||a.localeCompare(b));
-  tops.forEach((top,i)=>{
-   const subs=groups.get(top),count=[...subs.values()].flat().length;
-   const det=document.createElement('details');det.className='topic';det.open=!!q||i===0||tops.length<=2;
-   const sum=document.createElement('summary');const name=document.createElement('span');name.textContent=top;const c=document.createElement('span');c.className='count';c.textContent=count;sum.append(name,c);det.append(sum);
-   [...subs.keys()].sort((a,b)=>(a==='')-(b==='')||a.localeCompare(b)).forEach(sub=>{
-    const wrap=document.createElement('div');wrap.className='subtopic';
-    if(sub){const sn=document.createElement('div');sn.className='sub-name';sn.textContent=sub+' · '+subs.get(sub).length;wrap.append(sn)}
-    subs.get(sub).forEach(n=>{
-     const row=document.createElement('div');row.className='note-item';row.tabIndex=0;row.dataset.id=n.id;
-     const t=document.createElement('strong');t.textContent=n.title||'Untitled note';
-     const [bt,bc]=badgeFor(n);const b=document.createElement('span');b.className=bc;b.textContent=bt;
-     row.append(t,b);row.onclick=()=>loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')loadNote(n.id)};wrap.append(row);
-    });
-    det.append(wrap);
-   });
-   list.append(det);
-  });
+ // ---------- Obsidian-style vault: folders from topics ("Work › AMOS"), any depth ----------
+ const TREE_OPEN='max_tree_open',FOLDERS='max_folders',TREE_SORT='max_tree_sort';
+ let selFolder='';
+ const openSet=()=>new Set(jget(TREE_OPEN,[]));
+ const folderList=()=>jget(FOLDERS,[]).map(f=>splitPath(f).join(' › ')).filter(Boolean);
+ function buildTree(notes){
+  const root={name:'',path:'',folders:new Map(),notes:[]};
+  const dirOf=path=>{let node=root;const parts=splitPath(path);parts.forEach((p,i)=>{if(!node.folders.has(p))node.folders.set(p,{name:p,path:parts.slice(0,i+1).join(' › '),folders:new Map(),notes:[]});node=node.folders.get(p)});return node};
+  folderList().forEach(dirOf);
+  notes.forEach(n=>{const c=splitPath(n.category).join(' › ');(c&&c!=='Unsorted'?dirOf(c):root).notes.push(n)});
+  return root;
  }
+ function treeStats(){const notes=getNotes(),t=buildTree(notes);let folders=0;const walk=n=>{for(const f of n.folders.values()){folders++;walk(f)}};walk(t);return {files:notes.length,folders}}
+ function renderList(){
+  const list=$('noteList'),q=$('notesSearch').value.toLowerCase().trim(),all=getNotes();
+  list.replaceChildren();refreshTopicList();
+  const found=all.filter(n=>matchesQuery(n,q));
+  const st=treeStats();
+  $('notesCount').textContent=all.length+' note'+(all.length===1?'':'s')+(q?' · '+found.length+' found':' · Max checks these first');
+  $('vaultStats').textContent=st.files+' file'+(st.files===1?'':'s')+', '+st.folders+' folder'+(st.folders===1?'':'s');
+  if(!found.length&&!(!q&&folderList().length)){const p=document.createElement('p');p.className='notes-tip';p.style.padding='18px';p.textContent=all.length?'No matching notes.':'No notes yet. Tap ✎ below to write one, or ⋯ to import your Obsidian vault.';list.append(p);return}
+  const sort=jget(TREE_SORT,'name'),open=openSet(),fresh=localStorage.getItem(TREE_OPEN)===null&&all.length<=40; // small vaults start fully open
+  const byName=(a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'});
+  const draw=(node,parent)=>{
+   const count=n=>n.notes.length+[...n.folders.values()].reduce((s,f)=>s+count(f),0);
+   [...node.folders.values()].filter(f=>!q||count(f)>0).sort((a,b)=>byName(a.name,b.name)).forEach(f=>{
+    const det=document.createElement('details');det.className='topic tree-folder';det.dataset.path=f.path;det.open=!!q||fresh||open.has(f.path);
+    const sum=document.createElement('summary');if(f.path===selFolder)sum.className='sel';const nm=document.createElement('span');nm.textContent=f.name;sum.append(nm);det.append(sum);
+    det.addEventListener('toggle',()=>{if(q||fresh&&det.open&&!det.dataset.touched)return;const o=fresh&&localStorage.getItem(TREE_OPEN)===null?new Set([...list.querySelectorAll('details[open]')].map(d=>d.dataset.path)):openSet();det.open?o.add(f.path):o.delete(f.path);jset(TREE_OPEN,[...o])});
+    sum.addEventListener('click',()=>{selFolder=f.path;list.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));sum.classList.add('sel')});
+    const kids=document.createElement('div');kids.className='tree-kids';draw(f,kids);det.append(kids);parent.append(det);
+   });
+   node.notes.sort((a,b)=>sort==='modified'?b.updatedAt-a.updatedAt:byName(a.title||'',b.title||'')).forEach(n=>{
+    const row=document.createElement('div');row.className='note-item tree-note';row.tabIndex=0;row.dataset.id=n.id;row.setAttribute('role','treeitem');
+    const t=document.createElement('strong');t.textContent=n.title||'Untitled note';if(q&&(n.title||'').toLowerCase().includes(q))t.className='tree-hit';
+    row.append(t);
+    if(n.source==='research'){const b=document.createElement('span');b.className='tag';b.textContent='research';row.append(b)}
+    row.onclick=()=>loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')loadNote(n.id)};parent.append(row);
+   });
+  };
+  draw(buildTree(found),list);
+ }
+ $('newFolder').onclick=()=>{$('newFolderRow').hidden=false;$('newFolderName').value=selFolder?selFolder+' › ':'';$('newFolderName').focus()};
+ const addFolder=()=>{const v=splitPath($('newFolderName').value).join(' › ');$('newFolderRow').hidden=true;if(!v)return;const l=jget(FOLDERS,[]);if(!l.includes(v))l.push(v);jset(FOLDERS,l);const o=openSet();splitPath(v).forEach((_,i,a)=>o.add(a.slice(0,i+1).join(' › ')));jset(TREE_OPEN,[...o]);selFolder=v;renderList();status('Folder “'+v.split(' › ').pop()+'” added. ✎ makes a note inside it.')};
+ $('newFolderOk').onclick=addFolder;$('newFolderName').onkeydown=e=>{if(e.key==='Enter')addFolder();if(e.key==='Escape')$('newFolderRow').hidden=true};
+ $('sortNotes').onclick=()=>{const v=jget(TREE_SORT,'name')==='name'?'modified':'name';jset(TREE_SORT,v);renderList();status(v==='name'?'Sorted A to Z.':'Newest changes first.')};
+ $('collapseAll').onclick=()=>{jset(TREE_OPEN,[]);renderList()};
+ $('vaultMoreBtn').onclick=()=>{$('vaultMore').hidden=!$('vaultMore').hidden};
+ // reading view (like Obsidian's) — tap ✎ Edit to change the note
+ function setReading(on){
+  $('editorScreen').classList.toggle('reading',!!on);$('noteRead').hidden=!on;
+  $('readToggle').textContent=on?'✎ Edit':'📖 Read';$('readToggle').setAttribute('aria-label',on?'Edit this note':'Read this note');
+  if(on){
+   const path=splitPath($('editorCategory').value).filter(x=>x!=='Unsorted');
+   $('readPath').textContent=path.join(' / ');$('readTags').replaceChildren(...$('editorTags').value.split(',').map(t=>t.trim()).filter(Boolean).map(t=>{const x=document.createElement('span');x.textContent='#'+t;return x}));$('readTitle').textContent=$('editorTitle').value||'Untitled note';
+   const body=$('readBody');body.replaceChildren(safeFragment($('editorBody').innerHTML));wikiLinks(body);
+  }
+ }
+ function wikiLinks(el){
+  const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),hits=[];
+  while(walker.nextNode())if(/\[\[[^\]]+\]\]/.test(walker.currentNode.nodeValue))hits.push(walker.currentNode);
+  for(const t of hits){
+   const frag=document.createDocumentFragment();let last=0;const v=t.nodeValue;
+   for(const m of v.matchAll(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g)){
+    frag.append(v.slice(last,m.index));const a=document.createElement('span');a.className='wikilink';a.textContent=(m[2]||m[1]).trim();a.setAttribute('role','link');a.tabIndex=0;
+    const target=m[1].trim().toLowerCase();a.onclick=()=>{const n=getNotes().find(x=>(x.title||'').toLowerCase()===target);if(n)loadNote(n.id);else status('No note called “'+m[1].trim()+'” yet.')};
+    frag.append(a);last=m.index+m[0].length;
+   }
+   frag.append(v.slice(last));t.replaceWith(frag);
+  }
+ }
+ $('readToggle').onclick=()=>{const reading=$('editorScreen').classList.contains('reading');setReading(!reading);if(reading)$('editorBody').focus()};
  function clearEditor(){
   activeNoteId=null;$('editorTitle').value='';$('editorCategory').value='Unsorted';$('editorTags').value='';$('editorBody').innerHTML='';$('editorAnalysis').textContent='Write your note, then save. Max can analyze it separately.';$('editorPageHeading').textContent='New note';$('editorBadge').textContent='Write it your way';$('editorLinksWrap').hidden=true;dirty=false;
  }
@@ -1033,7 +1152,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   $('editorBadge').textContent=(n.source==='research'?'Research ✓ approved by you':'My note')+(n.filedByMax?' · filed by Max':'');
   const links=linkedNotes(n),box=$('editorLinks');box.replaceChildren();$('editorLinksWrap').hidden=!links.length;
   links.forEach(o=>{const b=document.createElement('button');b.textContent='↔ '+(o.title||'Untitled');b.onclick=()=>loadNote(o.id);box.append(b)});
-  dirty=false;setSection('editor');
+  dirty=false;setSection('editor');setReading(!!(n.body&&n.body!=='<br>'));
  }
  function saveCurrent(){
   const body=$('editorBody').innerHTML.trim();if(!body||body==='<br>'){status('Write something in your note first.');return null}
@@ -1042,7 +1161,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const cat=splitPath($('editorCategory').value).join(' › ');
   if(n.category&&cat!==n.category)n.filedByMax=false;
   n.title=$('editorTitle').value.trim()||$('editorBody').innerText.split('\n')[0].slice(0,80)||'Untitled note';n.category=cat||'Unsorted';n.tags=$('editorTags').value.split(',').map(x=>x.trim()).filter(Boolean);n.body=body;n.updatedAt=Date.now();
-  putNotes(notes);dirty=false;$('editorPageHeading').textContent=n.title;renderList();status(cloud.memory?'Note saved. Syncing…':'Note saved on this phone.');
+  putNotes(notes);dirty=false;$('editorPageHeading').textContent=n.title;renderList();if(!$('noteRead').hidden)setReading(true);status(cloud.memory?'Note saved. Syncing…':'Note saved on this phone.');
   if(n.category==='Unsorted'&&workerBase())analyze(n,{quiet:true}).catch(()=>{}); // Max files it into a topic
   return n;
  }
@@ -1084,7 +1203,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   renderList();
   return filed?'Done. I filed '+filed+' note'+(filed===1?'':'s')+' into topics.':'I could not find good topics for those notes yet.';
  }
- const createNewNote=title=>{clearEditor();if(title)$('editorTitle').value=title;setSection('editor');$('editorTitle').focus()};
+ const createNewNote=title=>{clearEditor();if(selFolder&&screen==='notes')$('editorCategory').value=selFolder;if(title)$('editorTitle').value=title;setSection('editor');setReading(false);$('editorTitle').focus()};
  $('newNote').onclick=()=>createNewNote('');
  $('editorBack').onclick=()=>{if(dirty&&!confirm('You have unsaved changes. Leave without saving?'))return;setSection('notes')};
  $('editorSave').onclick=()=>{const n=saveCurrent();if(n)status(cloud.memory?'Saved. Syncing to cloud…':'Saved successfully.')};
@@ -1148,6 +1267,120 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  const fileSafe=s=>String(s||'note').replace(/[\\/:*?"<>|#^[\]]+/g,' ').replace(/\s+/g,' ').trim().slice(0,80)||'note';
  function exportNote(n){download(fileSafe(n.title)+'.md',noteToMd(n))}
+ // ---------- Obsidian vault: import (.zip or .md files) and export (.zip) ----------
+ function mdInline(t){
+  let x=escHtml(t);
+  x=x.replace(/`([^`]+)`/g,'<code>$1</code>')
+   .replace(/!\[\[([^\]]+)\]\]/g,'🖼 $1').replace(/!\[([^\]]*)\]\([^)]*\)/g,'🖼 $1')
+   .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2">$1</a>')
+   .replace(/\*\*([^*]+)\*\*|__([^_]+)__/g,(_,a,b)=>'<b>'+(a||b)+'</b>')
+   .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\*)/g,'$1<i>$2</i>').replace(/(^|[^_\w])_([^_\n]+)_(?!\w)/g,'$1<i>$2</i>')
+   .replace(/==([^=]+)==/g,'<b>$1</b>').replace(/~~([^~]+)~~/g,'$1');
+  return x;
+ }
+ function mdToHtml(md){
+  const lines=String(md||'').replace(/\r\n?/g,'\n').split('\n'),out=[];let i=0;
+  const listRe=/^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
+  while(i<lines.length){
+   const l=lines[i];
+   if(/^\s*```/.test(l)){const code=[];i++;while(i<lines.length&&!/^\s*```/.test(lines[i]))code.push(lines[i++]);i++;out.push('<pre><code>'+escHtml(code.join('\n'))+'</code></pre>');continue}
+   const h=l.match(/^(#{1,6})\s+(.*)$/);if(h){const n=Math.min(4,h[1].length);out.push('<h'+n+'>'+mdInline(h[2])+'</h'+n+'>');i++;continue}
+   if(/^\s*([-*_])\s*\1\s*\1[\s\1]*$/.test(l)){out.push('<hr>');i++;continue}
+   if(/^\s*>/.test(l)){const q=[];while(i<lines.length&&/^\s*>/.test(lines[i]))q.push(lines[i++].replace(/^\s*>\s?/,'').replace(/^\[!(\w+)\][+-]?\s*/,(_,k)=>k.toUpperCase()+': '));out.push('<blockquote>'+q.map(mdInline).join('<br>')+'</blockquote>');continue}
+   if(/^\s*\|.*\|\s*$/.test(l)){const rows=[];while(i<lines.length&&/^\s*\|.*\|\s*$/.test(lines[i]))rows.push(lines[i++]);const cells=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());const body=rows.filter(r=>!/^\s*\|?\s*:?-{2,}/.test(r));out.push('<table>'+body.map((r,k)=>'<tr>'+cells(r).map(c=>k===0&&rows.length>1&&/^\s*\|?\s*:?-{2,}/.test(rows[1])?'<th>'+mdInline(c)+'</th>':'<td>'+mdInline(c)+'</td>').join('')+'</tr>').join('')+'</table>');continue}
+   if(listRe.test(l)){
+    // nested lists by indentation
+    const stack=[];let html='';
+    while(i<lines.length&&(listRe.test(lines[i])||(/^\s{2,}\S/.test(lines[i])&&stack.length))){
+     const m=lines[i].match(listRe);
+     if(!m){html+='<br>'+mdInline(lines[i].trim());i++;continue}
+     const ind=m[1].replace(/\t/g,'    ').length,tag=/\d/.test(m[2])?'ol':'ul';
+     let text=m[3].replace(/^\[ \]\s*/,'☐ ').replace(/^\[[xX]\]\s*/,'☑ ');
+     while(stack.length&&ind<stack.at(-1).ind){html+='</li></'+stack.pop().tag+'>'}
+     if(!stack.length||ind>stack.at(-1).ind){html+='<'+tag+'>';stack.push({ind,tag})}
+     else html+='</li>';
+     html+='<li>'+mdInline(text);i++;
+    }
+    while(stack.length)html+='</li></'+stack.pop().tag+'>';
+    out.push(html);continue;
+   }
+   if(!l.trim()){i++;continue}
+   const para=[];while(i<lines.length&&lines[i].trim()&&!listRe.test(lines[i])&&!/^(#{1,6})\s|^\s*```|^\s*>|^\s*\|/.test(lines[i]))para.push(mdInline(lines[i++]));
+   out.push('<p>'+para.join('<br>')+'</p>');
+  }
+  return out.join('');
+ }
+ function parseMdNote(path,text){
+  let md=String(text||''),tags=[],fmTitle='';
+  const fm=md.match(/^---\n([\s\S]*?)\n---\n?/);
+  if(fm){md=md.slice(fm[0].length);const y=fm[1];
+   const tl=y.match(/^tags:\s*\[([^\]]*)\]/m);if(tl)tags=tl[1].split(',').map(x=>x.trim().replace(/^["']|["']$/g,'')).filter(Boolean);
+   else{const tb=y.match(/^tags:\s*\n((?:\s*-\s*.+\n?)+)/m);if(tb)tags=tb[1].split('\n').map(x=>x.replace(/^\s*-\s*/,'').trim()).filter(Boolean)}
+   const tt=y.match(/^title:\s*["']?(.+?)["']?\s*$/m);if(tt)fmTitle=tt[1]}
+  const parts=path.split('/').filter(Boolean),file=parts.pop()||'note.md';
+  let title=fmTitle||file.replace(/\.md$/i,'');
+  md=md.replace(/^\s*#\s+(.+)\n/,(all,h)=>h.trim().toLowerCase()===title.toLowerCase()?'':all); // the title is shown already
+  (md.match(/(^|\s)#([A-Za-z][\w/-]{1,40})/g)||[]).forEach(t=>tags.push(t.trim().slice(1)));
+  return {title,category:parts.join(' › ')||'Unsorted',tags:[...new Set(tags)].slice(0,12),body:mdToHtml(md.trim())||'<p></p>'};
+ }
+ async function importVault(files){
+  const items=[];let skipped=0,folders=new Set();
+  for(const f of files){
+   if(/\.zip$/i.test(f.name)||f.type==='application/zip'){
+    if(typeof DecompressionStream!=='function')return 'This browser can’t open zip files. Update Chrome, or pick the .md files instead.';
+    let z;try{z=await unzip(await f.arrayBuffer())}catch(e){return 'I couldn’t open that zip file. '+(e.message||'')}
+    for(const name of Object.keys(z)){
+     if(/(^|\/)(\.obsidian|\.trash|__MACOSX)\//.test(name)){continue}
+     if(name.endsWith('/')){folders.add(name.replace(/\/$/,''));continue}
+     if(!/\.md$/i.test(name)){skipped++;continue}
+     try{items.push({path:name,text:await z[name]()})}catch{skipped++}
+    }
+   }else if(/\.md$/i.test(f.name)||f.type==='text/markdown'){items.push({path:f.webkitRelativePath||f.name,text:await f.text()})}
+   else skipped++;
+  }
+  if(!items.length)return 'I didn’t find any notes (.md files) in that. In My Files, long-press your vault folder → Compress (zip), then send me the zip.';
+  // drop the vault's own folder name ("My vault/Work/…" → "Work/…")
+  const firsts=new Set(items.map(x=>x.path.split('/')[0]));
+  const strip=firsts.size===1&&items.every(x=>x.path.includes('/'))?[...firsts][0]+'/':'';
+  const parsed=items.map(x=>parseMdNote(x.path.slice(strip.length),x.text));
+  const dirs=[...folders].map(d=>d.startsWith(strip.replace(/\/$/,''))?d.slice(strip.length):d).filter(Boolean).map(d=>d.split('/').join(' › '));
+  const existing=loadAll(),key=n=>(splitPath(n.category).join(' › ')+'|'+(n.title||'')).toLowerCase();
+  const byKey=new Map(existing.filter(n=>!n.deleted).map(n=>[key(n),n]));
+  const updates=parsed.filter(n=>byKey.has(key(n))).length;
+  const folderCount=new Set(parsed.flatMap(n=>splitPath(n.category).filter(x=>x!=='Unsorted').map((_,i,a)=>a.slice(0,i+1).join(' › '))).concat(dirs)).size;
+  return askConfirm('Import '+parsed.length+' note'+(parsed.length===1?'':'s')+' in '+folderCount+' folder'+(folderCount===1?'':'s')+(updates?' — '+updates+' of them replace notes you already have with the same name':'')+'? Say yes or no.',async()=>{
+   const all=loadAll(),idx=new Map(all.filter(n=>!n.deleted).map(n=>[key(n),n])),now=Date.now();
+   for(const p of parsed){const old=idx.get(key(p));if(old){Object.assign(old,{body:p.body,tags:p.tags.length?p.tags:old.tags,updatedAt:now})}else all.push({id:newId(),...p,source:'obsidian',createdAt:now,updatedAt:now,deleted:false,analysis:null})}
+   putNotes(all);
+   const fl=jget(FOLDERS,[]);dirs.forEach(d=>{if(!fl.includes(d))fl.push(d)});jset(FOLDERS,fl);
+   setSection('notes');renderList();
+   return 'Imported '+parsed.length+' note'+(parsed.length===1?'':'s')+' into '+folderCount+' folder'+(folderCount===1?'':'s')+(updates?', '+updates+' updated':'')+(skipped?'. I skipped '+skipped+(skipped===1?' file that isn’t a note':' files that aren’t notes')+' (pictures and settings stay in Obsidian)':'')+'.';
+  },[{badge:'IMPORT',badgeClass:'badge-draft',title:parsed.length+' notes · '+folderCount+' folders',lines:parsed.slice(0,8).map(n=>'• '+(n.category!=='Unsorted'?n.category+' › ':'')+n.title).concat(parsed.length>8?['…and '+(parsed.length-8)+' more']:[])}],'Import your Obsidian vault?');
+ }
+ $('importVault').onclick=()=>{$('vaultMore').hidden=true;$('vaultInput').click()};
+ $('vaultInput').onchange=async()=>{const fs=[...$('vaultInput').files];$('vaultInput').value='';if(!fs.length)return;const t=await importVault(fs);setSub('📎 '+fs.map(f=>f.name).join(', ').slice(0,60),t);speak(t)};
+ // a small zip writer (stored, no compression) — Obsidian opens it as a vault folder
+ const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+ const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=crcTable[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
+ function zipFiles(files){
+  const enc=new TextEncoder(),parts=[],central=[];let off=0;
+  for(const f of files){
+   const name=enc.encode(f.name),data=enc.encode(f.text),crc=crc32(data);
+   const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint32(14,crc,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,name.length,true);
+   parts.push(new Uint8Array(h.buffer),name,data);
+   const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,name.length,true);c.setUint32(42,off,true);
+   central.push(new Uint8Array(c.buffer),name);off+=30+name.length+data.length;
+  }
+  const csize=central.reduce((s,x)=>s+x.length,0),e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,csize,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:'application/zip'});
+ }
+ function exportVault(){
+  const notes=getNotes();if(!notes.length)return 'You have no notes to export yet.';
+  const used=new Set(),files=notes.map(n=>{const dir=splitPath(n.category).filter(x=>x!=='Unsorted').map(fileSafe).join('/');let name=(dir?dir+'/':'')+fileSafe(n.title)+'.md',k=2;while(used.has(name.toLowerCase()))name=name.replace(/( \d+)?\.md$/,' '+(k++)+'.md');used.add(name.toLowerCase());return {name:'Max vault/'+name,text:noteToMd(n)}});
+  const a=document.createElement('a');a.href=URL.createObjectURL(zipFiles(files));a.download='Max-vault-'+new Date().toISOString().slice(0,10)+'.zip';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+  return 'Your vault is downloading: '+notes.length+' notes in their folders. Unzip it and open the folder in Obsidian.';
+ }
+ $('exportVault').onclick=()=>{$('vaultMore').hidden=true;const t=exportVault();status(t)};
  function exportAllNotes(){
   const notes=getNotes();if(!notes.length)return 'You have no notes to export yet.';
   const byTopic=new Map();notes.forEach(n=>{const k=splitPath(n.category).join(' › ')||'Unsorted';if(!byTopic.has(k))byTopic.set(k,[]);byTopic.get(k).push(n)});
@@ -1326,6 +1559,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- obsidian vault ----
+  if(has(/\b(import|bring in|load|add|upload)\b.*\b(obsidian|vault)\b/))return {type:'import_vault'};
+  if(has(/\b(export|download|backup|back up)\b.*\b(obsidian|vault)\b/))return {type:'export_vault'};
   // ---- paper trading ----
   if(has(/\b(trading|trade|trades)\b.*\b(emails?|mails?|notifications?)\b|\b(emails?|notifications?)\b.*\btrading\b/)&&has(/\b(off|stop|disable|no more|on|enable|start|resume)\b/))return {type:'trading_emails',details:{on:has(/\b(off|stop|disable|no more)\b/)?'off':'on'}};
   if(has(/\bpaper (trading|trade|trades|account|portfolio)\b|\b(my|your|max'?s?) (trades|trading|portfolio)\b|\btrading (account|update|updates|status|results?)\b|\bwhat did you (buy|sell|trade)\b|\b(orders?) for (tomorrow|the open|monday)\b/)&&!has(/\b(research|note|remind)\b/))return {type:'trading_status',details:{project:has(/\bcrypto|bitcoin|binance\b/)?'crypto':has(/\b(pse|stocks?|col)\b/)?'pse':''}};
@@ -2045,6 +2281,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  $('attachInput').onchange=async()=>{
   const f=$('attachInput').files[0];$('attachInput').value='';if(!f)return;
+  if(/\.zip$/i.test(f.name)||f.type==='application/zip'){const t=await importVault([f]);setSub('📎 '+f.name,t);speak(t);return}
   const s=await readAttachment(f);setSub('📎 '+f.name,s);speak(s);
  };
 
@@ -3257,6 +3494,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'set_weather_place':return await setWeatherPlace(a.details||{location:a.query});
    case 'set_personality':return setPersonality(a.details||{name:a.query});
    case 'usage':return usageReport();
+   case 'import_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Import Obsidian vault” and pick your vault zip. To make the zip: in My Files, long-press your vault folder and choose Compress.';
+   case 'export_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Export vault” to download all your notes as an Obsidian vault.';
    case 'trading_status':return await tradingStatus(a.details||{});
    case 'trading_emails':return await tradingEmails(a.details?.on!=='off');
    case 'hands_free':return handsFree(a.details?.on!=='off');
