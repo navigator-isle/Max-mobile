@@ -115,8 +115,10 @@ export function stepBook(book, ctx) {
   const sized = (s, stopDist) => Math.min(eq * (P.risk ?? 1) / 100 * s.I.c[s.idx] / stopDist, eq * 0.25);   // risk % of equity, max 25% in one name
   const halted = ctx.halt;  // master risk breaker: no new entries
   if (book.template === 'rotation') {
-    const due = M === 'crypto' ? ctx.newWeek : ctx.newMonth;
+    book.sinceRotate = (book.sinceRotate ?? 99) + 1;
+    const due = (M === 'crypto' ? ctx.newWeek : ctx.newMonth) && book.sinceRotate >= 5;
     if (due) {
+      book.sinceRotate = 0;
       const ranked = live.map(([sym, s]) => { const i = s.idx, look = P.look, skip = P.skip || 0; const m = i > look ? s.I.c[i - skip] / s.I.c[i - look] - 1 : NaN; const ok = s.I.c[i] > (P.trendSma === 100 ? s.I.sma100[i] : s.I.sma200[i]) && m > 0; return { sym, m, ok }; })
         .filter(x => x.ok && Number.isFinite(x.m)).sort((a, b) => b.m - a.m).slice(0, P.K).map(x => x.sym);
       for (const sym of Object.keys(book.positions)) if (!ranked.includes(sym)) exit(sym, 'rotated out');
@@ -271,7 +273,7 @@ export function rebalanceMaster(master, books, weights, ctx, events) {
     const hold = Object.fromEntries(Object.entries(b.positions).map(([sym, p]) => [sym, { qty: p.qty, why: p.why }]));
     for (const od of b.pending || []) {
       if (od.side === 'sell') delete hold[od.sym];
-      else { const c = px(od.sym); if (c && od.amount) hold[od.sym] = { qty: Math.min(od.amount, b.cash) / c, why: od.why }; }
+      else { const c = px(od.sym); if (c && od.amount) hold[od.sym] = { qty: Math.min(od.amount, be) / c, why: od.why }; }
     }
     for (const [sym, h] of Object.entries(hold)) { target[sym] = (target[sym] || 0) + h.qty * scale; reason[sym] ||= `${id}: ${h.why || 'signal'}`; }
   }
@@ -279,7 +281,7 @@ export function rebalanceMaster(master, books, weights, ctx, events) {
   for (const sym of new Set([...Object.keys(target), ...Object.keys(master.positions)])) {
     const s = ctx.syms[sym]; if (!s || s.idx < 0) continue;
     const price = s.I.c[s.idx], cur = master.positions[sym]?.qty || 0, want = roundQty(M, target[sym] || 0, price), diff = want - cur;
-    const minTrade = M === 'crypto' ? Math.max(20, eq * 0.02) : Math.max(1000, boardLot(price) * price);
+    const minTrade = M === 'crypto' ? Math.max(10, eq * 0.005) : Math.max(1000, boardLot(price) * price);
     // only trade when it matters: opening, closing, or a change of at least a quarter of the position
     if (want > 0 && cur > 0 && Math.abs(diff) < 0.25 * cur) continue;
     if (Math.abs(diff) * price < minTrade && want !== 0) continue;

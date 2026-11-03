@@ -46,4 +46,29 @@ const neg = Object.values(st.markets).some(m => m.master.cash < -1e-6 || Object.
 ok(!neg, "no account or strategy ever goes below zero cash");
 const src = fs.readFileSync(new URL("../trader/lib.mjs", import.meta.url), "utf8") + fs.readFileSync(new URL("../trader/run.mjs", import.meta.url), "utf8");
 ok(!/api\/v3\/order|signature=|X-MBX-APIKEY|apiKey|secretKey/i.test(src), "no exchange order endpoint or API key anywhere in the trader (paper only)");
+
+// the main account copies a strategy's planned buys the same evening, even small ones, and even when the strategy's cash is tied up until its sells fill
+{
+  const bars = []; let p = 100; for (let i = 0; i < 260; i++) { const o = p; p *= 1.003; bars.push([day(i), o, p * 1.01, o * 0.99, p, 1e9]); }
+  const data = L.prepare({ BTC: bars, ETH: bars.map(b => [...b]) }, { BTC: "crypto", ETH: "crypto" });
+  const ctx = L.makeCtx("crypto", data, day(259), day(258));
+  const book = L.newBook({ id: "r", market: "crypto", template: "rotation", params: { K: 2, look: 90, skip: 0, trendSma: 100 }, universe: ["BTC", "ETH"], startCash: 1500, created: day(0) });
+  book.cash = 20; book.positions = { ETH: { qty: 10, entry: 140, last: 150, date: day(250), bars: 5 } }; book.equity = [[day(258), 1520]];
+  book.pending = [{ side: "sell", sym: "ETH", why: "rotated out", wait: 0 }, { side: "buy", sym: "BTC", why: "top momentum", amount: 700, wait: 0 }];
+  const small = L.newBook({ id: "s", market: "crypto", template: "rsi2", params: { th: 10, stopATR: 3, maxDays: 10, risk: 1, maxPos: 4 }, universe: ["BTC"], startCash: 1500, created: day(0) });
+  small.equity = [[day(258), 1500]]; small.pending = [{ side: "buy", sym: "ETH", why: "dip", amount: 110, wait: 0 }];
+  const master = { market: "crypto", cash: 1500, start: 1500, positions: {}, trades: [], equity: [], halt: false };
+  const ev = []; L.rebalanceMaster(master, { r: book, s: small }, { r: 0.4, s: 0.15 }, ctx, ev);
+  const btc = master.pending.find(o => o.sym === "BTC"), eth = master.pending.find(o => o.sym === "ETH");
+  ok(btc && btc.qty * bars[259][4] > 250, "main account copies a rotation buy at its planned size (not limited by cash still in stocks it is selling)", JSON.stringify(master.pending));
+  ok(eth && eth.qty * bars[259][4] > 10, "small crypto orders (~16 USDT) are copied too", JSON.stringify(master.pending));
+}
+// rotation doesn't flip-flop: at least 5 trading days between rotations
+{
+  const bars = []; let p = 100; for (let i = 0; i < 300; i++) { const o = p; p *= 1.002; bars.push([day(i), o, p * 1.01, o * 0.99, p, 1e9]); }
+  const data = L.prepare({ BTC: bars }, { BTC: "crypto" });
+  const book = L.newBook({ id: "r", market: "crypto", template: "rotation", params: { K: 1, look: 90, skip: 0, trendSma: 100 }, universe: ["BTC"], startCash: 1500, created: day(0) });
+  let rot = 0; for (let i = 270; i < 285; i++) { const c = L.makeCtx("crypto", data, day(i), day(i - 1)); c.newWeek = true; const before = book.sinceRotate; L.stepBook(book, c); if (book.sinceRotate === 0) rot++; }
+  ok(rot === 3, "with a 'new week' every day, rotation still waits 5 trading days between rebalances", rot);
+}
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
