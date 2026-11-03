@@ -416,7 +416,7 @@ body.vault-mode .search-box{background:#25263a;border-color:#3a3c52}
   </main>
 
   <main id="crewScreen" class="section-screen">
-    <div class="notes-header"><div><h1>My crew</h1><p>Talk to Max, or name one: “secretary, brief me”, “researcher, keep an eye on BWM updates”, “librarian, find duplicate notes”.</p></div></div>
+    <div class="notes-header"><div><h1>My departments</h1><p>Six teams working for you. Name one: “website team, check Hobby Isle”, “apps, show the Play Store”, “trading desk, how is it going”, “librarian, find duplicates”, “secretary, brief me”, “fitness coach, let’s talk”.</p></div></div>
     <div id="crewBody" class="disp"></div>
   </main>
 
@@ -1538,7 +1538,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status','trading_emails','weather','set_weather_place','set_personality','whatsapp_draft'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status','trading_emails','site_audit','seo_ideas','content_draft','weather','set_weather_place','set_personality','whatsapp_draft'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1559,6 +1559,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- departments ----
+  if(has(/\b(my |the |show (me )?(my |the )?)?departments?\b|\bmy teams\b|\bsub ?workers\b/))return {type:'show_crew'};
+  {const pr=projects().find(x=>x.site&&(n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al)))));
+   const soloSite=projects().filter(x=>x.site).length===1?projects().find(x=>x.site):null,sp=pr||(has(/\b(website|site|blog|web team|website team|affiliate)\b/)?soloSite:null);
+   if(sp&&has(/\b(check|audit|scan|test)\b/)&&has(/\b(security|seo|site|website|links?|health|speed)\b/)&&!has(/\b(visitors?|traffic|sales|up\b|is it up)\b/))return {type:'site_audit',details:{project:sp.name}};
+   if(sp&&has(/\b(seo|keywords?)\b/)||sp&&has(/\b(content|post|blog|article) ideas?\b/))return {type:'seo_ideas',details:{project:sp.name,topic:(raw.match(/\b(?:about|on|for)\s+(?!hobby isle)(.{3,60})$/i)||[])[1]||''}};
+   const wm=raw.match(/\b(?:write|draft|create|make)\s+(?:me\s+)?(?:a|an)?\s*(blog post|post|article|review|guide|comparison|social(?: media)? post|caption)\s+(?:for\s+[\w ]+?\s+)?(?:about|on|for|of)\s+(.{3,})$/i);
+   if(wm&&!/\b(email|e-mail|mail|message|whatsapp)\b/i.test(raw)&&(sp||soloSite))return {type:'content_draft',details:{project:(sp||soloSite).name,topic:wm[2].replace(/\s+for\s+hobby\s*isle$/i,'').trim(),name:/review/i.test(wm[1])?'review':/guide/i.test(wm[1])?'guide':/comparison/i.test(wm[1])?'comparison':/social|caption/i.test(wm[1])?'social':'blog'}};
+  }
   // ---- obsidian vault ----
   if(has(/\b(import|bring in|load|add|upload)\b.*\b(obsidian|vault)\b/))return {type:'import_vault'};
   if(has(/\b(export|download|backup|back up)\b.*\b(obsidian|vault)\b/))return {type:'export_vault'};
@@ -1781,9 +1790,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- your projects: open by voice, check if they're up, pass on change requests ----------
  const DEFAULT_PROJECTS=[
   {id:'max',name:'Max',url:'https://navigator-isle.github.io/Max-mobile/',repo:'navigator-isle/Max-mobile',aliases:['max app','this app','yourself']},
-  {id:'passage',name:'Passage Planner',url:'https://navigator-isle.github.io/',repo:'navigator-isle/navigator-isle.github.io',androidRepo:'navigator-isle/passage-planner-android',aliases:['passage plan','passage','route planner','voyage planner','navigator isle']},
-  {id:'draft',name:'Quick Draft Calculator',url:'https://draft-calculator.github.io/Draft-Calculator/',repo:'',aliases:['draft calculator','draft calc','quick draft','draft survey']},
-  {id:'hobby',name:'Hobby Isle',url:'https://hobbyisle.com/',repo:'navigator-isle/hobbyisle',analytics:true,earns:true,aliases:['hobbyisle','hobby site','gundam site','gunpla site','my website']},
+  {id:'passage',name:'Passage Planner',play:true,niche:'passage planning app for ship officers (distances, ETA, weather routing)',url:'https://navigator-isle.github.io/',repo:'navigator-isle/navigator-isle.github.io',androidRepo:'navigator-isle/passage-planner-android',aliases:['passage plan','passage','route planner','voyage planner','navigator isle']},
+  {id:'draft',name:'Quick Draft Calculator',appLike:true,niche:'draft survey calculator for ship officers',url:'https://draft-calculator.github.io/Draft-Calculator/',repo:'',aliases:['draft calculator','draft calc','quick draft','draft survey']},
+  {id:'hobby',name:'Hobby Isle',url:'https://hobbyisle.com/',repo:'navigator-isle/hobbyisle',analytics:true,earns:true,site:true,niche:'Gundam / Gunpla model kits and anime collectibles — affiliate site with buying guides and lists',aliases:['hobbyisle','hobby site','gundam site','gunpla site','my website']},
   {id:'checklist',name:'Officer Checklist',url:'https://claude.ai/artifact/9j5SkqSG5sMiX8tpC2ieqS',repo:'',aliases:['checklist','officer checklist','ship app','inventory','ship checklist']},
   {id:'sealex',name:'SeaLex',url:'https://claude.ai/artifact/AzwR4SjQNGSKbBcZsiKm9E',repo:'',aliases:['sea lex','maritime hub','imo updates','info bank']},
   {id:'reviewer',name:'Deck Board Reviewer',url:'https://claude.ai/artifact/BcWnWqHA29UWhb2V96yeDM',repo:'',earns:true,aliases:['reviewer','marina reviewer','exam reviewer','board reviewer']},
@@ -3350,18 +3359,33 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function renderCrew(){
   const box=$('crewBody');if(!box)return;box.replaceChildren();
   const dl=findDeadlines(30),watch=jget(WATCH_KEY,[]),inbox=jget(INBOX_KEY,[]),notes=getNotes().filter(n=>n.category!==SKILL_CAT),skills=getSkills();
-  const unsorted=notes.filter(n=>!n.category||n.category==='Unsorted').length;
-  const run=(type,q)=>()=>doAction({type,query:q||''},'').then(t=>{if(t){setSub('',t);speak(t)}});
-  const crew=[
-   {badge:'SECRETARY',title:'📋 Secretary',meta:'deadlines · briefing · schedule',lines:dl.length?dl.slice(0,3).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['No deadlines in the next 30 days.'],buttons:[['Brief me',run('briefing')],['Deadlines',run('deadlines')]]},
-   {badge:'RESEARCHER',badgeClass:'badge-res',title:'🔎 Researcher',meta:'research · watch list · fact-checks',lines:[...(inbox.length?[{text:inbox.length+' update'+(inbox.length===1?'':'s')+' waiting for approval',cls:'miss'}]:[]),...(watch.length?watch.map(t=>'Watching: '+t.topic+(t.lastChecked?' (checked '+whenText(localDate(new Date(t.lastChecked)))+')':' (not checked yet)')):['No watched topics. Say “keep an eye on BWM updates”.'])],
-    buttons:[...inbox.slice(0,3).map(it=>['Open: '+it.topic,()=>{const t=openInbox(it.id);setSub('',t);speak(t)}]),...(watch.length?[['Check now',run('check_watch')]]:[])]},
-   {badge:'LIBRARIAN',badgeClass:'badge-res',title:'🗂 Librarian',meta:'filing · duplicates · tidy-ups',lines:[notes.length+' notes'+(unsorted?' · '+unsorted+' not filed':' · all filed')],buttons:[['Library report',run('library_report')],['Duplicates',run('find_duplicates')],...(unsorted?[['Organize',run('organize_notes')]]:[])]},
-   {badge:'COACHES',badgeClass:'badge-note',title:'🎯 Your coaches',meta:'investment · fitness · skills · business · career · life',lines:COACH_IDS.map(id=>{const n=coachNote(id);return COACHES[id].icon+' '+COACHES[id].name+(n?' — last session '+whenText(localDate(new Date(n.updatedAt))):' — not started')}),buttons:COACH_IDS.map(id=>[COACHES[id].icon+' '+COACHES[id].name.replace(' coach',''),()=>{const t=coachTalk({coach:id});setSub('',t);speak(t)}])},
-   {badge:'ROUTINES',badgeClass:'badge-res',title:'🔁 Routines',meta:routines().length+' routine'+(routines().length===1?'':'s'),lines:routines().length?routines().map(r=>'• '+r.name+' — 🔥 '+(rstate()[r.id]?.streak||0)+' days'):['Say “my morning routine is …”.'],buttons:routines().slice(0,3).map(r=>['Start '+r.name,()=>{const t=startRoutine({name:r.name});setSub('',t);speak(t)}])},
-   {badge:'SKILLS',badgeClass:'badge-draft',title:'🧠 Skills you taught Max',meta:skills.length+' skill'+(skills.length===1?'':'s'),lines:skills.length?skills.map(n=>'• '+n.title.replace(/^Skill:\s*/,'')):['Say “new skill …” to teach me one.'],buttons:skills.length?[['Show skills',run('show_skills')]]:[]}];
-  crew.forEach(c=>{
-   const card=document.createElement('article');card.className='disp-card';
+  const unsorted=notes.filter(n=>!n.category||n.category==='Unsorted').length,list=projects();
+  const run=(type,details,q)=>()=>doAction({type,details:details||{},query:q||''},'').then(t=>{if(t){setSub('',t);speak(t)}});
+  const sites=list.filter(p=>p.site),apps=list.filter(p=>p.play||p.appLike),tr=jget(TR_CACHE,null)?.data,wl=watchlist();
+  const st=p=>projStatus[p.id]?.up===true?'up':projStatus[p.id]?.up===false?'DOWN':'not checked';
+  const audits=jget('max_site_audits',{});
+  const depts=[
+   {badge:'APPS',badgeClass:'badge-res',title:'📱 Apps & Play Store',meta:'release manager · store listing · reviews',
+    lines:apps.map(p=>({text:p.name+' — '+(p.play?'on Google Play (closed test)':'website only, not on Play yet')+' · site '+st(p),cls:st(p)==='DOWN'?'miss':''})),
+    buttons:[['Play Store status',run('play_overview',{project:'Passage Planner'})],['Reviews',run('play_reviews',{project:'Passage Planner'})],['Build status',run('build_status',{project:'Passage Planner'})]]},
+   {badge:'WEBSITES',badgeClass:'badge-res',title:'🌐 Websites & affiliate',meta:'webmaster · SEO researcher · content writer · security & SEO checker · pictures · sales',
+    lines:[...sites.map(p=>({text:p.name+' — '+st(p)+(audits[p.id]?' · last check '+audits[p.id].score+'/100 ('+whenText(localDate(new Date(audits[p.id].at)))+')':' · not audited yet'),cls:st(p)==='DOWN'||(audits[p.id]?.score??100)<60?'miss':''})),
+     'Pictures: send a photo with 📎 and ask for alt text and a file name.','Comments: tell me where comments are kept (e.g. WordPress, Disqus) to connect them.'],
+    buttons:sites.flatMap(p=>[['Check '+p.name,run('site_audit',{project:p.name})],['SEO ideas',run('seo_ideas',{project:p.name})],['Write a post',()=>{const t='What should the post for '+p.name+' be about? Say “write a post about …”.';setSub('',t);speak(t)}]])},
+   {badge:'TRADING',badgeClass:'badge-note',title:'📈 Trading desk',meta:'paper trader · strategy researcher · market watcher — pretend money only',
+    lines:[...(tr?.markets?Object.entries(tr.markets).map(([k,m])=>(k==='pse'?'PSE':'Crypto')+' paper account: '+trPct(m.returnPct)+' · '+m.positions.length+' open'):['Paper trading: ask “how’s my paper trading?”']),'Watchlist: '+(wl.length?wl.length+' symbol'+(wl.length===1?'':'s'):'empty'),'Forex: prices and conversions only (no forex paper account yet).'],
+    buttons:[['Paper trading',run('trading_status')],['Watchlist',run('show_watchlist')],['Price alerts',run('list_alerts')]]},
+   {badge:'NOTES',badgeClass:'badge-res',title:'🗂 Notes & research',meta:'librarian · researcher',
+    lines:[notes.length+' notes'+(unsorted?' · '+unsorted+' not filed':' · all filed'),...(inbox.length?[{text:inbox.length+' research update'+(inbox.length===1?'':'s')+' waiting for you',cls:'miss'}]:[]),...(watch.length?['Watching: '+watch.map(t=>t.topic).join(', ')]:[])],
+    buttons:[['Library report',run('library_report')],['Duplicates',run('find_duplicates')],...(unsorted?[['Organize',run('organize_notes')]]:[]),...(inbox.length?[['Research inbox',run('research_inbox')]]:[])]},
+   {badge:'SCHEDULE',title:'📅 Schedule & reminders',meta:'secretary · routines',
+    lines:[...(dl.length?dl.slice(0,3).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['No deadlines in the next 30 days.']),...routines().slice(0,3).map(r=>'🔁 '+r.name+' — 🔥 '+(rstate()[r.id]?.streak||0)+' days')],
+    buttons:[['Brief me',run('briefing')],['Today',run('list_schedule',{range:'today'})],['Deadlines',run('deadlines')]]},
+   {badge:'TRAINING',badgeClass:'badge-note',title:'🎯 Training & coaching',meta:'investment · fitness · skills · business · career · life',
+    lines:[...COACH_IDS.map(id=>{const n=coachNote(id);return COACHES[id].icon+' '+COACHES[id].name+(n?' — last session '+whenText(localDate(new Date(n.updatedAt))):' — not started')}),...(skills.length?['Skills you taught me: '+skills.map(n=>n.title.replace(/^Skill:\s*/,'')).join(', ')]:[])],
+    buttons:COACH_IDS.map(id=>[COACHES[id].icon+' '+COACHES[id].name.replace(' coach',''),()=>{const t=coachTalk({coach:id});setSub('',t);speak(t)}])}];
+  depts.forEach(c=>{
+   const card=document.createElement('article');card.className='disp-card';card.dataset.dept=c.badge.toLowerCase();
    const head=document.createElement('div');head.className='disp-head';const b=document.createElement('span');b.className='badge '+(c.badgeClass||'badge-note');b.textContent=c.badge;const m=document.createElement('span');m.className='muted small';m.textContent=c.meta;head.append(b,m);
    const h=document.createElement('h2');h.textContent=c.title;card.append(head,h);
    const ul=document.createElement('ul');ul.className='disp-lines';c.lines.forEach(l=>{const li=document.createElement('li');li.textContent=typeof l==='string'?l:l.text;if(l.cls)li.className=l.cls;ul.append(li)});card.append(ul);
@@ -3369,7 +3393,53 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    box.append(card);
   });
  }
-
+ // ---------- website team ----------
+ const siteProject=d=>{const all=projects().filter(p=>p.site);return findProject(d?.project||'')?.site?findProject(d.project):all.length===1?all[0]:null};
+ async function siteAuditRun(d){
+  const p=siteProject(d);if(!p)return 'Which website should I check?';
+  setSection('display');$('dispTitle').textContent='Checking '+p.name+'…';$('dispSub').textContent='Security, SEO, pictures and links — takes about 20 seconds.';$('dispBody').replaceChildren();
+  const {r,data}=await postJson('/api/site/audit',{url:p.url},60000);
+  if(!r.ok){$('dispSub').textContent=data.error||'';return data.error||'I couldn’t check '+p.name+'.'}
+  const a=jget('max_site_audits',{});a[p.id]={score:data.score,at:Date.now(),high:data.issues.filter(i=>i.sev==='high').length};jset('max_site_audits',a);
+  const AREA={security:'🔒 Security',seo:'🔎 SEO',pictures:'🖼 Pictures',content:'📝 Content',uptime:'⏱ Uptime',speed:'⚡ Speed'};
+  const areas=[...new Set([...data.issues,...data.good].map(i=>i.area))];
+  showDisplay(p.name+' — '+data.score+'/100',data.url+' · checked '+new Date(data.checkedAt).toLocaleString(),[
+   {badge:'TO FIX',badgeClass:data.issues.some(i=>i.sev==='high')?'badge-web':'badge-draft',title:data.issues.length?data.issues.length+' thing'+(data.issues.length===1?'':'s')+' to fix':'Nothing to fix',lines:data.issues.map(i=>({text:(i.sev==='high'?'⚠ ':i.sev==='medium'?'• ':'· ')+AREA[i.area].split(' ')[1]+': '+i.text,cls:i.sev==='high'?'miss':''})),
+    buttons:[['Save to notes',()=>{saveSiteNote(p,'Site check '+localDate(new Date()),'<p><b>Score:</b> '+data.score+'/100</p><ul>'+data.issues.map(i=>'<li>'+escHtml(AREA[i.area]+' — '+i.text)+'</li>').join('')+'</ul><p><b>Good:</b></p><ul>'+data.good.map(i=>'<li>'+escHtml(i.text)+'</li>').join('')+'</ul>','Audits');const t='Saved under Websites › '+p.name+' › Audits.';setSub('',t);speak(t)}],...(p.repo?[['Ask for fixes',()=>doAction({type:'project_request',details:{project:p.name,request:'Fix the site check issues: '+data.issues.slice(0,8).map(i=>i.text).join(' | ')}},'').then(t=>{setSub('',t);speak(t)})]]:[])]},
+   ...areas.map(ar=>({badge:AREA[ar]||ar,title:data.good.filter(i=>i.area===ar).length+' OK · '+data.issues.filter(i=>i.area===ar).length+' to fix',lines:data.good.filter(i=>i.area===ar).map(i=>({text:'✓ '+i.text,cls:'ok'}))}))]);
+  const high=data.issues.filter(i=>i.sev==='high');
+  return p.name+' scored '+data.score+' out of 100. '+(high.length?'Most urgent: '+high[0].text:data.issues.length?'Top thing to fix: '+data.issues[0].text:'Everything I checked looks good.');
+ }
+ function saveSiteNote(p,title,body,sub){
+  const all=loadAll();all.push({id:newId(),title,category:'Websites › '+p.name+' › '+sub,tags:[p.name.toLowerCase(),sub.toLowerCase()],body,source:'max',createdAt:Date.now(),updatedAt:Date.now(),deleted:false,analysis:null});putNotes(all);
+ }
+ async function seoIdeas(d){
+  const p=siteProject(d);if(!p)return 'Which website should I research?';
+  setSection('display');$('dispTitle').textContent='Researching SEO for '+p.name+'…';$('dispSub').textContent='Searching what people look for in your niche.';$('dispBody').replaceChildren();
+  const {r,data}=await postJson('/api/content/ideas',{site:p.name,niche:p.niche||'',topic:d?.topic||d?.query||''},60000);
+  if(!r.ok){$('dispSub').textContent=data.error||'';return data.error||'The researcher couldn’t finish.'}
+  const ideas=data.ideas||[];
+  showDisplay('SEO ideas — '+p.name,(p.niche||'')+' · from a live web search',[
+   ...ideas.map((x,i)=>({badge:(x.intent||'idea').toUpperCase(),badgeClass:/buy|compare/.test(x.intent)?'badge-note':'badge-res',meta:'#'+(i+1)+' · '+(x.keyword||''),title:x.title||x.keyword,lines:[x.why||''],buttons:[['Write this post',()=>contentDraft({project:p.name,topic:x.title||x.keyword}).then(t=>{setSub('',t);speak(t)})]]})),
+   ...(data.quickWins?.length?[{badge:'QUICK WINS',badgeClass:'badge-draft',title:'Easy improvements',lines:data.quickWins.map(x=>'• '+x)}]:[]),
+   ...(data.competitors?.length?[{badge:'COMPETITORS',title:'Who ranks now',lines:[data.competitors.join(', ')]}]:[]),
+   {badge:'SOURCES',title:'Where this came from',html:(data.sources||[]).map(s=>'<p><a href="'+escHtml(s.url)+'">'+escHtml(s.title||s.url)+'</a></p>').join(''),buttons:[['Save ideas to notes',()=>{saveSiteNote(p,'SEO ideas '+localDate(new Date()),'<ol>'+ideas.map(x=>'<li><b>'+escHtml(x.title||x.keyword)+'</b> — '+escHtml(x.keyword||'')+' ('+escHtml(x.intent||'')+'): '+escHtml(x.why||'')+'</li>').join('')+'</ol>','SEO');const t='Saved under Websites › '+p.name+' › SEO.';setSub('',t);speak(t)}]]}]);
+  return ideas.length?'I found '+ideas.length+' ideas for '+p.name+'. The top one: '+(ideas[0].title||ideas[0].keyword)+'. Tap “Write this post” on any of them.':'I couldn’t find solid ideas right now.';
+ }
+ async function contentDraft(d){
+  const p=siteProject(d);if(!p)return 'Which website is the post for?';
+  const topic=String(d?.topic||d?.query||'').trim();if(!topic)return 'What should the post for '+p.name+' be about?';
+  setSection('display');$('dispTitle').textContent='Writing for '+p.name+'…';$('dispSub').textContent=topic;$('dispBody').replaceChildren();
+  const {r,data}=await postJson('/api/content/draft',{site:p.name,niche:p.niche||'',topic,kind:d?.name||''},90000);
+  if(!r.ok){$('dispSub').textContent=data.error||'';return data.error||'The writer couldn’t finish.'}
+  const x=data.draft,html=mdToHtml(x.bodyMarkdown);
+  showDisplay('Draft — '+x.title,p.name+' · '+x.kind+' · '+x.bodyMarkdown.split(/\s+/).length+' words · nothing is published',[
+   {badge:'SEO',badgeClass:'badge-res',title:x.title,lines:['Meta description ('+x.metaDescription.length+'): '+x.metaDescription,'URL: /'+x.slug,'Keywords: '+x.keywords.join(', ')]},
+   {badge:'DRAFT',badgeClass:'badge-draft',title:'The post',html,buttons:[['Save to notes',()=>{saveSiteNote(p,x.title,'<p><i>Meta: '+escHtml(x.metaDescription)+'</i></p>'+html,'Drafts');const t='Saved under Websites › '+p.name+' › Drafts.';setSub('',t);speak(t)}],...(p.repo?[['Send to the website team',()=>doAction({type:'project_request',details:{project:p.name,request:'Publish this post: '+x.title+'\n\nMeta: '+x.metaDescription+'\nSlug: '+x.slug+'\n\n'+x.bodyMarkdown}},'').then(t=>{setSub('',t);speak(t)})]]:[])]},
+   ...(x.imageIdeas?.length?[{badge:'PICTURES',title:'Photos to add',lines:x.imageIdeas.map(i=>'• '+(i.shot||'')+' — alt: “'+(i.alt||'')+'” — '+(i.filename||''))}]:[]),
+   ...(x.checkFacts?.length?[{badge:'CHECK',badgeClass:'badge-web',title:'Check these before publishing',lines:x.checkFacts.map(f=>({text:'⚠ '+f,cls:'miss'}))}]:[])]);
+  return 'Here’s a draft for '+p.name+': “'+x.title+'”, about '+x.bodyMarkdown.split(/\s+/).length+' words.'+(x.checkFacts?.length?' I flagged '+x.checkFacts.length+' fact'+(x.checkFacts.length===1?'':'s')+' to double-check.':'')+' Nothing is published — save it or send it to the website team when you’re happy.';
+ }
  // ---------- calendar & tasks ----------
  let lastCreated=null;
  const pad=n=>String(n).padStart(2,'0');
@@ -3497,12 +3567,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'import_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Import Obsidian vault” and pick your vault zip. To make the zip: in My Files, long-press your vault folder and choose Compress.';
    case 'export_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Export vault” to download all your notes as an Obsidian vault.';
    case 'trading_status':return await tradingStatus(a.details||{});
+   case 'site_audit':return await siteAuditRun(a.details||{project:a.query});
+   case 'seo_ideas':return await seoIdeas(a.details||{query:a.query});
+   case 'content_draft':return await contentDraft(a.details||{topic:a.query});
    case 'trading_emails':return await tradingEmails(a.details?.on!=='off');
    case 'hands_free':return handsFree(a.details?.on!=='off');
    case 'barge_setting':jset('max_barge',a.details?.on!=='off');return a.details?.on!=='off'?'Voice interrupt is on — say “stop” or just start talking while I speak.':'Voice interrupt is off. Tap the circle to stop me while I speak.';
    case 'whatsapp_draft':return whatsappDraft(a.details||{text:a.query});
    case 'deadlines':return deadlinesSay(a.details||{});
-   case 'show_crew':setSection('crew');return 'Here’s your crew: the Secretary, the Researcher, the Librarian, and your six coaches. Name one and tell them what you need.';
+   case 'show_crew':setSection('crew');return 'Here are your six departments: apps, websites, trading, notes, schedule, and training. Each has its own workers. Name one and tell them what you need.';
    case 'watch_topic':return watchTopic(a.query||a.details?.topic);
    case 'unwatch_topic':return unwatchTopic(a.query||a.details?.topic);
    case 'check_watch':return await checkWatch(true);
@@ -3662,7 +3735,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','weather','set_weather_place','set_personality','usage','whatsapp_draft'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','weather','set_weather_place','set_personality','usage','whatsapp_draft'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

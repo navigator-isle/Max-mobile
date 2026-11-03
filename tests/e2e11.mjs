@@ -114,7 +114,7 @@ ok(/taught me 1 skill: Port arrival/.test(await answer()), "show skills", await 
 // crew screen + routing
 await say("show me my crew");
 const crew = await p.locator("#crewBody").textContent();
-ok(await vis("#crewScreen") && /Secretary/.test(crew) && /Watching: BWM/.test(crew) && /Librarian/.test(crew) && /Port arrival/.test(crew), "crew screen shows each crew member's work", crew.slice(0, 300));
+ok(await vis("#crewScreen") && /secretary/i.test(crew) && /Watching: BWM/.test(crew) && /librarian/i.test(crew) && /Port arrival/.test(crew), "crew screen shows each crew member's work", crew.slice(0, 300));
 await p.screenshot({ path: process.env.SHOT_DIR + "/crew.png", fullPage: true });
 await say("forget skill port arrival");
 ok(/Forgot the skill “Port arrival”/.test(await answer()), "forget a skill", await answer());

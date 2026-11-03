@@ -165,7 +165,7 @@ ok(/you need 14\.1 knots/.test(await answer()), "speed needed to arrive on time"
 
 await say("show my crew");
 const crew = await p.locator("#crewBody").textContent();
-ok(/Your coaches/.test(crew) && /Fitness coach — last session today/.test(crew) && /Morning — 🔥 1 days/.test(crew), "crew screen: coaches and routines", crew.slice(0, 400));
+ok(/Training & coaching/.test(crew) && /Fitness coach — last session today/.test(crew) && /Morning — 🔥 1 days/.test(crew), "crew screen: coaches and routines", crew.slice(0, 400));
 ok(errs.length === 0, "no script errors", errs.join(" | "));
 await ctx.close(); await b.close(); sW.close(); sP.close();
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

@@ -23,6 +23,14 @@
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
 
+**🏢 Departments (say "show my departments")**
+- 📱 Apps & Play Store — release manager (test builds), store listing editor, review reader. Passage Planner is on Play; Quick Draft Calculator is website-only for now
+- 🌐 Websites & affiliate — webmaster (up/down, visitors, sales log), security & SEO checker ("check Hobby Isle security": https, security headers, title/description, sitemap, broken links, picture alt text, affiliate disclosure — score out of 100), SEO researcher ("SEO ideas for Hobby Isle": live web search of what people look for, competitors, quick wins), content writer ("write a review of the RG Hi-Nu", "write a post about …": title, meta description, URL, keywords, photo ideas with alt text and file names, facts to double-check). Drafts are never published by Max — save them or send them to the website as a change request. Pictures: send a photo with 📎 and ask for alt text. Comments: not connected yet (say where comments are kept)
+- 📈 Trading desk — paper trader, strategy researcher, market watcher (pretend money only; forex = prices and conversions)
+- 🗂 Notes & research — librarian, researcher
+- 📅 Schedule & reminders — secretary, routines
+- 🎯 Training & coaching — six coaches and the skills you taught Max
+
 **🗂 Notes like Obsidian**
 - Notes screen = your vault: folders inside folders (any depth) with arrows, guide lines, "My vault · N files, M folders", and a bottom bar: ✎ new note (inside the folder you tapped), 🗀+ new folder, ⇅ sort A–Z / newest, collapse all, ⋯ more
 - Opening a note shows it like Obsidian's reading view: folder path, big title, #tags, numbered steps, bold, tables, ☐/☑ tasks, and [[links]] you can tap. ✎ Edit to change it
