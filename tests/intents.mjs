@@ -9,7 +9,7 @@ const cases = [
  ["show keyboard","show_keyboard"],["Max, can you bring up the keyboard please","show_keyboard"],["I'd rather type","show_keyboard"],["let me type it","show_keyboard"],["gusto kong mag type","show_keyboard"],["type na lang ako","show_keyboard"],
  ["hide the keyboard","hide_keyboard"],["I don't need the keyboard anymore","hide_keyboard"],["voice only","hide_keyboard"],
  ["show my notes","show_notes"],["open my second brain","show_notes"],["pull up what I have on ballast in my notes","show_notes:ballast"],["do I have notes about mooring","show_notes:mooring"],["find bunkering in my notes","show_notes:bunkering"],["pakita mga notes ko tungkol sa ballast","show_notes:ballast"],["notes","show_notes"],
- ["what do my notes say about ballast?",null],["how many pumps do we have",null],["tell me a joke",null],["what's the weather in Manila",null],
+ ["what do my notes say about ballast?",null],["how many pumps do we have",null],["tell me a joke",null],["what's the weather in Manila","weather"],
  ["open the ballast procedure note","open_note:ballast procedure"],
  ["research the latest BWM rules","research:BWM rules"],["can you look up the new MARPOL Annex VI changes","research:the new MARPOL Annex VI changes"],["check online if the CII rating rules changed","research:the CII rating rules changed"],["find out about ECDIS updates","research:ECDIS updates"],
  ["show me your research","show_research"],["let me see what you found","show_research"],
