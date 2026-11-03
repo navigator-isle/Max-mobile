@@ -109,7 +109,7 @@ await say("what's on my schedule this week");
 ok(/Dentist/.test(await answer()) && /saved copy/.test(await answer()), "offline: schedule from the saved copy", await answer());
 await say("how much is bitcoin");
 ok(/5\.8 million pesos/.test(await answer()), "offline: last saved price", await answer());
-ok(/saved .*offline/.test(await p.locator("#dispBody").textContent()), "and the card says it's a saved price");
+ok(/saved .*offline/.test(await p.locator("#dispBody").textContent()), "and the card says it's a saved price", (await p.locator("#dispBody").textContent()).slice(0, 300));
 await home();
 await say("remind me tomorrow at 9 to call the agency");
 ok(/saved that and I’ll do it as soon as we’re back online/.test(await answer()) && /1 waiting/.test(await label()), "offline: a reminder waits in the outbox", await answer() + " | " + await label());

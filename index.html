@@ -2360,7 +2360,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function renderQuotes(qs,title,chartDays){
   const wl=watchlist();
   showDisplay(title,'In '+currencies().join(' · ')+' · prices only, not advice',qs.map(q=>q.error?{badge:q.symbol,badgeClass:'badge-web',title:q.symbol,lines:[{text:q.error,cls:'miss'}]}:{
-   badge:(q.kind==='pse'?'PSE · ':q.kind==='crypto'?'CRYPTO · ':'FX · ')+q.symbol,badgeClass:q.changePct>0?'badge-note':q.changePct<0?'badge-web':'badge-res',meta:(wl.find(x=>x.symbol===q.symbol)?.tier||'')+(q.asOf?' · '+(q.kind==='crypto'&&/T/.test(q.asOf)?'as of '+new Date(q.asOf).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):q.asOf):''),
+   badge:(q.kind==='pse'?'PSE · ':q.kind==='crypto'?'CRYPTO · ':'FX · ')+q.symbol,badgeClass:q.changePct>0?'badge-note':q.changePct<0?'badge-web':'badge-res',meta:(wl.find(x=>x.symbol===q.symbol)?.tier||'')+(q.asOf?' · '+(q.kind==='crypto'&&/^\d{4}-\d\d-\d\dT/.test(q.asOf)?'as of '+new Date(q.asOf).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):q.asOf):''),
    title:(q.name||q.symbol).replace(/\b\w/g,c=>c.toUpperCase())+' — '+quoteLine(q),
    lines:[equivLine(q)&&'≈ '+equivLine(q),q.kind==='pse'&&q.high52?'52-week range '+fmtM('PHP',q.low52)+' – '+fmtM('PHP',q.high52):'',q.prevClose?'Previous close '+fmtM('PHP',q.prevClose):'',/web search/.test(q.source)?{text:'From a web search — may be delayed',cls:'miss'}:'Source: '+q.source].filter(Boolean),
    buttons:[['Chart',()=>marketChart({symbol:q.symbol,kind:q.kind,days:30}).then(t=>{setSub('',t);speak(t)})],...(wl.some(x=>x.symbol===q.symbol)?[]:[['Add to watchlist',()=>{const t=watchAdd({symbol:q.symbol,kind:q.kind,name:q.name});setSub('',t);speak(t)}]])],_q:q}));
