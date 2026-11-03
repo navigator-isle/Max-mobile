@@ -51,4 +51,5 @@ run "Phone and laptop sync, laptop layout" tests/e2e22.mjs "$PWD/index.html" "$T
 run "Phone: paper trading" tests/e2e23.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: Obsidian-style vault" tests/e2e24.mjs "$PWD/index.html"
 run "Phone: departments and website team" tests/e2e25.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: skills, learning and meaning search" tests/e2e26.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

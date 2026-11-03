@@ -23,6 +23,15 @@
   - "Publish pull request 13 on Hobby Isle", then "yes, merge it"
 - **Can't be checked or changed from outside:** apps that live inside Claude open with your Claude account. Their change requests are saved in your notes under Projects.
 
+**🧠 Teaching Max (skills, learning, search by meaning)**
+- Skills = how Max does things. Open a note with steps (e.g. your AMOS monthly report) and say "make this a skill" — or send a file/link that teaches a procedure and tap "Learn … as a skill". Max shows the skill (when to use it, numbered steps, rules) and saves it after your yes, in Max › Skills (edit it like any note)
+- When your question matches a skill, Max follows it exactly and starts his answer with its name. Only matching skills are sent in full, so many skills don't crowd out your notes
+- "Walk me through the AMOS monthly report": one step at a time on screen and out loud — "next", "back", "repeat", "step 5", "stop". Works for skills and any note with numbered steps
+- Correct a skill by voice: "improve the AMOS monthly report skill: step 4 should be …" — Max shows the change and the old version, and saves after your yes
+- "Learn this" after sending a file or link: saves a detailed study note (sections, key facts, terms, why it matters, the source and date) and suggests a skill if it teaches a procedure. On an open note it studies and files it
+- Search by meaning: Max indexes your notes with Google's free embedding model (small fingerprints kept on your phone), so questions find the right notes even with different words; up to 8 notes per question
+- Librarian: "check my notes for conflicts" finds notes that disagree (e.g. 200 nm vs 50 nm) and regulation notes not updated in 2+ years
+
 **🏢 Departments (say "show my departments")**
 - 📱 Apps & Play Store — release manager (test builds), store listing editor, review reader. Passage Planner is on Play; Quick Draft Calculator is website-only for now
 - 🌐 Websites & affiliate — webmaster (up/down, visitors, sales log), security & SEO checker ("check Hobby Isle security": https, security headers, title/description, sitemap, broken links, picture alt text, affiliate disclosure — score out of 100), SEO researcher ("SEO ideas for Hobby Isle": live web search of what people look for, competitors, quick wins), content writer ("write a review of the RG Hi-Nu", "write a post about …": title, meta description, URL, keywords, photo ideas with alt text and file names, facts to double-check). Drafts are never published by Max — save them or send them to the website as a change request. Pictures: send a photo with 📎 and ask for alt text. Comments: not connected yet (say where comments are kept)

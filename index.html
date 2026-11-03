@@ -744,7 +744,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  const loadAll=()=>{try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v.map(normNote).filter(Boolean):[]}catch{return []}};
  const getNotes=()=>loadAll().filter(n=>!n.deleted);
- const putNotes=items=>{localStorage.setItem(KEY,JSON.stringify(items));scheduleSync()};
+ const putNotes=items=>{localStorage.setItem(KEY,JSON.stringify(items));scheduleSync();try{scheduleIndex()}catch{}};
  const escHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const plain=html=>{const d=document.createElement('div');d.innerHTML=html||'';return (d.innerText||d.textContent||'').replace(/\s+/g,' ').trim()};
  const newId=()=>'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
@@ -1538,7 +1538,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return score>=0.75?{...best.a,learned:true}:null;
  }
  function learn(n,a){
-  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status','trading_emails','site_audit','seo_ideas','content_draft','weather','set_weather_place','set_personality','whatsapp_draft'].includes(a.type))return; // these depend on the details each time
+  if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status','trading_emails','site_audit','seo_ideas','content_draft','walk_through','walk_step','improve_skill','make_skill','weather','set_weather_place','set_personality','whatsapp_draft'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
   try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
@@ -1559,6 +1559,23 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
   const NEG=/\b(hide|close|remove|no more|don'?t|do not|ayoko|ayaw|tanggal|alisin|without|stop)\b/;
   // research screen: approve / reject / change by voice
+  // ---- walk-through mode: next / back / repeat / step N / stop ----
+  if(walk){
+   if(has(/^(next|next step|done|ok(ay)?|sige|tapos|go on|continue|then|ready)( na)?( max)?$/))return {type:'walk_step',details:{op:'next'}};
+   if(has(/^(back|previous|go back|last step|balik)( step)?$/))return {type:'walk_step',details:{op:'back'}};
+   if(has(/^(repeat|again|say (it|that) again|ulit|what was that)$/))return {type:'walk_step',details:{op:'repeat'}};
+   {const m=n.match(/^(?:go to |jump to )?step (\d{1,2})$/);if(m)return {type:'walk_step',details:{op:'goto',n:+m[1]}}}
+   if(has(/^(stop|exit|end|cancel|quit|that'?s all|i'?m done|finished)( walk ?through| the walk ?through)?$/))return {type:'walk_step',details:{op:'stop'}};
+  }
+  // ---- learning: skills, learn this, conflicts ----
+  {const m=raw.match(/^\s*(?:max[, ]+)?(?:please\s+)?(?:walk|guide|take|talk)\s+me\s+through\s+(?:the\s+|my\s+|how to\s+)?(.{2,80}?)(?:\s+(?:step by step|skill|procedure|steps))?[.?!]*$/i)||raw.match(/^\s*(?:max[, ]+)?step[- ]by[- ]step[,:]?\s+(?:for\s+|the\s+)?(.{2,80}?)[.?!]*$/i);
+   if(m)return {type:'walk_through',details:{name:m[1].trim()}};}
+  {const m=raw.match(/^\s*(?:max[, ]+)?(?:improve|update|fix|correct|change)\s+(?:the\s+|my\s+)?(.{2,60}?)\s+skill\s*[:,-]?\s*(.{4,})$/i)||raw.match(/^\s*(?:max[, ]+)?(?:the\s+)?(.{2,60}?)\s+skill\s+(?:is wrong|needs? (?:a )?(?:fix|change))\s*[:,-]?\s*(.{4,})$/i);
+   if(m)return {type:'improve_skill',details:{name:m[1].trim(),instruction:m[2].trim()}};}
+  {const m=raw.match(/^\s*(?:max[, ]+)?(?:make|turn|save|learn|keep)\s+(?:this|it|that|(?:the\s+|my\s+)?(.{2,60}?)(?:\s+note)?)\s+(?:(?:in)?to\s+|as\s+)?(?:a\s+)?skill[.!]?$/i)||raw.match(/^\s*(?:max[, ]+)?learn\s+(?:this|it|that)\s+as\s+a\s+skill[.!]?$/i);
+   if(m)return {type:'make_skill',details:{name:(m[1]||'').trim()}};}
+  if(has(/^(max )?(learn|study|memorize|remember) (this|it|that)( file| page| video| note| link)?$|^(max )?(make|give me|write) (a )?detailed summary( of (this|it|that))?$|^(max )?summari[sz]e (this|it|that) in detail$/))return {type:'learn_this'};
+  if(has(/\b(conflicts?|contradict\w*|disagree\w*|outdated|out of date|old) (in )?(my )?notes\b|\bnotes? (that )?(conflict|contradict|disagree|are outdated|out of date)\b|\bcheck (my )?notes for (conflicts|contradictions|outdated)/))return {type:'check_conflicts'};
   // ---- departments ----
   if(has(/\b(my |the |show (me )?(my |the )?)?departments?\b|\bmy teams\b|\bsub ?workers\b/))return {type:'show_crew'};
   {const pr=projects().find(x=>x.site&&(n.includes(norm(x.name))||(x.aliases||[]).some(al=>n.includes(norm(al)))));
@@ -2252,12 +2269,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(attachURL){const v=a.preview==='video'?document.createElement('video'):document.createElement('img');v.src=attachURL;v.className='att-img';if(a.preview==='video'){v.controls=true;v.playsInline=true}else v.alt=a.title;card.insertBefore(v,card.children[1])}
   if(a.url){const l=document.createElement('a');l.href=a.url;l.target='_blank';l.rel='noopener noreferrer';l.className='att-link';l.textContent='🔗 '+a.url;card.insertBefore(l,card.children[1])}
   if(a.answer){const p=document.createElement('p');p.className='disp-text';p.textContent='Your question: '+a.answer;card.append(p)}
+  if(a.details){const dv=document.createElement('div');dv.className='disp-text att-details';dv.append(safeFragment(mdToHtml(a.details)));card.append(dv)}
+  if(a.procedure){const b=document.createElement('button');b.className='pill pill-ok';b.textContent='🧠 Learn “'+a.procedure.name+'” as a skill';b.onclick=()=>makeSkill({}).then(t=>{setSub('',t);speak(t)});card.append(b)}
   const pre=document.createElement('pre');pre.id='attText';pre.className='att-text';pre.hidden=true;pre.textContent=a.text||'(no text)';card.append(pre);
  }
  function saveAttachment(){
   const a=pendingAttach;if(!a)return 'There’s no file waiting to be saved. Tap the 📎 at the top to send me one.';
   const topic=splitPath(a.topic).join(' › ')||'Inbox';
-  const body=(a.url?'<p><i>🔗 From <a href="'+escHtml(a.url)+'">'+escHtml(a.url)+'</a> ('+escHtml(a.kind)+')</i></p>':'<p><i>📎 From file: '+escHtml(a.name)+' ('+escHtml(a.kind)+')</i></p>')+(a.summary?'<p>'+escHtml(a.summary)+'</p>':'')+
+  const body=(a.url?'<p><i>🔗 From <a href="'+escHtml(a.url)+'">'+escHtml(a.url)+'</a> ('+escHtml(a.kind)+') · '+localDate(new Date())+'</i></p>':'<p><i>📎 From file: '+escHtml(a.name)+' ('+escHtml(a.kind)+') · '+localDate(new Date())+'</i></p>')+(a.summary?'<p>'+escHtml(a.summary)+'</p>':'')+(a.details?'<h2>Detailed summary</h2>'+mdToHtml(a.details):'')+(a.points.length?'<h3>Key facts</h3>':'')+
    (a.points.length?'<ul>'+a.points.map(p=>'<li>'+escHtml(p)+'</li>').join('')+'</ul>':'')+
    (a.dates.length?'<h3>Dates</h3><ul>'+a.dates.map(d=>'<li>'+escHtml(d.what)+': '+d.date+'</li>').join('')+'</ul>':'')+
    (a.amounts.length?'<h3>Amounts</h3><ul>'+a.amounts.map(x=>'<li>'+escHtml(x.what)+': '+escHtml(money(x.currency||'',x.amount))+'</li>').join('')+'</ul>':'')+
@@ -3327,6 +3346,172 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return 'Librarian: merged '+done+' pair'+(done===1?'':'s')+'. Each pair is now one note with the text of both.';
  }
 
+ // ---------- Skills: playbooks Max follows (built from notes, files, links or your words) ----------
+ // A skill note looks like: When … / Steps (numbered) / Rules (bullets) / Format / Example. You can edit it like any note.
+ function skillHtml(k,from){
+  return '<p><b>When:</b> '+escHtml(k.when||'')+'</p>'+(k.steps?.length?'<h3>Steps</h3><ol>'+k.steps.map(x=>'<li>'+escHtml(x)+'</li>').join('')+'</ol>':'')+
+   (k.rules?.length?'<h3>Rules</h3><ul>'+k.rules.map(x=>'<li>'+escHtml(x)+'</li>').join('')+'</ul>':'')+(k.format?'<h3>Format</h3><p>'+escHtml(k.format).replace(/\n/g,'<br>')+'</p>':'')+
+   (k.example?'<p><i>Example: '+escHtml(k.example)+'</i></p>':'')+(from?'<p><i>Learned from: '+escHtml(from)+'</i></p>':'');
+ }
+ function skillOf(n){
+  const d=document.createElement('div');d.innerHTML=n.body||'';
+  const when=(d.querySelector('p b')?.parentElement?.textContent||'').replace(/^When:\s*/,'');
+  const after=h=>{const el=[...d.querySelectorAll('h3')].find(x=>x.textContent.trim().toLowerCase()===h);return el?el.nextElementSibling:null};
+  const ol=after('steps')||d.querySelector('ol'),ul=after('rules'),fm=after('format');
+  const steps=ol?[...ol.querySelectorAll(':scope > li')].map(li=>li.textContent.trim()).filter(Boolean):[];
+  return {name:n.title.replace(/^Skill:\s*/,''),when,steps,rules:ul?[...ul.querySelectorAll('li')].map(li=>li.textContent.trim()):[],format:fm?fm.innerText||fm.textContent:'',text:plain(n.body)};
+ }
+ function findSkill(name){
+  const k=norm(String(name||'').replace(/\bskill\b/gi,'')),sk=getSkills();if(!k)return null;
+  return sk.find(x=>norm(x.title.replace(/^Skill:\s*/,''))===k)||sk.find(x=>norm(x.title).includes(k))||sk.find(x=>k.split(' ').filter(w=>w.length>2).every(w=>norm(x.title+' '+skillOf(x).when).includes(w)))||null;
+ }
+ // Only the skills that fit the question go to the brain (all of them would crowd out your notes).
+ function relevantSkills(q){
+  const ws=qWords(q),sk=getSkills();if(!sk.length)return [];
+  const stem=w=>w.length>5?w.slice(0,5):w;
+  const scored=sk.map(n=>{const k=skillOf(n),when=k.when||plain(n.body).slice(0,300),hay=norm(k.name+' '+when),nm=norm(k.name);let s=0;ws.forEach(w=>{const st=stem(w);if(hay.includes(st))s+=nm.includes(st)?3:1});return {n,k:{...k,when},s}}).sort((a,b)=>b.s-a.s);
+  const top=sk.length<=5?scored:scored.filter(x=>x.s>=2).slice(0,3); // a few skills: send them all in full
+  return [...top.map(x=>({name:x.k.name,text:plain(x.n.body).slice(0,4000)})),...scored.filter(x=>!top.includes(x)).slice(0,12).map(x=>({name:x.k.name,text:'When: '+(x.k.when||'').slice(0,200)}))];
+ }
+ function saveSkill(k,from){
+  const all=loadAll(),old=all.find(n=>!n.deleted&&n.category===SKILL_CAT&&norm(n.title)===norm('Skill: '+k.name));
+  if(old){old.body=skillHtml(k,from);old.updatedAt=Date.now()}
+  else all.push({id:newId(),title:'Skill: '+k.name,category:SKILL_CAT,tags:['skill'],body:skillHtml(k,from),source:'skill',createdAt:Date.now(),updatedAt:Date.now(),deleted:false});
+  putNotes(all);if(screen==='crew')renderCrew();return !!old;
+ }
+ function skillCard(k,badge){return {badge:badge||'NEW SKILL',badgeClass:'badge-res',meta:k.steps.length+' steps · '+k.rules.length+' rules',title:k.name,html:skillHtml(k)}}
+ async function makeSkill(d){
+  // what to learn from: the file you just sent, the note you're on, or a note you named
+  let src=null;
+  if(attachFresh()&&!d?.name){const a=pendingAttach;src={title:a.title,text:a.procedure?JSON.stringify(a.procedure):((a.details||'')+'\n'+(a.text||'')).slice(0,14000),ready:a.procedure}}
+  else{const n=(d?.name?rankNotes(d.name,1)[0]:null)||(screen==='editor'&&activeNoteId?getNotes().find(x=>x.id===activeNoteId):null)||(lastNote.id&&Date.now()-lastNote.at<30*60e3?getNotes().find(x=>x.id===lastNote.id):null);
+   if(n&&n.category!==SKILL_CAT)src={title:n.title,text:(n.title+'\n'+htmlToMd(n.body)).slice(0,14000)}}
+  if(!src)return d?.name?'I couldn’t find a note called “'+d.name+'”. Open it and say “make this a skill”.':'Open the note (or send me the file) first, then say “make this a skill”.';
+  setSection('display');$('dispTitle').textContent='Learning “'+src.title+'” as a skill…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  const {r,data}=await postJson('/api/skill/build',{text:src.text,title:src.title,name:d?.name&&!rankNotes(d.name,1).length?d.name:''},60000);
+  if(!r.ok){$('dispSub').textContent=data.error||'';return data.error||'I couldn’t turn that into a skill.'}
+  const k=data.skill;
+  return askConfirm('I’ll learn “'+k.name+'”: '+k.steps.length+' step'+(k.steps.length===1?'':'s')+(k.rules.length?' and '+k.rules.length+' rule'+(k.rules.length===1?'':'s'):'')+'. Keep it as a skill?',async()=>{
+   const upd=saveSkill(k,src.title);
+   return (upd?'Updated the skill “':'Learned the skill “')+k.name+'”. Ask me for it any time, or say “walk me through '+k.name.toLowerCase()+'” to go step by step.';
+  },[skillCard(k)],'Learn this skill?');
+ }
+ async function improveSkill(d){
+  const n=findSkill(d?.name);if(!n)return 'Which skill? Say “improve the AMOS monthly report skill: step 4 is …”.';
+  if(!d?.instruction)return 'What should change in “'+n.title.replace(/^Skill:\s*/,'')+'”?';
+  const cur=skillOf(n);
+  setSection('display');$('dispTitle').textContent='Updating “'+cur.name+'”…';$('dispSub').textContent=d.instruction;$('dispBody').replaceChildren();
+  const {r,data}=await postJson('/api/skill/build',{text:cur.text,current:cur,correction:d.instruction},60000);
+  if(!r.ok){$('dispSub').textContent=data.error||'';return data.error||'I couldn’t update that skill.'}
+  const k={...data.skill,name:cur.name};
+  return askConfirm('Change “'+cur.name+'”: '+String(data.changed||'as you said').replace(/[.!\s]+$/,'')+'. Save it?',async()=>{saveSkill(k,'');return 'Updated “'+cur.name+'”. I’ll do it that way from now on.'},[skillCard(k,'UPDATED SKILL'),{badge:'BEFORE',title:cur.name,html:n.body}],'Update this skill?');
+ }
+ // ---------- Walk-through: one step at a time ("next", "back", "repeat", "step 4", "stop") ----------
+ let walk=null;
+ function stepsFrom(n){
+  if(n.category===SKILL_CAT){const k=skillOf(n);return {title:k.name,steps:k.steps,rules:k.rules}}
+  const d=document.createElement('div');d.innerHTML=n.body||'';const ol=d.querySelector('ol');
+  const steps=ol?[...ol.querySelectorAll(':scope > li')].map(li=>li.textContent.trim()):plain(n.body).split(/(?:\n|(?<=\.)\s+)(?=\d+[.)]\s)/).map(x=>x.replace(/^\d+[.)]\s*/,'').trim()).filter(x=>x.length>1);
+  return {title:n.title,steps,rules:[]};
+ }
+ function walkThrough(d){
+  const n=findSkill(d?.name)||rankNotes(d?.name||'',1)[0];
+  if(!n)return 'I couldn’t find a skill or note called “'+(d?.name||'')+'”.';
+  const w=stepsFrom(n);if(w.steps.length<2)return '“'+w.title+'” doesn’t have numbered steps I can walk you through. Open it and make the steps a numbered list.';
+  walk={...w,i:0,at:Date.now()};convoKeep();
+  return walkSay(true);
+ }
+ function walkShow(){
+  if(!walk)return;
+  showDisplay('Step '+(walk.i+1)+' of '+walk.steps.length,walk.title+' · say “next”, “back”, “repeat”, “step 4” or “stop”',[
+   {badge:'NOW',badgeClass:'badge-res',title:walk.steps[walk.i],buttons:[['◀ Back',()=>{const t=walkStep({op:'back'});setSub('',t);speak(t)}],['Repeat',()=>{const t=walkStep({op:'repeat'});setSub('',t);speak(t)}],['Next ▶',()=>{const t=walkStep({op:'next'});setSub('',t);speak(t)}],['Stop',()=>{const t=walkStep({op:'stop'});setSub('',t);speak(t)}]]},
+   {badge:'ALL STEPS',title:walk.title,lines:walk.steps.map((x,i)=>({text:(i<walk.i?'✓ ':i===walk.i?'▶ ':'   ')+(i+1)+'. '+x,cls:i===walk.i?'ok':''}))},
+   ...(walk.rules?.length?[{badge:'REMEMBER',badgeClass:'badge-draft',title:'Rules',lines:walk.rules.map(x=>'• '+x)}]:[])]);
+ }
+ function walkSay(first){walkShow();return (first?walk.title+'. '+walk.steps.length+' steps. Say “next” when you’re ready for each one. ':'')+'Step '+(walk.i+1)+': '+walk.steps[walk.i]}
+ function walkStep(d){
+  if(!walk)return 'We’re not in a walk-through. Say “walk me through …” and a skill or note name.';
+  walk.at=Date.now();
+  if(d.op==='stop'){const t=walk.title;walk=null;return 'Stopped “'+t+'”.'}
+  if(d.op==='back')walk.i=Math.max(0,walk.i-1);
+  else if(d.op==='goto')walk.i=Math.min(walk.steps.length-1,Math.max(0,(d.n||1)-1));
+  else if(d.op==='next'){if(walk.i>=walk.steps.length-1){const t=walk.title;walk=null;return 'That was the last step. “'+t+'” is done. Well done.'}walk.i++}
+  return walkSay(false);
+ }
+ function convoKeep(){/* the conversation stays open after each step so you can just say “next” */}
+ // ---------- "Learn this": a detailed study note from the file, link or note ----------
+ async function learnThis(raw){
+  const url=String(raw||'').match(/https?:\/\/\S+|\b[a-z0-9-]+\.[a-z]{2,}\/\S*/i);
+  if(url){const t=await readLink(url[0]);if(!pendingAttach)return t}
+  if(attachFresh()){const a=pendingAttach;const t=saveAttachment();return t+(a.procedure?' It also teaches a procedure (“'+a.procedure.name+'”) — say “make it a skill” and I’ll follow it step by step.':'')}
+  const n=(screen==='editor'&&activeNoteId?getNotes().find(x=>x.id===activeNoteId):null)||(lastNote.id&&Date.now()-lastNote.at<30*60e3?getNotes().find(x=>x.id===lastNote.id):null);
+  if(n){const r=await analyze(n,{quiet:true});const proc=/<ol/i.test(n.body||'');return 'I studied “'+n.title+'”'+(typeof r==='string'?' and filed it under '+r:'')+'. Its summary and key facts are in the note.'+(proc?' It has numbered steps — say “make this a skill” and I’ll follow them, or “walk me through '+n.title.toLowerCase()+'”.':'')}
+  return 'Send me the file with 📎 or a link, or open a note, then say “learn this”.';
+ }
+ // ---------- search by meaning (free embeddings, stored on this phone) ----------
+ const VEC_KEY='max_vec';let vecIndex=null,vecBusy=false,vecTimer=null;const qVecCache=new Map();
+ function vecLoad(){if(!vecIndex){try{vecIndex=JSON.parse(localStorage.getItem(VEC_KEY)||'null')}catch{}vecIndex=vecIndex||{model:'',items:{}}}return vecIndex}
+ function vecSave(){try{localStorage.setItem(VEC_KEY,JSON.stringify(vecIndex))}catch{const ks=Object.keys(vecIndex.items);ks.slice(0,Math.floor(ks.length/4)).forEach(k=>delete vecIndex.items[k])}}
+ const vecDecode=b=>{const s=atob(b),v=new Float32Array(s.length);let m=0;for(let i=0;i<s.length;i++){let x=s.charCodeAt(i);if(x>127)x-=256;v[i]=x;m+=x*x}m=Math.sqrt(m)||1;for(let i=0;i<v.length;i++)v[i]/=m;return v};
+ const dot=(a,b)=>{let s=0;for(let i=0;i<Math.min(a.length,b.length);i++)s+=a[i]*b[i];return s};
+ const noteHash=n=>{const t=(n.title||'')+'|'+(n.category||'')+'|'+plain(n.body).slice(0,3000);let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return String(h)};
+ const vecText=n=>(n.title||'')+'\n'+(n.category||'')+'\n'+(n.tags||[]).join(', ')+'\n'+plain(n.body).slice(0,3000);
+ function scheduleIndex(){clearTimeout(vecTimer);vecTimer=setTimeout(()=>indexNotes().catch(()=>{}),4000)}
+ async function indexNotes(){
+  if(vecBusy||!workerBase()||navigator.onLine===false)return;vecBusy=true;
+  try{
+   const V=vecLoad(),notes=getNotes(),ids=new Set(notes.map(n=>n.id));
+   for(const id of Object.keys(V.items))if(!ids.has(id))delete V.items[id];
+   let todo=notes.filter(n=>V.items[n.id]?.h!==noteHash(n)).slice(0,200);
+   for(let i=0;i<todo.length;i+=25){
+    const batch=todo.slice(i,i+25),{r,data}=await postJson('/api/embed',{texts:batch.map(vecText),task:'doc'},30000);
+    if(!r.ok)break;
+    if(V.model&&V.model!==data.model){V.items={};todo=notes;i=-25;V.model=data.model;continue} // model changed → re-index everything
+    V.model=data.model;batch.forEach((n,k)=>{V.items[n.id]={h:noteHash(n),v:data.vectors[k]}});vecSave();
+   }
+  }finally{vecBusy=false}
+ }
+ async function queryVec(q){
+  if(qVecCache.has(q))return qVecCache.get(q);
+  const V=vecLoad();if(!V.model||!Object.keys(V.items).length||navigator.onLine===false)return null;
+  try{const {r,data}=await Promise.race([postJson('/api/embed',{texts:[q],task:'query'},4000),new Promise((_,j)=>setTimeout(()=>j(new Error('slow')),3000))]);
+   if(!r.ok||data.model!==V.model)return null;const v=vecDecode(data.vectors[0]);qVecCache.set(q,v);if(qVecCache.size>50)qVecCache.delete(qVecCache.keys().next().value);return v}catch{return null}
+ }
+ // Notes for a question: keyword matches + meaning matches, best 8.
+ async function notesContextSmart(q){
+  const base=notesContext(q);
+  const qv=await queryVec(q);if(!qv)return base;
+  const V=vecLoad(),notes=getNotes(),kw=new Map(rankNotes(q,20).map((n,i)=>[n.id,1-i/20]));
+  const scored=notes.map(n=>{const it=V.items[n.id];const c=it?dot(qv,vecDecode(it.v)):0;return {n,s:c+0.35*(kw.get(n.id)||0),c}}).filter(x=>x.c>=0.45||kw.has(x.n.id)).sort((a,b)=>b.s-a.s).slice(0,8);
+  if(!scored.length)return base;
+  return {...base,items:scored.map(({n})=>({id:n.id,title:n.title||'Untitled',category:n.category,text:noteText(n)}))};
+ }
+ // ---------- Librarian: notes that contradict each other or look outdated ----------
+ async function checkConflicts(){
+  const notes=getNotes().filter(n=>![SKILL_CAT,SALES_CAT].includes(n.category)&&plain(n.body).length>40);
+  if(notes.length<2)return 'Librarian: you need at least two notes before I can compare them.';
+  setSection('display');$('dispTitle').textContent='Librarian is comparing your notes…';$('dispSub').textContent='Looking for notes that disagree.';$('dispBody').replaceChildren();
+  await indexNotes().catch(()=>{});
+  const V=vecLoad(),vec=notes.map(n=>V.items[n.id]?vecDecode(V.items[n.id].v):null),pairs=[];
+  const words=n=>new Set(norm(plain(n.body)+' '+n.title).split(' ').filter(w=>w.length>3)),W=notes.map(words);
+  for(let i=0;i<notes.length;i++)for(let j=i+1;j<notes.length;j++){
+   let s;if(vec[i]&&vec[j])s=dot(vec[i],vec[j]);else{let c=0;W[i].forEach(w=>{if(W[j].has(w))c++});s=c/(W[i].size+W[j].size-c||1)+0.4}
+   if(s>=0.72&&s<0.995)pairs.push([i,j,s]);
+  }
+  pairs.sort((a,b)=>b[2]-a[2]);const top=pairs.slice(0,8);
+  const day=n=>localDate(new Date(n.updatedAt||n.createdAt||Date.now()));
+  const oldRegs=notes.filter(n=>/\b(regulation|convention|resolution|circular|amendment|code|solas|marpol|stcw|mlc|ism|isps|bwm)\b/i.test(n.title+' '+n.category)&&Date.now()-(n.updatedAt||0)>2*365*864e5);
+  let results=[];
+  if(top.length){const {r,data}=await postJson('/api/notes/conflicts',{pairs:top.map(([i,j])=>({a:{title:notes[i].title,date:day(notes[i]),text:plain(notes[i].body).slice(0,2500)},b:{title:notes[j].title,date:day(notes[j]),text:plain(notes[j].body).slice(0,2500)}}))},90000);
+   if(!r.ok){$('dispSub').textContent=data.error||'';return data.error||'The librarian couldn’t compare your notes right now.'}
+   results=(data.results||[]).map(x=>({...x,a:notes[top[x.pair-1]?.[0]],b:notes[top[x.pair-1]?.[1]]})).filter(x=>x.a&&x.b&&(x.conflict||x.outdated))}
+  const cards=[...results.map(x=>({badge:x.conflict?'CONFLICT':'OUTDATED?',badgeClass:x.conflict?'badge-web':'badge-draft',title:x.a.title+'  ⇄  '+x.b.title,lines:[...(x.what?[{text:x.what,cls:'miss'}]:[]),...(x.outdated?['⏳ '+x.outdated]:[])],
+    buttons:[['Open first',()=>loadNote(x.a.id)],['Open second',()=>loadNote(x.b.id)]]})),
+   ...(oldRegs.length?[{badge:'OLD',badgeClass:'badge-draft',title:oldRegs.length+' regulation note'+(oldRegs.length===1?'':'s')+' not updated in 2+ years',lines:oldRegs.slice(0,8).map(n=>'• '+n.title+' — last changed '+day(n)),buttons:[['Ask the Researcher',()=>doAction({type:'research',query:'latest amendments: '+oldRegs[0].title},'').then(t=>{setSub('',t);speak(t)})]]}]:[])];
+  showDisplay('Conflicts & outdated notes','Librarian · compared '+top.length+' close pair'+(top.length===1?'':'s')+' of '+notes.length+' notes',cards.length?cards:[{badge:'TIDY',title:'No conflicts found',lines:['Notes that cover the same thing agree with each other.']}]);
+  const c=results.filter(x=>x.conflict).length;
+  return 'Librarian: '+(c?c+' pair'+(c===1?'':'s')+' of notes disagree — first: '+results.find(x=>x.conflict).what:'no notes contradict each other')+(oldRegs.length?'. '+oldRegs.length+' regulation note'+(oldRegs.length===1?' hasn’t':'s haven’t')+' been updated in over two years.':'.');
+ }
  // ---------- Skill cards: playbooks you teach Max by voice ----------
  const getSkills=()=>getNotes().filter(n=>n.category===SKILL_CAT);
  function newSkill(text){
@@ -3343,7 +3528,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function showSkills(){
   const sk=getSkills();
-  showDisplay('Max’s skills',sk.length+' skill'+(sk.length===1?'':'s')+' you taught me',sk.length?sk.map(n=>({badge:'SKILL',badgeClass:'badge-res',title:n.title.replace(/^Skill:\s*/,''),html:n.body,buttons:[['Edit',()=>loadNote(n.id)],['Forget',()=>{const t=forgetSkill(n.title.replace(/^Skill:\s*/,''));setSub('',t);speak(t);showSkills()}]]})):
+  showDisplay('Max’s skills',sk.length+' skill'+(sk.length===1?'':'s')+' you taught me',sk.length?sk.map(n=>({badge:'SKILL',badgeClass:'badge-res',title:n.title.replace(/^Skill:\s*/,''),html:n.body,buttons:[['▶ Walk through',()=>{const t=walkThrough({name:n.title.replace(/^Skill:\s*/,'')});setSub('',t);speak(t)}],['Edit',()=>loadNote(n.id)],['Forget',()=>{const t=forgetSkill(n.title.replace(/^Skill:\s*/,''));setSub('',t);speak(t);showSkills()}]]})):
    [{title:'No skills yet',lines:['Teach me one by saying: “new skill port arrival: when I say arriving at a port, list its pilot rules and my pre-arrival checklist.”']}]);
   return sk.length?'You’ve taught me '+sk.length+' skill'+(sk.length===1?'':'s')+': '+sk.map(n=>n.title.replace(/^Skill:\s*/,'')).join(', ')+'.':'You haven’t taught me any skills yet. Say “new skill”, give it a name, then tell me what to do.';
  }
@@ -3377,13 +3562,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     buttons:[['Paper trading',run('trading_status')],['Watchlist',run('show_watchlist')],['Price alerts',run('list_alerts')]]},
    {badge:'NOTES',badgeClass:'badge-res',title:'🗂 Notes & research',meta:'librarian · researcher',
     lines:[notes.length+' notes'+(unsorted?' · '+unsorted+' not filed':' · all filed'),...(inbox.length?[{text:inbox.length+' research update'+(inbox.length===1?'':'s')+' waiting for you',cls:'miss'}]:[]),...(watch.length?['Watching: '+watch.map(t=>t.topic).join(', ')]:[])],
-    buttons:[['Library report',run('library_report')],['Duplicates',run('find_duplicates')],...(unsorted?[['Organize',run('organize_notes')]]:[]),...(inbox.length?[['Research inbox',run('research_inbox')]]:[])]},
+    buttons:[['Library report',run('library_report')],['Duplicates',run('find_duplicates')],['Conflicts',run('check_conflicts')],...(unsorted?[['Organize',run('organize_notes')]]:[]),...(inbox.length?[['Research inbox',run('research_inbox')]]:[])]},
    {badge:'SCHEDULE',title:'📅 Schedule & reminders',meta:'secretary · routines',
     lines:[...(dl.length?dl.slice(0,3).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['No deadlines in the next 30 days.']),...routines().slice(0,3).map(r=>'🔁 '+r.name+' — 🔥 '+(rstate()[r.id]?.streak||0)+' days')],
     buttons:[['Brief me',run('briefing')],['Today',run('list_schedule',{range:'today'})],['Deadlines',run('deadlines')]]},
    {badge:'TRAINING',badgeClass:'badge-note',title:'🎯 Training & coaching',meta:'investment · fitness · skills · business · career · life',
-    lines:[...COACH_IDS.map(id=>{const n=coachNote(id);return COACHES[id].icon+' '+COACHES[id].name+(n?' — last session '+whenText(localDate(new Date(n.updatedAt))):' — not started')}),...(skills.length?['Skills you taught me: '+skills.map(n=>n.title.replace(/^Skill:\s*/,'')).join(', ')]:[])],
-    buttons:COACH_IDS.map(id=>[COACHES[id].icon+' '+COACHES[id].name.replace(' coach',''),()=>{const t=coachTalk({coach:id});setSub('',t);speak(t)}])}];
+    lines:[...COACH_IDS.map(id=>{const n=coachNote(id);return COACHES[id].icon+' '+COACHES[id].name+(n?' — last session '+whenText(localDate(new Date(n.updatedAt))):' — not started')}),...(skills.length?['Skills: '+skills.map(n=>n.title.replace(/^Skill:\s*/,'')).join(', ')]:['No skills yet — open a note with steps and say “make this a skill”.'])],
+    buttons:[...COACH_IDS.map(id=>[COACHES[id].icon+' '+COACHES[id].name.replace(' coach',''),()=>{const t=coachTalk({coach:id});setSub('',t);speak(t)}]),...skills.slice(0,4).map(n=>['▶ '+n.title.replace(/^Skill:\s*/,''),()=>{const t=walkThrough({name:n.title.replace(/^Skill:\s*/,'')});setSub('',t);speak(t)}])]}];
   depts.forEach(c=>{
    const card=document.createElement('article');card.className='disp-card';card.dataset.dept=c.badge.toLowerCase();
    const head=document.createElement('div');head.className='disp-head';const b=document.createElement('span');b.className='badge '+(c.badgeClass||'badge-note');b.textContent=c.badge;const m=document.createElement('span');m.className='muted small';m.textContent=c.meta;head.append(b,m);
@@ -3568,6 +3753,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'export_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Export vault” to download all your notes as an Obsidian vault.';
    case 'trading_status':return await tradingStatus(a.details||{});
    case 'site_audit':return await siteAuditRun(a.details||{project:a.query});
+   case 'learn_this':return await learnThis(a.query||raw);
+   case 'make_skill':return await makeSkill(a.details||{name:a.query});
+   case 'improve_skill':return await improveSkill(a.details||{});
+   case 'walk_through':return walkThrough(a.details||{name:a.query});
+   case 'walk_step':return walkStep(a.details||{op:'next'});
+   case 'check_conflicts':return await checkConflicts();
    case 'seo_ideas':return await seoIdeas(a.details||{query:a.query});
    case 'content_draft':return await contentDraft(a.details||{topic:a.query});
    case 'trading_emails':return await tradingEmails(a.details?.on!=='off');
@@ -3725,7 +3916,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(navigator.onLine===false){const o=offlineAnswer(q);if(!o.refs.length)o.text=queuedReply(q,null)+' Meanwhile your notes and commands still work.';talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:notesContext(q),projects:projects().map(p=>p.name),skills:getSkills().slice(0,20).map(n=>({name:n.title.replace(/^Skill:\s*/,''),text:plain(n.body).slice(0,1500)})),personality:personality(),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:await notesContextSmart(q),projects:projects().map(p=>p.name),skills:relevantSkills(q),personality:personality(),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
@@ -3735,7 +3926,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','weather','set_weather_place','set_personality','usage','whatsapp_draft'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
@@ -3972,6 +4163,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  step('greeting',armGreeting);
  step('circle',()=>requestAnimationFrame(orbLoop));
  // Works offline: the app itself is kept on the phone, notes are already stored here.
+ step('meaning-index',()=>{setTimeout(()=>{if(workerBase())indexNotes().catch(()=>{})},8000)});
  step('handsfree',()=>{if(jget('max_handsfree',false))handsFree(true)});
  step('offline',()=>{if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{})});
  step('shared',()=>{setTimeout(()=>takeShared().catch(()=>{}),800)});
