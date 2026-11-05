@@ -32,7 +32,10 @@ r = await chat(w, { GEMINI_API_KEY: "k" });
 ok(r.status === 502 && calls.length === 1, "a broken request is not retried on every model");
 w = await fresh(); plan = { "gemini-3.5-flash": { ok: false, status: 429 }, "gemini-3.5-flash-lite": { ok: false, status: 429, msg: "quota" } }; calls = [];
 r = await chat(w, { GEMINI_API_KEY: "k" });
-ok(r.status === 429 && r.data.error === "quota", "both out of free quota → clear error");
+ok(r.status === 200 && r.data.reply === "gemini-3.8-flash here.", "Flash and Lite out of free quota → the newer free models answer (more free answers per day)", JSON.stringify(r.data).slice(0, 120));
+w = await fresh(); plan = Object.fromEntries(["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite"].map(m => [m, { ok: false, status: 429, msg: "quota" }])); calls = [];
+r = await chat(w, { GEMINI_API_KEY: "k" });
+ok(r.status === 429 && r.data.error === "quota", "all of them out of free quota → clear error");
 
 w = await fresh(); plan = {}; calls = [];
 r = await chat(w, { GEMINI_API_KEY: "k", GEMINI_MODEL: "gemini-3.5-pro" });

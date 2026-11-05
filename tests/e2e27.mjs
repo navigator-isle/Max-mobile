@@ -17,6 +17,7 @@ globalThis.fetch = async (u, o = {}) => {
   if (url.startsWith("https://www.youtube.com/results?")) { const q = new URL(url).searchParams.get("search_query"); return new Response(`<script>var ytInitialData = ${JSON.stringify(vids(q))};</script>`); }
   if (/radio-browser\.info/.test(url)) return new Response(JSON.stringify([{ name: "Smooth Jazz 24/7", url_resolved: "https://stream.example/jazz.mp3", codec: "MP3", countrycode: "US", tags: "jazz,smooth" }, { name: "Jazz Two", url_resolved: "https://stream.example/two.mp3", codec: "AAC" }]));
   if (url.includes("raw.githubusercontent.com")) return new Response("[]");
+  if (url === "https://api.groq.com/openai/v1/chat/completions") return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ verdict: "minor", issues: ["Also mention the drill must be logged"], confidence: "high" }) } }] }));
   if (url.includes("generativelanguage")) { const b = JSON.parse(o.body); gem.push(b); const q = b.contents?.at(-1)?.parts?.[0]?.text || "";
     const text = /focus/.test(q) ? JSON.stringify({ reply: "Putting on some focus music.", action: { type: "play_music", query: "lofi focus mix", details: { mode: "video" } } }) : JSON.stringify({ reply: "Answer to: " + q, action: null });
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] })); }
@@ -25,7 +26,7 @@ globalThis.fetch = async (u, o = {}) => {
 const worker = (await import(workerPath)).default;
 const ORIGIN = "http://127.0.0.1:8064", WK = "http://127.0.0.1:8850";
 const sqlite = new DatabaseSync(":memory:");
-let env = { GEMINI_API_KEY: "k", ALLOWED_ORIGIN: ORIGIN, MAX_PASSCODE: "pw", MAX_MEMORY: new D1(sqlite) };
+let env = { GEMINI_API_KEY: "k", ALLOWED_ORIGIN: ORIGIN, MAX_PASSCODE: "pw", MAX_MEMORY: new D1(sqlite), GROQ_API_KEY: "g" };
 const sW = http.createServer(async (req, res) => { const c = []; for await (const x of req) c.push(x);
   const r = await worker.fetch(new Request(WK + req.url, { method: req.method, headers: req.headers, body: ["GET", "HEAD", "OPTIONS"].includes(req.method) ? undefined : Buffer.concat(c) }), env);
   res.writeHead(r.status, Object.fromEntries(r.headers)); res.end(Buffer.from(await r.arrayBuffer())); }).listen(8850);
@@ -89,6 +90,14 @@ await say("I need something to help me focus");
 y = await yt();
 ok(y && /^l/.test(y.id) && /🎵 Music desk/.test(await p.evaluate(() => document.getElementById("noteRefs").textContent)), "asked in his own words (no music words), Max picks music, it plays, and the 🎵 Music desk gets the credit", JSON.stringify(y));
 await say("stop the music");
+// ---- smarter brain: deep thinking + second-AI check, shown on the phone ----
+await say("Explain why SOLAS requires monthly lifeboat drills and compare it with MARPOL Annex I");
+const chips = await p.evaluate(() => [...document.querySelectorAll("#noteRefs .desk-chip")].map(x => x.textContent));
+ok(chips.includes("🧠 Deep thinking") && chips.includes("✓ Double-checked · 1 note"), "a hard question shows 🧠 Deep thinking and ✓ Double-checked", JSON.stringify(chips));
+await p.click("#noteRefs button.desk-chip"); await p.waitForTimeout(200);
+ok(/Also mention the drill must be logged/.test(await p.evaluate(() => document.body.innerText)), "tap the check label to see what the second AI said");
+await say("tell me a joke");
+ok(!(await p.evaluate(() => document.getElementById("noteRefs").innerText)).includes("Deep thinking"), "everyday questions don't show it");
 // ---- activity log ----
 await p.waitForTimeout(3500);
 await say("show my activity log");

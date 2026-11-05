@@ -26,6 +26,7 @@ const cases = [
  ["play Ben&Ben","play_music"],["Max, play some chill music","play_music"],["play jazz radio","play_music"],["patugtugin mo ang OPM love songs","play_music"],["put on Taylor Swift please","play_music"],["play music","play_music"],
  ["stop the music","music_control"],["pause the song","music_control"],["next song","music_control"],["what song is this","music_control"],["skip this song","music_control"],
  ["show the play store status","play_overview"],["show my activity log","activity"],["what did my desks do today","activity"],["what failed today","activity"],["what did you do while I was offline","offline_results"],
+ ["double check that",null],["are you sure?",null],["sigurado ka ba",null],["verify your last answer",null],
  ["go back","go_home"],["just talk","go_home"],["close the notes","go_home"],["balik","go_home"],["let's just talk","go_home"],
 ];
 const res = await p.evaluate(cs => cs.map(([t]) => { const a = window.MaxDebug.understand(t); return a ? a.type + (a.query ? ":" + a.query : "") : null; }), cases);

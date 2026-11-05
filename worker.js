@@ -8,14 +8,21 @@
 // GEMINI_MODEL in Cloudflare. If an ANTHROPIC_API_KEY secret exists, conversation uses Claude
 // (CLAUDE_MODEL variable to choose; default Haiku) and falls back to Gemini if Claude fails.
 const GEMINI_CHAIN = ["gemini-3.5-flash", "gemini-3.5-flash-lite"];
+// Hard questions go to the strongest free Gemini first, with deep thinking on. Every model has its own free daily
+// limit, so the extra models also give Max more free answers before he needs the backups.
+const DEEP_CHAIN = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-2.5-pro"];
+const EXTRA_CHAIN = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite"];
 const DEFAULT_CLAUDE = "claude-haiku-5-5";
-const modelChain = env => { const own = cleanText(env.GEMINI_MODEL, 80); return own ? [own, ...GEMINI_CHAIN.filter(m => m !== own)] : GEMINI_CHAIN; };
+const modelChain = (env, deep) => { const own = cleanText(env.GEMINI_MODEL, 80);
+  const base = [...new Set([...(own ? [own] : []), ...GEMINI_CHAIN, ...EXTRA_CHAIN])];
+  return deep ? [...new Set([...DEEP_CHAIN, ...base])] : base; };
+const thinkingFor = m => /gemini-2\.5/.test(m) ? {thinkingBudget: 8192} : {thinkingLevel: "high"};
 const modelFor = env => lastGood || modelChain(env)[0];
 const skipUntil = new Map(); // models that recently failed are skipped for a while
 let lastGood = "";
 // ---------- backup brains (free): Groq, then Cloudflare Workers AI — used only when every Gemini model is out ----------
 // They get text only: photos, PDFs, videos and web search still need Gemini.
-const GROQ_MODELS = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
+const GROQ_MODELS = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile"];
 const WAI_MODELS = ["@cf/zai-org/glm-4.7-flash", "@cf/google/gemma-4-26b-a4b-it", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"];
 const backupSkip = new Map();
 function textOnly(payload) {
@@ -63,12 +70,23 @@ async function backupBrain(env, payload) {
   }
   return null;
 }
-async function gemini(env, payload) {
-  const chain = modelChain(env), now = Date.now();
+async function gemini(env, payload, opts = {}) {
+  const chain = modelChain(env, opts.deep), now = Date.now();
   const usable = chain.filter(m => !(skipUntil.get(m) > now));
   let last = null, networkError = false;
-  const send = m => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST",
-    headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY}, body: JSON.stringify(payload)});
+  const noThink = new Set();
+  const bodyFor = m => opts.deep && !noThink.has(m) ? {...payload, generationConfig: {...(payload.generationConfig || {}), thinkingConfig: thinkingFor(m)}} : payload;
+  const send = async m => {
+    let r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST",
+      headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY}, body: JSON.stringify(bodyFor(m))});
+    if (r.status === 400 && opts.deep && !noThink.has(m)) {
+      const peek = await r.clone().json().catch(() => ({}));
+      // This model doesn't take the deep-thinking setting: ask again without it.
+      if (/think/i.test(String(peek?.error?.message || ""))) { noThink.add(m); r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST",
+        headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY}, body: JSON.stringify(payload)}); }
+    }
+    return r;
+  };
   for (const m of usable.length ? usable : chain) {
     let res;
     try {
@@ -112,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-11a";
+const WORKER_VERSION = "max-worker-2026-11-12a";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -317,6 +335,65 @@ function parseResearch(raw, topic) {
 }
 function officialSource(s) {
   return /imo\.org|\.gov\b|\.gov\.|\.int\b|europa\.eu|marina\.gov\.ph|uscg|mca\.gov|amsa\.gov|mpa\.gov\.sg|classnk|dnv\.|lr\.org|abs-group|eagle\.org|bureauveritas|iacs\.org|ilo\.org|panama-maritime|amp\.gob\.pa|liscr|register-iri/i.test(String(s));
+}
+// ---------- smarter free brain: hard questions get the strongest free model + a second AI checks the answer ----------
+// Difficulty is scored from the words (no extra AI call). Hard → deep chain with deep thinking, then a reviewer from a
+// DIFFERENT company checks it. Only if the reviewer says it's wrong does Max think again — and Max decides who is right.
+const HARD_WORDS = /\b(?:explain|why|how (?:does|do|can|should|would)|compare|comparison|difference|vs\.?|versus|analy[sz]e|analysis|evaluate|assess|plan|planning|strategy|calculate|calculation|compute|estimate|formula|prove|derive|step[- ]by[- ]step|in detail|detailed|pros and cons|trade-?offs?|should i|recommend|best way|regulations?|conventions?|solas|marpol|stcw|mlc|ism|isps|colregs?|bwm|imdg|load ?line|psc|class(?:ification)? society|law|legal|contract|tax|code|debug|stability|gm|trim|draft survey|displacement|deadweight|ballast|cargo plan|eta|passage plan|risk|diagnos\w*|symptoms?|invest\w*|budget|loan|interest rate|bakit|paano|ipaliwanag|ikumpara)\b/gi;
+const FORCE_DEEP = /\b(?:think (?:hard|harder|carefully|deeply)|deep think|be (?:very )?(?:accurate|careful|precise)|double[- ]check (?:it|this|your answer)|take your time|isipin mong mabuti)\b/i;
+function hardness(message, deskId) {
+  const t = String(message || "");
+  if (FORCE_DEEP.test(t)) return {hard: true, why: "you asked me to think hard"};
+  if (t.length < 25) return {hard: false, why: "short"};
+  const words = new Set((t.match(HARD_WORDS) || []).map(w => w.toLowerCase().split(/\s+/)[0]));
+  let score = Math.min(words.size, 3) * 1.5;
+  if (t.length > 220) score += 2; else if (t.length > 110) score += 1;
+  if ((t.match(/\?/g) || []).length > 1 || /\b(?:and also|also|then|plus)\b.*\?/i.test(t)) score += 1;
+  if (/\d+(?:\.\d+)?\s*(?:[-+*/×x÷^]|percent|%|knots|nm|tons?|mt|m3|kg|hours?)\b/i.test(t)) score += 1;
+  if (["trading", "web", "training"].includes(deskId) && t.length > 60) score += 0.5;
+  return score >= 3 ? {hard: true, why: "a hard question (" + [...words].slice(0, 3).join(", ") + ")"} : {hard: false, why: "everyday question"};
+}
+const CHECK_AGAIN = /^\s*(?:(?:hey|ok|okay)\s+)?(?:max[, ]+)?(?:(?:please\s+|can you\s+)?(?:double[- ]?check|re-?check|verify|fact[- ]?check)(?:\s+(?:that|it|this|your (?:last )?answer|what you said))?(?:\s+again)?|are you sure(?: about (?:that|it|this))?|sigurado ka(?: ba)?(?: dyan| diyan)?|totoo ba (?:yan|iyan|yun|iyon))\s*(?:please|po|max)?\s*[?.!]*\s*$/i;
+const REVIEW_SYS = "You are a strict, careful reviewer. Another AI assistant (Max) answered his user, Mark Jun (a ship officer from the Philippines). Check the answer for: factual errors; wrong numbers, units or arithmetic (redo any calculation yourself); wrong dates or deadlines; anything that contradicts his notes; unsafe, illegal or financially reckless advice; a missing important safety caveat; or not answering what was asked. Do NOT nitpick style, tone or length. If you are not sure something is wrong, it is not wrong. Reply ONLY with JSON: {\"verdict\": \"ok\" | \"minor\" | \"wrong\", \"issues\": [\"short, specific problem\", ...], \"confidence\": \"high\" | \"medium\" | \"low\"}. verdict \"wrong\" only for a real error that changes the answer.";
+async function reviewer(env, user, avoid) {
+  const now = Date.now(), msgs = [{role: "system", content: REVIEW_SYS}, {role: "user", content: user}];
+  const viaGroq = async () => { if (!env.GROQ_API_KEY) return null;
+    for (const m of ["openai/gpt-oss-120b", "qwen/qwen3.8-27b"]) { if (backupSkip.get(m) > now) continue;
+      try { const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + env.GROQ_API_KEY},
+          body: JSON.stringify({model: m, messages: msgs, max_tokens: 1500, temperature: 0.1, response_format: {type: "json_object"}})});
+        const d = await res.json().catch(() => ({}));
+        if (res.ok && d.choices?.[0]?.message?.content) return {by: "groq:" + m, text: d.choices[0].message.content};
+        if ([401, 403].includes(res.status)) return null;
+        backupSkip.set(m, now + (res.status === 429 ? 10 * 60e3 : 30 * 60e3));
+      } catch {} }
+    return null; };
+  const viaGemini = async () => { if (!env.GEMINI_API_KEY) return null;
+    const g = await gemini(env, {systemInstruction: {parts: [{text: REVIEW_SYS}]}, contents: [{role: "user", parts: [{text: user}]}], generationConfig: {temperature: 0.1, maxOutputTokens: 4096, responseMimeType: "application/json"}}).catch(() => null);
+    return g && g.ok && !g.backup ? {by: g.model, text: (g.data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("")} : null; };
+  const viaWai = async () => { if (!env.AI || typeof env.AI.run !== "function") return null;
+    try { const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {messages: msgs, max_tokens: 1500, temperature: 0.1}); const text = typeof r === "string" ? r : r?.response ?? r?.choices?.[0]?.message?.content ?? "";
+      return text ? {by: "workers-ai:llama-3.3-70b", text: typeof text === "string" ? text : JSON.stringify(text)} : null; } catch { return null; } };
+  // Always a different company from the one that answered.
+  const order = /^groq:/.test(avoid) ? [viaGemini, viaWai] : /^workers-ai:/.test(avoid) ? [viaGroq, viaGemini] : [viaGroq, viaWai];
+  for (const f of order) { const r = await f(); if (r) {
+    let o = {}; try { const m = String(r.text).replace(/<think>[\s\S]*?<\/think>/g, "").match(/\{[\s\S]*\}/); o = m ? JSON.parse(m[0]) : {}; } catch {}
+    const verdict = ["ok", "minor", "wrong"].includes(o.verdict) ? o.verdict : null;
+    if (!verdict) continue;
+    return {by: r.by, verdict, confidence: ["high", "medium", "low"].includes(o.confidence) ? o.confidence : "medium", issues: (Array.isArray(o.issues) ? o.issues : []).map(x => cleanText(String(x), 240)).filter(Boolean).slice(0, 5)}; } }
+  return null;
+}
+function reviewPrompt(question, answer, notes, nowText) {
+  return `Current time: ${nowText}\n\nHIS QUESTION:\n${cleanText(question, 3000)}\n\nHIS NOTES THE ASSISTANT COULD SEE (personal notes, may be empty):\n${cleanText(notes || "(none)", 5000)}\n\nANSWER TO CHECK:\n${cleanText(answer, 6000)}`;
+}
+// Max thinks again with the reviewer's points — and keeps his answer if the reviewer is the one who is wrong.
+async function reconsider(env, system, contents, raw, review, jsonMode) {
+  const ask = "A second AI (" + review.by + ") reviewed your answer and flagged:\n- " + review.issues.join("\n- ") + "\nThink it through again carefully. If the reviewer is right, give the corrected, complete answer. If the reviewer is wrong, keep your answer and add one short sentence saying why it is still right. Same reply format as before.";
+  const g = await gemini(env, {systemInstruction: {parts: [{text: system}]}, contents: [...contents, {role: "model", parts: [{text: raw}]}, {role: "user", parts: [{text: ask}]}],
+    generationConfig: {temperature: 0.3, maxOutputTokens: 8192, ...(jsonMode ? {responseMimeType: "application/json"} : {})}}, {deep: true}).catch(() => null);
+  if (!g || !g.ok) return null;
+  const text = (g.data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("\n").trim();
+  const p = jsonMode ? parseModelJson(text) : {reply: text};
+  return p.reply ? {reply: p.reply, model: g.model} : null;
 }
 // ---------- the brain's router: one Max, six specialist departments ----------
 // A quick word-based router (no extra AI call, so no extra cost or delay) picks the department for each
@@ -1799,6 +1876,7 @@ export default {
       const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env),
         brainChain: [...(env.ANTHROPIC_API_KEY ? [cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE] : []), ...modelChain(env), ...(env.GROQ_API_KEY ? GROQ_MODELS.map(m => "groq:" + m) : []), ...(env.AI ? WAI_MODELS.map(m => "workers-ai:" + m) : [])],
         resting, departments: DEPT_IDS.map(id => DEPTS[id].icon + " " + DEPTS[id].name),
+        deepChain: modelChain(env, true), checker: env.GROQ_API_KEY ? "groq:openai/gpt-oss-120b" : env.AI ? "workers-ai:llama-3.3-70b" : "none (add GROQ_API_KEY)",
         guard: await (async () => { try { const r = env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_guard_report") || "null") : null; return r ? "last check " + new Date(r.at).toISOString().slice(0, 16) + "Z, " + r.problems.length + " problem(s)" : "no check yet (daily at 22:45 UTC)"; } catch { return "unknown"; } })(), brain: (env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini") + (env.GROQ_API_KEY || env.AI ? " · free backups: " + [env.GROQ_API_KEY ? "groq" : "", env.AI ? "workers-ai" : ""].filter(Boolean).join(", ") : ""), version:WORKER_VERSION,
         geminiKey: env.GEMINI_API_KEY ? "set" : "missing", passcodeRequired: passcodeSet(env),
         database: env.MAX_MEMORY ? "bound" : "not bound",
@@ -1820,6 +1898,18 @@ export default {
         try { const r = await weatherRoutes(new Request("https://x/api/weather?place=Batangas"), env, new URL("https://x/api/weather?place=Batangas"), ""); const w = await r.json();
           health.weather = r.ok ? "working — " + w.place + " " + Math.round(w.now.temp) + "°C, wind " + Math.round(w.now.wind) + " kn" + (w.sea ? ", waves " + w.sea.waves + " m" : ", no sea data") : "not working: " + w.error; }
         catch (e) { health.weather = "not working: " + String(e.message || e).slice(0, 120); }
+        // Which free brains really answer right now (a two-word test each).
+        health.freeModels = {};
+        for (const m of [...new Set([...DEEP_CHAIN, ...GEMINI_CHAIN, ...EXTRA_CHAIN])]) {
+          try { const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method: "POST", headers: {"Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY},
+              body: JSON.stringify({contents: [{role: "user", parts: [{text: "Reply with the word OK."}]}], generationConfig: {maxOutputTokens: 400}})});
+            const d = await r.json().catch(() => ({})), msg = String(d?.error?.message || "");
+            health.freeModels[m] = r.ok ? "works" : r.status === 429 ? (/limit: 0|free_tier.*0\b/i.test(msg) ? "not free" : "daily limit reached") : r.status === 404 ? "not found" : "no (" + r.status + ")";
+          } catch (e) { health.freeModels[m] = "unreachable"; } }
+        if (env.GROQ_API_KEY) for (const m of GROQ_MODELS) {
+          try { const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + env.GROQ_API_KEY}, body: JSON.stringify({model: m, messages: [{role: "user", content: "Reply with the word OK."}], max_tokens: 200})});
+            health.freeModels["groq:" + m] = r.ok ? "works" : r.status === 429 ? "limit reached" : r.status === 404 ? "not found" : "no (" + r.status + ")";
+          } catch { health.freeModels["groq:" + m] = "unreachable"; } }
         try { const v = await findVideos("lofi hip hop"); health.musicYouTube = v.length ? "working — " + v.length + " songs, e.g. " + (v[0].title || v[0].id).slice(0, 50) + (v.every(x => x.title) ? "" : " (titles missing)") : "not working: no results " + JSON.stringify(findVideos.last || {}).slice(0, 200); } catch (e) { health.musicYouTube = "not working: " + String(e.message || e).slice(0, 100); }
         try { const st = await findRadio("jazz"); health.musicRadio = st.length ? "working — " + st.length + " stations, e.g. " + st[0].name.slice(0, 40) : "not working: no stations"; } catch (e) { health.musicRadio = "not working: " + String(e.message || e).slice(0, 100); }
       }
@@ -1996,6 +2086,31 @@ export default {
       const system = style + `\nCurrent time: ${cleanText(body.now, 40) || when(Date.now())}${body.tz ? " (" + cleanText(body.tz, 60) + ")" : ""}.` +
         (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote + deskNote + (persona ? "\n" + persona : "");
       const contents = [...history, {role:"user", parts:[{text:message}]}];
+      const jsonMode = !!(db || actionsOn), nowText = cleanText(body.now, 40) || when(Date.now());
+      // "Double-check that" / "are you sure?" → a second AI checks his last answer.
+      if (CHECK_AGAIN.test(message)) {
+        let ai = -1; for (let i = history.length - 1; i >= 0; i--) if (history[i].role === "model") { ai = i; break; }
+        const lastA = ai > 0 ? history[ai] : null, lastQ = ai > 0 ? history[ai - 1] : null;
+        if (lastA && lastQ && lastQ.role === "user") {
+          route = {id: route.id === "general" ? "general" : route.id, how: "double-check"};
+          const review = await reviewer(env, reviewPrompt(lastQ.parts[0].text, lastA.parts[0].text, notesText, nowText), "");
+          let reply2, check = null, model2 = review ? review.by : "";
+          if (!review) reply2 = "I couldn't reach a second AI just now, so I can't double-check it. Try again in a minute.";
+          else {
+            check = {by: review.by, verdict: review.verdict, issues: review.issues, fixed: false};
+            if (review.verdict === "wrong" && review.confidence !== "low") {
+              const rev = await reconsider(env, system, history.slice(0, ai), lastA.parts[0].text, review, jsonMode);
+              if (rev) { reply2 = "After a second check: " + rev.reply; check.fixed = true; model2 = rev.model; }
+              else reply2 = "A second AI (" + review.by + ") thinks my last answer has a problem: " + review.issues.join("; ") + ". I couldn't re-check it myself just now, so please treat it with care.";
+            } else reply2 = "I had a second AI (" + review.by.replace(/^groq:|^workers-ai:/, "") + ") check my last answer — it holds up." + (review.verdict === "minor" && review.issues.length ? " One small note: " + review.issues[0] : "");
+          }
+          await logAct(env, {dept: route.id, kind: "double-check", text: message.slice(0, 160), detail: check ? "verdict " + check.verdict + (check.fixed ? ", fixed" : "") : "no reviewer", model: model2, ok: !!check, ms: Date.now() - chatStart});
+          if (db) { try { await saveTalk(db, message, reply2); } catch {} }
+          return json({reply: reply2, action: null, coachNotes: [], model: model2, dept: {id: route.id, name: (DEPTS[route.id] || {}).name || "Max", icon: (DEPTS[route.id] || {}).icon || "", how: "double-check"},
+            brain: {mode: "check", why: "you asked me to double-check"}, check, savedMemory, autoSaved: [], memoriesUsed: allMemories.length, notesUsed: [], truncated: false, conversationSaved: !!db}, 200, origin, env);
+        }
+      }
+      const diff = hardness(message, route.id);
       let raw = "", cutOff = false, usedModel = "", claudeNote = "";
       const c = await claude(env, system, history, message, 4096);
       if (c && c.text) { raw = c.text; cutOff = c.cutOff; usedModel = c.model; }
@@ -2005,7 +2120,7 @@ export default {
         try {
           g = await gemini(env, {systemInstruction:{parts:[{text:system}]}, contents,
             // Large limit: newer Gemini models also spend part of it on thinking, which used to cut answers short.
-            generationConfig:{temperature:0.7, maxOutputTokens:8192, ...(db || actionsOn ? {responseMimeType:"application/json"} : {})}});
+            generationConfig:{temperature:0.7, maxOutputTokens:8192, ...(db || actionsOn ? {responseMimeType:"application/json"} : {})}}, {deep: diff.hard});
         } catch { await logChat({ok: false, detail: "could not reach any brain"}); return json({error:"Could not reach the AI provider. Try again later.", savedMemory}, 502, origin, env); }
         if (!g || !g.ok) {
           const message = g?.data?.error?.message || `AI provider returned HTTP ${g?.status}`;
@@ -2021,19 +2136,32 @@ export default {
         }
       }
       const parsed = db || actionsOn || (c && c.text) ? parseModelJson(raw) : {reply: raw, remember: []};
-      const reply = parsed.reply ? parsed.reply + (cutOff ? " … That was a long one, so I stopped there. Say “continue” for the rest." : "") : "";
+      let reply = parsed.reply ? parsed.reply + (cutOff ? " … That was a long one, so I stopped there. Say “continue” for the rest." : "") : "";
       if (!reply) { await logChat({ok: false, detail: "empty answer", model: usedModel}); return json({error:"The AI provider returned no text. Try rephrasing.", savedMemory}, 502, origin, env); }
       const chosen = actionsOn ? cleanAction(parsed.action) : null;
       if (route.id === "general" && chosen && deptOfAction(chosen.type)) route = {id: deptOfAction(chosen.type), how: "action"};
       const deskOut = DEPTS[route.id] || null;
+      // Hard question → a second AI from a different company checks the answer before he hears it.
+      let check = null;
+      if (diff.hard && !chosen && !body.coach && !cutOff && reply.length > 20) {
+        const review = await reviewer(env, reviewPrompt(message, parsed.reply, notesText, nowText), usedModel).catch(() => null);
+        if (review) {
+          check = {by: review.by, verdict: review.verdict, issues: review.issues, fixed: false};
+          if (review.verdict === "wrong" && review.confidence !== "low") {
+            const rev = await reconsider(env, system, contents, raw, review, jsonMode);
+            if (rev && rev.reply && rev.reply !== parsed.reply) { reply = rev.reply; check.fixed = true; usedModel = rev.model || usedModel; }
+          }
+        }
+      }
       { const act = chosen;
-        await logChat({model: usedModel, detail: [act ? "action: " + act.type : "", claudeNote ? "Claude failed: " + claudeNote : "", /^(groq|workers-ai):/.test(usedModel) ? "Gemini was out, a backup brain answered" : ""].filter(Boolean).join(" · ")}); }
+        await logChat({model: usedModel, detail: [diff.hard ? "deep thinking" : "", check ? "checked by " + check.by + ": " + check.verdict + (check.fixed ? " (fixed)" : "") : "", act ? "action: " + act.type : "", claudeNote ? "Claude failed: " + claudeNote : "", /^(groq|workers-ai):/.test(usedModel) ? "Gemini was out, a backup brain answered" : ""].filter(Boolean).join(" · ")}); }
       let autoSaved = [];
       if (db) {
         if (!savedMemory) { try { autoSaved = await saveFacts(db, parsed.remember); } catch {} }
         try { await saveTalk(db, message, reply); } catch {}
       }
-      return json({reply, action: actionsOn ? cleanAction(parsed.action) : null, coachNotes: body.coach ? (parsed.coach_notes || []).map(x => cleanText(String(x), 300)).filter(Boolean).slice(0, 5) : [], model:usedModel, dept: {id: route.id, name: deskOut ? deskOut.name : "Max", icon: deskOut ? deskOut.icon : "", how: route.how}, ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
+      return json({reply, action: actionsOn ? cleanAction(parsed.action) : null, coachNotes: body.coach ? (parsed.coach_notes || []).map(x => cleanText(String(x), 300)).filter(Boolean).slice(0, 5) : [], model:usedModel, dept: {id: route.id, name: deskOut ? deskOut.name : "Max", icon: deskOut ? deskOut.icon : "", how: route.how},
+        brain: {mode: diff.hard ? "deep" : "fast", why: diff.why}, check, ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
         notesUsed: Array.isArray(parsed.used_notes) ? [...new Set(parsed.used_notes.map(t => cleanText(String(t), 200)).filter(t => knownTitles.some(k => k.toLowerCase() === t.toLowerCase())))].slice(0, 4)
           : [...fromPhone.items.map(n => n.title), ...notesUsed.map(n => n.title || "Untitled")].slice(0, 3),
         truncated: cutOff, conversationSaved: !!db}, 200, origin, env);

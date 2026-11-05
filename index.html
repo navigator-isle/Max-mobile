@@ -43,6 +43,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}.b
 .music-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.music-title{flex:1 1 140px;min-width:0;font-size:.85rem;color:#cfe9ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .music-ctrls{display:flex;gap:4px}.music-btn{min-width:38px;padding:6px 8px}.music-ext{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.music-link{font-size:.72rem;text-decoration:none}
 body.music-on{padding-bottom:300px}
+.desk-chip.warn{border-color:rgba(255,190,90,.55);color:#ffd28a;background:rgba(200,120,20,.14)}button.desk-chip{cursor:pointer;font:inherit;font-size:.72rem}
 </style><style>
 /* MAX two-section layout */
 :root{--max-bg:#07111e;--max-panel:#0b1a2b;--max-line:#1c344c;--max-accent:#77d7ff;--max-text:#e8f3ff;--max-muted:#8fa8c0}
@@ -1016,6 +1017,18 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const box=$('noteRefs'),tag=document.createElement('span');tag.className='desk-chip';tag.textContent=(d.icon?d.icon+' ':'')+d.name;tag.title='The specialist who answered';
   box.prepend(tag);box.hidden=false;
  }
+ // How hard Max thought, and whether a second AI checked the answer.
+ function showBrain(b,c){
+  const box=$('noteRefs');
+  const chip=(text,title,cls,onClick)=>{const t=document.createElement(onClick?'button':'span');t.className='desk-chip'+(cls?' '+cls:'');t.textContent=text;t.title=title;if(onClick)t.onclick=onClick;box.append(t);box.hidden=false};
+  if(b&&b.mode==='deep')chip('🧠 Deep thinking','Hard question — strongest free brain with deep thinking ('+(b.why||'')+')');
+  if(c){
+   const by=String(c.by||'').replace(/^groq:|^workers-ai:/,'').replace(/^openai\//,'').replace(/^qwen\//,'');
+   const issues=(c.issues||[]).join(' · ');
+   const label=c.fixed?'✓ Fixed after a second check':c.verdict==='wrong'?'⚠ Second AI disagreed':c.verdict==='minor'?'✓ Double-checked · 1 note':'✓ Double-checked';
+   chip(label,'Checked by '+by+(issues?': '+issues:''),c.verdict==='wrong'&&!c.fixed?'warn':'',issues?()=>{const t=(c.fixed?'The second AI ('+by+') spotted: ':'The second AI ('+by+') said: ')+issues;setSub('',t);status(t)}:null);
+  }
+ }
  function showNoteRefs(titles){
   const box=$('noteRefs');box.replaceChildren();
   const list=(titles||[]).filter(Boolean).slice(0,3);
@@ -1592,6 +1605,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function stripQuery(s){return s.replace(/^(?:about|on|for|regarding|related to|tungkol sa|sa|the|my|a|an|some)\s+/g,'').replace(/^(?:about|on|for|regarding|the|my)\s+/,'').replace(/\s+(?:in|from|on)\s+(?:my|the)\s+(?:notes?|second brain)$/,'').replace(/\s+(?:notes?|note)$/,'').trim()}
  function matchCommand(raw){
   const n=norm(raw);if(!n)return null;
+  // "double-check that" / "are you sure?" → Max asks a second AI to check his last answer (done by the server).
+  if(/^\s*(?:max[, ]+)?(?:(?:please\s+)?(?:double[- ]?check|re-?check|verify|fact[- ]?check)(?:\s+(?:that|it|this|your (?:last )?answer|what you said))?(?:\s+again)?|are you sure(?: about (?:that|it|this))?|sigurado ka(?: ba)?(?: dyan| diyan)?|totoo ba (?:yan|iyan|yun|iyon))\s*(?:please|po|max)?\s*[?.!]*\s*$/i.test(raw))return null;
   const wc=n.split(' ').length;
   const has=re=>re.test(n);
   const hasDraft=!!(draft&&draft.points&&draft.points.length);
@@ -4182,7 +4197,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function handleUtterance(q,voice){
   return new Promise(async finish=>{
   setSub(q,'');showNoteRefs([]);
-  $('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');
+  $('maxOrb').classList.remove('listening');$('maxOrb').classList.add('processing');status('Thinking…');setTimeout(()=>{if($('maxOrb').classList.contains('processing'))status('Thinking it through carefully…')},9000);
   try{
    const local=matchLearned(norm(q))||matchCommand(q);
    if(local&&isOffline()&&QUEUE_TYPES.has(local.type)){const said=queuedReply(q,local);talkHistory.push({role:'user',text:q},{role:'model',text:said});showAnswer(said,finish);return}
@@ -4198,7 +4213,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:await notesContextSmart(q),projects:projects().map(p=>p.name),skills:relevantSkills(q),personality:personality(),lastDept:deskHint(),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
-     now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
+     now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},70000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
    if(r.status===401){cloud.memory=false;if(data.needLogin==='google'){cloud.state='needlogin';refreshConnectionLabel();throw new Error('Please sign in with Google first: hold the circle, then Settings.')}cloud.state='needpass';refreshConnectionLabel();throw new Error('Max needs the passcode. Tap ⚙ and enter it.')}
@@ -4212,7 +4227,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     learn(norm(q),data.action); // next time this phrase works instantly
    }
    talkHistory.push({role:'user',text:q},{role:'model',text:reply});
-   showNoteRefs(data.notesUsed);showDesk(data.dept);
+   showNoteRefs(data.notesUsed);showDesk(data.dept);showBrain(data.brain,data.check);if(data.check&&data.check.by)countUsage(data.check.by);
    showAnswer(reply,finish);
    if(remembered)setTimeout(()=>{$('memoryBadge').textContent='✓ Noted in memory';$('memoryBadge').hidden=false;setTimeout(()=>$('memoryBadge').hidden=true,5000)},200);
   }catch(err){

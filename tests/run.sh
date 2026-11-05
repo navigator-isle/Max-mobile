@@ -27,6 +27,7 @@ run "Google Play"          tests/test-worker15.mjs "$TMP/worker.mjs"
 run "Brain router & desks" tests/test-worker16.mjs "$TMP/worker.mjs"
 run "Activity log & music finder" tests/test-worker17.mjs "$TMP/worker.mjs"
 run "Guard: daily check & backup" tests/test-worker18.mjs "$TMP/worker.mjs"
+run "Smarter free brain & second check" tests/test-worker19.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
