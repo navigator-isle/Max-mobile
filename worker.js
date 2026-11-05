@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-13a";
+const WORKER_VERSION = "max-worker-2026-11-14a";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -1571,6 +1571,40 @@ async function guardRoutes(request, env, url, origin) {
   const report = await guardRun(env, {backup: body.backup === true, source: "asked"});
   return json({report, lastBackup: report.backup || (env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_guard_backup").catch(() => null) || "null") : null)}, 200, origin, env);
 }
+// ---------- pictures and videos inside notes ----------
+// The phone keeps them in its own storage; a copy goes to Max's database in pieces (D1 rows are limited to 2 MB),
+// so the laptop sees them too. Pictures are shrunk by the phone first; videos are capped at 30 MB.
+let mediaReady = false;
+async function mediaTable(db) {
+  if (mediaReady) return;
+  await db.prepare("CREATE TABLE IF NOT EXISTS max_media (id TEXT NOT NULL, idx INTEGER NOT NULL, total INTEGER NOT NULL, mime TEXT, name TEXT, data TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (id, idx))").run();
+  mediaReady = true;
+}
+const MEDIA_ID = /^[\w-]{4,40}$/, MEDIA_CHUNK = 1_400_000, MEDIA_MAX_CHUNKS = 32;
+async function mediaRoutes(request, env, url, origin) {
+  const db = env.MAX_MEMORY;
+  if (!db) return json({error: "Pictures in notes need Max's database to reach your other devices."}, 503, origin, env);
+  await mediaTable(db);
+  if (request.method === "POST") {
+    let b = {}; try { b = await request.json(); } catch {}
+    const id = String(b.id || ""), idx = Number(b.idx), total = Number(b.total), data = typeof b.data === "string" ? b.data : "";
+    if (!MEDIA_ID.test(id) || !Number.isInteger(idx) || !Number.isInteger(total) || idx < 0 || total < 1 || total > MEDIA_MAX_CHUNKS || idx >= total) return json({error: "Bad media piece."}, 400, origin, env);
+    if (!data || data.length > MEDIA_CHUNK * 1.4 || !/^[A-Za-z0-9+/=]+$/.test(data.slice(0, 200))) return json({error: "That piece is too big or not base64."}, 400, origin, env);
+    const mime = /^(image|video)\/[\w.+-]{1,40}$/.test(String(b.mime || "")) ? b.mime : "application/octet-stream";
+    await db.prepare("INSERT OR REPLACE INTO max_media (id, idx, total, mime, name, data, at) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(id, idx, total, mime, cleanText(String(b.name || ""), 120), data, Date.now()).run();
+    return json({saved: idx + 1, total}, 200, origin, env);
+  }
+  const id = url.searchParams.get("id") || "";
+  if (!MEDIA_ID.test(id)) return json({error: "Which picture?"}, 400, origin, env);
+  if (request.method === "DELETE") { await db.prepare("DELETE FROM max_media WHERE id = ?").bind(id).run(); return json({deleted: true}, 200, origin, env); }
+  const rows = (await db.prepare("SELECT idx, total, mime, name, data FROM max_media WHERE id = ? ORDER BY idx").bind(id).all()).results || [];
+  if (!rows.length) return json({error: "Not in Max's database (it may still be on the other device)."}, 404, origin, env);
+  if (rows.length !== rows[0].total) return json({error: "Only " + rows.length + " of " + rows[0].total + " pieces have arrived so far."}, 409, origin, env);
+  const parts = rows.map(r => Uint8Array.from(atob(r.data), c => c.charCodeAt(0)));
+  const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0)); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; }
+  const h = new Headers(corsHeaders(origin, env)); h.set("Content-Type", rows[0].mime || "application/octet-stream"); h.set("Cache-Control", "private, max-age=86400");
+  return new Response(out, {status: 200, headers: h});
+}
 // ---------- markets: crypto (CoinGecko), Philippine stocks (PSE Edge), currencies (Frankfurter / ECB) ----------
 // Prices are reported, never advised on, and Max never trades.
 const UA = "MaxPersonalAssistant/1.0 (personal use; +https://navigator-isle.github.io/Max-mobile/)";
@@ -1940,6 +1974,7 @@ export default {
     if (url.pathname === "/api/weather") return weatherRoutes(request, env, url, origin);
     if (url.pathname === "/api/activity" && ["GET", "POST"].includes(request.method)) return activityRoutes(request, env, url, origin);
     if (url.pathname === "/api/music" && request.method === "GET") return musicRoutes(request, env, url, origin);
+    if (url.pathname === "/api/media" && ["GET", "POST", "DELETE"].includes(request.method)) return mediaRoutes(request, env, url, origin);
     if ((url.pathname === "/api/guard" && request.method === "GET") || (url.pathname === "/api/guard/run" && request.method === "POST")) return guardRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/trader/")) return traderRoutes(request, env, url, origin);
     if ((url.pathname === "/api/site/audit" || url.pathname.startsWith("/api/content/")) && request.method === "POST") return contentRoutes(request, env, url, origin);

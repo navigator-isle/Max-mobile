@@ -8,7 +8,7 @@ const sP = http.createServer((q, r) => { const f = q.url.split("?")[0].endsWith(
 let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
 const b = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), args: ["--no-sandbox"] });
 const ctx = await b.newContext({ ...devices["Pixel 7"], acceptDownloads: true });
-await ctx.addInitScript(() => { if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); localStorage.setItem("max_notes_migrated_v1", "1"); }
+await ctx.addInitScript(() => { if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); localStorage.setItem("max_notes_migrated_v1", "1"); localStorage.setItem("max_struct_maritime_v1", "1"); }
   window.__spoken = []; window.__q = [];
   class R { start() { if (this.continuous) return; const t = window.__q.shift(); setTimeout(() => { if (t) this.onresult && this.onresult({ results: [[{ transcript: t }]] }); else this.onerror && this.onerror({ error: "no-speech" }); this.onend && this.onend(); }, 60); } stop() {} abort() {} }
   window.webkitSpeechRecognition = R; window.SpeechRecognition = R;
@@ -28,7 +28,7 @@ ok(/skipped 1 file/.test(await p.locator("#homeAnswer").textContent()), "says wh
 ok(await p.locator('.tree-folder[data-path="Work › Ship\'s Apps and Tool › AMOS"]').count() === 1 && await p.locator('.tree-folder[data-path="Work › Chief Officer"]').count() === 1 && await p.locator('.tree-folder[data-path="Maritime › IMO › Conventions"]').count() === 1, "folders kept at any depth, empty folders too (Work › Chief Officer)");
 ok(await p.locator('.tree-folder[data-path="My vault"]').count() === 0 && await p.locator(".tree-folder > summary", { hasText: ".obsidian" }).count() === 0, "the vault's own folder name and .obsidian are not shown as folders");
 const kids = await p.locator('.tree-folder[data-path="Maritime › IMO"] > .tree-kids > *').allTextContents();
-ok(kids[0].startsWith("Codes") && kids[1].startsWith("Conventions") && kids.at(-1) === "IMO", "folders first, then notes, A to Z (like Obsidian)", kids.join(" | "));
+ok(kids[0].startsWith("Codes") && kids[1].startsWith("Conventions") && kids.at(-1).startsWith("IMO"), "folders first, then notes, A to Z (like Obsidian)", kids.join(" | "));
 // reading view
 await p.locator(".tree-note", { hasText: "Monthly Reports (AMOS)" }).click(); await p.waitForTimeout(300);
 ok(await p.locator("#noteRead").isVisible() && !(await p.locator("#editorBody").isVisible()), "opening a note shows the reading view");
@@ -46,9 +46,10 @@ ok(await p.locator("#readBody pre", { hasText: "Vessel A" }).count() === 1, "cod
 await p.click("#readToggle");
 ok(await p.locator("#editorBody").isVisible() && !(await p.locator("#noteRead").isVisible()) && await p.inputValue("#editorCategory") === "Work › Personal Records", "✎ Edit switches to editing (folder = topic)");
 await p.click("#editorBody"); await p.keyboard.press("End"); await p.keyboard.type(" Updated."); await p.click("#editorSave"); await p.waitForTimeout(200);
-await p.click("#readToggle"); ok(/Updated\./.test(await p.locator("#readBody").textContent()), "saved edits show in reading view");
+ok(await p.locator("#notesScreen").isVisible(), "Save goes back to the notes list");
+await p.locator(".tree-note", { hasText: "Sea Service" }).click(); await p.waitForTimeout(200); ok(/Updated\./.test(await p.locator("#readBody").textContent()), "saved edits show in reading view");
 // re-import doesn't duplicate
-await p.click("#editorBack"); await p.click("#vaultMoreBtn"); await p.setInputFiles("#vaultInput", ZIP); await p.waitForTimeout(800);
+await p.click("#editorBack"); await p.waitForTimeout(150); await p.click("#vaultMoreBtn"); await p.setInputFiles("#vaultInput", ZIP); await p.waitForTimeout(800);
 ok(/7 of them replace notes you already have/.test(await p.locator("#homeAnswer").textContent()), "re-importing warns which notes it would replace");
 await p.locator("#dispBody button", { hasText: "Yes" }).first().click(); await p.waitForTimeout(500);
 ok(await notesCount() === 7, "…and doesn't create duplicates", await notesCount());

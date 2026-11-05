@@ -92,7 +92,7 @@ await say("open the ballast procedure note");
 ok(await vis("#editorScreen") && await p.inputValue("#editorTitle") === "Ballast procedure", "“open the ballast procedure note” → note opens");
 ok(await p.locator("#editorLinks button", { hasText: "Ballast water record book" }).count() === 1, "linked notes shown (Obsidian-style)");
 // export this note
-const [dl] = await Promise.all([p.waitForEvent("download"), p.click("#exportMd")]);
+const [dl] = await Promise.all([p.waitForEvent("download"), (async () => { await p.click("#edMoreBtn"); await p.click("#exportMd"); })()]);
 const md = fs.readFileSync(await dl.path(), "utf8");
 ok(dl.suggestedFilename() === "Ballast procedure.md" && md.startsWith("---\ntitle: \"Ballast procedure\"") && md.includes("topic: \"Maritime › Ballast\"") && md.includes("[[Ballast water record book]]") && md.includes("Start ballast pump No. 2"), "export to Obsidian .md with topic, tags and [[links]]", md.slice(0, 200));
 
@@ -126,7 +126,8 @@ ok(await vis("#quickMenu"), "hold the circle → menu (Keyboard, Notes, Research
 await p.click("[data-go=notes]"); await p.click("#newNote");
 await p.fill("#editorTitle", "Mooring line wear"); await p.click("#editorBody"); await p.keyboard.type("Mooring lines showing wear at the fairlead.");
 await p.click("#editorSave"); await p.waitForTimeout(1200);
-ok(await p.inputValue("#editorCategory") === "Maritime › Mooring" && (await p.locator("#editorBadge").textContent()).includes("filed by Max"), "new Unsorted note filed into a topic by Max");
+{ const n = await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).find(x => x.title === "Mooring line wear"));
+  ok(n.category === "Maritime › Mooring" && n.filedByMax && /Max filed it under Maritime › Mooring/.test(await p.locator("#savedBanner").textContent()), "new Unsorted note filed into a topic by Max (and the list says so)", JSON.stringify([n.category, await p.locator("#savedBanner").textContent()])); }
 await p.click("#miniHome"); await say("could you organise my notes");
 await p.waitForFunction(() => /filed/.test(document.getElementById("organizeBanner").textContent), null, { timeout: 10000 }).catch(() => {});
 const cats = await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).filter(n => !n.deleted).map(n => n.title + "=" + n.category));

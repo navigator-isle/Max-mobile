@@ -323,6 +323,68 @@ body.vault-mode .search-box{background:#25263a;border-color:#3a3c52}
 .read-tags{display:flex;flex-wrap:wrap;gap:6px;margin:-8px 0 14px}.read-tags span{color:var(--v-accent);background:#2d2a45;border-radius:999px;padding:2px 10px;font-size:.85rem}
 #editorScreen.reading #editorAnalysis,#editorScreen.reading #editorSave,#editorScreen.reading #editorDictate{display:none!important}
 .read-toggle{margin-left:auto}
+
+#editorScreen [hidden],#notesScreen [hidden]{display:none!important}
+#editorScreen.reading .full-editor>.ed-extra{display:block!important}
+#notesScreen .vault-tree details.topic>summary{padding:4px 4px!important;min-height:0!important;font-size:.82rem}
+#notesScreen .vault-tree .note-item.tree-note{padding-top:3px!important;padding-bottom:3px!important;min-height:0!important;border-top:0!important}
+#notesScreen .vault-tree .note-item.tree-note strong{font-size:.8rem!important;font-weight:400;flex:1;min-width:0}
+#notesScreen .vault-tree .f-count:empty,#notesScreen .vault-tree .f-count.zero{display:none}
+#editorScreen .ed-save{width:auto!important;padding:5px 14px!important;border-radius:8px!important;flex:0 0 auto}
+#editorScreen .ed-btn{white-space:nowrap;flex:0 0 auto}
+.saved-banner{font-size:.76rem;color:#bff3d2;background:rgba(60,170,110,.16);border:1px solid rgba(110,220,160,.4);border-radius:8px;padding:5px 9px;margin:0 0 4px}
+/* ---------- notes v2: compact, more on one screen; formatting only when needed ---------- */
+#notesScreen.vault .vault-head{margin:0 0 6px}#notesScreen.vault .vault-head h1{font-size:1.05rem;margin:0}#notesCount{font-size:.7rem;color:var(--v-muted);margin:1px 0 0}
+#notesScreen .search-box{min-height:0;padding:0 10px;margin:0 0 4px;border-radius:9px}#notesScreen .search-box input{padding:7px 4px;font-size:.82rem}
+.vault-tree{font-size:.84rem!important;line-height:1.25;padding:2px 0 8px!important}
+.vault-tree details>summary{padding:5px 4px;gap:6px;border-radius:6px;font-weight:600;color:#e6e7f2}
+.vault-tree details>summary::before{width:6px;height:6px;flex:0 0 6px;border-width:0 1.5px 1.5px 0;margin:0 3px 0 2px}
+.vault-tree details>summary .f-count{margin-left:auto;font-size:.66rem;font-weight:400;color:var(--v-muted);background:#2a2c40;border-radius:8px;padding:0 6px}
+.vault-tree .tree-kids{margin-left:7px;padding-left:9px}
+.vault-tree .tree-note{padding:4px 4px 4px 18px;min-height:0;border-radius:6px}.vault-tree .tree-kids .tree-note{padding-left:4px}
+.vault-tree .tree-note strong{font-size:.82rem}.vault-tree .tree-note .n-date{flex:0 0 auto;font-size:.64rem;color:var(--v-muted)}
+.vault-tree .tree-note .n-media{font-size:.68rem;color:var(--v-muted)}
+.vault-tree .tree-note.just-saved{animation:savedFlash 2.4s ease-out}
+@keyframes savedFlash{0%,35%{background:rgba(120,220,160,.28);box-shadow:inset 3px 0 0 #6fe0a0}100%{background:transparent;box-shadow:none}}
+.vault-bar{padding:4px 6px}.vault-bar button{font-size:1.05rem;padding:5px 12px}
+.vault-foot{font-size:.68rem;padding:2px 2px 6px}.vault-foot b{font-size:.72rem}
+/* editor */
+#editorScreen .ed-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:4px;padding:4px 0 6px;background:var(--v-bg,#1e1f2e)}
+#editorScreen .ed-head{flex:1;min-width:0}#editorScreen .ed-head h1{font-size:.84rem;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+#editorBadge{font-size:.64rem;margin:0;color:var(--v-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ed-btn{background:#26283b;color:#dcdde8;border:1px solid #3a3c52;border-radius:8px;padding:5px 9px;font:inherit;font-size:.78rem;line-height:1.2;min-width:32px;cursor:pointer}
+.ed-btn[aria-expanded="true"]{background:#3a3560;border-color:#a88bfa}
+.ed-btn.ed-save{background:#a88bfa;color:#16122b;border-color:#a88bfa;font-weight:700}
+#editorScreen.reading .ed-edit-only,#editorScreen.reading .ed-save{display:none}
+.ed-menu{display:flex;flex-wrap:wrap;gap:6px;padding:6px;margin:0 0 6px;background:#24263a;border:1px solid #3a3c52;border-radius:10px}
+.ed-menu button{background:#2f3148;color:#dcdde8;border:0;border-radius:7px;padding:7px 10px;font:inherit;font-size:.78rem;cursor:pointer}.ed-menu .danger-btn{color:#ff9c9c}
+#editorScreen .full-editor{gap:6px!important;padding:0!important;background:none!important;border:0!important}
+#editorTitle{background:none!important;border:0!important;border-bottom:1px solid #3a3c52!important;border-radius:0!important;font-size:1.02rem!important;font-weight:700;padding:4px 2px!important;color:#eef}
+.meta-fold>summary{list-style:none;font-size:.7rem;color:var(--v-muted);cursor:pointer;padding:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta-fold>summary::-webkit-details-marker{display:none}
+.meta-fold .editor-meta{margin-top:4px}.meta-fold input{font-size:.78rem!important;padding:6px 8px!important}
+#editorScreen .format-toolbar{gap:3px;padding:4px;border-radius:9px;background:#24263a;border-color:#3a3c52;flex-wrap:wrap}
+#editorScreen .format-toolbar button,#editorScreen .format-toolbar select,#editorScreen .color-tool{padding:4px 7px;font-size:.78rem;border-radius:6px;min-width:28px;background:#2f3148;border-color:#3a3c52}
+#editorScreen .format-toolbar select{max-width:96px}.color-tool input{width:16px;height:14px;padding:0;border:0;background:none;vertical-align:middle;margin-left:2px}
+#fmtBar.floating{position:fixed;z-index:80;box-shadow:0 6px 22px rgba(0,0,0,.55);max-width:calc(100vw - 16px)}
+.link-row{display:flex;gap:6px}.link-row input{flex:1;font-size:.8rem;padding:6px 8px}
+#editorScreen .rich-editor{min-height:55vh;max-height:none;background:none;border:0;padding:4px 2px 40px;font-size:.88rem;line-height:1.5}
+.rich-editor h1,.read-body h1{font-size:1.15rem}.rich-editor h2,.read-body h2{font-size:1rem}.rich-editor h3,.read-body h3{font-size:.92rem}
+.rich-editor a,.read-body a,.read-body .ext-link{color:#7cc4ff;text-decoration:underline;text-underline-offset:2px;word-break:break-word}
+.read-body a::after{content:' ↗';font-size:.75em;text-decoration:none}
+.link-pop{position:fixed;z-index:85;display:flex;gap:4px;background:#24263a;border:1px solid #a88bfa;border-radius:9px;padding:4px;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+.link-pop a,.link-pop button{font-size:.78rem;padding:5px 9px;border-radius:6px;background:#2f3148;color:#dcdde8;border:0;text-decoration:none}
+.ed-extra{font-size:.76rem;color:var(--v-muted);border-top:1px solid #3a3c52;padding-top:6px}.ed-extra>summary{cursor:pointer}.ed-extra .notes-analysis{font-size:.78rem}
+/* reading view */
+#editorScreen .note-read{padding:2px 2px 30px}.read-path{font-size:.66rem!important}.read-title{font-size:1.12rem!important;margin:2px 0 4px!important}
+.read-tags span{font-size:.66rem!important}.read-body{font-size:.88rem!important;line-height:1.5!important}
+/* pictures and videos inside notes */
+figure.note-media{margin:8px 0;padding:0;border:1px solid #3a3c52;border-radius:10px;overflow:hidden;background:#17182a;position:relative}
+figure.note-media .media-el{display:block;max-width:100%;max-height:60vh;margin:0 auto;object-fit:contain;background:#0d0e18}figure.note-media video.media-el{width:100%}
+figure.note-media figcaption{font-size:.74rem;color:#b9bbd0;padding:5px 8px;line-height:1.35}
+figure.note-media details{font-size:.72rem;color:#9a9cb3;padding:0 8px 6px}figure.note-media details>summary{cursor:pointer}
+figure.note-media .media-x{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:50%;width:26px;height:26px;font-size:.8rem;cursor:pointer}
+figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb3;text-align:center}
+.media-viewer{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center}.media-viewer img{max-width:100vw;max-height:100vh;object-fit:contain}
 </style></head>
 <body>
 <script>
@@ -438,6 +500,7 @@ body.vault-mode .search-box{background:#25263a;border-color:#3a3c52}
     </div>
     <label class="search-box"><span aria-hidden="true">⌕</span><input id="notesSearch" placeholder="Search notes…" aria-label="Search notes"></label>
     <div id="organizeBanner" class="banner" hidden></div>
+    <div id="savedBanner" class="saved-banner" role="status" aria-live="polite" hidden></div>
     <div id="newFolderRow" class="tree-new" hidden><span aria-hidden="true">🗀</span><input id="newFolderName" placeholder="New folder name" aria-label="New folder name" enterkeyhint="done"><button id="newFolderOk" class="pill">Add</button></div>
     <div id="noteList" class="vault-tree note-list-page" role="tree" aria-label="Notes and folders"></div>
     <div class="vault-bar" role="toolbar" aria-label="Vault actions">
@@ -460,11 +523,22 @@ body.vault-mode .search-box{background:#25263a;border-color:#3a3c52}
   </main>
 
   <main id="editorScreen" class="section-screen">
-    <div class="notes-header">
-      <button id="editorBack" class="home-mic">← Notes</button>
-      <button id="readToggle" class="home-mic read-toggle" title="Switch between reading and editing" aria-label="Edit this note">✎ Edit</button>
-      <div style="text-align:right"><h1 id="editorPageHeading">New note</h1><p id="editorBadge" class="muted small">Write it your way</p></div>
+    <div class="ed-bar">
+      <button id="editorBack" class="ed-btn" title="Back to notes" aria-label="Back to notes">←</button>
+      <div class="ed-head"><h1 id="editorPageHeading">New note</h1><p id="editorBadge">Write it your way</p></div>
+      <button id="readToggle" class="ed-btn read-toggle" title="Switch between reading and editing" aria-label="Edit this note">✎ Edit</button>
+      <button id="fmtBtn" class="ed-btn ed-edit-only" title="Formatting" aria-label="Formatting" aria-expanded="false">Aa</button>
+      <button id="insertBtn" class="ed-btn ed-edit-only" title="Insert picture, video or link" aria-label="Insert" aria-expanded="false">＋</button>
+      <button id="edMoreBtn" class="ed-btn" title="More" aria-label="More note actions" aria-expanded="false">⋯</button>
+      <button id="editorSave" class="ed-btn ed-save save-note-button" title="Save note">Save</button>
     </div>
+    <div id="insertMenu" class="ed-menu" hidden>
+      <button id="insPhoto">📷 Picture</button><button id="insVideo">🎬 Video</button><button id="insLink">🔗 Link</button><button id="insRule">― Divider</button>
+    </div>
+    <div id="edMore" class="ed-menu" hidden>
+      <button id="editorDictate">🎙 Dictate</button><button id="editorAnalyze">✦ Analyze with Max</button><button id="exportMd">⤒ Obsidian .md</button><button id="exportPdf">⤒ PDF</button><button id="editorDelete" class="danger-btn">🗑 Delete note</button>
+    </div>
+    <input id="mediaInput" type="file" hidden>
     <article id="noteRead" class="note-read" hidden>
       <div id="readPath" class="read-path"></div>
       <h1 id="readTitle" class="read-title"></h1>
@@ -473,33 +547,33 @@ body.vault-mode .search-box{background:#25263a;border-color:#3a3c52}
     </article>
     <section class="notes-editor full-editor">
       <input id="editorTitle" placeholder="Title" aria-label="Note title">
-      <div class="editor-meta">
-        <input id="editorCategory" list="topicList" placeholder="Topic, e.g. Maritime › Ballast" aria-label="Topic" value="Unsorted">
-        <input id="editorTags" placeholder="Tags, separated by commas" aria-label="Tags">
-      </div>
-      <div class="format-toolbar" role="toolbar" aria-label="Text formatting">
+      <details class="meta-fold"><summary id="metaSummary">📁 Unsorted</summary>
+        <div class="editor-meta">
+          <input id="editorCategory" list="topicList" placeholder="Folder, e.g. Maritime › IMO › Conventions" aria-label="Folder" value="Unsorted">
+          <input id="editorTags" placeholder="Tags, separated by commas" aria-label="Tags">
+        </div>
+      </details>
+      <div id="fmtBar" class="format-toolbar" role="toolbar" aria-label="Text formatting" hidden>
         <button data-cmd="bold" title="Bold"><b>B</b></button>
         <button data-cmd="italic" title="Italic"><i>I</i></button>
         <button data-cmd="underline" title="Underline"><u>U</u></button>
-        <button data-cmd="insertUnorderedList" title="Bulleted list">• List</button>
-        <button data-cmd="insertOrderedList" title="Numbered list">1. List</button>
-        <select id="formatBlock" title="Paragraph format"><option value="p">Paragraph</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option><option value="pre">Code</option></select>
-        <label class="color-tool" title="Text color">A <input type="color" id="textColor" value="#dcecff" aria-label="Text color"></label>
-        <label class="color-tool" title="Highlight color">▰ <input type="color" id="highlightColor" value="#385777" aria-label="Highlight color"></label>
+        <button data-block="h2" title="Heading">H</button>
+        <button data-cmd="insertUnorderedList" title="Bulleted list">•</button>
+        <button data-cmd="insertOrderedList" title="Numbered list">1.</button>
+        <button id="fmtLink" title="Make a link">🔗</button>
+        <select id="formatBlock" title="Paragraph style"><option value="p">Text</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option><option value="pre">Code</option></select>
+        <label class="color-tool" title="Text color">A<input type="color" id="textColor" value="#ffd27a" aria-label="Text color"></label>
+        <label class="color-tool" title="Highlight">▰<input type="color" id="highlightColor" value="#385777" aria-label="Highlight color"></label>
+        <button data-cmd="removeFormat" title="Clear formatting">⌫</button>
       </div>
-      <div id="editorBody" class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Start writing your note…"></div>
-      <div class="editor-bottom">
-        <div class="notes-toolbar">
-          <button id="editorDictate">🎙 Dictate</button>
-          <button id="editorAnalyze">Analyze with Max</button>
-          <button id="editorDelete" class="danger-btn">Delete</button>
-        </div>
-        <button id="editorSave" class="accent save-note-button">Save note</button>
-      </div>
-      <div id="editorLinksWrap" hidden><span class="label">LINKED NOTES</span><div id="editorLinks" class="links"></div></div>
-      <div><strong style="font-size:.9rem">Max's analysis</strong><p class="notes-tip">Max's summary and key facts are stored separately from your original note.</p></div>
-      <div id="editorAnalysis" class="notes-analysis">Save your note to keep it in your library.</div>
-      <div class="export-row"><span class="label">EXPORT</span><button id="exportMd" class="pill">Obsidian .md</button><button id="exportPdf" class="pill">PDF</button></div>
+      <div id="linkRow" class="link-row" hidden><input id="linkUrl" placeholder="https://… web address" inputmode="url" aria-label="Link address"><button id="linkOk" class="pill">Add link</button></div>
+      <div id="editorBody" class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Start writing… select text to format it"></div>
+      <div id="linkPop" class="link-pop" hidden><a id="linkPopOpen" target="_blank" rel="noopener noreferrer">Open ↗</a><button id="linkPopRemove">Remove link</button></div>
+      <details class="ed-extra"><summary>Max’s analysis &amp; linked notes</summary>
+        <div id="editorLinksWrap" hidden><span class="label">LINKED NOTES</span><div id="editorLinks" class="links"></div></div>
+        <p class="notes-tip">Max’s summary and key facts are kept separately from your original note.</p>
+        <div id="editorAnalysis" class="notes-analysis">Save your note to keep it in your library.</div>
+      </details>
     </section>
   </main>
 </div>
@@ -1098,7 +1172,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function refreshTopicList(){
   const dl=$('topicList');dl.replaceChildren();
-  [...new Set([...allTopics(),'Maritime','Work procedures','Projects','Learning','Personal','Ideas','Reference','Unsorted'])].forEach(t=>{const o=document.createElement('option');o.value=t;dl.append(o)});
+  [...new Set([...allTopics(),...folderList(),'Maritime','Work procedures','Projects','Learning','Personal','Ideas','Reference','Unsorted'])].forEach(t=>{const o=document.createElement('option');o.value=t;dl.append(o)});
  }
  const badgeFor=n=>n.source==='research'?['RESEARCH ✓','badge badge-res']:n.source==='attachment'?['FROM FILE','badge badge-res']:['MY NOTE','badge badge-note'];
  function matchesQuery(n,q){
@@ -1133,7 +1207,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    const count=n=>n.notes.length+[...n.folders.values()].reduce((s,f)=>s+count(f),0);
    [...node.folders.values()].filter(f=>!q||count(f)>0).sort((a,b)=>byName(a.name,b.name)).forEach(f=>{
     const det=document.createElement('details');det.className='topic tree-folder';det.dataset.path=f.path;det.open=!!q||fresh||open.has(f.path);
-    const sum=document.createElement('summary');if(f.path===selFolder)sum.className='sel';const nm=document.createElement('span');nm.textContent=f.name;sum.append(nm);det.append(sum);
+    const sum=document.createElement('summary');if(f.path===selFolder)sum.className='sel';const nm=document.createElement('span');nm.textContent=f.name;const cnt=document.createElement('span');const cf=count(f);cnt.className='f-count'+(cf?'':' zero');cnt.textContent=cf;sum.append(nm,cnt);det.append(sum);
     det.addEventListener('toggle',()=>{if(q||fresh&&det.open&&!det.dataset.touched)return;const o=fresh&&localStorage.getItem(TREE_OPEN)===null?new Set([...list.querySelectorAll('details[open]')].map(d=>d.dataset.path)):openSet();det.open?o.add(f.path):o.delete(f.path);jset(TREE_OPEN,[...o])});
     sum.addEventListener('click',()=>{selFolder=f.path;list.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));sum.classList.add('sel')});
     const kids=document.createElement('div');kids.className='tree-kids';draw(f,kids);det.append(kids);parent.append(det);
@@ -1142,7 +1216,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     const row=document.createElement('div');row.className='note-item tree-note';row.tabIndex=0;row.dataset.id=n.id;row.setAttribute('role','treeitem');
     const t=document.createElement('strong');t.textContent=n.title||'Untitled note';if(q&&(n.title||'').toLowerCase().includes(q))t.className='tree-hit';
     row.append(t);
+    if(/data-media=/.test(n.body||'')){const m=document.createElement('span');m.className='n-media';m.textContent=/data-kind="video"/.test(n.body)?'🎬':'📷';m.title='Has pictures or videos';row.append(m)}
+    {const d=document.createElement('span');d.className='n-date';const dt=new Date(n.updatedAt||n.createdAt||0),now=new Date();d.textContent=dt.toDateString()===now.toDateString()?dt.toTimeString().slice(0,5):dt.getFullYear()===now.getFullYear()?dt.toLocaleDateString(undefined,{month:'short',day:'numeric'}):String(dt.getFullYear());row.append(d)}
     if(n.source==='research'){const b=document.createElement('span');b.className='tag';b.textContent='research';row.append(b)}
+    if(flash.id===n.id&&Date.now()<flash.until){row.classList.add('just-saved');setTimeout(()=>row.classList.remove('just-saved'),Math.max(300,flash.until-Date.now()))}
     row.onclick=()=>loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')loadNote(n.id)};parent.append(row);
    });
   };
@@ -1161,7 +1238,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(on){
    const path=splitPath($('editorCategory').value).filter(x=>x!=='Unsorted');
    $('readPath').textContent=path.join(' / ');$('readTags').replaceChildren(...$('editorTags').value.split(',').map(t=>t.trim()).filter(Boolean).map(t=>{const x=document.createElement('span');x.textContent='#'+t;return x}));$('readTitle').textContent=$('editorTitle').value||'Untitled note';
-   const body=$('readBody');body.replaceChildren(safeFragment($('editorBody').innerHTML));wikiLinks(body);
+   const body=$('readBody');body.replaceChildren(safeFragment(cleanNoteHtml($('editorBody'))));wikiLinks(body);linkify(body);hydrateMedia(body,false);
+   $('fmtBar').hidden=true;closeEdMenus();$('linkPop').hidden=true;$('linkRow').hidden=true;
   }
  }
  function wikiLinks(el){
@@ -1179,7 +1257,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  $('readToggle').onclick=()=>{const reading=$('editorScreen').classList.contains('reading');setReading(!reading);if(reading)$('editorBody').focus()};
  function clearEditor(){
-  activeNoteId=null;$('editorTitle').value='';$('editorCategory').value='Unsorted';$('editorTags').value='';$('editorBody').innerHTML='';$('editorAnalysis').textContent='Write your note, then save. Max can analyze it separately.';$('editorPageHeading').textContent='New note';$('editorBadge').textContent='Write it your way';$('editorLinksWrap').hidden=true;dirty=false;
+  activeNoteId=null;$('editorTitle').value='';$('editorCategory').value='Unsorted';$('editorTags').value='';$('editorBody').innerHTML='';setTimeout(metaSummary);$('editorAnalysis').textContent='Write your note, then save. Max can analyze it separately.';$('editorPageHeading').textContent='New note';$('editorBadge').textContent='Write it your way';$('editorLinksWrap').hidden=true;dirty=false;
  }
  function linkedNotes(n){
   const others=getNotes().filter(x=>x.id!==n.id);
@@ -1198,7 +1276,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function loadNote(id){
   const n=getNotes().find(x=>x.id===id);if(!n)return;
-  activeNoteId=id;lastNote={id,at:Date.now()};$('editorTitle').value=n.title||'';$('editorCategory').value=n.category||'Unsorted';$('editorTags').value=(n.tags||[]).join(', ');$('editorBody').innerHTML=n.body||'';
+  activeNoteId=id;lastNote={id,at:Date.now()};$('editorTitle').value=n.title||'';$('editorCategory').value=n.category||'Unsorted';$('editorTags').value=(n.tags||[]).join(', ');$('editorBody').innerHTML=n.body||'';metaSummary();hydrateMedia($('editorBody'),true);
   $('editorAnalysis').textContent=n.analysis?.fullText||'Not analyzed yet. Tap Analyze with Max to analyze this note.';$('editorPageHeading').textContent=n.title||'Edit note';
   $('editorBadge').textContent=(n.source==='research'?'Research ✓ approved by you':'My note')+(n.filedByMax?' · filed by Max':'');
   const links=linkedNotes(n),box=$('editorLinks');box.replaceChildren();$('editorLinksWrap').hidden=!links.length;
@@ -1206,7 +1284,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   dirty=false;setSection('editor');setReading(!!(n.body&&n.body!=='<br>'));
  }
  function saveCurrent(){
-  const body=$('editorBody').innerHTML.trim();if(!body||body==='<br>'){status('Write something in your note first.');return null}
+  const body=cleanNoteHtml($('editorBody'));if(!body||body==='<br>'){status('Write something in your note first.');return null}
   const notes=loadAll();let n=notes.find(x=>x.id===activeNoteId);
   if(!n){n={id:newId(),createdAt:Date.now(),analysis:null,deleted:false};notes.push(n);activeNoteId=n.id}
   const cat=splitPath($('editorCategory').value).join(' › ');
@@ -1222,13 +1300,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!base){if(!opts.quiet)$('editorAnalysis').textContent='Saved locally. Connect Max’s Cloudflare Worker to enable AI analysis.';return false}
   if(!opts.quiet)$('editorAnalysis').textContent='Max is analyzing your note…';
   try{
-   const {r,data}=await fetchJson(base+'/api/analyze-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:n.title,category:n.category,text:plain(n.body),topics:allTopics()})},45000);
+   const {r,data}=await fetchJson(base+'/api/analyze-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:n.title,category:n.category,text:plain(n.body),topics:[...new Set([...allTopics(),...folderList()])]})},45000);
    if(!r.ok)throw new Error(data.error||'Analysis failed');
    const cur=loadAll().find(x=>x.id===n.id)||n;
    cur.analysis={summary:data.summary||'',fullText:data.analysis||data.summary||'',tags:data.tags||[],related:data.related||[],questions:data.questions||[]};
    let filed='';
    const topic=splitPath(data.topic).join(' › ');
-   if(topic&&(!cur.category||cur.category==='Unsorted')){cur.category=topic;cur.filedByMax=true;filed=topic}
+   if(topic&&(!cur.category||cur.category==='Unsorted')){cur.category=topic;cur.filedByMax=true;filed=topic;
+    if(flash.id===cur.id){const o=openSet();splitPath(topic).forEach((_,i,a)=>o.add(a.slice(0,i+1).join(' › ')));jset(TREE_OPEN,[...o]);flash.until=Date.now()+3000}}
    if(!cur.tags.length&&Array.isArray(data.tags))cur.tags=data.tags.slice(0,6).map(String);
    cur.updatedAt=Date.now();
    putNotes(loadAll().map(x=>x.id===cur.id?cur:x));
@@ -1239,7 +1318,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    }
    if(screen==='notes')renderList();
    if(!opts.quiet)status('Analysis complete. Your original note is unchanged.');
-   else if(filed)status('Max filed it under '+filed+'.');
+   else if(filed){const t=(flash.id===cur.id?'Saved ✓ “'+(cur.title||'Untitled')+'” — ':'')+'Max filed it under '+filed+'.';if(flash.id===cur.id&&screen==='notes')savedBanner(t);else status(t)}
+   if(screen==='notes'&&flash.id===cur.id){const row=$('noteList').querySelector('.tree-note[data-id="'+cur.id+'"]');if(row)row.scrollIntoView({block:'center'})}
    return filed||true;
   }catch(e){if(!opts.quiet){$('editorAnalysis').textContent='Analysis failed: '+e.message;status('Note is saved, but analysis failed.')}return false}
  }
@@ -1257,8 +1337,19 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const createNewNote=title=>{clearEditor();if(selFolder&&screen==='notes')$('editorCategory').value=selFolder;if(title)$('editorTitle').value=title;setSection('editor');setReading(false);$('editorTitle').focus()};
  $('newNote').onclick=()=>createNewNote('');
  $('editorBack').onclick=()=>{if(dirty&&!confirm('You have unsaved changes. Leave without saving?'))return;setSection('notes')};
- $('editorSave').onclick=()=>{const n=saveCurrent();if(n)status(cloud.memory?'Saved. Syncing to cloud…':'Saved successfully.')};
- $('editorAnalyze').onclick=()=>{const n=saveCurrent();if(n)analyze(n)};
+ // Save → back to the notes list, with the saved note opened in its folder and flashing, so you can see it's there.
+ let flash={id:'',until:0},savedTimer=null;
+ function savedBanner(t){status(t);const b=$('savedBanner');b.textContent=t;b.hidden=false;clearTimeout(savedTimer);savedTimer=setTimeout(()=>b.hidden=true,4500)}
+ function showSaved(n){
+  flash={id:n.id,until:Date.now()+3000};
+  const o=openSet();splitPath(n.category).forEach((_,i,a)=>o.add(a.slice(0,i+1).join(' › ')));jset(TREE_OPEN,[...o]);
+  $('notesSearch').value='';setSection('notes');renderList();
+  const row=$('noteList').querySelector('.tree-note[data-id="'+n.id+'"]');
+  if(row)row.scrollIntoView({block:'center'});
+  savedBanner('Saved ✓ “'+(n.title||'Untitled')+'” in '+(n.category||'Unsorted')+(cloud.memory?' — syncing.':'.'));
+ }
+ $('editorSave').onclick=()=>{closeEdMenus();const n=saveCurrent();if(n)showSaved(n)};
+ $('editorAnalyze').onclick=()=>{closeEdMenus();const n=saveCurrent();if(n){$('editorScreen').querySelector('.ed-extra').open=true;analyze(n)}};
  $('editorDelete').onclick=()=>{
   if(!activeNoteId){if(dirty&&!confirm('Discard this unsaved note?'))return;clearEditor();setSection('notes');return}
   if(confirm('Delete this note?')){putNotes(loadAll().map(n=>n.id===activeNoteId?{...n,deleted:true,body:'',analysis:null,updatedAt:Date.now()}:n));clearEditor();setSection('notes');status('Note deleted.')}
@@ -1266,10 +1357,172 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('notesSearch').oninput=renderList;
  $('organizeBtn').onclick=()=>organizeAll();
  ['editorBody','editorTitle','editorTags','editorCategory'].forEach(id=>$(id).addEventListener('input',()=>dirty=true));
- document.querySelectorAll('.format-toolbar [data-cmd]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.cmd,false,null);$('editorBody').focus();dirty=true});
- $('formatBlock').onchange=()=>{document.execCommand('formatBlock',false,$('formatBlock').value);$('editorBody').focus();dirty=true};
- $('textColor').oninput=()=>{document.execCommand('foreColor',false,$('textColor').value);$('editorBody').focus();dirty=true};
- $('highlightColor').oninput=()=>{document.execCommand('hiliteColor',false,$('highlightColor').value);$('editorBody').focus();dirty=true};
+ // ---------- pictures and videos inside notes ----------
+ // Kept in the phone's own storage (IndexedDB, not the small note storage) and copied to Max's database in pieces,
+ // so the laptop sees them too. When one is added, Max looks at it and writes what he sees under it — that text is
+ // part of the note, so it is included when Max analyzes, searches or answers from your notes.
+ const MEDIA_DB='max-media',VIDEO_MAX=25e6;let mediaDbP=null;
+ function mediaDb(){if(!mediaDbP)mediaDbP=new Promise((res,rej)=>{try{const r=indexedDB.open(MEDIA_DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('files',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});return mediaDbP}
+ const idbReq=(mode,fn)=>mediaDb().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files',mode),st=tx.objectStore('files'),q=fn(st);tx.oncomplete=()=>res(q&&q.result);tx.onerror=()=>rej(tx.error)}));
+ const mediaPut=rec=>idbReq('readwrite',st=>st.put(rec));
+ const mediaGet=id=>idbReq('readonly',st=>st.get(id));
+ const mediaAllRecs=()=>idbReq('readonly',st=>st.getAll());
+ const mediaUrls=new Map();
+ async function mediaBlob(id){
+  const rec=await mediaGet(id).catch(()=>null);
+  if(rec&&rec.blob)return rec.blob;
+  if(!workerBase()||isOffline())return null;
+  try{const r=await fetch(workerBase()+'/api/media?id='+encodeURIComponent(id));if(!r.ok)return null;const blob=await r.blob();mediaPut({id,blob,mime:blob.type,synced:true,at:Date.now()}).catch(()=>{});return blob}catch{return null}
+ }
+ const blobB64=b=>new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]||'');fr.onerror=()=>rej(fr.error);fr.readAsDataURL(b)});
+ async function mediaUpload(id){
+  const rec=await mediaGet(id).catch(()=>null);if(!rec||!rec.blob||rec.synced||!workerBase()||isOffline())return false;
+  const CH=1_300_000,total=Math.max(1,Math.ceil(rec.blob.size/CH));
+  try{for(let i=0;i<total;i++){const data=await blobB64(rec.blob.slice(i*CH,(i+1)*CH));const {r}=await postJson('/api/media',{id,idx:i,total,mime:rec.mime,name:rec.name||'',data},60000);if(!r.ok)return false}
+   await mediaPut({...rec,synced:true});return true}catch{return false}
+ }
+ async function mediaUploadPending(){try{for(const r of await mediaAllRecs())if(!r.synced)await mediaUpload(r.id)}catch{}}
+ setTimeout(mediaUploadPending,15000);
+ // Show the picture / video inside a figure (editor or reading view). The stored note only keeps the figure and caption.
+ async function hydrateMedia(root,editable){
+  for(const fig of root.querySelectorAll('figure[data-media]')){
+   if(fig.querySelector('.media-el,.media-missing'))continue;
+   const id=fig.dataset.media,kind=fig.dataset.kind==='video'?'video':'image';
+   if(editable){fig.contentEditable='false';fig.querySelectorAll('figcaption,details').forEach(c=>c.contentEditable='true');
+    const x=document.createElement('button');x.className='media-x';x.type='button';x.textContent='✕';x.title='Remove';x.setAttribute('aria-label','Remove this '+(kind==='video'?'video':'picture'));
+    x.onclick=e=>{e.preventDefault();if(confirm('Remove this '+(kind==='video'?'video':'picture')+' from the note?')){fig.remove();dirty=true}};fig.prepend(x)}
+   const holder=document.createElement('div');holder.className='media-missing';holder.textContent='Loading '+(kind==='video'?'video':'picture')+'…';fig.prepend(holder);
+   const blob=await mediaBlob(id);
+   if(!blob){holder.textContent=(kind==='video'?'🎬 This video':'📷 This picture')+' is on your other device and hasn’t reached Max’s database yet.';continue}
+   let url=mediaUrls.get(id);if(!url){url=URL.createObjectURL(blob);mediaUrls.set(id,url)}
+   const el=document.createElement(kind==='video'?'video':'img');el.className='media-el';el.src=url;
+   if(kind==='video'){el.controls=true;el.playsInline=true;el.preload='metadata'}
+   else{el.alt=(fig.querySelector('figcaption')?.textContent||'Picture').slice(0,200);el.loading='lazy';if(!editable)el.onclick=()=>{const v=document.createElement('div');v.className='media-viewer';const big=document.createElement('img');big.src=url;big.alt=el.alt;v.append(big);v.onclick=()=>v.remove();document.body.append(v)}}
+   holder.replaceWith(el);
+  }
+ }
+ // What is saved: the figure with its caption and Max's description — never the temporary picture element.
+ function cleanNoteHtml(root){
+  const c=root.cloneNode(true);
+  c.querySelectorAll('.media-el,.media-missing,.media-x').forEach(e=>e.remove());
+  c.querySelectorAll('[contenteditable]').forEach(e=>e.removeAttribute('contenteditable'));
+  linkify(c);
+  return c.innerHTML.trim();
+ }
+ let mediaKind='image';
+ function pickMedia(kind){mediaKind=kind;const inp=$('mediaInput');inp.accept=kind==='video'?'video/*':'image/*';inp.value='';closeEdMenus();inp.click()}
+ async function shrinkForNote(f){
+  try{const bmp=await createImageBitmap(f);const k=Math.min(1,1600/Math.max(bmp.width,bmp.height));const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+   const b=await new Promise(r=>c.toBlob(r,'image/jpeg',0.82));return b||f}catch{return f}
+ }
+ async function insertMedia(f){
+  const kind=f.type.startsWith('video/')?'video':'image';
+  if(kind==='video'&&f.size>VIDEO_MAX){status('That video is over 25 MB. Trim it to a short clip first.');return}
+  const blob=kind==='image'?await shrinkForNote(f):f;
+  const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  try{await mediaPut({id,blob,mime:blob.type||f.type,name:f.name,synced:false,at:Date.now()})}catch(e){status('This phone’s storage refused it: '+e.message);return}
+  const fig=document.createElement('figure');fig.className='note-media';fig.dataset.media=id;fig.dataset.kind=kind;
+  const cap=document.createElement('figcaption');cap.textContent=(kind==='video'?'🎬 ':'📷 ')+'Max is looking at it…';fig.append(cap);
+  restoreRange();const ed=$('editorBody');ed.focus();
+  const sel=getSelection();let placed=false;
+  // After the whole line the cursor is on (never in the middle of a sentence).
+  const BLOCK=/^(P|DIV|H[1-6]|UL|OL|LI|BLOCKQUOTE|PRE|FIGURE|TABLE|HR)$/;
+  if(sel.rangeCount&&ed.contains(sel.getRangeAt(0).startContainer)){const r=sel.getRangeAt(0);let blk=r.startContainer;while(blk&&blk.parentNode!==ed)blk=blk.parentNode;
+   if(blk&&blk!==ed){if(!(blk.nodeType===1&&BLOCK.test(blk.tagName))){while(blk.nextSibling&&!(blk.nextSibling.nodeType===1&&BLOCK.test(blk.nextSibling.tagName)))blk=blk.nextSibling}blk.after(fig);placed=true}}
+  if(!placed)ed.append(fig);
+  const after=document.createElement('p');after.append(document.createElement('br'));fig.after(after);
+  {const r=document.createRange();r.setStart(after,0);r.collapse(true);sel.removeAllRanges();sel.addRange(r);savedRange=r.cloneRange()}
+  dirty=true;await hydrateMedia(ed,true);
+  mediaUpload(id);
+  // Max looks at it and writes what he sees — that becomes part of the note.
+  if(!workerBase()||isOffline()){cap.textContent=(kind==='video'?'🎬 Video':'📷 Picture')+' — add a caption (Max will describe it when you’re online).';return}
+  try{
+   let r,res;
+   if(kind==='video')({r,data:res}=await fetchJson(workerBase()+'/api/attachment/upload',{method:'POST',headers:{'Content-Type':blob.type||'video/mp4','X-File-Type':blob.type||'video/mp4','X-File-Name':encodeURIComponent(f.name),'X-Topics':''},body:blob},300000));
+   else ({r,data:res}=await postJson('/api/attachment',{name:f.name,mime:'image/jpeg',data:await blobB64(blob),topics:[]},120000));
+   const att=res&&res.attachment;
+   if(!r.ok||!att)throw new Error((res&&res.error)||'no answer');
+   cap.textContent=(kind==='video'?'🎬 ':'📷 ')+(att.summary||att.title||'');
+   const det=att.details||att.text||'';
+   if(det){const d=document.createElement('details');const sm=document.createElement('summary');sm.textContent='What Max saw';d.append(sm,document.createTextNode(String(det).replace(/[#*_`>]/g,'').slice(0,1800)));d.contentEditable='true';cap.after(d)}
+   dirty=true;status('Max described the '+(kind==='video'?'video':'picture')+'. Save the note to keep it.');
+  }catch(e){cap.textContent=(kind==='video'?'🎬 Video':'📷 Picture')+' — Max couldn’t look at it ('+e.message+'). Type a caption instead.'}
+ }
+ $('mediaInput').onchange=e=>{const f=e.target.files[0];if(f)insertMedia(f)};
+ // ---------- links: highlighted, open when tapped ----------
+ const URL_RE=/\b(?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,;:!?)\]]/gi;
+ function linkify(root){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement&&n.parentElement.closest('a,code,pre,figcaption details,summary')?NodeFilter.FILTER_REJECT:(URL_RE.lastIndex=0,URL_RE.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP)});
+  const hits=[];while(walker.nextNode())hits.push(walker.currentNode);
+  for(const t of hits){const v=t.nodeValue,frag=document.createDocumentFragment();let last=0;URL_RE.lastIndex=0;
+   for(const m of v.matchAll(URL_RE)){frag.append(v.slice(last,m.index));const a=document.createElement('a');a.href=/^www\./i.test(m[0])?'https://'+m[0]:m[0];a.textContent=m[0];a.className='ext-link';a.target='_blank';a.rel='noopener noreferrer';frag.append(a);last=m.index+m[0].length}
+   frag.append(v.slice(last));t.replaceWith(frag)}
+ }
+ // In the editor a tap puts the cursor in a link, so show a small "Open ↗" button next to it.
+ $('editorBody').addEventListener('click',e=>{
+  const a=e.target.closest('a');const pop=$('linkPop');
+  if(!a||!/^https?:/i.test(a.getAttribute('href')||'')){pop.hidden=true;return}
+  const r=a.getBoundingClientRect();pop.hidden=false;$('linkPopOpen').href=a.href;pop.style.left=Math.max(8,Math.min(innerWidth-180,r.left))+'px';pop.style.top=Math.min(innerHeight-50,r.bottom+6)+'px';
+  $('linkPopRemove').onclick=()=>{a.replaceWith(document.createTextNode(a.textContent));pop.hidden=true;dirty=true};
+ });
+ $('linkPopOpen').addEventListener('click',()=>setTimeout(()=>$('linkPop').hidden=true,50));
+ // ---------- formatting only when needed: select text (floating bar) or tap Aa ----------
+ let savedRange=null;
+ const inEditor=n=>n&&$('editorBody').contains(n.nodeType===1?n:n.parentNode);
+ function saveRange(){const s=getSelection();if(s.rangeCount&&inEditor(s.getRangeAt(0).startContainer))savedRange=s.getRangeAt(0).cloneRange()}
+ function restoreRange(){if(!savedRange)return;const s=getSelection();s.removeAllRanges();s.addRange(savedRange)}
+ const fmtDocked=()=>$('fmtBtn').getAttribute('aria-expanded')==='true';
+ function placeFmtBar(){
+  const bar=$('fmtBar'),s=getSelection();
+  if(fmtDocked()){bar.hidden=false;bar.classList.remove('floating');bar.style.left=bar.style.top='';return}
+  if(screen!=='editor'||$('editorScreen').classList.contains('reading')||!s.rangeCount||s.isCollapsed||!inEditor(s.getRangeAt(0).startContainer)){if(!bar.matches(':focus-within'))bar.hidden=true;return}
+  const r=s.getRangeAt(0).getBoundingClientRect();bar.hidden=false;bar.classList.add('floating');
+  const w=Math.min(bar.offsetWidth||320,innerWidth-16);
+  bar.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+'px';
+  // below the selection, so the phone's own copy/paste menu (above it) stays visible
+  const below=r.bottom+10,h=bar.offsetHeight||40;bar.style.top=(below+h<innerHeight-8?below:Math.max(8,r.top-h-10))+'px';
+ }
+ document.addEventListener('selectionchange',()=>{saveRange();placeFmtBar()});
+ window.addEventListener('scroll',()=>{if($('fmtBar').classList.contains('floating'))placeFmtBar()},{passive:true});
+ // keep the text selected while tapping the bar
+ $('fmtBar').addEventListener('pointerdown',e=>{if(!e.target.closest('select,input'))e.preventDefault()});
+ function fmt(cmd,val){restoreRange();$('editorBody').focus();document.execCommand(cmd,false,val??null);saveRange();dirty=true;placeFmtBar()}
+ document.querySelectorAll('#fmtBar [data-cmd]').forEach(b=>b.onclick=()=>fmt(b.dataset.cmd));
+ document.querySelectorAll('#fmtBar [data-block]').forEach(b=>b.onclick=()=>{const cur=document.queryCommandValue('formatBlock').toLowerCase();fmt('formatBlock',cur===b.dataset.block?'p':b.dataset.block)});
+ $('formatBlock').onchange=()=>fmt('formatBlock',$('formatBlock').value);
+ $('textColor').oninput=()=>fmt('foreColor',$('textColor').value);
+ $('highlightColor').oninput=()=>fmt('hiliteColor',$('highlightColor').value);
+ const askLink=()=>{saveRange();$('linkRow').hidden=false;$('linkUrl').value='';$('linkUrl').focus()};
+ $('fmtLink').onclick=askLink;
+ $('linkOk').onclick=()=>{let u=$('linkUrl').value.trim();$('linkRow').hidden=true;if(!u)return;if(!/^https?:\/\//i.test(u))u='https://'+u;
+  restoreRange();const s=getSelection();
+  if(s.rangeCount&&!s.isCollapsed)fmt('createLink',u);else{$('editorBody').focus();restoreRange();document.execCommand('insertHTML',false,'<a href="'+escHtml(u)+'">'+escHtml(u)+'</a>&nbsp;');dirty=true}
+  $('editorBody').querySelectorAll('a').forEach(a=>{a.target='_blank';a.rel='noopener noreferrer'})};
+ $('linkUrl').onkeydown=e=>{if(e.key==='Enter')$('linkOk').click();if(e.key==='Escape')$('linkRow').hidden=true};
+ function closeEdMenus(except){[['insertBtn','insertMenu'],['edMoreBtn','edMore']].forEach(([b,m])=>{if(b!==except){$(m).hidden=true;$(b).setAttribute('aria-expanded','false')}})}
+ const toggleMenu=(b,m)=>{saveRange();const open=$(m).hidden;closeEdMenus(b);$(m).hidden=!open;$(b).setAttribute('aria-expanded',String(open))};
+ $('insertBtn').onclick=()=>toggleMenu('insertBtn','insertMenu');
+ $('edMoreBtn').onclick=()=>toggleMenu('edMoreBtn','edMore');
+ $('fmtBtn').onclick=()=>{const on=!fmtDocked();$('fmtBtn').setAttribute('aria-expanded',String(on));if(!on)$('fmtBar').hidden=true;placeFmtBar()};
+ $('insPhoto').onclick=()=>pickMedia('image');$('insVideo').onclick=()=>pickMedia('video');
+ $('insLink').onclick=()=>{closeEdMenus();askLink()};
+ $('insRule').onclick=()=>{closeEdMenus();restoreRange();$('editorBody').focus();document.execCommand('insertHorizontalRule');dirty=true};
+ function metaSummary(){const c=splitPath($('editorCategory').value).join(' › ')||'Unsorted',t=$('editorTags').value.split(',').map(x=>x.trim()).filter(Boolean);$('metaSummary').textContent='📁 '+c+(t.length?'  ·  '+t.map(x=>'#'+x).join(' '):'  ·  tap to change folder or tags')}
+ ['editorCategory','editorTags'].forEach(id=>$(id).addEventListener('input',metaSummary));
+ // ---------- the Maritime structure (added once; more folders can be added any time) ----------
+ const MARITIME_TREE=['Maritime › IMO › Conventions','Maritime › IMO › Codes','Maritime › IMO › Resolutions & Circulars','Maritime › IMO › Amendments & Updates',
+  'Maritime › US Regulations › USCG & CFR','Maritime › US Regulations › Environment (OPA 90, VGP, ECA)','Maritime › US Regulations › Port Entry & Security',
+  'Maritime › School Subjects › Navigation','Maritime › School Subjects › Seamanship','Maritime › School Subjects › Ship Stability','Maritime › School Subjects › Cargo Handling & Stowage',
+  'Maritime › School Subjects › Meteorology & Oceanography','Maritime › School Subjects › Ship Construction','Maritime › School Subjects › Electronic Navigation (Radar, ARPA, ECDIS)',
+  'Maritime › School Subjects › GMDSS & Communications','Maritime › School Subjects › Maritime Law','Maritime › School Subjects › Bridge Resource Management','Maritime › School Subjects › Safety & Survival','Maritime › School Subjects › Medical Care',
+  'Maritime › Job by Rank › Master','Maritime › Job by Rank › Chief Officer','Maritime › Job by Rank › Second Officer','Maritime › Job by Rank › Third Officer'];
+ function seedMaritime(force){
+  if(!force&&localStorage.getItem('max_struct_maritime_v1'))return 0;
+  const have=jget(FOLDERS,[]),add=MARITIME_TREE.filter(f=>!have.includes(f));
+  jset(FOLDERS,[...have,...add]);try{localStorage.setItem('max_struct_maritime_v1','1')}catch{}
+  return add.length;
+ }
+ setTimeout(()=>{if(seedMaritime()&&screen==='notes')renderList()},0);
  $('editorDictate').onclick=()=>{
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){status('Dictation is not supported in this browser. Try Chrome.');return}
   endConversation(null);
@@ -2117,12 +2370,17 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 
  // ---------- display screen: Max shows anything you ask — your notes first, then the web ----------
  const pflag=(p,k)=>p[k]??DEFAULT_PROJECTS.find(d=>d.id===p.id)?.[k];
- const SAFE_TAGS=new Set(['P','BR','B','STRONG','I','EM','U','UL','OL','LI','H1','H2','H3','H4','BLOCKQUOTE','PRE','CODE','A','TABLE','THEAD','TBODY','TR','TD','TH','HR','SPAN','DIV']);
+ const SAFE_TAGS=new Set(['P','BR','B','STRONG','I','EM','U','UL','OL','LI','H1','H2','H3','H4','BLOCKQUOTE','PRE','CODE','A','TABLE','THEAD','TBODY','TR','TD','TH','HR','SPAN','DIV','FIGURE','FIGCAPTION','DETAILS','SUMMARY','FONT','MARK','S']);
  function safeFragment(html){
   const t=document.createElement('template');t.innerHTML=html||'';
   const walk=el=>{[...el.children].forEach(c=>{
    if(!SAFE_TAGS.has(c.tagName)){c.replaceWith(document.createTextNode(c.textContent));return}
-   [...c.attributes].forEach(a=>{if(!(c.tagName==='A'&&a.name==='href'&&/^https?:/i.test(a.value)))c.removeAttribute(a.name)});
+   [...c.attributes].forEach(a=>{
+    if(c.tagName==='A'&&a.name==='href'&&/^https?:/i.test(a.value))return;
+    if(c.tagName==='FIGURE'&&(a.name==='data-media'&&/^[\w-]{4,40}$/.test(a.value)||a.name==='data-kind'&&/^(image|video)$/.test(a.value)||a.name==='class'&&a.value==='note-media'))return;
+    if(a.name==='style'){const keep=String(a.value).split(';').map(x=>x.trim()).filter(x=>/^(color|background-color)\s*:\s*(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\))$/i.test(x)).join(';');if(keep){c.setAttribute('style',keep);return}}
+    if(c.tagName==='FONT'&&a.name==='color'&&/^#[0-9a-f]{3,8}$/i.test(a.value))return;
+    c.removeAttribute(a.name)});
    if(c.tagName==='A'){c.target='_blank';c.rel='noopener noreferrer'}
    walk(c);
   })};

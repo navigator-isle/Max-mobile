@@ -151,7 +151,7 @@ await page.click("#maxOrb",{button:"right"}); await page.click('[data-go=notes]'
 ok(await page.locator(".note-item strong", { hasText: "Ballast procedure" }).count() === 1, "second phone receives notes from database");
 await page.locator(".note-item", { hasText: "Ballast procedure" }).click();
 page.once("dialog", d => d.accept());
-await page.click("#editorDelete"); await wait(2500);
+await page.click("#edMoreBtn"); await page.click("#editorDelete"); await wait(2500);
 ok(sqlite.prepare("SELECT deleted d, body FROM max_notes WHERE title='Ballast procedure'").get().d === 1, "delete on second phone reaches database");
 ok(errors.length === 0, "second phone: no script errors", errors.join(" | "));
 await ctx.close();
