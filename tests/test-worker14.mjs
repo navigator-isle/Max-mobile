@@ -26,7 +26,7 @@ groqMode = "limit"; groqCalls = []; aiCalls = [];
 r = await call("/api/chat", { message: "hello again", allowActions: true }, { ...base, GROQ_API_KEY: "gk", AI });
 ok(r.status === 200 && r.data.reply === "Hello from Workers AI." && aiCalls[0].includes("glm") && aiCalls[1].includes("gemma"), "Groq also out → Cloudflare Workers AI (tries the next model if one is busy)", JSON.stringify(r.data).slice(0, 200) + " " + aiCalls);
 r = await call("/api/chat", { message: "and again", allowActions: true }, { ...base, GROQ_API_KEY: "gk", AI });
-ok(groqCalls.length === 4 && aiCalls.filter(m => m.includes("glm")).length === 1, "a backup that is out is skipped for a while (no wasted calls)", groqCalls.length + " " + aiCalls);
+ok(groqCalls.length === 3 && aiCalls.filter(m => m.includes("glm")).length === 1, "a backup that is out is skipped for a while (no wasted calls)", groqCalls.length + " " + aiCalls);
 groqCalls = []; aiCalls = [];
 r = await call("/api/attachment", { name: "a.jpg", mime: "image/jpeg", data: "iVBORw0KGgo=" }, { ...base, GROQ_API_KEY: "gk", AI });
 ok(r.status === 429 && groqCalls.length === 0 && aiCalls.length === 0, "photos and files are never sent to the backups (they need Gemini)");

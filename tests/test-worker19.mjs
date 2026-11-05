@@ -56,7 +56,7 @@ ok(r.data.model === "gemini-3.8-flash" && gem.filter(g => g.m === "gemini-3.8-fl
 w2 = await fresh(); reset(); plan["gemini-3.8-flash"] = 404;
 r = await (async () => { const x = await w2.fetch(new Request("https://x/api/chat", { method: "POST", headers: { "Content-Type": "application/json", "X-Max-Pass": "p" }, body: JSON.stringify({ message: "Explain why SOLAS requires monthly lifeboat drills and compare it with MARPOL Annex I.", allowActions: true }) }), base); return { data: await x.json() }; })();
 ok(r.data.model === "gemini-3.6-flash", "if the strongest isn't available, the next strongest free model answers", r.data.model);
-w2 = await fresh(); reset(); for (const m of ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-2.5-pro", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]) plan[m] = 429;
+w2 = await fresh(); reset(); for (const m of ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]) plan[m] = 429;
 r = await (async () => { const x = await w2.fetch(new Request("https://x/api/chat", { method: "POST", headers: { "Content-Type": "application/json", "X-Max-Pass": "p" }, body: JSON.stringify({ message: "Explain why SOLAS requires monthly lifeboat drills and compare it with MARPOL Annex I.", allowActions: true }) }), base); return { data: await x.json() }; })();
 ok(/^groq:/.test(r.data.model) && r.data.check && /^workers-ai:/.test(r.data.check.by), "if Groq answered (Gemini out), the checker is from a different company (Cloudflare)", JSON.stringify({ m: r.data.model, c: r.data.check }));
 reset(); r = await chat("Explain why SOLAS requires monthly lifeboat drills and compare it with MARPOL Annex I.", {}, { GEMINI_API_KEY: "k", MAX_PASSCODE: "p" });

@@ -10,7 +10,7 @@
 const GEMINI_CHAIN = ["gemini-3.5-flash", "gemini-3.5-flash-lite"];
 // Hard questions go to the strongest free Gemini first, with deep thinking on. Every model has its own free daily
 // limit, so the extra models also give Max more free answers before he needs the backups.
-const DEEP_CHAIN = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-2.5-pro"];
+const DEEP_CHAIN = ["gemini-3.8-flash", "gemini-3.6-flash"]; // gemini-2.5-pro: "not found" for this account (live test Nov 2026)
 const EXTRA_CHAIN = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite"];
 const DEFAULT_CLAUDE = "claude-haiku-5-5";
 const modelChain = (env, deep) => { const own = cleanText(env.GEMINI_MODEL, 80);
@@ -22,7 +22,7 @@ const skipUntil = new Map(); // models that recently failed are skipped for a wh
 let lastGood = "";
 // ---------- backup brains (free): Groq, then Cloudflare Workers AI — used only when every Gemini model is out ----------
 // They get text only: photos, PDFs, videos and web search still need Gemini.
-const GROQ_MODELS = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile"];
+const GROQ_MODELS = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"]; // llama-3.3-70b: retired on Groq (live test Nov 2026)
 const WAI_MODELS = ["@cf/zai-org/glm-4.7-flash", "@cf/google/gemma-4-26b-a4b-it", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"];
 const backupSkip = new Map();
 function textOnly(payload) {
@@ -102,7 +102,7 @@ async function gemini(env, payload, opts = {}) {
     const msg = String(data?.error?.message || "");
     const modelProblem = [403, 404, 429].includes(res.status) || (res.status === 400 && /model|no longer available|not found|deprecated|retired|not supported for/i.test(msg) && !/tool|search/i.test(msg));
     if (modelProblem) { skipUntil.set(m, now + (res.status === 429 ? 10 * 60e3 : 60 * 60e3)); continue; }
-    if (res.status >= 500) continue;
+    if (res.status >= 500) { skipUntil.set(m, now + 3 * 60e3); continue; } // busy even after a retry: rest it a few minutes
     break; // a problem with the request itself: another model would fail the same way
   }
   // Every Gemini model is out (daily limit, busy or unreachable): try the free backups for text work.
@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-12a";
+const WORKER_VERSION = "max-worker-2026-11-12b";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
