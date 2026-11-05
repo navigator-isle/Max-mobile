@@ -44,6 +44,18 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}.b
 .music-ctrls{display:flex;gap:4px}.music-btn{min-width:38px;padding:6px 8px}.music-ext{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.music-link{font-size:.72rem;text-decoration:none}
 body.music-on{padding-bottom:300px}
 .desk-chip.warn{border-color:rgba(255,190,90,.55);color:#ffd28a;background:rgba(200,120,20,.14)}button.desk-chip{cursor:pointer;font:inherit;font-size:.72rem}
+
+/* notes: one sticky dock at the bottom (more menu, bar, footer) — the list never shows underneath it */
+.vault-dock{position:sticky;bottom:0;z-index:15;background:var(--v-bg);border-top:1px solid var(--v-guide);padding-bottom:env(safe-area-inset-bottom)}
+.vault-dock .vault-bar{position:static!important;border-top:0!important}
+.vault-dock .vault-foot{position:static!important;flex-direction:row;gap:6px;align-items:baseline;justify-content:center;padding:0 4px 4px}
+.vault-dock .vault-more{margin:0;padding:6px 6px 2px}
+/* the Max bar is small on the notes screens: one line, small circle, so more notes fit */
+body.vault-mode .mini-max{padding:3px 6px;gap:6px;margin:0 0 6px;border-radius:12px}
+body.vault-mode .mini-orb,body.vault-mode .mini-orb canvas{width:34px!important;height:34px!important}
+body.vault-mode .mini-you{font-size:.66rem}body.vault-mode .mini-say{font-size:.78rem;-webkit-line-clamp:1;line-height:1.25}
+/* links stand out while editing too */
+#editorBody a{color:#7cc4ff;text-decoration:underline;text-underline-offset:2px}
 </style><style>
 /* MAX two-section layout */
 :root{--max-bg:#07111e;--max-panel:#0b1a2b;--max-line:#1c344c;--max-accent:#77d7ff;--max-text:#e8f3ff;--max-muted:#8fa8c0}
@@ -503,13 +515,7 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
     <div id="savedBanner" class="saved-banner" role="status" aria-live="polite" hidden></div>
     <div id="newFolderRow" class="tree-new" hidden><span aria-hidden="true">🗀</span><input id="newFolderName" placeholder="New folder name" aria-label="New folder name" enterkeyhint="done"><button id="newFolderOk" class="pill">Add</button></div>
     <div id="noteList" class="vault-tree note-list-page" role="tree" aria-label="Notes and folders"></div>
-    <div class="vault-bar" role="toolbar" aria-label="Vault actions">
-      <button id="newNote" title="New note" aria-label="New note">✎</button>
-      <button id="newFolder" title="New folder" aria-label="New folder">🗀<sup>+</sup></button>
-      <button id="sortNotes" title="Sort" aria-label="Change sort order">⇅</button>
-      <button id="collapseAll" title="Collapse all folders" aria-label="Collapse all folders">⌃⌄</button>
-      <button id="vaultMoreBtn" title="More" aria-label="More vault actions">⋯</button>
-    </div>
+    <div class="vault-dock">
     <div id="vaultMore" class="vault-more" hidden>
       <button id="importVault" class="pill">⤓ Import Obsidian vault (.zip or .md files)</button>
       <button id="exportVault" class="pill">⤒ Export vault (.zip for Obsidian)</button>
@@ -517,8 +523,16 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
       <button id="organizeBtn" class="pill">Organize with Max</button>
       <button id="restoreBackup" class="pill">⟲ Restore from a Max backup (.json)</button>
     </div>
-    <input id="backupInput" type="file" accept=".json,application/json" hidden>
+    <div class="vault-bar" role="toolbar" aria-label="Vault actions">
+      <button id="newNote" title="New note" aria-label="New note">✎</button>
+      <button id="newFolder" title="New folder" aria-label="New folder">🗀<sup>+</sup></button>
+      <button id="sortNotes" title="Sort" aria-label="Change sort order">⇅</button>
+      <button id="collapseAll" title="Collapse all folders" aria-label="Collapse all folders">⌃⌄</button>
+      <button id="vaultMoreBtn" title="More" aria-label="More vault actions">⋯</button>
+    </div>
     <div class="vault-foot"><b>My vault</b><span id="vaultStats"></span></div>
+    </div>
+    <input id="backupInput" type="file" accept=".json,application/json" hidden>
     <input id="vaultInput" type="file" accept=".zip,.md,text/markdown,application/zip" multiple hidden>
   </main>
 
@@ -1276,7 +1290,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function loadNote(id){
   const n=getNotes().find(x=>x.id===id);if(!n)return;
-  activeNoteId=id;lastNote={id,at:Date.now()};$('editorTitle').value=n.title||'';$('editorCategory').value=n.category||'Unsorted';$('editorTags').value=(n.tags||[]).join(', ');$('editorBody').innerHTML=n.body||'';metaSummary();hydrateMedia($('editorBody'),true);
+  activeNoteId=id;lastNote={id,at:Date.now()};$('editorTitle').value=n.title||'';$('editorCategory').value=n.category||'Unsorted';$('editorTags').value=(n.tags||[]).join(', ');$('editorBody').innerHTML=n.body||'';linkify($('editorBody'));metaSummary();hydrateMedia($('editorBody'),true);
   $('editorAnalysis').textContent=n.analysis?.fullText||'Not analyzed yet. Tap Analyze with Max to analyze this note.';$('editorPageHeading').textContent=n.title||'Edit note';
   $('editorBadge').textContent=(n.source==='research'?'Research ✓ approved by you':'My note')+(n.filedByMax?' · filed by Max':'');
   const links=linkedNotes(n),box=$('editorLinks');box.replaceChildren();$('editorLinksWrap').hidden=!links.length;
@@ -1466,6 +1480,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   $('linkPopRemove').onclick=()=>{a.replaceWith(document.createTextNode(a.textContent));pop.hidden=true;dirty=true};
  });
  $('linkPopOpen').addEventListener('click',()=>setTimeout(()=>$('linkPop').hidden=true,50));
+ // web addresses typed into a note turn into links as soon as you leave the text
+ $('editorBody').addEventListener('blur',()=>{const before=$('editorBody').innerHTML;linkify($('editorBody'));if($('editorBody').innerHTML!==before)dirty=true});
  // ---------- formatting only when needed: select text (floating bar) or tap Aa ----------
  let savedRange=null;
  const inEditor=n=>n&&$('editorBody').contains(n.nodeType===1?n:n.parentNode);
