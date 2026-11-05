@@ -58,4 +58,5 @@ run "Phone: departments and website team" tests/e2e25.mjs "$PWD/index.html" "$TM
 run "Phone: skills, learning and meaning search" tests/e2e26.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: music desk and activity log" tests/e2e27.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: guard and restore" tests/e2e28.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: understanding his accent" tests/e2e29.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

@@ -826,7 +826,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- phone ↔ laptop sync of everything else (watchlist, routines progress, projects, settings) ----------
  // Notes, sales, routines and skills already sync as notes. These lists sync too; the newest change wins.
  // Not synced on purpose: passcode/sign-in, hands-free (each device decides), caches, the offline outbox.
- const SYNC_KEYS=['max_folders','max_watchlist','max_price_alerts','max_currencies','max_routine_state','max_watch','max_crew_inbox','max_projects','max_learned_phrases','max_weather_place','max_personality','max_barge','max_pp_speed','max_last_brief'];
+ const SYNC_KEYS=['max_hear_fixes','max_listen_lang','max_folders','max_watchlist','max_price_alerts','max_currencies','max_routine_state','max_watch','max_crew_inbox','max_projects','max_learned_phrases','max_weather_place','max_personality','max_barge','max_pp_speed','max_last_brief'];
  const SYNC_META='max_sync_meta';
  const strHash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h+':'+t.length};
  function syncMeta(){try{return JSON.parse(localStorage.getItem(SYNC_META)||'null')}catch{return null}}
@@ -1274,7 +1274,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){status('Dictation is not supported in this browser. Try Chrome.');return}
   endConversation(null);
   if(recognition)try{recognition.abort()}catch{}
-  recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;
+  recognition=new SR();recognition.lang=listenLang();recognition.interimResults=false;
   recognition.onresult=e=>{$('editorBody').focus();document.execCommand('insertText',false,e.results[0][0].transcript+' ');dirty=true};
   recognition.onerror=e=>status('Dictation error: '+e.error);
   try{recognition.start();status('Listening for your note…')}catch(e){status('Dictation could not start: '+e.message)}
@@ -1620,6 +1620,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    {const m=n.match(/^(?:go to |jump to )?step (\d{1,2})$/);if(m)return {type:'walk_step',details:{op:'goto',n:+m[1]}}}
    if(has(/^(stop|exit|end|cancel|quit|that'?s all|i'?m done|finished)( walk ?through| the walk ?through)?$/))return {type:'walk_step',details:{op:'stop'}};
   }
+  // ---- how Max hears him ----
+  {const m=raw.match(/^\s*(?:max[, ]+)?(?:when|if|whenever)\s+you\s+hear\s+["“']?(.{1,60}?)["”']?\s*,?\s*(?:i|it)\s+(?:mean|means|meant|is)\s+["“']?(.{1,80}?)["”']?\s*[.!]*$/i)||raw.match(/^\s*(?:max[, ]+)?when\s+i\s+say\s+["“']?(.{1,60}?)["”']?\s*,?\s*i\s+mean\s+["“']?(.{1,80}?)["”']?\s*[.!]*$/i)||raw.match(/^\s*(?:kapag|pag|kung)\s+(?:narinig\s+mo(?:ng)?|sinabi\s+ko(?:ng)?)\s+["“']?(.{1,60}?)["”']?\s*,?\s*(?:ang\s+)?(?:ibig\s+(?:kong\s+)?sabihin(?:\s+ko)?(?:\s+ay)?)\s+["“']?(.{1,80}?)["”']?\s*[.!]*$/i);
+   if(m)return {type:'hear_fix',details:{heard:m[1].trim(),meant:m[2].trim()}};}
+  if(has(/^(max )?(please )?(listen|understand me|hear me) in (filipino|tagalog)( na)?$|^(makinig ka sa|intindihin mo ako sa) (filipino|tagalog)$/))return {type:'listen_lang',details:{lang:'fil-PH'}};
+  if(has(/^(max )?(please )?(listen|understand me|hear me) in (english|taglish)( again)?$/))return {type:'listen_lang',details:{lang:'en-PH'}};
+  if(has(/\b(show|what are|list) (me )?(my )?word fixes\b|\bwhat words (have you|did you) learn(ed)?\b|\bhow do you (hear|understand) me\b/))return {type:'show_hearing'};
   // ---- music desk ----
   if(MUSIC.mode){
    if(has(/^(pause|stop|resume|continue|unpause|play)( it| that| the music| music| the song| song| the radio| radio)?( please| na| muna)?$/))return {type:'music_control',details:{op:has(/^pause/)?'pause':has(/^stop/)?'stop':'resume'}};
@@ -4039,6 +4045,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'set_weather_place':return await setWeatherPlace(a.details||{location:a.query});
    case 'set_personality':return setPersonality(a.details||{name:a.query});
    case 'usage':return usageReport();
+   case 'hear_fix':return teachHearing(a.details||{});
+   case 'listen_lang':{const l=a.details?.lang==='fil-PH'?'fil-PH':'en-PH';jset(LISTEN_LANG,l);return l==='fil-PH'?'Sige, makikinig ako sa Filipino. Say “listen in English” to switch back.':'Okay, I’m listening in English again — Taglish works too.'}
+   case 'show_hearing':return showHearing();
    case 'play_music':return await playMusic({...(a.details||{}),query:(a.details&&a.details.query)||a.query},raw);
    case 'music_control':return await musicControl(a.details||{op:a.query});
    case 'activity':return await activityScreen(a.details||{});
@@ -4212,7 +4221,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(navigator.onLine===false){const o=offlineAnswer(q);if(!o.refs.length)o.text=queuedReply(q,null)+' Meanwhile your notes and commands still work.';talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:await notesContextSmart(q),projects:projects().map(p=>p.name),skills:relevantSkills(q),personality:personality(),lastDept:deskHint(),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:await notesContextSmart(q),projects:projects().map(p=>p.name),skills:relevantSkills(q),personality:personality(),lastDept:deskHint(),...(voice&&heardFor(q)?{heard:heardFor(q)}:{}),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},70000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
@@ -4222,7 +4231,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft','play_music','music_control','activity','guard_report','guard_run','backup_now'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft','play_music','music_control','activity','guard_report','guard_run','backup_now','hear_fix','listen_lang','show_hearing'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
@@ -4253,24 +4262,94 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(msg)status(msg);
   hfResume();
  }
- function listenOnce(){
+ // ---------- understanding him better: he's not a native English speaker ----------
+ // 1) The microphone gives up to 5 guesses; 2) each is fixed with his own words (projects, notes, ship terms, and
+ // words he taught: "when you hear X, I mean Y"); 3) the guess that matches a command wins, otherwise all guesses go to
+ // the brain, which is told to work out what he meant; 4) if he stops mid-sentence ("…and the"), Max keeps listening.
+ const HEAR_KEY='max_hear_fixes',LISTEN_LANG='max_listen_lang';
+ const listenLang=()=>{try{return /fil-PH/.test(localStorage.getItem(LISTEN_LANG)||'')?'fil-PH':'en-PH'}catch{return 'en-PH'}};
+ const HEAR_GLOSSARY=[[/\b(?:solace|so las|sola s|solus|soul as)\b/gi,'SOLAS'],[/\b(?:mar ?pole|marple|mar pol|mar paul|mar poll)\b/gi,'MARPOL'],[/\b(?:s t c w|stc w|st cw)\b/gi,'STCW'],
+  [/\b(?:call regs?|col regs?|colleague regs?|collar regs?|kohl regs?)\b/gi,'COLREGs'],[/\b(?:e c d i s|ek dis|eck dis|ecdys)\b/gi,'ECDIS'],[/\b(?:g m d s s)\b/gi,'GMDSS'],[/\b(?:i s p s)\b/gi,'ISPS'],[/\b(?:b w m)\b/gi,'BWM'],
+  [/\b(?:hobby (?:aisle|isle|I'll|isla|eye ?l|island)|hobbies isle|hobby ail)\b/gi,'Hobby Isle'],[/\b(?:passage (?:plan her|planer|planet|plan or|planning app))\b/gi,'Passage Planner'],[/\b(?:gun ?pla|gum ?pla|gunplay|gun play)\b/gi,'Gunpla'],
+  [/\b(?:p s e i|pse eye|psc i)\b/gi,'PSEi'],[/\b(?:p s e)\b/gi,'PSE'],[/\b(?:coal financial|call financial|col finance)\b/gi,'COL Financial'],[/\b(?:by nance|bye nance|bi nance|binance's)\b/gi,'Binance'],
+  [/\b(?:marina exam|marena|marine a exam)\b/gi,'MARINA exam'],[/\b(?:ben and ben|ben n ben|ben & ben)\b/gi,'Ben&Ben'],[/\b(?:dead weight)\b/gi,'deadweight'],[/\b(?:draught survey|draft survay)\b/gi,'draft survey']];
+ function hearFixes(){const v=jget(HEAR_KEY,[]);return Array.isArray(v)?v.filter(x=>x&&x.heard&&x.meant):[]}
+ const esc=s=>String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+ const skel=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+ function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(!m||!n)return m||n;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+ function hearTerms(){
+  const t=new Set();
+  try{projects().forEach(p=>{if(p.name)t.add(p.name);(p.aliases||[]).forEach(a=>{if(a.split(' ').length<=3)t.add(a)})})}catch{}
+  try{getNotes().slice(0,300).forEach(n=>{const w=String(n.title||'').replace(/^Skill:\s*/,'');if(w&&w.split(/\s+/).length<=4&&w.length>=5)t.add(w)})}catch{}
+  return [...t].filter(x=>skel(x).length>=6);
+ }
+ function fixHearing(text){
+  let s=String(text||'');if(!s)return s;
+  for(const f of hearFixes())s=s.replace(new RegExp('\\b'+esc(f.heard)+'\\b','gi'),f.meant);
+  for(const [re,to] of HEAR_GLOSSARY)s=s.replace(re,to);
+  // Close misspellings of his own project names and note titles (e.g. "quick draft calculater").
+  const words=s.split(/\s+/),terms=hearTerms().map(x=>[x,skel(x),x.split(/\s+/).length]);
+  for(let i=0;i<words.length;i++)for(const [term,sk,len] of terms){
+   // Same number of words, same first letters, and only a letter or two off — never rewrites ordinary phrases.
+   const chunkW=words.slice(i,i+len);if(chunkW.length!==len)continue;
+   const ck=skel(chunkW.join(' '));if(!ck||ck===sk||Math.abs(ck.length-sk.length)>2)continue;
+   const tw=term.split(/\s+/);if(chunkW.some((w,k)=>skel(w)[0]!==skel(tw[k])[0]))continue;
+   if(lev(ck,sk)<=Math.max(1,Math.floor(sk.length*0.12))){words.splice(i,len,...tw);break}
+  }
+  return words.join(' ');
+ }
+ let lastHeard=null;
+ // Pick the best of the microphone's guesses: one that is a command wins; otherwise the most confident.
+ function pickHeard(result){
+  const alts=[];for(let k=0;k<(result?.length||0);k++){const t=String(result[k]?.transcript||'').trim();if(t)alts.push({t:fixHearing(t),raw:t,c:Number(result[k].confidence)||0})}
+  if(!alts.length)return '';
+  let best=alts[0];
+  const isCmd=a=>{try{return !!(matchLearned(norm(a.t))||matchCommand(a.t))}catch{return false}};
+  // A lower guess may win only if it is a command, the top guess isn't, and the microphone wasn't sure of the top one.
+  if(!isCmd(alts[0])&&(alts[0].c===0||alts[0].c<0.75))for(const a of alts.slice(1))if(isCmd(a)){best=a;break}
+  lastHeard={chosen:best.t,raw:alts[0].raw,alts:[...new Set(alts.map(a=>a.t))].filter(x=>x!==best.t).slice(0,4),conf:alts[0].c,at:Date.now()};
+  return best.t;
+ }
+ const heardFor=q=>lastHeard&&lastHeard.chosen===q&&Date.now()-lastHeard.at<20000?{alts:lastHeard.alts,conf:Math.round((lastHeard.conf||0)*100)/100,raw:lastHeard.raw!==q?lastHeard.raw:undefined}:null;
+ // He paused mid-sentence: the words end like the sentence isn't finished.
+ const DANGLING=/\b(?:and|or|but|the|a|an|to|of|for|with|about|my|is|are|if|that|because|so|then|ng|sa|yung|kasi|para|at|pero|tapos|ang|na|kung|mga)\s*$/i;
+ function teachHearing(d){
+  const heard=String(d.heard||'').replace(/^["'“]|["'”]$/g,'').trim(),meant=String(d.meant||'').replace(/^["'“]|["'”]$/g,'').trim();
+  if(!heard||!meant)return 'Tell me like this: “when you hear hobby aisle, I mean Hobby Isle”.';
+  if(heard.length>60||meant.length>80)return 'Keep it to a few words, like “when you hear mar pole, I mean MARPOL”.';
+  const list=hearFixes().filter(x=>x.heard.toLowerCase()!==heard.toLowerCase());list.unshift({heard,meant,at:Date.now()});jset(HEAR_KEY,list.slice(0,100));
+  return 'Got it. When I hear “'+heard+'”, I’ll understand “'+meant+'”.';
+ }
+ function showHearing(){
+  const list=hearFixes();
+  showDisplay('Words I’ve learned to hear','How I understand you',[{badge:'YOUR WORDS',title:list.length?list.length+' word fix'+(list.length===1?'':'es'):'None yet',
+   lines:list.length?list.map(x=>'“'+x.heard+'” → '+x.meant):['Say “when you hear hobby aisle, I mean Hobby Isle” to teach me.'],
+   buttons:list.slice(0,8).map(x=>['Forget “'+x.heard+'”',()=>{jset(HEAR_KEY,hearFixes().filter(y=>y.heard!==x.heard));showHearing()}])},
+   {badge:'ALWAYS ON',title:'How I listen',lines:['I take up to 5 guesses of what you said and pick the one that makes sense.','I know your projects, note titles and ship terms (SOLAS, MARPOL, STCW, COLREGs, ECDIS…).','If you pause mid-sentence I keep listening.','If I’m still not sure, I ask “Did you mean …?” — never a lecture about English.','Listening language: '+(listenLang()==='fil-PH'?'Filipino':'English (Philippines) — handles Taglish')+'. Say “listen in Filipino” or “listen in English”.']}]);
+  return list.length?'I know '+list.length+' of your word fixes. They’re on the screen.':'No word fixes yet. Say “when you hear hobby aisle, I mean Hobby Isle” to teach me.';
+ }
+ function listenOnce(prefix){
   if(!convo)return;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const token=++listenToken;
   if(recognition)try{recognition.abort()}catch{}
-  recognition=new SR();recognition.lang='en-PH';recognition.interimResults=false;recognition.maxAlternatives=1;
+  recognition=new SR();recognition.lang=listenLang();recognition.interimResults=false;recognition.maxAlternatives=5;
   let heard=false,fatal=false;
   const take=async q=>{
    if(token!==listenToken)return;
    heard=true;misses=0;
    q=String(q||'').trim();
+   if(prefix)q=(prefix+' '+q).trim();
    if(!q)return;
+   // Stopped mid-sentence? Keep listening for the rest (once).
+   if(!prefix&&DANGLING.test(q)&&q.split(/\s+/).length>=2&&!END_WORDS.test(q)){setSub(q+' …','');status('Go on…');setTimeout(()=>{if(token===listenToken)listenOnce(q)},150);return}
+   if(prefix&&lastHeard)lastHeard.chosen=q;
    if(END_WORDS.test(q)){setSub(q,'');endConversation(null);showAnswer('Very well. I’ll be here when you need me.',()=>hfResume());return}
    await handleUtterance(q,true);
    if(convo&&token===listenToken)setTimeout(()=>{if(token===listenToken)listenOnce()},350);
   };
-  if(bargeQ){const q=bargeQ;bargeQ=null;take(q);return}
-  recognition.onresult=e=>take(e.results[0][0].transcript);
+  if(bargeQ){const q=fixHearing(bargeQ);bargeQ=null;take(q);return}
+  recognition.onresult=e=>take(pickHeard(e.results[0]));
   recognition.onerror=e=>{
    if(token!==listenToken)return;
    if(e.error==='no-speech'||e.error==='aborted')return;
@@ -4281,6 +4360,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   };
   recognition.onend=()=>{
    if(token!==listenToken)return;
+   if(prefix&&!heard&&!fatal){heard=true;handleUtterance(prefix,true).then(()=>{if(convo&&token===listenToken)setTimeout(()=>{if(token===listenToken)listenOnce()},350)});return}
    $('maxOrb').classList.remove('listening');
    if(heard||fatal||!convo)return;
    misses++;
@@ -4314,7 +4394,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const hf={on:false,rec:null,token:0,timer:null,lock:null,fails:0};
  let bargeQ=null,barge=null;
  const SRc=()=>window.SpeechRecognition||window.webkitSpeechRecognition;
- const WAKE=/(?:^\s*|\b(?:hey|hi|hello|ok(?:ay)?|oy|uy|hoy|yo)\s+)max\b[\s,.!?]*(.*)$/i;
+ const WAKE=/(?:^\s*|\b(?:hey|hi|hello|ok(?:ay)?|oy|uy|hoy|yo|a|eh|hei|hay)\s+)(?:max|macs|maks|mags|mack|mux|mex|maxx|macks)\b[\s,.!?]*(.*)$/i;
  const BARGE_WORDS=/\b(stop|wait|hold on|max|quiet|enough|excuse me|pause|shut up|sandali|teka|tama na|tumigil)\b/i;
  const bargeOn=()=>jget('max_barge',true)!==false;
  const spokenWords=t=>norm(t).split(' ').filter(Boolean);
@@ -4342,12 +4422,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function hfListen(){
   const SR=SRc();if(!SR||!hf.on)return;
   hfPause();const token=hf.token;
-  const rec=new SR();hf.rec=rec;rec.lang='en-PH';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+  const rec=new SR();hf.rec=rec;rec.lang=listenLang();rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=3;
   let done=false;
   rec.onresult=e=>{
    if(token!==hf.token||done)return;
    for(let i=e.resultIndex;i<e.results.length;i++){
-    const t=(e.results[i][0].transcript||'').trim(),m=t.match(WAKE);
+    let t=(e.results[i][0].transcript||'').trim(),m=t.match(WAKE);for(let k=1;!m&&k<e.results[i].length;k++){const tk=(e.results[i][k].transcript||'').trim(),mk=tk.match(WAKE);if(mk){t=tk;m=mk}}
     if(!m||!e.results[i].isFinal)continue;
     done=true;hf.fails=0;hfPause();
     const rest=m[1].replace(/^[,.\s]+/,'').trim();
@@ -4364,7 +4444,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function bargeStart(text,speakTok){
   const SR=SRc();if(!SR)return;bargeStop();
-  const rec=new SR(),me={rec,tok:speakTok,starts:0};barge=me;rec.lang='en-PH';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+  const rec=new SR(),me={rec,tok:speakTok,starts:0};barge=me;rec.lang=listenLang();rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
   rec.onresult=e=>{
    if(barge!==me)return;
    for(let i=e.resultIndex;i<e.results.length;i++){
