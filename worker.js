@@ -112,7 +112,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-10a";
+const WORKER_VERSION = "max-worker-2026-11-10b";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -1316,9 +1316,11 @@ function ytWalk(o, out) {
   for (const k in o) ytWalk(o[k], out);
 }
 async function findVideos(q) {
-  const {r: res} = await timedFetch("https://www.youtube.com/results?search_query=" + encodeURIComponent(q) + "&sp=EgIQAQ%253D%253D&hl=en", {headers: {"User-Agent": "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36", "Accept-Language": "en-US,en;q=0.8"}}, 8000);
+  const {r: res} = await timedFetch("https://www.youtube.com/results?search_query=" + encodeURIComponent(q) + "&sp=EgIQAQ%253D%253D&hl=en", {headers: {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36", "Accept-Language": "en-US,en;q=0.8",
+    "Cookie": "CONSENT=YES+cb; SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"}, redirect: "follow"}, 8000);
   if (!res.ok) throw new Error("YouTube search answered " + res.status);
   const html = await res.text();
+  findVideos.last = {status: res.status, url: res.url, bytes: html.length, consent: /consent\.youtube|before you continue/i.test(html), data: /ytInitialData/.test(html)};
   const m = html.match(/(?:var ytInitialData|window\["ytInitialData"\])\s*=\s*(\{[\s\S]*?\});\s*(?:<\/script>|window\[)/);
   const out = [];
   if (m) { try { ytWalk(JSON.parse(m[1]), out); } catch {} }
@@ -1678,7 +1680,7 @@ export default {
         try { const r = await weatherRoutes(new Request("https://x/api/weather?place=Batangas"), env, new URL("https://x/api/weather?place=Batangas"), ""); const w = await r.json();
           health.weather = r.ok ? "working — " + w.place + " " + Math.round(w.now.temp) + "°C, wind " + Math.round(w.now.wind) + " kn" + (w.sea ? ", waves " + w.sea.waves + " m" : ", no sea data") : "not working: " + w.error; }
         catch (e) { health.weather = "not working: " + String(e.message || e).slice(0, 120); }
-        try { const v = await findVideos("lofi hip hop"); health.musicYouTube = v.length ? "working — " + v.length + " songs, e.g. " + (v[0].title || v[0].id).slice(0, 50) + (v.every(x => x.title) ? "" : " (titles missing)") : "not working: no results"; } catch (e) { health.musicYouTube = "not working: " + String(e.message || e).slice(0, 100); }
+        try { const v = await findVideos("lofi hip hop"); health.musicYouTube = v.length ? "working — " + v.length + " songs, e.g. " + (v[0].title || v[0].id).slice(0, 50) + (v.every(x => x.title) ? "" : " (titles missing)") : "not working: no results " + JSON.stringify(findVideos.last || {}).slice(0, 200); } catch (e) { health.musicYouTube = "not working: " + String(e.message || e).slice(0, 100); }
         try { const st = await findRadio("jazz"); health.musicRadio = st.length ? "working — " + st.length + " stations, e.g. " + st[0].name.slice(0, 40) : "not working: no stations"; } catch (e) { health.musicRadio = "not working: " + String(e.message || e).slice(0, 100); }
       }
       return json(health, 200, origin, env);
