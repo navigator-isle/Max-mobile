@@ -39,6 +39,8 @@
 - 🗂 Notes & research — librarian, researcher
 - 📅 Schedule & reminders — secretary, routines
 - 🎯 Training & coaching — six coaches and the skills you taught Max
+- **The brain picks the desk.** Every question goes first to a quick router that picks the desk that should answer (📱 Apps desk, 🌐 Website team, 📈 Trading desk, 🗂 Librarian, 📅 Secretary, 🎯 Coach, or Max himself for anything else). That desk answers with its own rules and its own live data — the Trading desk reads the paper accounts directly, the Website team is told never to invent reviews. The answer shows a small label with the desk's name. A follow-up ("why?", "and the second one?") stays with the same desk for 10 minutes. The router adds no extra AI call, so it costs nothing and adds no delay; every action still works from any desk
+- **Brain backups:** Claude (if set up) → Gemini Flash → Gemini Flash-Lite → Groq → Cloudflare Workers AI. A one-off hiccup gets one quick retry on the same brain; an empty answer goes to a backup brain; a brain that hit its limit rests for 10–60 min. `/health` shows the whole chain ("brainChain") and which brains are resting
 
 **🗂 Notes like Obsidian**
 - Notes screen = your vault: folders inside folders (any depth) with arrows, guide lines, "My vault · N files, M folders", and a bottom bar: ✎ new note (inside the folder you tapped), 🗀+ new folder, ⇅ sort A–Z / newest, collapse all, ⋯ more

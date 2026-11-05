@@ -37,6 +37,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}.b
 
 #connectionModal.open{display:flex!important}
 #connectionModal[hidden]{display:none!important}
+.desk-chip{display:inline-block;font-size:.72rem;letter-spacing:.04em;padding:3px 9px;border-radius:999px;border:1px solid rgba(120,200,255,.35);color:#9fd8ff;background:rgba(40,120,200,.12);margin:0 6px 6px 0;vertical-align:middle}
 </style><style>
 /* MAX two-section layout */
 :root{--max-bg:#07111e;--max-panel:#0b1a2b;--max-line:#1c344c;--max-accent:#77d7ff;--max-text:#e8f3ff;--max-muted:#8fa8c0}
@@ -977,6 +978,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function setSub(you,max){
   if(you!==undefined){$('subYou').textContent=you?'“'+you+'”':'';$('miniYou').textContent=you?'You: '+you:''}
   if(max!==undefined){$('homeAnswer').textContent=max;$('miniSay').textContent=max||'Tap the circle to talk'}
+ }
+ // Which department (specialist) answered: follow-ups within 10 minutes stay with it.
+ let lastDesk={id:'',at:0};
+ function deskHint(){return Date.now()-lastDesk.at<10*60e3?lastDesk.id:''}
+ function showDesk(d){
+  if(!d||!d.id)return;lastDesk={id:d.id,at:Date.now()};
+  if(d.id==='general')return;
+  const box=$('noteRefs'),tag=document.createElement('span');tag.className='desk-chip';tag.textContent=(d.icon?d.icon+' ':'')+d.name;tag.title='The specialist who answered';
+  box.prepend(tag);box.hidden=false;
  }
  function showNoteRefs(titles){
   const box=$('noteRefs');box.replaceChildren();
@@ -3916,7 +3926,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(navigator.onLine===false){const o=offlineAnswer(q);if(!o.refs.length)o.text=queuedReply(q,null)+' Meanwhile your notes and commands still work.';talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:await notesContextSmart(q),projects:projects().map(p=>p.name),skills:relevantSkills(q),personality:personality(),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
+    body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:await notesContextSmart(q),projects:projects().map(p=>p.name),skills:relevantSkills(q),personality:personality(),lastDept:deskHint(),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
      now:new Date().toString().slice(0,24),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})},30000);
    const remembered=!!(data&&(data.savedMemory||(data.autoSaved&&data.autoSaved.length)));
    if(remembered&&modalOpen())renderMemory();
@@ -3931,7 +3941,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     learn(norm(q),data.action); // next time this phrase works instantly
    }
    talkHistory.push({role:'user',text:q},{role:'model',text:reply});
-   showNoteRefs(data.notesUsed);
+   showNoteRefs(data.notesUsed);showDesk(data.dept);
    showAnswer(reply,finish);
    if(remembered)setTimeout(()=>{$('memoryBadge').textContent='✓ Noted in memory';$('memoryBadge').hidden=false;setTimeout(()=>$('memoryBadge').hidden=true,5000)},200);
   }catch(err){

@@ -75,6 +75,15 @@ ok(/Here’s a draft for Hobby Isle: “RG Hi-Nu Gundam Review”/.test(a) && /f
 ok(/Meta description \(\d+\)/.test(dt) && /alt: “RG Hi-Nu Gundam front pose”/.test(dt) && /Check these before publishing/.test(dt) && await p.locator("#dispBody h2", { hasText: "Verdict" }).count() >= 1, "SEO title/meta, picture alt text + file names, formatted post");
 ok(/no fake reviews, no invented personal experiences/.test(JSON.stringify(gem.at(-1))), "writer is told: no fake reviews or invented experiences");
 for (const t of ["draft an email to ana about the meeting", "write a note about engine oil"]) { await say(t); ok(!/Here’s a draft for Hobby Isle/.test(await answer()), "“" + t + "” is not a website post", await answer()); await say("no"); }
+// The brain's router: the answer shows which desk handled it, and a follow-up stays with that desk.
+const lastChat = () => gem.filter(g => g.systemInstruction).at(-1);
+const chip = () => p.evaluate(() => [...document.querySelectorAll("#noteRefs .desk-chip")].map(x => x.textContent).join("|"));
+await say("what does a doji candlestick mean");
+ok(/Trading desk/.test(await chip()) && /SPECIALIST ON DUTY: Trading desk/.test(JSON.stringify(lastChat())), "a trading question is answered by the 📈 Trading desk, and the phone shows it", await chip());
+await say("why does it matter");
+ok(/Trading desk/.test(await chip()) && /SPECIALIST ON DUTY: Trading desk/.test(JSON.stringify(lastChat())), "a follow-up stays with the same desk", await chip());
+await say("what is the capital of norway");
+ok((await chip()) === "" && !/SPECIALIST ON DUTY/.test(JSON.stringify(lastChat())), "a general question goes to Max himself (no desk label)", await chip());
 ok(errs.length === 0, "no script errors", errs.join(" | "));
 await ctx.close(); await b.close(); sW.close(); sP.close();
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

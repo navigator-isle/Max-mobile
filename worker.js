@@ -67,12 +67,17 @@ async function gemini(env, payload) {
   const chain = modelChain(env), now = Date.now();
   const usable = chain.filter(m => !(skipUntil.get(m) > now));
   let last = null, networkError = false;
+  const send = m => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST",
+    headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY}, body: JSON.stringify(payload)});
   for (const m of usable.length ? usable : chain) {
     let res;
     try {
-      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {method:"POST",
-        headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY}, body: JSON.stringify(payload)});
-    } catch { networkError = true; continue; }
+      res = await send(m);
+      // A one-off hiccup (server busy, dropped connection) gets one quick retry on the same model.
+      if (res.status >= 500) { await new Promise(r => setTimeout(r, 600)); res = await send(m); }
+    } catch {
+      try { await new Promise(r => setTimeout(r, 600)); res = await send(m); } catch { networkError = true; continue; }
+    }
     const data = await res.json().catch(() => ({}));
     if (res.ok) { lastGood = m; skipUntil.delete(m); return {ok:true, status:200, data, model:m}; }
     last = {ok:false, status:res.status, data, model:m};
@@ -107,7 +112,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-09a";
+const WORKER_VERSION = "max-worker-2026-11-10a";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -312,6 +317,66 @@ function parseResearch(raw, topic) {
 }
 function officialSource(s) {
   return /imo\.org|\.gov\b|\.gov\.|\.int\b|europa\.eu|marina\.gov\.ph|uscg|mca\.gov|amsa\.gov|mpa\.gov\.sg|classnk|dnv\.|lr\.org|abs-group|eagle\.org|bureauveritas|iacs\.org|ilo\.org|panama-maritime|amp\.gob\.pa|liscr|register-iri/i.test(String(s));
+}
+// ---------- the brain's router: one Max, six specialist departments ----------
+// A quick word-based router (no extra AI call, so no extra cost or delay) picks the department for each
+// request. That specialist's own instructions, rules and live data go to the brain on top of Max's usual
+// instructions. Nothing is taken away: every app action still works from any department.
+const DEPTS = {
+  apps: {name: "Apps desk", icon: "📱",
+    words: /\b(?:play ?store|google play|passage planner|draft survey|apps?|build|builds|release|closed test|alpha track|android|apk|version|listing|store page|crash(?:es)?|bug|feature request)\b/gi,
+    brief: "You are acting as Max's APPS DESK specialist: release manager and product manager for his Play Store apps (Passage Planner, Draft Survey and others). Think like an experienced mobile developer. New versions go to the closed test only; production is always his decision. When he asks how an app is doing, use play_overview, play_reviews or build_status. When he wants changes, turn them into a clear project_request. Suggest improvements in priority order, each one concrete."},
+  web: {name: "Website team", icon: "🌐",
+    words: /\b(?:website|websites|site|sites|hobby ?isle|seo|keywords?|blog|posts?|articles?|content|affiliate|amazon|traffic|visitors|ranking|google search console|backlinks?|comments?|alt text|meta|security headers?|wordpress|gunpla|gundam)\b/gi,
+    brief: "You are acting as Max's WEBSITE TEAM: webmaster, SEO researcher, content writer and security checker for his affiliate sites (such as Hobby Isle). Rules: never invent reviews, personal experiences, prices, specs or statistics; write drafts only, he publishes; affiliate links must be disclosed; never change DNS or site settings. Back SEO advice with search intent and what top pages actually cover, and say when something needs checking."},
+  trading: {name: "Trading desk", icon: "📈",
+    words: /\b(?:stocks?|shares?|pse|psei|crypto|bitcoin|btc|eth|ethereum|solana|sol|forex|fx|trad(?:e|es|ing|er)|paper|strateg(?:y|ies)|candles?|candlestick|chart|portfolio|watchlist|binance|col financial|bull(?:ish)?|bear(?:ish)?|breakout|rsi|support|resistance|smc|order blocks?|stake|dividends?|presyo|bili|benta)\b/gi,
+    brief: "You are acting as Max's TRADING DESK: paper trader, strategy researcher and market watcher. Rules: pretend money only, you never place real trades. Never tell him to buy or sell anything with real money; give facts, risks and what the paper account did, and say it is not financial advice when you discuss trades. Use ONLY the paper-account numbers in TRADING DESK DATA below. Never invent prices, returns or trades. Explain strategies plainly: what the signal is, the fees, the risk, and what the backtest showed. If the data is missing or old, say so."},
+  notes: {name: "Librarian", icon: "🗂",
+    words: /\b(?:notes?|vault|obsidian|folders?|skills?|playbook|learn this|summari[sz]e|summary|organi[sz]e|conflicts?|duplicates?|library|knowledge|second brain|tala)\b/gi,
+    brief: "You are acting as Max's LIBRARIAN: keeper of his second brain (notes, skills and research). Answer from his notes first and name the note. Point out gaps, outdated facts and notes that conflict. Suggest where a new note belongs in his folders. Turn procedures into skills when he wants to repeat them."},
+  schedule: {name: "Secretary", icon: "📅",
+    words: /\b(?:remind(?:er|ers)?|calendar|schedule|meetings?|events?|alarm|appointment|tasks?|to-?do|deadlines?|due|tomorrow|today|tonight|later|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|emails?|gmail|inbox|reply|whatsapp|routines?|briefing|paalala|bukas|mamaya|ngayon)\b/gi,
+    brief: "You are acting as Max's SECRETARY: calendar, reminders, tasks, email and routines. Always repeat back the day of the week, the date and the time you understood, in his time zone. Never say an email or message was sent unless the app confirmed it. Spot clashes and deadlines, and keep confirmations to one short sentence."},
+  training: {name: "Coach", icon: "🎯",
+    words: /\b(?:coach(?:ing)?|train(?:ing)?|workout|exercise|fitness|gym|run(?:ning)?|push-?ups?|sleep|habit|study|exam|marina|review(?:er)?|career|promotion|interview|motivation|goal|goals|discipline|ehersisyo)\b/gi,
+    brief: "You are acting as Max's COACH desk: fitness, study (including his MARINA exams), skills, business, career and life coaching. Be warm and direct. Give one clear next step at a time and follow up on his progress. For health, injury or medical questions give general guidance only and tell him to see a professional. Keep fitness and diet advice moderate and safe."}
+};
+const DEPT_IDS = Object.keys(DEPTS);
+// Sounds like it continues the last topic: "why?", "and the second one", "what about that", "explain more", "bakit", "yung isa".
+const FOLLOW_UP = /^\s*(?:and|but|so|then|also|ok(?:ay)?|why|how come|what about|how about|which|explain|tell me more|more|again|same|continue|go on|bakit|paano|eh|yung|ano pa|tapos|pero|sige)\b|\b(?:it|its|it's|that|this|those|these|them|they|one|ones|first|second|third|last|previous|above|niyan|iyan|yan|ito|iyon)\b/i;
+function routeDept(message, hint) {
+  const text = String(message || "");
+  const scores = DEPT_IDS.map(id => [id, (text.match(DEPTS[id].words) || []).length]);
+  const best = Math.max(...scores.map(s => s[1]));
+  const prev = DEPTS[hint] ? hint : "";
+  if (!best) {
+    // A short follow-up ("and SOL?", "why?", "the second one") stays with the department he was talking to.
+    if (prev && text.length <= 80 && FOLLOW_UP.test(text)) return {id: prev, how: "follow-up"};
+    return {id: "general", how: "no match"};
+  }
+  const top = scores.filter(s => s[1] === best).map(s => s[0]);
+  if (top.length > 1) return top.includes(prev) ? {id: prev, how: "follow-up"} : {id: "general", how: "unclear"};
+  return {id: top[0], how: "words"};
+}
+// Live data a specialist works from: the trading desk gets the paper accounts.
+async function deptContext(env, id) {
+  if (id !== "trading") return "";
+  try {
+    const s = await Promise.race([traderFile("summary.json"), new Promise((_, no) => setTimeout(() => no(new Error("slow")), 3500))]);
+    if (!s || !s.markets) return "\nTRADING DESK DATA: paper trading has not started yet.";
+    const pct = x => (x >= 0 ? "+" : "") + (100 * (Number(x) || 0)).toFixed(2) + "%";
+    const lines = [`TRADING DESK DATA (paper accounts, updated ${cleanText(String(s.updated || ""), 30)}):`];
+    for (const [k, m] of Object.entries(s.markets)) {
+      lines.push(`- ${m.name}: equity ${m.equity} ${m.ccy} from ${m.start} (${pct(m.returnPct)}), cash ${m.cash}, market mood ${m.regime}${m.halted ? ", HALTED by the risk breaker" : ""}, last data ${m.lastDate}.`);
+      if ((m.positions || []).length) lines.push("  Open: " + m.positions.slice(0, 10).map(p => `${p.sym} ${p.qty}${p.entry ? " @" + p.entry : ""}${p.pnlPct !== undefined ? " (" + pct(p.pnlPct) + ")" : ""}`).join("; "));
+      if ((m.orders || []).length) lines.push("  Queued for the next open: " + m.orders.slice(0, 8).map(o => `${o.side} ${o.qty} ${o.sym} (${cleanText(String(o.why || ""), 60)})`).join("; "));
+      if ((m.trades || []).length) lines.push("  Recent trades (newest first): " + m.trades.slice(0, 5).map(t => [t.date, t.side, t.sym, t.qty, t.price !== undefined ? "@" + t.price : "", t.pnl !== undefined ? "P/L " + t.pnl : ""].filter(x => x !== undefined && x !== "").join(" ")).join("; "));
+      lines.push("  Strategies (money share, backtest score): " + (m.strategies || []).slice(0, 8).map(st => `${st.id} ${Math.round(100 * (st.weight || 0))}% (${st.score})`).join(", "));
+    }
+    if (s.replay) lines.push("2026 test run: " + Object.entries(s.replay).map(([k, r]) => `${k} ${pct(r.returnPct)} vs buy-and-hold ${pct(r.buyHoldPct)}`).join("; "));
+    return "\n" + lines.join("\n");
+  } catch { return "\nTRADING DESK DATA: could not be loaded right now, so do not quote any paper-trading numbers."; }
 }
 // What Max may do to the app screen when he understands a request.
 const ACTIONS = ["learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
@@ -1479,7 +1544,10 @@ export default {
     const auth = await authenticate(request, env);
     if (url.pathname === "/health" && request.method === "GET") {
       // Public check: says what is configured, never any secret value or stored data.
-      const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env), brain: (env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini") + (env.GROQ_API_KEY || env.AI ? " · free backups: " + [env.GROQ_API_KEY ? "groq" : "", env.AI ? "workers-ai" : ""].filter(Boolean).join(", ") : ""), version:WORKER_VERSION,
+      const resting = [...skipUntil, ...backupSkip].filter(([, t]) => t > Date.now()).map(([m, t]) => m + " (back in " + Math.ceil((t - Date.now()) / 60e3) + " min)");
+      const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env),
+        brainChain: [...(env.ANTHROPIC_API_KEY ? [cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE] : []), ...modelChain(env), ...(env.GROQ_API_KEY ? GROQ_MODELS.map(m => "groq:" + m) : []), ...(env.AI ? WAI_MODELS.map(m => "workers-ai:" + m) : [])],
+        resting, departments: DEPT_IDS.map(id => DEPTS[id].icon + " " + DEPTS[id].name), brain: (env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini") + (env.GROQ_API_KEY || env.AI ? " · free backups: " + [env.GROQ_API_KEY ? "groq" : "", env.AI ? "workers-ai" : ""].filter(Boolean).join(", ") : ""), version:WORKER_VERSION,
         geminiKey: env.GEMINI_API_KEY ? "set" : "missing", passcodeRequired: passcodeSet(env),
         database: env.MAX_MEMORY ? "bound" : "not bound",
         google: !googleConfigured(env) ? "not set up" : auth.enforced ? "linked" + (canModifyMail(await googleRow(env)) ? " (calendar, tasks, gmail)" : hasGmail(await googleRow(env)) ? " (calendar, tasks, gmail read-only — sign in again to let Max organize email)" : " (calendar, tasks — sign in again to add Gmail)") : "set up, not signed in",
@@ -1658,12 +1726,16 @@ export default {
           "edit_research (query = his exact change to the research draft) · approve_research · reject_research · save_answer (save your last answer into his notes) · organize_notes (sort notes into topics) · open_settings · go_home (back to just talking) · export_notes. " +
           "Work out dates from the current time below (e.g. 'Friday 9am' = the coming Friday). Only set an action when he clearly wants it; otherwise null. When you set one, 'reply' is a short spoken confirmation. If the app cannot do what he asks, say so honestly. " : "") +
         (!db && actionsOn ? "Reply ONLY with JSON: {\"reply\": \"what you say\", \"used_notes\": [\"exact titles of his notes you used\"], \"action\": null or {\"type\": \"...\", \"query\": \"...\", \"details\": {...}}" + (body.coach ? ", \"coach_notes\": [\"...\"]" : "") + "}. " : "");
+      // The brain's router picks the specialist department for this request.
+      const route = body.coach && body.coach.name ? {id: "training", how: "coach session"} : routeDept(message, cleanText(String(body.lastDept || ""), 20));
+      const desk = DEPTS[route.id] || null;
+      const deskNote = desk ? "\n\nSPECIALIST ON DUTY: " + desk.name + ". " + desk.brief + " You are still Max: same voice and same JSON reply format, and every app action listed above is still available if he needs one." + await deptContext(env, route.id) : "";
       const coach = body.coach && typeof body.coach === "object" ? {name: cleanText(String(body.coach.name || ""), 40), brief: cleanText(String(body.coach.brief || ""), 2500), file: cleanText(String(body.coach.file || ""), 6000)} : null;
       if (coach && coach.name) memoryNote += `\n\nCOACH MODE — right now you are speaking as his ${coach.name} (still Max, warm and direct, short spoken answers, one clear next step).\n${coach.brief}\n` +
         `HIS COACHING FILE (goals, facts and progress he told you before):\n${coach.file || "(empty — this is your first session: greet him, then ask at most 3 short questions to learn his situation and goal, one at a time)"}\n` +
         `When he tells you something worth keeping for this coaching (a goal, a fact about his situation, a result, a session done), add it to "coach_notes" as short dated-free lines in third person, e.g. "Goal: 10 push-ups a day by December". Otherwise "coach_notes" is empty.`;
       const system = style + `\nCurrent time: ${cleanText(body.now, 40) || when(Date.now())}${body.tz ? " (" + cleanText(body.tz, 60) + ")" : ""}.` +
-        (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote + (persona ? "\n" + persona : "");
+        (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote + deskNote + (persona ? "\n" + persona : "");
       const contents = [...history, {role:"user", parts:[{text:message}]}];
       let raw = "", cutOff = false, usedModel = "", claudeNote = "";
       const c = await claude(env, system, history, message, 4096);
@@ -1682,6 +1754,11 @@ export default {
         }
         raw = (g.data?.candidates?.[0]?.content?.parts || []).map(p=>p.text||"").join("\n").trim();
         cutOff = g.data?.candidates?.[0]?.finishReason === "MAX_TOKENS"; usedModel = g.model;
+        if (!raw && !g.backup) {
+          // Gemini answered with nothing (blocked or glitched): ask a free backup brain instead of giving up.
+          const b = await backupBrain(env, {systemInstruction:{parts:[{text:system}]}, contents, generationConfig:{temperature:0.7, maxOutputTokens:8192, ...(db || actionsOn ? {responseMimeType:"application/json"} : {})}}).catch(() => null);
+          if (b) { raw = (b.data?.candidates?.[0]?.content?.parts || []).map(p=>p.text||"").join("\n").trim(); usedModel = b.model; cutOff = false; }
+        }
       }
       const parsed = db || actionsOn || (c && c.text) ? parseModelJson(raw) : {reply: raw, remember: []};
       const reply = parsed.reply ? parsed.reply + (cutOff ? " … That was a long one, so I stopped there. Say “continue” for the rest." : "") : "";
@@ -1691,7 +1768,7 @@ export default {
         if (!savedMemory) { try { autoSaved = await saveFacts(db, parsed.remember); } catch {} }
         try { await saveTalk(db, message, reply); } catch {}
       }
-      return json({reply, action: actionsOn ? cleanAction(parsed.action) : null, coachNotes: body.coach ? (parsed.coach_notes || []).map(x => cleanText(String(x), 300)).filter(Boolean).slice(0, 5) : [], model:usedModel, ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
+      return json({reply, action: actionsOn ? cleanAction(parsed.action) : null, coachNotes: body.coach ? (parsed.coach_notes || []).map(x => cleanText(String(x), 300)).filter(Boolean).slice(0, 5) : [], model:usedModel, dept: {id: route.id, name: desk ? desk.name : "Max", icon: desk ? desk.icon : "", how: route.how}, ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
         notesUsed: Array.isArray(parsed.used_notes) ? [...new Set(parsed.used_notes.map(t => cleanText(String(t), 200)).filter(t => knownTitles.some(k => k.toLowerCase() === t.toLowerCase())))].slice(0, 4)
           : [...fromPhone.items.map(n => n.title), ...notesUsed.map(n => n.title || "Untitled")].slice(0, 3),
         truncated: cutOff, conversationSaved: !!db}, 200, origin, env);
