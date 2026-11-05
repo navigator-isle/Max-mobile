@@ -38,6 +38,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}.b
 #connectionModal.open{display:flex!important}
 #connectionModal[hidden]{display:none!important}
 .desk-chip{display:inline-block;font-size:.72rem;letter-spacing:.04em;padding:3px 9px;border-radius:999px;border:1px solid rgba(120,200,255,.35);color:#9fd8ff;background:rgba(40,120,200,.12);margin:0 6px 6px 0;vertical-align:middle}
+#musicBar{position:fixed;left:8px;right:8px;bottom:8px;z-index:60;background:rgba(8,16,28,.96);border:1px solid rgba(120,200,255,.3);border-radius:14px;padding:8px;box-shadow:0 6px 24px rgba(0,0,0,.5);max-width:560px;margin:0 auto}
+#musicVideoWrap{width:100%;max-width:360px;margin:0 auto 6px}#musicVideoWrap iframe{width:100%;height:200px;border:0;border-radius:10px;display:block}
+.music-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.music-title{flex:1 1 140px;min-width:0;font-size:.85rem;color:#cfe9ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.music-ctrls{display:flex;gap:4px}.music-btn{min-width:38px;padding:6px 8px}.music-ext{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.music-link{font-size:.72rem;text-decoration:none}
+body.music-on{padding-bottom:300px}
 </style><style>
 /* MAX two-section layout */
 :root{--max-bg:#07111e;--max-panel:#0b1a2b;--max-line:#1c344c;--max-accent:#77d7ff;--max-text:#e8f3ff;--max-muted:#8fa8c0}
@@ -1576,6 +1581,30 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(has(/^(repeat|again|say (it|that) again|ulit|what was that)$/))return {type:'walk_step',details:{op:'repeat'}};
    {const m=n.match(/^(?:go to |jump to )?step (\d{1,2})$/);if(m)return {type:'walk_step',details:{op:'goto',n:+m[1]}}}
    if(has(/^(stop|exit|end|cancel|quit|that'?s all|i'?m done|finished)( walk ?through| the walk ?through)?$/))return {type:'walk_step',details:{op:'stop'}};
+  }
+  // ---- music desk ----
+  if(MUSIC.mode){
+   if(has(/^(pause|stop|resume|continue|unpause|play)( it| that| the music| music| the song| song| the radio| radio)?( please| na| muna)?$/))return {type:'music_control',details:{op:has(/^pause/)?'pause':has(/^stop/)?'stop':'resume'}};
+   if(has(/^(next|skip)( song| track| one| station| it| this( song| one)?)?( please| na)?$|^(ibang kanta|palitan (mo )?(ang )?kanta)$/))return {type:'music_control',details:{op:'next'}};
+   if(has(/^(louder|volume up|turn it up|lakasan( mo)?( pa)?)( please)?$/))return {type:'music_control',details:{op:'louder'}};
+   if(has(/^(softer|quieter|volume down|turn it down|hinaan( mo)?( pa)?)( please)?$/))return {type:'music_control',details:{op:'softer'}};
+  }
+  if(has(/\b(stop|pause|resume|unpause|turn off|patayin|ihinto)\b.*\b(music|song|songs|radio|kanta|tugtog)\b/)&&!has(/\bremind/))return {type:'music_control',details:{op:has(/\bpause\b/)?'pause':has(/\b(resume|unpause)\b/)?'resume':'stop'}};
+  if(has(/\b(next|skip|change|another)( this| the| that)? (song|track|station)\b/))return {type:'music_control',details:{op:'next'}};
+  if(has(/\b(louder|volume up|lakasan)\b/)&&has(/\b(music|song|radio|volume|lakasan|louder)\b/)&&wc<=6)return {type:'music_control',details:{op:'louder'}};
+  if(has(/\b(softer|quieter|volume down|hinaan)\b/)&&wc<=6)return {type:'music_control',details:{op:'softer'}};
+  if(has(/\b(what'?s|what is) (this |that )?(playing|song)\b|\bwhat song is (this|that|playing)\b|\banong kanta (ito|to|yan)\b/))return {type:'music_control',details:{op:'what'}};
+  {const pm=raw.match(/^\s*(?:(?:hey|ok|okay)\s+)?(?:max[, ]+)?(?:please\s+|can you\s+|could you\s+)?(?:play|put on|i-?play|patugtugin|patugtog(?:in)?|tumugtog ka ng)\s+(?:me\s+|us\s+)?(?:some\s+|a\s+)?(.{2,100}?)(?:\s+(?:please|for me|po|naman))?[.!?]*$/i);
+   if(pm&&!/^(?:the\s+)?(?:play ?store|store|console|reviews?|listing|google play|routine|walk ?through|step)\b/i.test(pm[1])&&!/\b(play ?store|google play|closed test)\b/i.test(raw)){
+    let q=pm[1].replace(/\s+(?:on|in|from)\s+(?:youtube(?: music)?|spotify)$/i,'').trim();
+    if(/^(music|something|anything|a song|songs|any song|kanta|music na lang)$/i.test(q))q='popular hits mix';
+    return {type:'play_music',details:{query:q,mode:/\b(radio|station|fm)\b/i.test(q)?'radio':'video'}};
+   }}
+  if(has(/^(play|put on) (some )?music$|^(music|music please|patugtog)$/))return {type:'play_music',details:{query:'popular hits mix'}};
+  // ---- activity log ----
+  if(has(/\bactivity( log)?\b|\bwhat (did|have) (you|max|my desks?|the desks?|my departments?|my team|the team) (do|done|been doing)\b|\bwhat (failed|went wrong)\b|\bany(thing)? (fail|failed|failures|errors?)\b/)&&!has(/\b(remind|add|schedule|offline|while i was away)\b/)){
+   const dept=has(/\btrad/)?'trading':has(/\b(app|apps|play store)\b/)?'apps':has(/\b(web|website|site)\b/)?'web':has(/\b(notes?|librarian)\b/)?'notes':has(/\b(secretary|schedule|calendar|email)\b/)?'schedule':has(/\bcoach/)?'training':has(/\bmusic\b/)?'music':'';
+   return {type:'activity',details:{range:has(/\btoday\b|\bngayon\b/)?'today':'week',...(dept?{dept}:{})}};
   }
   // ---- learning: skills, learn this, conflicts ----
   {const m=raw.match(/^\s*(?:max[, ]+)?(?:please\s+)?(?:walk|guide|take|talk)\s+me\s+through\s+(?:the\s+|my\s+|how to\s+)?(.{2,80}?)(?:\s+(?:step by step|skill|procedure|steps))?[.?!]*$/i)||raw.match(/^\s*(?:max[, ]+)?step[- ]by[- ]step[,:]?\s+(?:for\s+|the\s+)?(.{2,80}?)[.?!]*$/i);
@@ -3578,7 +3607,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     buttons:[['Brief me',run('briefing')],['Today',run('list_schedule',{range:'today'})],['Deadlines',run('deadlines')]]},
    {badge:'TRAINING',badgeClass:'badge-note',title:'🎯 Training & coaching',meta:'investment · fitness · skills · business · career · life',
     lines:[...COACH_IDS.map(id=>{const n=coachNote(id);return COACHES[id].icon+' '+COACHES[id].name+(n?' — last session '+whenText(localDate(new Date(n.updatedAt))):' — not started')}),...(skills.length?['Skills: '+skills.map(n=>n.title.replace(/^Skill:\s*/,'')).join(', ')]:['No skills yet — open a note with steps and say “make this a skill”.'])],
-    buttons:[...COACH_IDS.map(id=>[COACHES[id].icon+' '+COACHES[id].name.replace(' coach',''),()=>{const t=coachTalk({coach:id});setSub('',t);speak(t)}]),...skills.slice(0,4).map(n=>['▶ '+n.title.replace(/^Skill:\s*/,''),()=>{const t=walkThrough({name:n.title.replace(/^Skill:\s*/,'')});setSub('',t);speak(t)}])]}];
+    buttons:[...COACH_IDS.map(id=>[COACHES[id].icon+' '+COACHES[id].name.replace(' coach',''),()=>{const t=coachTalk({coach:id});setSub('',t);speak(t)}]),...skills.slice(0,4).map(n=>['▶ '+n.title.replace(/^Skill:\s*/,''),()=>{const t=walkThrough({name:n.title.replace(/^Skill:\s*/,'')});setSub('',t);speak(t)}])]},
+   {badge:'MUSIC',badgeClass:'badge-res',title:'🎵 Music desk',meta:'DJ · YouTube songs · internet radio',
+    lines:[MUSIC.mode?'Now playing: '+((MUSIC.list[MUSIC.i]||{}).title||(MUSIC.list[MUSIC.i]||{}).name||MUSIC.q):'Say “play Ben&Ben”, “play some chill music”, or “play jazz radio”.','Songs play in a small player; radio keeps playing with the screen off.','The music turns down by itself while I listen or talk.'],
+    buttons:[['▶ Chill',run('play_music',{query:'chill lofi mix'})],['📻 OPM radio',run('play_music',{query:'opm',mode:'radio'})],['📻 Jazz radio',run('play_music',{query:'jazz',mode:'radio'})],...(MUSIC.mode?[['⏹ Stop',run('music_control',{op:'stop'})]]:[])]},
+   {badge:'ACTIVITY',badgeClass:'badge-draft',title:'🧾 Activity log',meta:'what each desk did · which brain answered · what failed',
+    lines:(()=>{const l=jget(ACT_KEY,[]).filter(x=>x.at>Date.now()-864e5);const f=l.filter(x=>!x.ok).length;return [l.length?l.length+' action'+(l.length===1?'':'s')+' on this phone today'+(f?' · '+f+' failed':''):'Nothing done on this phone today yet.','Answers and background jobs (like trading emails) are logged by Max’s server.']})(),
+    buttons:[['Today',run('activity',{range:'today'})],['Last 7 days',run('activity',{range:'week'})]]}];
   depts.forEach(c=>{
    const card=document.createElement('article');card.className='disp-card';card.dataset.dept=c.badge.toLowerCase();
    const head=document.createElement('div');head.className='disp-head';const b=document.createElement('span');b.className='badge '+(c.badgeClass||'badge-note');b.textContent=c.badge;const m=document.createElement('span');m.className='muted small';m.textContent=c.meta;head.append(b,m);
@@ -3703,7 +3738,185 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
 
  // Carries out an understood command. Returns what Max says about it.
+ // ---------- 🎵 music desk: plays songs (YouTube) and internet radio inside Max ----------
+ // Songs play in a small YouTube player (YouTube's rules: it stays visible). Radio keeps playing with the screen off.
+ // The music turns down by itself while Max listens or speaks, and comes back after.
+ const MUSIC={mode:'',list:[],i:0,q:'',playing:false,vol:70,yt:null,ytReady:null,audio:null,ducked:false,title:'',startedAt:0};
+ const MUSIC_VOL='max_music_vol';try{MUSIC.vol=Math.min(100,Math.max(5,Number(localStorage.getItem(MUSIC_VOL))||70))}catch{}
+ function musicBar(){
+  let bar=$('musicBar');if(bar)return bar;
+  bar=document.createElement('div');bar.id='musicBar';bar.hidden=true;
+  const vid=document.createElement('div');vid.id='musicVideoWrap';const inner=document.createElement('div');inner.id='musicVideo';vid.append(inner);
+  const row=document.createElement('div');row.className='music-row';
+  const t=document.createElement('div');t.id='musicTitle';t.className='music-title';
+  const btn=(id,label,title,fn)=>{const b=document.createElement('button');b.id=id;b.className='pill music-btn';b.textContent=label;b.title=title;b.setAttribute('aria-label',title);b.onclick=fn;return b};
+  const ctr=document.createElement('div');ctr.className='music-ctrls';
+  ctr.append(btn('musicPlay','⏸','Pause or play',()=>musicControl({op:MUSIC.playing?'pause':'resume'})),btn('musicNext','⏭','Next',()=>musicControl({op:'next'})),
+   btn('musicDown','🔉','Softer',()=>musicControl({op:'softer'})),btn('musicUp','🔊','Louder',()=>musicControl({op:'louder'})),btn('musicStop','⏹','Stop',()=>musicControl({op:'stop'})));
+  const ext=document.createElement('div');ext.className='music-ext';
+  const link=(label,href)=>{const a=document.createElement('a');a.className='pill music-link';a.target='_blank';a.rel='noopener';a.textContent=label;a.dataset.base=href;return a};
+  ext.append(link('Open in YouTube Music','https://music.youtube.com/search?q='),link('Spotify','https://open.spotify.com/search/'));
+  row.append(t,ctr);bar.append(vid,row,ext);document.body.append(bar);
+  return bar;
+ }
+ function musicShow(){
+  const bar=musicBar();bar.hidden=!MUSIC.mode;
+  $('musicVideoWrap').hidden=MUSIC.mode!=='video';
+  const cur=MUSIC.list[MUSIC.i]||{};
+  $('musicTitle').textContent=MUSIC.mode?(MUSIC.mode==='radio'?'📻 '+(cur.name||'Radio')+(cur.country?' · '+cur.country:''):'🎵 '+(cur.title||MUSIC.q)+(cur.channel?' · '+cur.channel:'')):'';
+  $('musicPlay').textContent=MUSIC.playing?'⏸':'▶';
+  bar.querySelectorAll('.music-link').forEach(a=>a.href=a.dataset.base+encodeURIComponent(MUSIC.q||''));
+  document.body.classList.toggle('music-on',!!MUSIC.mode);
+  if('mediaSession' in navigator&&MUSIC.mode)try{navigator.mediaSession.metadata=new MediaMetadata({title:cur.title||cur.name||MUSIC.q,artist:cur.channel||(MUSIC.mode==='radio'?'Internet radio':'Max'),album:'Max · '+MUSIC.q});
+   navigator.mediaSession.setActionHandler('play',()=>musicControl({op:'resume'}));navigator.mediaSession.setActionHandler('pause',()=>musicControl({op:'pause'}));navigator.mediaSession.setActionHandler('nexttrack',()=>musicControl({op:'next'}))}catch{}
+ }
+ function ytApi(){
+  if(window.YT&&window.YT.Player)return Promise.resolve();
+  if(MUSIC.ytReady)return MUSIC.ytReady;
+  MUSIC.ytReady=new Promise((res,rej)=>{const prev=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=()=>{prev&&prev();res()};
+   const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.async=true;s.onerror=()=>{MUSIC.ytReady=null;rej(new Error('the YouTube player did not load'))};document.head.append(s);
+   setTimeout(()=>{if(!(window.YT&&window.YT.Player)){MUSIC.ytReady=null;rej(new Error('the YouTube player is taking too long to load'))}},15000)});
+  return MUSIC.ytReady;
+ }
+ const musicLevel=()=>MUSIC.ducked?Math.max(3,Math.round(MUSIC.vol*0.2)):MUSIC.vol;
+ function musicApplyVol(){const v=musicLevel();try{MUSIC.yt&&MUSIC.yt.setVolume&&MUSIC.yt.setVolume(v)}catch{}if(MUSIC.audio)MUSIC.audio.volume=v/100}
+ function musicDuck(on){if(MUSIC.ducked===on)return;MUSIC.ducked=on;if(MUSIC.mode)musicApplyVol()}
+ async function musicStartVideo(){
+  const v=MUSIC.list[MUSIC.i];if(!v)return false;
+  if(MUSIC.audio){MUSIC.audio.pause();MUSIC.audio=null}
+  musicBar();MUSIC.mode='video';musicShow();
+  await ytApi();
+  if(MUSIC.yt&&MUSIC.yt.loadVideoById){MUSIC.yt.loadVideoById(v.id);musicApplyVol();return true}
+  await new Promise(res=>{
+   MUSIC.yt=new YT.Player('musicVideo',{width:'100%',height:'200',videoId:v.id,playerVars:{autoplay:1,playsinline:1,rel:0,modestbranding:1},
+    events:{onReady:e=>{musicApplyVol();try{e.target.playVideo()}catch{}res()},
+     onStateChange:e=>{if(e.data===1){MUSIC.playing=true;musicShow()}else if(e.data===2){MUSIC.playing=false;musicShow()}else if(e.data===0){musicNext(true)}},
+     onError:()=>{musicNext(true)}}});
+   setTimeout(res,8000);
+  });
+  return true;
+ }
+ function musicStartRadio(){
+  const st=MUSIC.list[MUSIC.i];if(!st)return false;
+  try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch{}
+  if(MUSIC.audio)MUSIC.audio.pause();
+  const a=new Audio();a.preload='none';a.src=st.url;MUSIC.audio=a;MUSIC.mode='radio';musicApplyVol();
+  a.onplaying=()=>{MUSIC.playing=true;musicShow()};a.onpause=()=>{MUSIC.playing=false;musicShow()};
+  a.onerror=()=>{if(MUSIC.audio===a)musicNext(true)};
+  a.play().catch(e=>{if(e&&e.name==='NotAllowedError')status('Tap ▶ to start the music — your phone needs one tap first.')});
+  musicShow();return true;
+ }
+ async function playMusic(d,raw){
+  const q=String((d&&(d.query||d.q))||'').replace(/^(?:some|me|a|the)\s+/i,'').replace(/[.!?]+$/,'').trim();
+  if(!q)return 'What would you like to hear? Say a song, an artist, or a mood like “chill music”.';
+  const base=workerBase();if(!base)return 'Music needs Max’s connection (the Worker) to find songs.';
+  if(isOffline())return 'I can’t find music without internet.';
+  const mode=d.mode==='radio'||/\b(radio|station|fm)\b/i.test(q+' '+(raw||''))?'radio':'video';
+  let res;
+  try{res=await fetchJson(base+'/api/music?q='+encodeURIComponent(q)+'&mode='+mode,{},15000)}catch(e){return 'I couldn’t reach the music finder. '+e.message}
+  const {r,data}=res;
+  if(!r.ok)return data.error||'I couldn’t find music for “'+q+'”.';
+  MUSIC.q=q;MUSIC.i=0;MUSIC.startedAt=Date.now();
+  if(data.mode==='radio'){MUSIC.list=data.stations||[];if(!musicStartRadio())return 'I couldn’t find a radio station for “'+q+'”.';return (data.note?data.note+' ':'')+'Playing '+(MUSIC.list[0].name||q+' radio')+'.'}
+  MUSIC.list=data.videos||[];
+  try{await musicStartVideo()}catch(e){
+   // The YouTube player didn't load: fall back to radio so he still gets music.
+   const rr=await fetchJson(base+'/api/music?q='+encodeURIComponent(q)+'&mode=radio',{},15000).catch(()=>null);
+   if(rr&&rr.r.ok&&rr.data.stations?.length){MUSIC.list=rr.data.stations;MUSIC.i=0;musicStartRadio();return 'YouTube didn’t load ('+e.message+'), so here’s '+(MUSIC.list[0].name||'radio')+' instead.'}
+   MUSIC.mode='';musicShow();return 'Sorry, '+e.message+'. Try “play '+q+' radio”.';
+  }
+  setTimeout(()=>{if(MUSIC.mode==='video'&&!MUSIC.playing&&Date.now()-MUSIC.startedAt>4000)status('Tap ▶ on the music bar if it hasn’t started — some phones need one tap.')},5000);
+  return 'Playing '+(MUSIC.list[0].title||q)+'.';
+ }
+ async function musicNext(auto){
+  if(!MUSIC.mode)return 'Nothing is playing.';
+  MUSIC.i++;
+  if(MUSIC.i>=MUSIC.list.length){if(auto){musicControl({op:'stop'});status('That’s the end of “'+MUSIC.q+'”. Ask for more anytime.');return ''}MUSIC.i=0}
+  if(MUSIC.mode==='radio'){musicStartRadio();return 'Next station: '+(MUSIC.list[MUSIC.i].name||'radio')+'.'}
+  try{await musicStartVideo()}catch(e){return 'The next song didn’t load: '+e.message}
+  return auto?'':'Next: '+(MUSIC.list[MUSIC.i].title||'the next song')+'.';
+ }
+ async function musicControl(d){
+  const op=(d&&d.op)||'';
+  if(!MUSIC.mode&&op!=='what')return 'Nothing is playing right now. Say “play” and what you’d like.';
+  const cur=MUSIC.list[MUSIC.i]||{};
+  switch(op){
+   case 'pause':try{MUSIC.yt&&MUSIC.yt.pauseVideo&&MUSIC.yt.pauseVideo()}catch{}if(MUSIC.audio)MUSIC.audio.pause();MUSIC.playing=false;musicShow();return 'Paused.';
+   case 'resume':try{MUSIC.mode==='video'&&MUSIC.yt&&MUSIC.yt.playVideo&&MUSIC.yt.playVideo()}catch{}if(MUSIC.audio)MUSIC.audio.play().catch(()=>{});musicShow();return 'Playing.';
+   case 'stop':try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch{}if(MUSIC.audio){MUSIC.audio.pause();MUSIC.audio.src='';MUSIC.audio=null}MUSIC.mode='';MUSIC.playing=false;musicShow();return 'Music off.';
+   case 'next':return await musicNext(false);
+   case 'louder':case 'softer':MUSIC.vol=Math.min(100,Math.max(5,MUSIC.vol+(op==='louder'?15:-15)));try{localStorage.setItem(MUSIC_VOL,MUSIC.vol)}catch{}musicApplyVol();return 'Volume '+MUSIC.vol+'%.';
+   case 'what':return MUSIC.mode?(MUSIC.mode==='radio'?'This is '+(cur.name||'a radio station')+(cur.tags?' — '+cur.tags.split(',').slice(0,3).join(', '):'')+'.':'This is '+(cur.title||MUSIC.q)+(cur.channel?' by '+cur.channel:'')+'.'):'Nothing is playing.';
+  }
+  return 'Say pause, play, next, louder, softer or stop.';
+ }
+ // Turn the music down while Max listens or talks (so he can hear you and you can hear him).
+ try{const orbEl=$('maxOrb');if(orbEl)new MutationObserver(()=>musicDuck(orbEl.classList.contains('listening')||orbEl.classList.contains('speaking'))).observe(orbEl,{attributes:true,attributeFilter:['class']})}catch{}
+
+ // ---------- activity log: what each desk did, which brain answered, what failed ----------
+ const DESKS={apps:['📱','Apps desk'],web:['🌐','Website team'],trading:['📈','Trading desk'],notes:['🗂','Librarian'],schedule:['📅','Secretary'],training:['🎯','Coach'],music:['🎵','Music desk'],general:['🤵','Max'],system:['⚙','System']};
+ const ACT_KEY='max_activity_local',ACT_SKIP=new Set(['show_keyboard','hide_keyboard','go_home','open_settings','open_menu','walk_step','routine_step','activity']);
+ function deskOf(type){
+  const t=String(type||'');
+  if(/^(play_(overview|update|notes|reviews|build)|build_status|open_project|check_projects|show_projects|project_request|list_requests|merge_request|projects_overview|list_passage_plans)$/.test(t))return 'apps';
+  if(/^(site_audit|seo_ideas|content_draft|project_stats|log_sale|sales_summary)$/.test(t))return 'web';
+  if(/^(trading_|market_|show_watchlist|watchlist_|price_alert|list_alerts|convert_currency|set_currencies)/.test(t))return 'trading';
+  if(/^(learn_this|make_skill|improve_skill|walk_through|check_conflicts|show_notes|open_note|new_note|read_note|organize_notes|export_notes|import_vault|export_vault|research|show_research|edit_research|approve_research|reject_research|save_answer|verify_note|library_report|find_duplicates|new_skill|show_skills|forget_skill|read_link|attach_file|save_attachment|discard_attachment|watch_topic|unwatch_topic|check_watch|research_inbox)$/.test(t))return 'notes';
+  if(/^(add_event|edit_event|delete_event|add_task|list_schedule|briefing|deadlines|check_email|read_email|draft_email|send_email|cancel_email|modify_email|whatsapp_draft|new_routine|start_routine|show_routines|delete_routine)$/.test(t))return 'schedule';
+  if(/^coach_/.test(t))return 'training';
+  if(/^(play_music|music_control)$/.test(t))return 'music';
+  return 'general';
+ }
+ let actTimer=null;
+ function actLog(item){
+  const list=jget(ACT_KEY,[]);list.unshift({at:Date.now(),kind:'action',ok:true,...item,pending:true});jset(ACT_KEY,list.slice(0,300));
+  clearTimeout(actTimer);actTimer=setTimeout(actFlush,3000);
+ }
+ async function actFlush(){
+  const base=workerBase();if(!base||isOffline())return;
+  const list=jget(ACT_KEY,[]),todo=list.filter(x=>x.pending).slice(0,30);if(!todo.length)return;
+  try{const {r}=await postJson('/api/activity',{items:todo.map(({pending,...x})=>x)},10000);
+   if(r.ok){const sent=new Set(todo.map(x=>x.at+'|'+x.text));jset(ACT_KEY,jget(ACT_KEY,[]).map(x=>sent.has(x.at+'|'+x.text)?{...x,pending:false}:x))}}catch{}
+ }
+ setTimeout(actFlush,8000);
+ async function activityScreen(d){
+  d=d||{};const days=d.range==='today'?1:7,dept=DESKS[d.dept]?d.dept:'';
+  setSection('display');$('dispTitle').textContent='Reading the activity log…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  let server=null,why='';
+  if(workerBase()&&!isOffline()){await actFlush();try{const {r,data}=await fetchJson(workerBase()+'/api/activity?days='+days+(dept?'&dept='+dept:''),{},15000);if(r.ok)server=data;else why=data.error||''}catch(e){why=e.message}}
+  const since=Date.now()-days*864e5;
+  const local=jget(ACT_KEY,[]).filter(x=>x.at>=since&&(!dept||x.dept===dept)&&(!server||x.pending));
+  const items=[...(server?.items||[]),...local].sort((a,b)=>b.at-a.at);
+  const fails=items.filter(x=>!x.ok),byDesk={};items.forEach(x=>{byDesk[x.dept]=(byDesk[x.dept]||0)+1});
+  const brains=server?.brains||{};
+  const cards=[{badge:'SUMMARY',badgeClass:'badge-res',title:(days===1?'Today':'Last 7 days')+': '+items.length+' thing'+(items.length===1?'':'s')+(fails.length?' · '+fails.length+' failed':' · nothing failed'),
+   lines:[...Object.entries(byDesk).sort((a,b)=>b[1]-a[1]).map(([k,n])=>(DESKS[k]||DESKS.general).join(' ')+' — '+n),...(Object.keys(brains).length?['Brains that answered: '+Object.entries(brains).sort((a,b)=>b[1]-a[1]).map(([m,n])=>m+' ×'+n).join(', ')]:[]),...(server?[]:['Showing this phone only'+(why?' — '+why:'')+'.'])],
+   buttons:[['Today',()=>doAction({type:'activity',details:{range:'today',dept}},'')],['7 days',()=>doAction({type:'activity',details:{range:'week',dept}},'')],['All desks',()=>doAction({type:'activity',details:{range:d.range}},'')],
+    ...Object.keys(DESKS).filter(k=>byDesk[k]&&k!==dept).slice(0,8).map(k=>[DESKS[k][0]+' '+DESKS[k][1],()=>doAction({type:'activity',details:{range:d.range,dept:k}},'')])]}];
+  if(fails.length)cards.push({badge:'FAILED',badgeClass:'badge-draft',tone:'warn',title:fails.length+' thing'+(fails.length===1?'':'s')+' went wrong',lines:fails.slice(0,10).map(x=>({text:actTime(x.at)+' '+(DESKS[x.dept]||DESKS.general)[0]+' '+actText(x)+(x.detail?' — '+x.detail:''),cls:'miss'}))});
+  const byDay={};items.forEach(x=>{const k=new Date(x.at).toDateString();(byDay[k]=byDay[k]||[]).push(x)});
+  Object.entries(byDay).slice(0,7).forEach(([k,list])=>cards.push({badge:'LOG',title:whenText(localDate(new Date(list[0].at))),meta:list.length+' entries',
+   lines:list.slice(0,40).map(x=>({text:actTime(x.at)+' '+(DESKS[x.dept]||DESKS.general)[0]+' '+actText(x)+(x.model?' · '+x.model:'')+(x.ms?' · '+(x.ms/1000).toFixed(1)+' s':''),cls:x.ok?'':'miss'}))}));
+  if(!items.length)cards.push({badge:'LOG',title:'Nothing logged yet',lines:['Every answer and every action from now on shows up here.']});
+  showDisplay('Activity log'+(dept?' · '+DESKS[dept][1]:''),server?'From Max’s database':'This phone only',cards);
+  const top=Object.entries(byDesk).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,n])=>(DESKS[k]||DESKS.general)[1]+' '+n).join(', ');
+  return (days===1?'Today':'In the last 7 days')+' '+(items.length?'I logged '+items.length+' things'+(top?': '+top:'')+'. '+(fails.length?fails.length+' failed — they’re at the top.':'Nothing failed.'):'nothing is logged yet.');
+ }
+ const actTime=t=>new Date(t).toTimeString().slice(0,5);
+ function actText(x){
+  if(x.kind==='chat')return 'Answered: “'+String(x.text||'').slice(0,90)+'”'+(x.detail?' ('+x.detail+')':'');
+  return String(x.text||x.kind||'');
+ }
+ // Every action Max carries out goes into the activity log (except small screen moves).
  async function doAction(a,raw,aiReply){
+  const t0=Date.now();
+  try{
+   const said=await doActionCore(a,raw,aiReply);
+   if(a&&a.type&&!ACT_SKIP.has(a.type)&&!(a.type==='music_control'&&['louder','softer','what'].includes(a.details?.op)))actLog({dept:deskOf(a.type),kind:a.type,text:String(said||a.type).replace(/\s+/g,' ').slice(0,180),detail:String(raw||'').slice(0,120),ms:Date.now()-t0,ok:!/^(sorry|i couldn’t|i couldn't|i can’t|i can't|couldn’t|could not)\b/i.test(String(said||''))});
+   return said;
+  }catch(e){if(a&&a.type)actLog({dept:deskOf(a.type),kind:a.type,text:a.type+' failed',detail:String(e.message||e).slice(0,200),ok:false,ms:Date.now()-t0});throw e}
+ }
+ async function doActionCore(a,raw,aiReply){
   const say=s=>aiReply||s;
   switch(a.type){
    case 'show_keyboard':setSection('home');setKeyboard(true);return say('Keyboard’s up. Type, or just keep talking.');
@@ -3759,6 +3972,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'set_weather_place':return await setWeatherPlace(a.details||{location:a.query});
    case 'set_personality':return setPersonality(a.details||{name:a.query});
    case 'usage':return usageReport();
+   case 'play_music':return await playMusic({...(a.details||{}),query:(a.details&&a.details.query)||a.query},raw);
+   case 'music_control':return await musicControl(a.details||{op:a.query});
+   case 'activity':return await activityScreen(a.details||{});
    case 'import_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Import Obsidian vault” and pick your vault zip. To make the zip: in My Files, long-press your vault folder and choose Compress.';
    case 'export_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Export vault” to download all your notes as an Obsidian vault.';
    case 'trading_status':return await tradingStatus(a.details||{});
@@ -3776,7 +3992,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'barge_setting':jset('max_barge',a.details?.on!=='off');return a.details?.on!=='off'?'Voice interrupt is on — say “stop” or just start talking while I speak.':'Voice interrupt is off. Tap the circle to stop me while I speak.';
    case 'whatsapp_draft':return whatsappDraft(a.details||{text:a.query});
    case 'deadlines':return deadlinesSay(a.details||{});
-   case 'show_crew':setSection('crew');return 'Here are your six departments: apps, websites, trading, notes, schedule, and training. Each has its own workers. Name one and tell them what you need.';
+   case 'show_crew':setSection('crew');return 'Here are your seven departments: apps, websites, trading, notes, schedule, training, and music. Each has its own workers. Name one and tell them what you need.';
    case 'watch_topic':return watchTopic(a.query||a.details?.topic);
    case 'unwatch_topic':return unwatchTopic(a.query||a.details?.topic);
    case 'check_watch':return await checkWatch(true);
@@ -3936,7 +4152,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft','play_music','music_control','activity'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

@@ -53,7 +53,7 @@ const answer = async () => (await vis("#homeAnswer")) ? p.locator("#homeAnswer")
 const disp = () => p.locator("#dispBody").textContent();
 await say("show my departments");
 const crew = await p.locator("#crewBody").textContent();
-ok(await vis("#crewScreen") && ["APPS", "WEBSITES", "TRADING", "NOTES", "SCHEDULE", "TRAINING"].every(x => crew.includes(x)), "“show my departments” → six departments", crew.slice(0, 200));
+ok(await vis("#crewScreen") && ["APPS", "WEBSITES", "TRADING", "NOTES", "SCHEDULE", "TRAINING", "MUSIC", "ACTIVITY"].every(x => crew.includes(x)), "“show my departments” → seven departments and the activity log", crew.slice(0, 200));
 ok(/Passage Planner — on Google Play/.test(crew) && /Quick Draft Calculator — website only/.test(crew) && /SEO researcher/.test(crew) && /paper trader/.test(crew), "each lists its workers and apps");
 let g = gem.length;
 await say("check hobby isle security");

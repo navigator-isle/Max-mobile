@@ -338,11 +338,26 @@ const DEPTS = {
   schedule: {name: "Secretary", icon: "📅",
     words: /\b(?:remind(?:er|ers)?|calendar|schedule|meetings?|events?|alarm|appointment|tasks?|to-?do|deadlines?|due|tomorrow|today|tonight|later|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|emails?|gmail|inbox|reply|whatsapp|routines?|briefing|paalala|bukas|mamaya|ngayon)\b/gi,
     brief: "You are acting as Max's SECRETARY: calendar, reminders, tasks, email and routines. Always repeat back the day of the week, the date and the time you understood, in his time zone. Never say an email or message was sent unless the app confirmed it. Spot clashes and deadlines, and keep confirmations to one short sentence."},
+  music: {name: "Music desk", icon: "🎵",
+    words: /\b(?:music|songs?|kanta|kantahan|tugtog|patugtog(?:in)?|playlist|radio|album|artist|band|spotify|youtube music|volume|louder|softer|lofi|lo-fi|jazz|opm|karaoke|(?<!google )play(?!\s?store|\s+console|\s+reviews?|\s+listing))\b/gi,
+    brief: "You are acting as Max's MUSIC DESK: his DJ. When he asks for music, set play_music with exactly what to play — the app finds and plays it at once, so never say you cannot play music. For a mood or activity (working, sleeping, gym, rainy day), pick a fitting genre or artist yourself. Keep the spoken reply to a few words, like \"Playing OPM love songs.\""},
   training: {name: "Coach", icon: "🎯",
     words: /\b(?:coach(?:ing)?|train(?:ing)?|workout|exercise|fitness|gym|run(?:ning)?|push-?ups?|sleep|habit|study|exam|marina|review(?:er)?|career|promotion|interview|motivation|goal|goals|discipline|ehersisyo)\b/gi,
     brief: "You are acting as Max's COACH desk: fitness, study (including his MARINA exams), skills, business, career and life coaching. Be warm and direct. Give one clear next step at a time and follow up on his progress. For health, injury or medical questions give general guidance only and tell him to see a professional. Keep fitness and diet advice moderate and safe."}
 };
 const DEPT_IDS = Object.keys(DEPTS);
+// Which desk an action belongs to — when Max answers in general but takes a desk's action, the desk gets the credit.
+function deptOfAction(t) {
+  t = String(t || "");
+  if (/^(play_(overview|update|notes|reviews|build)|build_status|open_project|check_projects|show_projects|project_request|list_requests|merge_request|projects_overview|list_passage_plans)$/.test(t)) return "apps";
+  if (/^(site_audit|seo_ideas|content_draft|project_stats|log_sale|sales_summary)$/.test(t)) return "web";
+  if (/^(trading_|market_|show_watchlist|watchlist_|price_alert|list_alerts|convert_currency|set_currencies)/.test(t)) return "trading";
+  if (/^(learn_this|make_skill|improve_skill|walk_through|check_conflicts|show_notes|open_note|new_note|read_note|organize_notes|export_notes|research|show_research|edit_research|approve_research|reject_research|save_answer|verify_note|library_report|find_duplicates|new_skill|show_skills|forget_skill|read_link|save_attachment|watch_topic|unwatch_topic|check_watch|research_inbox)$/.test(t)) return "notes";
+  if (/^(add_event|edit_event|delete_event|add_task|list_schedule|briefing|deadlines|check_email|read_email|draft_email|send_email|cancel_email|modify_email|whatsapp_draft|new_routine|start_routine|show_routines|delete_routine)$/.test(t)) return "schedule";
+  if (/^coach_/.test(t)) return "training";
+  if (/^(play_music|music_control)$/.test(t)) return "music";
+  return "";
+}
 // Sounds like it continues the last topic: "why?", "and the second one", "what about that", "explain more", "bakit", "yung isa".
 const FOLLOW_UP = /^\s*(?:and|but|so|then|also|ok(?:ay)?|why|how come|what about|how about|which|explain|tell me more|more|again|same|continue|go on|bakit|paano|eh|yung|ano pa|tapos|pero|sige)\b|\b(?:it|its|it's|that|this|those|these|them|they|one|ones|first|second|third|last|previous|above|niyan|iyan|yan|ito|iyon)\b/i;
 function routeDept(message, hint) {
@@ -379,7 +394,7 @@ async function deptContext(env, id) {
   } catch { return "\nTRADING DESK DATA: could not be loaded right now, so do not quote any paper-trading numbers."; }
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["play_music","music_control","activity","learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
@@ -392,14 +407,15 @@ function cleanAction(a) {
     find: cleanText(String(d.find || ""), 120), on: cleanText(String(d.on || ""), 10), location: cleanText(String(d.location || ""), 200),
     reminders: Array.isArray(d.reminders) ? d.reminders.map(Number).filter(Number.isFinite).slice(0, 5) : undefined,
     text: cleanText(String(d.text || ""), 4000), field: ["title","shortDescription","fullDescription"].includes(d.field) ? d.field : undefined,
-    target: cleanText(String(d.target || ""), 200), op: ["archive","unarchive","trash","untrash","read","unread","star","unstar","important","unimportant","label","unlabel"].includes(d.op) ? d.op : undefined, label: cleanText(String(d.label || ""), 60),
+    target: cleanText(String(d.target || ""), 200), op: ["archive","unarchive","trash","untrash","read","unread","star","unstar","important","unimportant","label","unlabel","pause","resume","stop","next","louder","softer","what"].includes(d.op) ? d.op : undefined, label: cleanText(String(d.label || ""), 60),
     symbols: Array.isArray(d.symbols) ? d.symbols.map(x => cleanText(String(x), 40)).filter(Boolean).slice(0, 10) : undefined, symbol: cleanText(String(d.symbol || ""), 40), kind: ["pse","crypto","fx"].includes(d.kind) ? d.kind : undefined, tier: cleanText(String(d.tier || ""), 20),
     direction: ["above","below"].includes(d.direction) ? d.direction : undefined, price: Number.isFinite(Number(d.price)) ? Number(d.price) : undefined, from: cleanText(String(d.from || ""), 20),
     currencies: Array.isArray(d.currencies) ? d.currencies.map(x => cleanText(String(x), 5).toUpperCase()).filter(Boolean).slice(0, 5) : undefined,
     repeat: cleanText(String(d.repeat || ""), 60), coach: ["investment","fitness","skills","business","career","life"].includes(d.coach) ? d.coach : undefined, entry: cleanText(String(d.entry || ""), 500),
     steps: Array.isArray(d.steps) ? d.steps.map(x => cleanText(String(x), 120)).filter(Boolean).slice(0, 20) : undefined, time: cleanText(String(d.time || ""), 5),
     speed: Number.isFinite(Number(d.speed)) ? Number(d.speed) : undefined, depart: cleanText(String(d.depart || ""), 25), arriveBy: cleanText(String(d.arriveBy || ""), 25), delays: Number.isFinite(Number(d.delays)) ? Number(d.delays) : undefined,
-    days: Number.isFinite(Number(d.days)) ? Number(d.days) : undefined, topic: cleanText(String(d.topic || ""), 200), name: cleanText(String(d.name || ""), 80), url: cleanText(String(d.url || ""), 500), skill: cleanText(String(d.skill || ""), 1500)};
+    days: Number.isFinite(Number(d.days)) ? Number(d.days) : undefined, topic: cleanText(String(d.topic || ""), 200), name: cleanText(String(d.name || ""), 80), url: cleanText(String(d.url || ""), 500), skill: cleanText(String(d.skill || ""), 1500),
+    mode: ["radio","video"].includes(d.mode) ? d.mode : undefined, dept: ["apps","web","trading","notes","schedule","training","music"].includes(d.dept) ? d.dept : undefined};
   if (out.details) for (const k of Object.keys(out.details)) if (out.details[k] === undefined || out.details[k] === "" || out.details[k] === false) delete out.details[k];
   return out;
 }
@@ -1246,6 +1262,99 @@ async function traderNotify(env) {
   await srvSetting(env, "max_srv_trader_last", Math.max(...fresh.map(e => e.id)));
   return "sent " + fresh.length;
 }
+// ---------- activity log: what each desk did, which brain answered, and what failed ----------
+// Written by the chat (desk, brain, action, failures), by background jobs (trading emails) and by the phone
+// (each action Max carried out). Kept 90 days in his own database. Paper trades are read from the trader's own log.
+let actReady = false;
+async function actTable(db) {
+  if (actReady) return;
+  await db.batch([db.prepare("CREATE TABLE IF NOT EXISTS max_activity (id INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL, dept TEXT, kind TEXT, text TEXT, detail TEXT, model TEXT, ok INTEGER NOT NULL DEFAULT 1, ms INTEGER, source TEXT)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_max_activity_at ON max_activity(at)")]);
+  actReady = true;
+}
+const ACT_DEPTS = ["apps", "web", "trading", "notes", "schedule", "training", "music", "general", "system"];
+async function logAct(env, a) {
+  const db = env.MAX_MEMORY; if (!db) return;
+  try {
+    await actTable(db);
+    const dept = ACT_DEPTS.includes(a.dept) ? a.dept : "general";
+    await db.prepare("INSERT INTO max_activity (at, dept, kind, text, detail, model, ok, ms, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(a.at || Date.now(), dept, cleanText(String(a.kind || "chat"), 30), cleanText(String(a.text || ""), 200), cleanText(String(a.detail || ""), 300),
+        cleanText(String(a.model || ""), 80), a.ok === false ? 0 : 1, Number.isFinite(a.ms) ? Math.round(a.ms) : null, cleanText(String(a.source || "server"), 20)).run();
+    if (Math.random() < 0.02) await db.prepare("DELETE FROM max_activity WHERE at < ?").bind(Date.now() - 90 * 864e5).run();
+  } catch { /* the log must never break the real work */ }
+}
+async function activityRoutes(request, env, url, origin) {
+  if (!env.MAX_MEMORY) return json({error: "The activity log needs Max's database."}, 503, origin, env);
+  const db = env.MAX_MEMORY; await actTable(db);
+  if (request.method === "POST") {
+    let body = {}; try { body = await request.json(); } catch {}
+    const items = (Array.isArray(body.items) ? body.items : [body]).slice(0, 30);
+    for (const it of items) if (it && (it.text || it.kind)) await logAct(env, {...it, at: Math.min(Number(it.at) || Date.now(), Date.now()), source: "phone"});
+    return json({saved: items.length}, 200, origin, env);
+  }
+  const days = Math.min(Math.max(Number(url.searchParams.get("days")) || 7, 1), 90), since = Date.now() - days * 864e5;
+  const dept = url.searchParams.get("dept");
+  const rows = (await db.prepare("SELECT at, dept, kind, text, detail, model, ok, ms, source FROM max_activity WHERE at >= ?" + (ACT_DEPTS.includes(dept) ? " AND dept = ?" : "") + " ORDER BY at DESC LIMIT 400")
+    .bind(...(ACT_DEPTS.includes(dept) ? [since, dept] : [since])).all()).results || [];
+  let trades = [];
+  if (!dept || dept === "trading") {
+    try { const ev = await traderFile("events.json"); trades = (Array.isArray(ev) ? ev : []).filter(e => Date.parse(e.at) >= since).map(e => ({at: Date.parse(e.at), dept: "trading", kind: "paper " + e.type, text: e.text, detail: e.market, model: "", ok: e.type === "halt" ? 0 : 1, source: "paper trader"})); } catch {}
+  }
+  const items = [...rows, ...trades].sort((a, b) => b.at - a.at).slice(0, 400);
+  const brains = {}; for (const r of rows) if (r.model) brains[r.model] = (brains[r.model] || 0) + 1;
+  return json({days, items, failures: items.filter(r => !r.ok).length, brains}, 200, origin, env);
+}
+// ---------- music desk: finds songs on YouTube and internet radio stations ----------
+function ytWalk(o, out) {
+  if (!o || typeof o !== "object" || out.length >= 12) return;
+  if (o.videoRenderer && o.videoRenderer.videoId) {
+    const v = o.videoRenderer, t = v.title?.runs?.map(r => r.text).join("") || v.title?.simpleText || "";
+    if (!v.badges?.some(b => /live/i.test(JSON.stringify(b))) || out.length < 3) out.push({id: v.videoId, title: cleanText(t, 120), channel: cleanText(v.ownerText?.runs?.[0]?.text || "", 60), length: cleanText(v.lengthText?.simpleText || "", 12)});
+    return;
+  }
+  for (const k in o) ytWalk(o[k], out);
+}
+async function findVideos(q) {
+  const {r: res} = await timedFetch("https://www.youtube.com/results?search_query=" + encodeURIComponent(q) + "&sp=EgIQAQ%253D%253D&hl=en", {headers: {"User-Agent": "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36", "Accept-Language": "en-US,en;q=0.8"}}, 8000);
+  if (!res.ok) throw new Error("YouTube search answered " + res.status);
+  const html = await res.text();
+  const m = html.match(/(?:var ytInitialData|window\["ytInitialData"\])\s*=\s*(\{[\s\S]*?\});\s*(?:<\/script>|window\[)/);
+  const out = [];
+  if (m) { try { ytWalk(JSON.parse(m[1]), out); } catch {} }
+  if (!out.length) for (const x of html.matchAll(/"videoId":"([\w-]{11})"/g)) { if (!out.some(o => o.id === x[1])) out.push({id: x[1], title: "", channel: "", length: ""}); if (out.length >= 10) break; }
+  return out.filter((v, i) => out.findIndex(o => o.id === v.id) === i).slice(0, 10);
+}
+const RADIO_HOSTS = ["https://all.api.radio-browser.info", "https://de1.api.radio-browser.info", "https://nl1.api.radio-browser.info", "https://at1.api.radio-browser.info"];
+async function findRadio(q) {
+  const word = String(q || "").toLowerCase().replace(/\b(radio|station|stations|music|some|songs?|playlist|mix|please|play|fm)\b/g, " ").replace(/\s+/g, " ").trim() || "pop";
+  const tag = {"lo-fi": "lofi", "lo fi": "lofi", "opm": "opm", "filipino": "opm", "pinoy": "opm", "relaxing": "chillout", "chill": "chillout", "sleep": "ambient", "study": "lofi", "focus": "lofi", "classic rock": "classic rock", "love songs": "love songs", "christmas": "christmas", "news": "news"}[word] || word;
+  for (const host of RADIO_HOSTS) {
+    try {
+      const get = async params => { const {r} = await timedFetch(host + "/json/stations/search?" + params + "&hidebroken=true&order=clickcount&reverse=true&limit=25", {headers: {"User-Agent": UA}}, 6000); return r.ok ? r.json() : []; };
+      let list = await get("tag=" + encodeURIComponent(tag));
+      if (!list.length) list = await get("name=" + encodeURIComponent(word));
+      const ok = list.filter(s => /^https:\/\//.test(s.url_resolved || "") && (!s.codec || /mp3|aac/i.test(s.codec)));
+      if (ok.length || list.length) return ok.slice(0, 8).map(s => ({name: cleanText(s.name, 80), url: s.url_resolved, country: cleanText(s.countrycode || "", 4), tags: cleanText(s.tags || "", 80), bitrate: s.bitrate || 0}));
+    } catch { /* next mirror */ }
+  }
+  return [];
+}
+async function musicRoutes(request, env, url, origin) {
+  const q = cleanText(url.searchParams.get("q") || "", 120), mode = url.searchParams.get("mode") === "radio" ? "radio" : "video";
+  if (!q) return json({error: "What should I play?"}, 400, origin, env);
+  try {
+    if (mode === "radio") { const stations = await findRadio(q); return json({mode, q, stations}, stations.length ? 200 : 404, origin, env); }
+    const videos = await cached("music:" + q.toLowerCase(), 6 * 3600e3, () => findVideos(q));
+    if (videos.length) return json({mode, q, videos}, 200, origin, env);
+    const stations = await findRadio(q);
+    return json({mode: "radio", q, stations, note: "No songs found on YouTube, so here is radio instead."}, stations.length ? 200 : 404, origin, env);
+  } catch (e) {
+    const stations = await findRadio(q).catch(() => []);
+    if (stations.length) return json({mode: "radio", q, stations, note: "YouTube search didn't answer, so here is radio instead."}, 200, origin, env);
+    return json({error: "I couldn't find music for that right now (" + cleanText(String(e.message), 80) + ")."}, 502, origin, env);
+  }
+}
 // ---------- markets: crypto (CoinGecko), Philippine stocks (PSE Edge), currencies (Frankfurter / ECB) ----------
 // Prices are reported, never advised on, and Max never trades.
 const UA = "MaxPersonalAssistant/1.0 (personal use; +https://navigator-isle.github.io/Max-mobile/)";
@@ -1532,7 +1641,8 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
 }
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
-  async scheduled(event, env, ctx) { ctx.waitUntil(traderNotify(env).then(r => console.log("trader notify:", r)).catch(e => console.log("trader notify failed:", e.message))); },
+  async scheduled(event, env, ctx) { ctx.waitUntil(traderNotify(env).then(async r => { console.log("trader notify:", r); if (/^sent/.test(r)) await logAct(env, {dept: "trading", kind: "email", text: "Emailed you the paper-trading update (" + r.replace("sent ", "") + " updates)", source: "schedule"}); })
+    .catch(async e => { console.log("trader notify failed:", e.message); await logAct(env, {dept: "trading", kind: "email", text: "Trading update email failed", detail: e.message, ok: false, source: "schedule"}); })); },
   async fetch(request, env) {
     const url = new URL(request.url);
     const origin = request.headers.get("Origin") || "";
@@ -1568,6 +1678,8 @@ export default {
         try { const r = await weatherRoutes(new Request("https://x/api/weather?place=Batangas"), env, new URL("https://x/api/weather?place=Batangas"), ""); const w = await r.json();
           health.weather = r.ok ? "working — " + w.place + " " + Math.round(w.now.temp) + "°C, wind " + Math.round(w.now.wind) + " kn" + (w.sea ? ", waves " + w.sea.waves + " m" : ", no sea data") : "not working: " + w.error; }
         catch (e) { health.weather = "not working: " + String(e.message || e).slice(0, 120); }
+        try { const v = await findVideos("lofi hip hop"); health.musicYouTube = v.length ? "working — " + v.length + " songs, e.g. " + (v[0].title || v[0].id).slice(0, 50) + (v.every(x => x.title) ? "" : " (titles missing)") : "not working: no results"; } catch (e) { health.musicYouTube = "not working: " + String(e.message || e).slice(0, 100); }
+        try { const st = await findRadio("jazz"); health.musicRadio = st.length ? "working — " + st.length + " stations, e.g. " + st[0].name.slice(0, 40) : "not working: no stations"; } catch (e) { health.musicRadio = "not working: " + String(e.message || e).slice(0, 100); }
       }
       return json(health, 200, origin, env);
     }
@@ -1594,6 +1706,8 @@ export default {
     if (url.pathname.startsWith("/api/gmail/")) return gmailRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/market/")) return marketRoutes(request, env, url, origin);
     if (url.pathname === "/api/weather") return weatherRoutes(request, env, url, origin);
+    if (url.pathname === "/api/activity" && ["GET", "POST"].includes(request.method)) return activityRoutes(request, env, url, origin);
+    if (url.pathname === "/api/music" && request.method === "GET") return musicRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/trader/")) return traderRoutes(request, env, url, origin);
     if ((url.pathname === "/api/site/audit" || url.pathname.startsWith("/api/content/")) && request.method === "POST") return contentRoutes(request, env, url, origin);
     if (["/api/embed", "/api/skill/build", "/api/notes/conflicts"].includes(url.pathname) && request.method === "POST") return learnRoutes(request, env, url, origin);
@@ -1653,6 +1767,8 @@ export default {
       try { body = await request.json(); } catch { return json({error:"Invalid JSON body."}, 400, origin, env); }
       const message = cleanText(body.message, 4000);
       if (!message) return json({error:"Message is required."}, 400, origin, env);
+      const chatStart = Date.now(), logChat = a => logAct(env, {dept: route?.id || "general", kind: "chat", text: message.slice(0, 160), ms: Date.now() - chatStart, ...a});
+      let route = null;
       const db = body.useCloudMemory === true && !!env.MAX_MEMORY && auth.ok && (passcodeSet(env) || auth.enforced) ? env.MAX_MEMORY : null;
       const calendarOn = !!(await googleRow(env));
       // Long-term memory: notes first, then saved facts, then earlier conversations.
@@ -1719,7 +1835,7 @@ export default {
             "edit_event (change, move or rename an existing calendar event, or change its reminders; details = {find: words from its title, on: \"YYYY-MM-DD\" if he said which day, then only what changes: title, start, durationMinutes, location, reminders: [minutes before, e.g. 60, 10]}) · delete_event (cancel/remove an event; details = {find, on}) · alarms: an alarm is add_event with title starting \"⏰ \", reminderMinutes 0, durationMinutes 5 · several reminders: add_event with reminders: [60, 10] · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
-          "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}) · LEARNING: learn_this (he wants you to learn / study / summarize the file, link or note he is looking at into a detailed note; query = what) · make_skill (turn a note, file or link into a skill you follow; details = {name: the skill or note name}) · improve_skill (he corrects how you did a skill; details = {name: skill name, instruction: the correction}) · walk_through (he wants step-by-step guidance through a procedure or skill, one step at a time; details = {name}) · check_conflicts (find notes that contradict each other or look outdated) · WEBSITE TEAM (for his sites like Hobby Isle): site_audit (check a site's security, SEO, pictures and broken links; details = {project}) · seo_ideas (SEO / keyword / content ideas; details = {project, topic if he gave one}) · content_draft (write a blog post, review, guide, comparison or social post; details = {project, topic, name: \"blog\"|\"review\"|\"comparison\"|\"guide\"|\"social\"}) — drafts only, he decides what gets published · PAPER TRADING (pretend money only — you never place real trades): trading_status (how his paper trading is doing, positions, orders for the next open, which strategies are winning; details = {project: \"pse\" or \"crypto\" if he named one}) · trading_emails (turn the trading update emails on/off; details = {on: \"on\"|\"off\"}) · VOICE: hands_free (he wants you to always listen for \"Hey Max\" / stop doing that; details = {on: \"on\"|\"off\"}) · barge_setting (allow or stop interrupting you by voice; details = {on: \"on\"|\"off\"}) · WEATHER & SEA: weather (forecast, wind, waves, swell for a place; details = {location: the place, or empty for his saved place, on: \"today\"|\"tomorrow\"|\"week\"}) · set_weather_place (his default weather place; details = {location}) · set_personality (he wants you to talk differently; details = {name: \"butler\"|\"concise\"|\"witty\"|\"formal\"}) · usage (how much AI was used today / which brain answered) · whatsapp_draft (he wants to send a WhatsApp message; details = {to: the person or phone number, text: the finished message written in his voice and language}; the app opens WhatsApp with it filled in and HE taps send — never say it was sent) · play_build (build a NEW VERSION of the Android app from the latest website and upload it to his Play closed test; details = {project, notes: what's new if he said}; the app asks him first; never production) · build_status (is the app build finished / how did it go; details = {project}). The app always shows the new text and asks him before publishing. · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
+          "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}) · LEARNING: learn_this (he wants you to learn / study / summarize the file, link or note he is looking at into a detailed note; query = what) · make_skill (turn a note, file or link into a skill you follow; details = {name: the skill or note name}) · improve_skill (he corrects how you did a skill; details = {name: skill name, instruction: the correction}) · walk_through (he wants step-by-step guidance through a procedure or skill, one step at a time; details = {name}) · check_conflicts (find notes that contradict each other or look outdated) · WEBSITE TEAM (for his sites like Hobby Isle): site_audit (check a site's security, SEO, pictures and broken links; details = {project}) · seo_ideas (SEO / keyword / content ideas; details = {project, topic if he gave one}) · content_draft (write a blog post, review, guide, comparison or social post; details = {project, topic, name: \"blog\"|\"review\"|\"comparison\"|\"guide\"|\"social\"}) — drafts only, he decides what gets published · PAPER TRADING (pretend money only — you never place real trades): trading_status (how his paper trading is doing, positions, orders for the next open, which strategies are winning; details = {project: \"pse\" or \"crypto\" if he named one}) · trading_emails (turn the trading update emails on/off; details = {on: \"on\"|\"off\"}) · VOICE: hands_free (he wants you to always listen for \"Hey Max\" / stop doing that; details = {on: \"on\"|\"off\"}) · barge_setting (allow or stop interrupting you by voice; details = {on: \"on\"|\"off\"}) · WEATHER & SEA: weather (forecast, wind, waves, swell for a place; details = {location: the place, or empty for his saved place, on: \"today\"|\"tomorrow\"|\"week\"}) · set_weather_place (his default weather place; details = {location}) · set_personality (he wants you to talk differently; details = {name: \"butler\"|\"concise\"|\"witty\"|\"formal\"}) · usage (how much AI was used today / which brain answered) · whatsapp_draft (he wants to send a WhatsApp message; details = {to: the person or phone number, text: the finished message written in his voice and language}; the app opens WhatsApp with it filled in and HE taps send — never say it was sent) · play_build (build a NEW VERSION of the Android app from the latest website and upload it to his Play closed test; details = {project, notes: what's new if he said}; the app asks him first; never production) · build_status (is the app build finished / how did it go; details = {project}). The app always shows the new text and asks him before publishing. · MUSIC (the app plays it right away): play_music (he wants music played — a song, artist, album, genre or mood; query = exactly what to play, e.g. \"Ben&Ben Maybe the Night\", \"OPM love songs\", \"lofi\"; details = {mode: \"radio\" if he asked for a radio station or wants it to keep playing with the screen off, otherwise \"video\"}) · music_control (details = {op: \"pause\"|\"resume\"|\"stop\"|\"next\"|\"louder\"|\"softer\"|\"what\" (what is playing)}) · ACTIVITY: activity (he asks what you or his desks did, which brain answered, what failed, or for the activity log; details = {dept: \"apps\"|\"web\"|\"trading\"|\"notes\"|\"schedule\"|\"training\"|\"music\" if he named one, range: \"today\"|\"week\"}) · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +
@@ -1727,7 +1843,7 @@ export default {
           "Work out dates from the current time below (e.g. 'Friday 9am' = the coming Friday). Only set an action when he clearly wants it; otherwise null. When you set one, 'reply' is a short spoken confirmation. If the app cannot do what he asks, say so honestly. " : "") +
         (!db && actionsOn ? "Reply ONLY with JSON: {\"reply\": \"what you say\", \"used_notes\": [\"exact titles of his notes you used\"], \"action\": null or {\"type\": \"...\", \"query\": \"...\", \"details\": {...}}" + (body.coach ? ", \"coach_notes\": [\"...\"]" : "") + "}. " : "");
       // The brain's router picks the specialist department for this request.
-      const route = body.coach && body.coach.name ? {id: "training", how: "coach session"} : routeDept(message, cleanText(String(body.lastDept || ""), 20));
+      route = body.coach && body.coach.name ? {id: "training", how: "coach session"} : routeDept(message, cleanText(String(body.lastDept || ""), 20));
       const desk = DEPTS[route.id] || null;
       const deskNote = desk ? "\n\nSPECIALIST ON DUTY: " + desk.name + ". " + desk.brief + " You are still Max: same voice and same JSON reply format, and every app action listed above is still available if he needs one." + await deptContext(env, route.id) : "";
       const coach = body.coach && typeof body.coach === "object" ? {name: cleanText(String(body.coach.name || ""), 40), brief: cleanText(String(body.coach.brief || ""), 2500), file: cleanText(String(body.coach.file || ""), 6000)} : null;
@@ -1747,9 +1863,10 @@ export default {
           g = await gemini(env, {systemInstruction:{parts:[{text:system}]}, contents,
             // Large limit: newer Gemini models also spend part of it on thinking, which used to cut answers short.
             generationConfig:{temperature:0.7, maxOutputTokens:8192, ...(db || actionsOn ? {responseMimeType:"application/json"} : {})}});
-        } catch { return json({error:"Could not reach the AI provider. Try again later.", savedMemory}, 502, origin, env); }
+        } catch { await logChat({ok: false, detail: "could not reach any brain"}); return json({error:"Could not reach the AI provider. Try again later.", savedMemory}, 502, origin, env); }
         if (!g || !g.ok) {
           const message = g?.data?.error?.message || `AI provider returned HTTP ${g?.status}`;
+          await logChat({ok: false, detail: "every brain failed: " + message.slice(0, 200), model: g?.model || ""});
           return json({error:message.slice(0,400), savedMemory}, g?.status === 429 ? 429 : 502, origin, env);
         }
         raw = (g.data?.candidates?.[0]?.content?.parts || []).map(p=>p.text||"").join("\n").trim();
@@ -1762,13 +1879,18 @@ export default {
       }
       const parsed = db || actionsOn || (c && c.text) ? parseModelJson(raw) : {reply: raw, remember: []};
       const reply = parsed.reply ? parsed.reply + (cutOff ? " … That was a long one, so I stopped there. Say “continue” for the rest." : "") : "";
-      if (!reply) return json({error:"The AI provider returned no text. Try rephrasing.", savedMemory}, 502, origin, env);
+      if (!reply) { await logChat({ok: false, detail: "empty answer", model: usedModel}); return json({error:"The AI provider returned no text. Try rephrasing.", savedMemory}, 502, origin, env); }
+      const chosen = actionsOn ? cleanAction(parsed.action) : null;
+      if (route.id === "general" && chosen && deptOfAction(chosen.type)) route = {id: deptOfAction(chosen.type), how: "action"};
+      const deskOut = DEPTS[route.id] || null;
+      { const act = chosen;
+        await logChat({model: usedModel, detail: [act ? "action: " + act.type : "", claudeNote ? "Claude failed: " + claudeNote : "", /^(groq|workers-ai):/.test(usedModel) ? "Gemini was out, a backup brain answered" : ""].filter(Boolean).join(" · ")}); }
       let autoSaved = [];
       if (db) {
         if (!savedMemory) { try { autoSaved = await saveFacts(db, parsed.remember); } catch {} }
         try { await saveTalk(db, message, reply); } catch {}
       }
-      return json({reply, action: actionsOn ? cleanAction(parsed.action) : null, coachNotes: body.coach ? (parsed.coach_notes || []).map(x => cleanText(String(x), 300)).filter(Boolean).slice(0, 5) : [], model:usedModel, dept: {id: route.id, name: desk ? desk.name : "Max", icon: desk ? desk.icon : "", how: route.how}, ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
+      return json({reply, action: actionsOn ? cleanAction(parsed.action) : null, coachNotes: body.coach ? (parsed.coach_notes || []).map(x => cleanText(String(x), 300)).filter(Boolean).slice(0, 5) : [], model:usedModel, dept: {id: route.id, name: deskOut ? deskOut.name : "Max", icon: deskOut ? deskOut.icon : "", how: route.how}, ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
         notesUsed: Array.isArray(parsed.used_notes) ? [...new Set(parsed.used_notes.map(t => cleanText(String(t), 200)).filter(t => knownTitles.some(k => k.toLowerCase() === t.toLowerCase())))].slice(0, 4)
           : [...fromPhone.items.map(n => n.title), ...notesUsed.map(n => n.title || "Untitled")].slice(0, 3),
         truncated: cutOff, conversationSaved: !!db}, 200, origin, env);

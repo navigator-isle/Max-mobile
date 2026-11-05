@@ -56,5 +56,5 @@ r = await chat("tell me a joke", {}, { ...base, GROQ_API_KEY: "g" });
 ok(r.status === 200 && r.data.reply === "Backup here." && groqCalls === 1 && /groq/.test(r.data.model), "an empty Gemini answer goes to a free backup brain instead of an error", JSON.stringify(r.data).slice(0, 200));
 gemMode = "ok";
 r = await call("/health", null, { ...base, GROQ_API_KEY: "g" }, "GET");
-ok(Array.isArray(r.data.brainChain) && r.data.brainChain[0] === "gemini-3.5-flash" && r.data.brainChain.some(m => m.startsWith("groq:")) && r.data.departments.length === 6, "health shows the full brain chain and the six desks", JSON.stringify(r.data.brainChain));
+ok(Array.isArray(r.data.brainChain) && r.data.brainChain[0] === "gemini-3.5-flash" && r.data.brainChain.some(m => m.startsWith("groq:")) && r.data.departments.length === 7, "health shows the full brain chain and the seven desks", JSON.stringify(r.data.brainChain));
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

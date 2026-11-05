@@ -25,6 +25,7 @@ run "Markets"              tests/test-worker13.mjs "$TMP/worker.mjs"
 run "Free backup brains"   tests/test-worker14.mjs "$TMP/worker.mjs"
 run "Google Play"          tests/test-worker15.mjs "$TMP/worker.mjs"
 run "Brain router & desks" tests/test-worker16.mjs "$TMP/worker.mjs"
+run "Activity log & music finder" tests/test-worker17.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
@@ -53,4 +54,5 @@ run "Phone: paper trading" tests/e2e23.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: Obsidian-style vault" tests/e2e24.mjs "$PWD/index.html"
 run "Phone: departments and website team" tests/e2e25.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: skills, learning and meaning search" tests/e2e26.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: music desk and activity log" tests/e2e27.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }
