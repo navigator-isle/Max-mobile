@@ -112,7 +112,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-10b";
+const WORKER_VERSION = "max-worker-2026-11-11a";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -341,6 +341,9 @@ const DEPTS = {
   music: {name: "Music desk", icon: "🎵",
     words: /\b(?:music|songs?|kanta|kantahan|tugtog|patugtog(?:in)?|playlist|radio|album|artist|band|spotify|youtube music|volume|louder|softer|lofi|lo-fi|jazz|opm|karaoke|(?<!google )play(?!\s?store|\s+console|\s+reviews?|\s+listing))\b/gi,
     brief: "You are acting as Max's MUSIC DESK: his DJ. When he asks for music, set play_music with exactly what to play — the app finds and plays it at once, so never say you cannot play music. For a mood or activity (working, sleeping, gym, rainy day), pick a fitting genre or artist yourself. Keep the spoken reply to a few words, like \"Playing OPM love songs.\""},
+  guard: {name: "Guard", icon: "🛡",
+    words: /\b(?:guard|backups?|back ?up|uptime|outage|downtime|hacked|malware|system check|status report|security report|is everything (?:ok|okay|fine|working|alright)|anything broken|failed builds?)\b/gi,
+    brief: "You are acting as Max's GUARD: security and reliability. You watch his sites, app builds, Max's own health and the backups. Use guard_report to show the latest check, guard_run to check now, and backup_now to email him a backup. Be specific about what is wrong and what to do. Never claim something is fine without checking."},
   training: {name: "Coach", icon: "🎯",
     words: /\b(?:coach(?:ing)?|train(?:ing)?|workout|exercise|fitness|gym|run(?:ning)?|push-?ups?|sleep|habit|study|exam|marina|review(?:er)?|career|promotion|interview|motivation|goal|goals|discipline|ehersisyo)\b/gi,
     brief: "You are acting as Max's COACH desk: fitness, study (including his MARINA exams), skills, business, career and life coaching. Be warm and direct. Give one clear next step at a time and follow up on his progress. For health, injury or medical questions give general guidance only and tell him to see a professional. Keep fitness and diet advice moderate and safe."}
@@ -356,6 +359,7 @@ function deptOfAction(t) {
   if (/^(add_event|edit_event|delete_event|add_task|list_schedule|briefing|deadlines|check_email|read_email|draft_email|send_email|cancel_email|modify_email|whatsapp_draft|new_routine|start_routine|show_routines|delete_routine)$/.test(t)) return "schedule";
   if (/^coach_/.test(t)) return "training";
   if (/^(play_music|music_control)$/.test(t)) return "music";
+  if (/^(guard_report|guard_run|backup_now)$/.test(t)) return "guard";
   return "";
 }
 // Sounds like it continues the last topic: "why?", "and the second one", "what about that", "explain more", "bakit", "yung isa".
@@ -394,7 +398,7 @@ async function deptContext(env, id) {
   } catch { return "\nTRADING DESK DATA: could not be loaded right now, so do not quote any paper-trading numbers."; }
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["play_music","music_control","activity","learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["guard_report","guard_run","backup_now","play_music","music_control","activity","learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
@@ -1272,7 +1276,7 @@ async function actTable(db) {
     db.prepare("CREATE INDEX IF NOT EXISTS idx_max_activity_at ON max_activity(at)")]);
   actReady = true;
 }
-const ACT_DEPTS = ["apps", "web", "trading", "notes", "schedule", "training", "music", "general", "system"];
+const ACT_DEPTS = ["apps", "web", "trading", "notes", "schedule", "training", "music", "guard", "general", "system"];
 async function logAct(env, a) {
   const db = env.MAX_MEMORY; if (!db) return;
   try {
@@ -1356,6 +1360,139 @@ async function musicRoutes(request, env, url, origin) {
     if (stations.length) return json({mode: "radio", q, stations, note: "YouTube search didn't answer, so here is radio instead."}, 200, origin, env);
     return json({error: "I couldn't find music for that right now (" + cleanText(String(e.message), 80) + ")."}, 502, origin, env);
   }
+}
+// ---------- 🛡 Guard: a daily check of his sites, apps, builds and Max himself, and a weekly backup ----------
+// Runs by itself every morning (6:45 am Philippine time). Emails him only when something is wrong; on Sundays
+// it sends an all-clear summary with a backup of Max's notes and memory attached (to his own Gmail — never to
+// GitHub, because the Max-mobile repository is public). He can also ask for a check or a backup any time.
+const GUARD_SITES = [
+  {name: "Max", url: "https://navigator-isle.github.io/Max-mobile/"},
+  {name: "Passage Planner", url: "https://navigator-isle.github.io/"},
+  {name: "Quick Draft Calculator", url: "https://draft-calculator.github.io/Draft-Calculator/"},
+  {name: "Hobby Isle", url: "https://hobbyisle.com/", site: true}];
+const b64lines = s => { const b = new TextEncoder().encode(s); let o = ""; for (let i = 0; i < b.length; i += 32768) o += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(o).replace(/.{76}/g, "$&\r\n"); };
+async function guardSites(env) {
+  let list = GUARD_SITES;
+  try { const row = env.MAX_MEMORY ? await env.MAX_MEMORY.prepare("SELECT value FROM max_settings WHERE key = 'max_projects'").first() : null;
+    const mine = row ? JSON.parse(row.value) : null;
+    if (Array.isArray(mine) && mine.length) list = mine.filter(p => p && /^https:\/\//.test(p.url || "") && !/claude\.ai\//.test(p.url)).map(p => ({name: cleanText(String(p.name || ""), 60), url: p.url, site: !!p.site})).slice(0, 12);
+  } catch {}
+  return list;
+}
+async function guardRun(env, opts = {}) {
+  const t0 = Date.now(), problems = [], report = {at: t0, sites: [], builds: [], max: [], problems, backup: null};
+  const last = JSON.parse((env.MAX_MEMORY && await srvSetting(env, "max_srv_guard_report").catch(() => null)) || "null");
+  // 1) Sites: up, fast enough, still on https; full security & SEO check for his content sites
+  // (at most two full checks, so the whole run stays inside Cloudflare's 50-requests-per-run limit).
+  let audits = 0;
+  for (const s of (await guardSites(env)).slice(0, 8)) {
+    const row = {name: s.name, url: s.url};
+    try {
+      const {r, ms} = await timedFetch(s.url, {redirect: "follow"}, 12000);
+      row.up = r.status < 400; row.status = r.status; row.ms = ms;
+      if (!row.up) problems.push(`${s.name} is DOWN (answered ${r.status})`);
+      else if (ms > 6000) problems.push(`${s.name} is slow (${(ms / 1000).toFixed(1)} s to answer)`);
+      if (s.site && row.up && audits++ < 2) {
+        try { const a = await siteAudit(s.url); row.score = a.score; row.issues = (a.issues || []).filter(i => i && i.sev && i.sev !== "ok" && i.sev !== "low").map(i => cleanText(String(i.text || ""), 120)).filter(Boolean).slice(0, 6);
+          const before = last?.sites?.find(x => x.url === s.url)?.score;
+          if (Number.isFinite(before) && a.score < before - 5) problems.push(`${s.name}'s security & SEO score dropped from ${before} to ${a.score}/100`);
+          for (const i of (a.issues || []).filter(i => i.sev === "high")) problems.push(`${s.name}: ${cleanText(String(i.text), 140)}`);
+        } catch (e) { row.auditError = cleanText(String(e.message), 100); }
+      }
+    } catch (e) { row.up = false; row.error = cleanText(String(e.message || e), 100); problems.push(`${s.name} could not be reached (${row.error})`); }
+    report.sites.push(row);
+  }
+  // 2) Builds: any GitHub workflow that failed in the last day, in each of his repositories.
+  if (env.GITHUB_TOKEN) for (const repo of allowedRepos(env)) {
+    try {
+      const d = await gh(env, `/repos/${repo}/actions/runs?per_page=20&created=>${new Date(t0 - 26 * 3600e3).toISOString().slice(0, 19)}Z`);
+      const runs = d.workflow_runs || [], latest = {};
+      for (const run of runs) if (!latest[run.name]) latest[run.name] = run; // the newest run of each workflow decides
+      const bad = Object.values(latest).filter(x => x.conclusion === "failure");
+      report.builds.push({repo, runs: runs.length, failed: bad.map(x => ({name: x.name, url: x.html_url, at: x.created_at}))});
+      for (const x of bad) problems.push(`${repo.split("/")[1]}: "${x.name}" failed`);
+    } catch (e) { report.builds.push({repo, error: cleanText(String(e.message), 100)}); }
+  }
+  // 3) Max himself: brains, the paper trader, Google connection, failures in the activity log.
+  try { const e = await embedTexts(env, ["guard check"], "doc"); report.max.push("Gemini key working (" + e.model + ")"); }
+  catch (e) { problems.push("Gemini (Max's main brain) isn't answering: " + cleanText(String(e.message), 80)); }
+  const resting = [...skipUntil].filter(([, t]) => t > Date.now()).map(([m]) => m);
+  if (resting.length) report.max.push("Resting after hitting a limit: " + resting.join(", "));
+  try { const s = await traderFile("summary.json", true);
+    if (s && s.updated) { const age = (t0 - Date.parse(s.updated)) / 3600e3; report.max.push("Paper trader last ran " + Math.round(age) + " h ago");
+      if (age > 30) problems.push("The paper trader hasn't run for " + Math.round(age) + " hours");
+      for (const [k, m] of Object.entries(s.markets || {})) if (m.halted) problems.push(`Paper trading ${k.toUpperCase()} is paused by the risk breaker (down ${(-100 * m.returnPct).toFixed(1)}%)`); }
+  } catch (e) { report.max.push("Paper trader data unreadable: " + cleanText(String(e.message), 60)); }
+  if (googleConfigured(env)) { const row = await googleRow(env, true); if (!row) problems.push("Google (calendar, Gmail) is not connected — sign in again in ⚙ Settings"); else report.max.push("Google connected"); }
+  if (env.MAX_MEMORY) { try { await actTable(env.MAX_MEMORY);
+    const f = await env.MAX_MEMORY.prepare("SELECT count(*) AS c FROM max_activity WHERE ok = 0 AND at > ?").bind(t0 - 864e5).first();
+    const all = await env.MAX_MEMORY.prepare("SELECT count(*) AS c FROM max_activity WHERE at > ?").bind(t0 - 864e5).first();
+    report.max.push(`Activity log: ${all?.c || 0} entries today, ${f?.c || 0} failed`);
+    if ((f?.c || 0) >= 5) problems.push(`${f.c} things failed in the last day — see the activity log`); } catch {} }
+  // 4) Backup (Sundays, or when he asks).
+  if (opts.backup) report.backup = await guardBackup(env).catch(e => ({ok: false, error: cleanText(String(e.message), 150)}));
+  if (report.backup && report.backup.ok === false) problems.push("The backup could not be sent: " + report.backup.error);
+  report.ms = Date.now() - t0;
+  const known = new Set(last?.problems || []); report.newProblems = problems.filter(p => !known.has(p));
+  if (env.MAX_MEMORY) { await srvSetting(env, "max_srv_guard_report", JSON.stringify(report)).catch(() => {});
+    await logAct(env, {dept: "guard", kind: "guard check", text: problems.length ? problems.length + " problem" + (problems.length === 1 ? "" : "s") + ": " + problems.slice(0, 3).join("; ") : "All clear — sites up, builds passing, Max healthy" + (report.backup?.ok ? ", backup sent" : ""), ok: !problems.length, ms: report.ms, source: opts.source || "guard"}); }
+  return report;
+}
+async function guardBackup(env) {
+  if (!env.MAX_MEMORY) throw new Error("no database");
+  const db = env.MAX_MEMORY; await ensureSchema(db);
+  const notes = await listNotes(db), memories = await listMemories(db, false);
+  const settings = ((await db.prepare("SELECT key, value, updated_at FROM max_settings").all()).results || []).filter(r => !/token|pass|secret|session|srv_/i.test(r.key));
+  const data = JSON.stringify({kind: "Max backup", version: WORKER_VERSION, exportedAt: new Date().toISOString(), notes, memories, settings}, null, 1);
+  const out = {ok: true, notes: notes.length, memories: memories.length, settings: settings.length, bytes: data.length, at: Date.now()};
+  if (!env.MAX_OWNER_EMAIL || !(await googleRow(env))) throw new Error("Gmail isn't connected, so there is nowhere private to send it");
+  const to = String(env.MAX_OWNER_EMAIL).trim(), day = new Date().toISOString().slice(0, 10), bound = "maxbackup" + Math.random().toString(36).slice(2);
+  const body = `Max's weekly backup — ${notes.length} notes, ${memories.length} memories, ${settings.length} settings (${Math.round(data.length / 1024)} KB).\n\nKeep this email. To restore: save the attached file, then in Max open Notes → ⋯ → "Restore from a Max backup" and choose it. Nothing newer is overwritten.\nPasswords, keys and sign-ins are never included.`;
+  const raw = ["To: " + to, "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent("Max backup " + day + " — " + notes.length + " notes"))) + "?=", "MIME-Version: 1.0", `Content-Type: multipart/mixed; boundary="${bound}"`, "",
+    "--" + bound, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", body, "",
+    "--" + bound, `Content-Type: application/json; name="max-backup-${day}.json"`, `Content-Disposition: attachment; filename="max-backup-${day}.json"`, "Content-Transfer-Encoding: base64", "", b64lines(data), "--" + bound + "--", ""].join("\r\n");
+  if (raw.length > 30e6) throw new Error("the backup is too big for one email (" + Math.round(raw.length / 1e6) + " MB)");
+  await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})});
+  await srvSetting(env, "max_srv_guard_backup", JSON.stringify(out)).catch(() => {});
+  return out;
+}
+async function guardEmail(env, report, weekly) {
+  if (!env.MAX_OWNER_EMAIL || !(await googleRow(env))) return "no email";
+  if (!report.problems.length && !weekly) return "all clear, no email";
+  if (!weekly && !report.newProblems.length) return "same problems as before, no new email";
+  const lines = [report.problems.length ? "Max's Guard found " + report.problems.length + " thing" + (report.problems.length === 1 ? "" : "s") + " to look at:" : "All clear this week.", ""];
+  for (const p of report.problems) lines.push((report.newProblems.includes(p) ? "⚠ NEW: " : "⚠ ") + p);
+  if (report.problems.length) lines.push("");
+  lines.push("Sites: " + report.sites.map(s => s.name + (s.up ? " up" + (Number.isFinite(s.score) ? " (" + s.score + "/100)" : "") : " DOWN")).join(" · "));
+  lines.push("Builds: " + (report.builds.length ? report.builds.map(b => b.repo.split("/")[1] + (b.error ? " (couldn't check)" : b.failed?.length ? " ✗" : " ✓")).join(" · ") : "not checked"));
+  lines.push("Max: " + report.max.join(" · "));
+  if (report.backup?.ok) lines.push("", "Backup: " + report.backup.notes + " notes and " + report.backup.memories + " memories were sent in a separate email.");
+  lines.push("", "Ask Max \"is everything OK?\" for the full report.");
+  const subject = report.problems.length ? "⚠ Max Guard: " + report.problems[0].slice(0, 70) + (report.problems.length > 1 ? " (+" + (report.problems.length - 1) + " more)" : "") : "✓ Max Guard: all clear this week";
+  const raw = ["To: " + String(env.MAX_OWNER_EMAIL).trim(), "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent(subject))) + "?=", "MIME-Version: 1.0", "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", lines.join("\n")].join("\r\n");
+  await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})});
+  return "emailed";
+}
+// The hourly cron calls this; it only does the work once a day, at 22:45 UTC (6:45 am in Manila).
+async function guardDaily(env, when) {
+  const d = new Date(when || Date.now());
+  if (d.getUTCHours() !== 22 || !env.MAX_MEMORY) return "not now";
+  const day = d.toISOString().slice(0, 10);
+  if ((await srvSetting(env, "max_srv_guard_day")) === day) return "already ran today";
+  await srvSetting(env, "max_srv_guard_day", day);
+  const weekly = d.getUTCDay() === 6; // Saturday 22:45 UTC = Sunday morning in Manila
+  const report = await guardRun(env, {backup: weekly, source: "schedule"});
+  const sent = await guardEmail(env, report, weekly).catch(e => "email failed: " + e.message);
+  return report.problems.length + " problems, " + sent;
+}
+async function guardRoutes(request, env, url, origin) {
+  if (url.pathname === "/api/guard" && request.method === "GET") {
+    const r = env.MAX_MEMORY ? await srvSetting(env, "max_srv_guard_report").catch(() => null) : null, b = env.MAX_MEMORY ? await srvSetting(env, "max_srv_guard_backup").catch(() => null) : null;
+    return json({report: r ? JSON.parse(r) : null, lastBackup: b ? JSON.parse(b) : null}, 200, origin, env);
+  }
+  let body = {}; try { body = await request.json(); } catch {}
+  const report = await guardRun(env, {backup: body.backup === true, source: "asked"});
+  return json({report, lastBackup: report.backup || (env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_guard_backup").catch(() => null) || "null") : null)}, 200, origin, env);
 }
 // ---------- markets: crypto (CoinGecko), Philippine stocks (PSE Edge), currencies (Frankfurter / ECB) ----------
 // Prices are reported, never advised on, and Max never trades.
@@ -1643,7 +1780,9 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
 }
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
-  async scheduled(event, env, ctx) { ctx.waitUntil(traderNotify(env).then(async r => { console.log("trader notify:", r); if (/^sent/.test(r)) await logAct(env, {dept: "trading", kind: "email", text: "Emailed you the paper-trading update (" + r.replace("sent ", "") + " updates)", source: "schedule"}); })
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(guardDaily(env, event && event.scheduledTime).then(r => { if (r !== "not now") console.log("guard:", r); }).catch(async e => { console.log("guard failed:", e.message); await logAct(env, {dept: "guard", kind: "guard check", text: "The daily guard check failed", detail: e.message, ok: false, source: "schedule"}); }));
+    ctx.waitUntil(traderNotify(env).then(async r => { console.log("trader notify:", r); if (/^sent/.test(r)) await logAct(env, {dept: "trading", kind: "email", text: "Emailed you the paper-trading update (" + r.replace("sent ", "") + " updates)", source: "schedule"}); })
     .catch(async e => { console.log("trader notify failed:", e.message); await logAct(env, {dept: "trading", kind: "email", text: "Trading update email failed", detail: e.message, ok: false, source: "schedule"}); })); },
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1659,7 +1798,8 @@ export default {
       const resting = [...skipUntil, ...backupSkip].filter(([, t]) => t > Date.now()).map(([m, t]) => m + " (back in " + Math.ceil((t - Date.now()) / 60e3) + " min)");
       const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env),
         brainChain: [...(env.ANTHROPIC_API_KEY ? [cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE] : []), ...modelChain(env), ...(env.GROQ_API_KEY ? GROQ_MODELS.map(m => "groq:" + m) : []), ...(env.AI ? WAI_MODELS.map(m => "workers-ai:" + m) : [])],
-        resting, departments: DEPT_IDS.map(id => DEPTS[id].icon + " " + DEPTS[id].name), brain: (env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini") + (env.GROQ_API_KEY || env.AI ? " · free backups: " + [env.GROQ_API_KEY ? "groq" : "", env.AI ? "workers-ai" : ""].filter(Boolean).join(", ") : ""), version:WORKER_VERSION,
+        resting, departments: DEPT_IDS.map(id => DEPTS[id].icon + " " + DEPTS[id].name),
+        guard: await (async () => { try { const r = env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_guard_report") || "null") : null; return r ? "last check " + new Date(r.at).toISOString().slice(0, 16) + "Z, " + r.problems.length + " problem(s)" : "no check yet (daily at 22:45 UTC)"; } catch { return "unknown"; } })(), brain: (env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini") + (env.GROQ_API_KEY || env.AI ? " · free backups: " + [env.GROQ_API_KEY ? "groq" : "", env.AI ? "workers-ai" : ""].filter(Boolean).join(", ") : ""), version:WORKER_VERSION,
         geminiKey: env.GEMINI_API_KEY ? "set" : "missing", passcodeRequired: passcodeSet(env),
         database: env.MAX_MEMORY ? "bound" : "not bound",
         google: !googleConfigured(env) ? "not set up" : auth.enforced ? "linked" + (canModifyMail(await googleRow(env)) ? " (calendar, tasks, gmail)" : hasGmail(await googleRow(env)) ? " (calendar, tasks, gmail read-only — sign in again to let Max organize email)" : " (calendar, tasks — sign in again to add Gmail)") : "set up, not signed in",
@@ -1710,6 +1850,7 @@ export default {
     if (url.pathname === "/api/weather") return weatherRoutes(request, env, url, origin);
     if (url.pathname === "/api/activity" && ["GET", "POST"].includes(request.method)) return activityRoutes(request, env, url, origin);
     if (url.pathname === "/api/music" && request.method === "GET") return musicRoutes(request, env, url, origin);
+    if ((url.pathname === "/api/guard" && request.method === "GET") || (url.pathname === "/api/guard/run" && request.method === "POST")) return guardRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/trader/")) return traderRoutes(request, env, url, origin);
     if ((url.pathname === "/api/site/audit" || url.pathname.startsWith("/api/content/")) && request.method === "POST") return contentRoutes(request, env, url, origin);
     if (["/api/embed", "/api/skill/build", "/api/notes/conflicts"].includes(url.pathname) && request.method === "POST") return learnRoutes(request, env, url, origin);
@@ -1837,7 +1978,7 @@ export default {
             "edit_event (change, move or rename an existing calendar event, or change its reminders; details = {find: words from its title, on: \"YYYY-MM-DD\" if he said which day, then only what changes: title, start, durationMinutes, location, reminders: [minutes before, e.g. 60, 10]}) · delete_event (cancel/remove an event; details = {find, on}) · alarms: an alarm is add_event with title starting \"⏰ \", reminderMinutes 0, durationMinutes 5 · several reminders: add_event with reminders: [60, 10] · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
-          "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}) · LEARNING: learn_this (he wants you to learn / study / summarize the file, link or note he is looking at into a detailed note; query = what) · make_skill (turn a note, file or link into a skill you follow; details = {name: the skill or note name}) · improve_skill (he corrects how you did a skill; details = {name: skill name, instruction: the correction}) · walk_through (he wants step-by-step guidance through a procedure or skill, one step at a time; details = {name}) · check_conflicts (find notes that contradict each other or look outdated) · WEBSITE TEAM (for his sites like Hobby Isle): site_audit (check a site's security, SEO, pictures and broken links; details = {project}) · seo_ideas (SEO / keyword / content ideas; details = {project, topic if he gave one}) · content_draft (write a blog post, review, guide, comparison or social post; details = {project, topic, name: \"blog\"|\"review\"|\"comparison\"|\"guide\"|\"social\"}) — drafts only, he decides what gets published · PAPER TRADING (pretend money only — you never place real trades): trading_status (how his paper trading is doing, positions, orders for the next open, which strategies are winning; details = {project: \"pse\" or \"crypto\" if he named one}) · trading_emails (turn the trading update emails on/off; details = {on: \"on\"|\"off\"}) · VOICE: hands_free (he wants you to always listen for \"Hey Max\" / stop doing that; details = {on: \"on\"|\"off\"}) · barge_setting (allow or stop interrupting you by voice; details = {on: \"on\"|\"off\"}) · WEATHER & SEA: weather (forecast, wind, waves, swell for a place; details = {location: the place, or empty for his saved place, on: \"today\"|\"tomorrow\"|\"week\"}) · set_weather_place (his default weather place; details = {location}) · set_personality (he wants you to talk differently; details = {name: \"butler\"|\"concise\"|\"witty\"|\"formal\"}) · usage (how much AI was used today / which brain answered) · whatsapp_draft (he wants to send a WhatsApp message; details = {to: the person or phone number, text: the finished message written in his voice and language}; the app opens WhatsApp with it filled in and HE taps send — never say it was sent) · play_build (build a NEW VERSION of the Android app from the latest website and upload it to his Play closed test; details = {project, notes: what's new if he said}; the app asks him first; never production) · build_status (is the app build finished / how did it go; details = {project}). The app always shows the new text and asks him before publishing. · MUSIC (the app plays it right away): play_music (he wants music played — a song, artist, album, genre or mood; query = exactly what to play, e.g. \"Ben&Ben Maybe the Night\", \"OPM love songs\", \"lofi\"; details = {mode: \"radio\" if he asked for a radio station or wants it to keep playing with the screen off, otherwise \"video\"}) · music_control (details = {op: \"pause\"|\"resume\"|\"stop\"|\"next\"|\"louder\"|\"softer\"|\"what\" (what is playing)}) · ACTIVITY: activity (he asks what you or his desks did, which brain answered, what failed, or for the activity log; details = {dept: \"apps\"|\"web\"|\"trading\"|\"notes\"|\"schedule\"|\"training\"|\"music\" if he named one, range: \"today\"|\"week\"}) · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
+          "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}) · LEARNING: learn_this (he wants you to learn / study / summarize the file, link or note he is looking at into a detailed note; query = what) · make_skill (turn a note, file or link into a skill you follow; details = {name: the skill or note name}) · improve_skill (he corrects how you did a skill; details = {name: skill name, instruction: the correction}) · walk_through (he wants step-by-step guidance through a procedure or skill, one step at a time; details = {name}) · check_conflicts (find notes that contradict each other or look outdated) · WEBSITE TEAM (for his sites like Hobby Isle): site_audit (check a site's security, SEO, pictures and broken links; details = {project}) · seo_ideas (SEO / keyword / content ideas; details = {project, topic if he gave one}) · content_draft (write a blog post, review, guide, comparison or social post; details = {project, topic, name: \"blog\"|\"review\"|\"comparison\"|\"guide\"|\"social\"}) — drafts only, he decides what gets published · PAPER TRADING (pretend money only — you never place real trades): trading_status (how his paper trading is doing, positions, orders for the next open, which strategies are winning; details = {project: \"pse\" or \"crypto\" if he named one}) · trading_emails (turn the trading update emails on/off; details = {on: \"on\"|\"off\"}) · VOICE: hands_free (he wants you to always listen for \"Hey Max\" / stop doing that; details = {on: \"on\"|\"off\"}) · barge_setting (allow or stop interrupting you by voice; details = {on: \"on\"|\"off\"}) · WEATHER & SEA: weather (forecast, wind, waves, swell for a place; details = {location: the place, or empty for his saved place, on: \"today\"|\"tomorrow\"|\"week\"}) · set_weather_place (his default weather place; details = {location}) · set_personality (he wants you to talk differently; details = {name: \"butler\"|\"concise\"|\"witty\"|\"formal\"}) · usage (how much AI was used today / which brain answered) · whatsapp_draft (he wants to send a WhatsApp message; details = {to: the person or phone number, text: the finished message written in his voice and language}; the app opens WhatsApp with it filled in and HE taps send — never say it was sent) · play_build (build a NEW VERSION of the Android app from the latest website and upload it to his Play closed test; details = {project, notes: what's new if he said}; the app asks him first; never production) · build_status (is the app build finished / how did it go; details = {project}). The app always shows the new text and asks him before publishing. · MUSIC (the app plays it right away): play_music (he wants music played — a song, artist, album, genre or mood; query = exactly what to play, e.g. \"Ben&Ben Maybe the Night\", \"OPM love songs\", \"lofi\"; details = {mode: \"radio\" if he asked for a radio station or wants it to keep playing with the screen off, otherwise \"video\"}) · music_control (details = {op: \"pause\"|\"resume\"|\"stop\"|\"next\"|\"louder\"|\"softer\"|\"what\" (what is playing)}) · GUARD: guard_report (is everything OK / security or status report / anything broken) · guard_run (check everything now) · backup_now (back up his notes and memory now — emailed to himself) · ACTIVITY: activity (he asks what you or his desks did, which brain answered, what failed, or for the activity log; details = {dept: \"apps\"|\"web\"|\"trading\"|\"notes\"|\"schedule\"|\"training\"|\"music\" if he named one, range: \"today\"|\"week\"}) · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +

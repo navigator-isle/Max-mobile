@@ -451,7 +451,9 @@ body.vault-mode .search-box{background:#25263a;border-color:#3a3c52}
       <button id="exportVault" class="pill">⤒ Export vault (.zip for Obsidian)</button>
       <button id="exportAll" class="pill">Export all as one file</button>
       <button id="organizeBtn" class="pill">Organize with Max</button>
+      <button id="restoreBackup" class="pill">⟲ Restore from a Max backup (.json)</button>
     </div>
+    <input id="backupInput" type="file" accept=".json,application/json" hidden>
     <div class="vault-foot"><b>My vault</b><span id="vaultStats"></span></div>
     <input id="vaultInput" type="file" accept=".zip,.md,text/markdown,application/zip" multiple hidden>
   </main>
@@ -880,6 +882,27 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   }catch(e){console.warn('Max notes sync failed',e);return false}
   finally{syncing=false}
  }
+
+ // ---------- restore from the weekly backup email (max-backup-YYYY-MM-DD.json) ----------
+ // Newest version wins, item by item, so a restore never overwrites anything newer on this phone or in the database.
+ async function restoreBackup(file){
+  let b;try{b=JSON.parse(await file.text())}catch{return 'That file isn’t a Max backup (it isn’t readable JSON).'}
+  if(!b||b.kind!=='Max backup'||!Array.isArray(b.notes))return 'That file isn’t a Max backup.';
+  const before=loadAll().length,merged=new Map(loadAll().map(n=>[n.id,n]));let added=0,updated=0;
+  b.notes.map(normNote).filter(Boolean).forEach(s=>{const l=merged.get(s.id);if(!l){added++;merged.set(s.id,s)}else if(s.updatedAt>l.updatedAt){updated++;merged.set(s.id,s)}});
+  localStorage.setItem(KEY,JSON.stringify([...merged.values()]));
+  const settings=(Array.isArray(b.settings)?b.settings:[]).filter(x=>x&&SYNC_KEYS.includes(x.key)&&typeof x.value==='string').map(x=>({key:x.key,value:x.value,updated:Number(x.updated_at||x.updated)||0}));
+  if(settings.length)applySettings(settings);
+  let cloudMsg='';
+  if(workerBase()&&cloud.memory&&!isOffline()){
+   try{const {r,data}=await fetchJson(workerBase()+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes:loadAll(),memories:(b.memories||[]).slice(0,500),settings})},30000);
+    cloudMsg=r.ok?' Your long-term memory ('+(b.memories||[]).length+' facts) is back in Max’s database too.':' The database didn’t take it ('+(data.error||r.status)+'); notes are restored on this phone.'}catch(e){cloudMsg=' Couldn’t reach the database, so only this phone was restored.'}
+  }else cloudMsg=(b.memories||[]).length?' Long-term memory needs the database connection, so only the notes were restored.':'';
+  if(screen==='notes')renderList();
+  return 'Restored the backup from '+String(b.exportedAt||'').slice(0,10)+': '+added+' notes added, '+updated+' updated'+(before?', '+(b.notes.length-added-updated)+' already up to date':'')+'.'+cloudMsg;
+ }
+ $('restoreBackup').onclick=()=>$('backupInput').click();
+ $('backupInput').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const t=await restoreBackup(f);status(t);try{speak(t)}catch{}};
 
  // ---------- long-term memory list (in ⚙ settings) ----------
  async function renderMemory(){
@@ -1601,6 +1624,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     return {type:'play_music',details:{query:q,mode:/\b(radio|station|fm)\b/i.test(q)?'radio':'video'}};
    }}
   if(has(/^(play|put on) (some )?music$|^(music|music please|patugtog)$/))return {type:'play_music',details:{query:'popular hits mix'}};
+  // ---- guard ----
+  if(has(/\b(run|do)( a| the)? (system|guard|security|health|full) check\b|\bcheck (everything|all systems|my systems|all my (sites|apps))( now)?\b/))return {type:'guard_run'};
+  if(has(/\b(guard|security|system|status) report\b|\bis everything (ok|okay|fine|working|alright|good)\b|\banything broken\b|\bok ba lahat\b/))return {type:'guard_report'};
+  if(has(/^(max )?(please )?(back ?up|backup)( my| all my)? (notes|max|everything|data|memory|notes and memory)( now)?$|^(max )?(back ?up|backup)( now)?$/))return {type:'backup_now'};
   // ---- activity log ----
   if(has(/\bactivity( log)?\b|\bwhat (did|have) (you|max|my desks?|the desks?|my departments?|my team|the team) (do|done|been doing)\b|\bwhat (failed|went wrong)\b|\bany(thing)? (fail|failed|failures|errors?)\b/)&&!has(/\b(remind|add|schedule|offline|while i was away)\b/)){
    const dept=has(/\btrad/)?'trading':has(/\b(app|apps|play store)\b/)?'apps':has(/\b(web|website|site)\b/)?'web':has(/\b(notes?|librarian)\b/)?'notes':has(/\b(secretary|schedule|calendar|email)\b/)?'schedule':has(/\bcoach/)?'training':has(/\bmusic\b/)?'music':'';
@@ -3611,6 +3638,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    {badge:'MUSIC',badgeClass:'badge-res',title:'🎵 Music desk',meta:'DJ · YouTube songs · internet radio',
     lines:[MUSIC.mode?'Now playing: '+((MUSIC.list[MUSIC.i]||{}).title||(MUSIC.list[MUSIC.i]||{}).name||MUSIC.q):'Say “play Ben&Ben”, “play some chill music”, or “play jazz radio”.','Songs play in a small player; radio keeps playing with the screen off.','The music turns down by itself while I listen or talk.'],
     buttons:[['▶ Chill',run('play_music',{query:'chill lofi mix'})],['📻 OPM radio',run('play_music',{query:'opm',mode:'radio'})],['📻 Jazz radio',run('play_music',{query:'jazz',mode:'radio'})],...(MUSIC.mode?[['⏹ Stop',run('music_control',{op:'stop'})]]:[])]},
+   {badge:'GUARD',badgeClass:'badge-draft',title:'🛡 Guard',meta:'security & reliability · daily check 6:45 am · Sunday backup',
+    lines:['Checks your sites (up, speed, security & SEO), GitHub builds, the paper trader and Max himself every morning.','Emails you only when something new is wrong; on Sundays an all-clear plus a backup of your notes and memory.'],
+    buttons:[['Is everything OK?',run('guard_report')],['Check now',run('guard_run')],['Back up now',run('backup_now')]]},
    {badge:'ACTIVITY',badgeClass:'badge-draft',title:'🧾 Activity log',meta:'what each desk did · which brain answered · what failed',
     lines:(()=>{const l=jget(ACT_KEY,[]).filter(x=>x.at>Date.now()-864e5);const f=l.filter(x=>!x.ok).length;return [l.length?l.length+' action'+(l.length===1?'':'s')+' on this phone today'+(f?' · '+f+' failed':''):'Nothing done on this phone today yet.','Answers and background jobs (like trading emails) are logged by Max’s server.']})(),
     buttons:[['Today',run('activity',{range:'today'})],['Last 7 days',run('activity',{range:'week'})]]}];
@@ -3854,7 +3884,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  try{const orbEl=$('maxOrb');if(orbEl)new MutationObserver(()=>musicDuck(orbEl.classList.contains('listening')||orbEl.classList.contains('speaking'))).observe(orbEl,{attributes:true,attributeFilter:['class']})}catch{}
 
  // ---------- activity log: what each desk did, which brain answered, what failed ----------
- const DESKS={apps:['📱','Apps desk'],web:['🌐','Website team'],trading:['📈','Trading desk'],notes:['🗂','Librarian'],schedule:['📅','Secretary'],training:['🎯','Coach'],music:['🎵','Music desk'],general:['🤵','Max'],system:['⚙','System']};
+ const DESKS={apps:['📱','Apps desk'],web:['🌐','Website team'],trading:['📈','Trading desk'],notes:['🗂','Librarian'],schedule:['📅','Secretary'],training:['🎯','Coach'],music:['🎵','Music desk'],guard:['🛡','Guard'],general:['🤵','Max'],system:['⚙','System']};
  const ACT_KEY='max_activity_local',ACT_SKIP=new Set(['show_keyboard','hide_keyboard','go_home','open_settings','open_menu','walk_step','routine_step','activity']);
  function deskOf(type){
   const t=String(type||'');
@@ -3865,6 +3895,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(/^(add_event|edit_event|delete_event|add_task|list_schedule|briefing|deadlines|check_email|read_email|draft_email|send_email|cancel_email|modify_email|whatsapp_draft|new_routine|start_routine|show_routines|delete_routine)$/.test(t))return 'schedule';
   if(/^coach_/.test(t))return 'training';
   if(/^(play_music|music_control)$/.test(t))return 'music';
+  if(/^(guard_report|guard_run|backup_now)$/.test(t))return 'guard';
   return 'general';
  }
  let actTimer=null;
@@ -3903,6 +3934,27 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return (days===1?'Today':'In the last 7 days')+' '+(items.length?'I logged '+items.length+' things'+(top?': '+top:'')+'. '+(fails.length?fails.length+' failed — they’re at the top.':'Nothing failed.'):'nothing is logged yet.');
  }
  const actTime=t=>new Date(t).toTimeString().slice(0,5);
+ // ---------- 🛡 Guard: daily check of sites, builds and Max himself; weekly backup to his Gmail ----------
+ async function guardScreen(mode){
+  setSection('display');$('dispTitle').textContent=mode==='report'?'Reading the Guard report…':mode==='backup'?'Backing up your notes and memory…':'Checking everything…';$('dispSub').textContent=mode==='report'?'':'This takes up to a minute.';$('dispBody').replaceChildren();
+  if(!workerBase())return 'The Guard runs on Max’s server — connect the Worker first.';
+  if(isOffline())return 'I can’t check anything without internet.';
+  let res;
+  try{res=mode==='report'?await fetchJson(workerBase()+'/api/guard',{},15000):await postJson('/api/guard/run',{backup:mode==='backup'},90000)}catch(e){$('dispTitle').textContent='Guard';return 'I couldn’t reach the Guard. '+e.message}
+  const {r,data}=res;if(!r.ok){$('dispTitle').textContent='Guard';return data.error||'The Guard didn’t answer.'}
+  const rep=data.report,bk=data.lastBackup;
+  if(!rep){showDisplay('Guard','No check yet',[{badge:'GUARD',title:'No check has run yet',lines:['The first automatic check runs at 6:45 am Philippine time.'],buttons:[['Check everything now',()=>doAction({type:'guard_run'},'').then(t=>{setSub('',t);speak(t)})]]}]);return 'No Guard check has run yet. Say “check everything now” to run one.'}
+  const cards=[{badge:'GUARD',badgeClass:rep.problems.length?'badge-draft':'badge-res',tone:rep.problems.length?'warn':'',title:rep.problems.length?rep.problems.length+' thing'+(rep.problems.length===1?'':'s')+' to look at':'All clear',meta:'checked '+new Date(rep.at).toLocaleString(),
+   lines:rep.problems.length?rep.problems.map(x=>({text:'⚠ '+x,cls:'miss'})):['Sites are up, builds are passing and Max is healthy.'],
+   buttons:[['Check again now',()=>doAction({type:'guard_run'},'').then(t=>{setSub('',t);speak(t)})],['Back up now',()=>doAction({type:'backup_now'},'').then(t=>{setSub('',t);speak(t)})],['Activity log',()=>doAction({type:'activity',details:{range:'today'}},'')]]},
+   {badge:'SITES',title:'Websites and web apps',lines:(rep.sites||[]).map(x=>({text:x.name+' — '+(x.up?'up'+(x.ms?' · '+(x.ms/1000).toFixed(1)+' s':''):'DOWN'+(x.status?' ('+x.status+')':x.error?' ('+x.error+')':''))+(Number.isFinite(x.score)?' · security & SEO '+x.score+'/100':'')+(x.issues&&x.issues.length?' · '+x.issues.slice(0,2).join('; '):''),cls:x.up?'':'miss'}))},
+   {badge:'BUILDS',title:'GitHub (last 24 hours)',lines:(rep.builds||[]).length?(rep.builds).map(b=>({text:b.repo.split('/')[1]+' — '+(b.error?'couldn’t check ('+b.error+')':b.failed.length?b.failed.map(f=>'✗ '+f.name).join(', '):'✓ '+(b.runs?b.runs+' run'+(b.runs===1?'':'s')+', all fine':'no runs')),cls:b.failed&&b.failed.length?'miss':''})):['GitHub isn’t connected.']},
+   {badge:'MAX',title:'Max himself',lines:rep.max||[]},
+   {badge:'BACKUP',title:'Backup',lines:[bk&&bk.ok?'Last backup '+new Date(bk.at).toLocaleString()+': '+bk.notes+' notes, '+bk.memories+' memories, '+Math.round(bk.bytes/1024)+' KB — emailed to you':'No backup yet','Every Sunday morning a backup of your notes and memory is emailed to you (never put on GitHub). Passwords and keys are never included.','To restore: Notes → ⋯ → “Restore from a Max backup”.']}];
+  showDisplay('🛡 Guard',rep.problems.length?'Needs attention':'All clear',cards);
+  if(mode==='backup')return bk&&bk.ok&&Date.now()-bk.at<5*60e3?'Backup sent to your Gmail: '+bk.notes+' notes and '+bk.memories+' memories.':'The backup didn’t go through. '+(rep.backup&&rep.backup.error||'');
+  return rep.problems.length?rep.problems.length+' thing'+(rep.problems.length===1?'':'s')+' to look at. First: '+rep.problems[0]+'.':'All clear. Your sites are up, builds are passing and I’m healthy.';
+ }
  function actText(x){
   if(x.kind==='chat')return 'Answered: “'+String(x.text||'').slice(0,90)+'”'+(x.detail?' ('+x.detail+')':'');
   return String(x.text||x.kind||'');
@@ -3975,6 +4027,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'play_music':return await playMusic({...(a.details||{}),query:(a.details&&a.details.query)||a.query},raw);
    case 'music_control':return await musicControl(a.details||{op:a.query});
    case 'activity':return await activityScreen(a.details||{});
+   case 'guard_report':return await guardScreen('report');
+   case 'guard_run':return await guardScreen('run');
+   case 'backup_now':return await guardScreen('backup');
    case 'import_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Import Obsidian vault” and pick your vault zip. To make the zip: in My Files, long-press your vault folder and choose Compress.';
    case 'export_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Export vault” to download all your notes as an Obsidian vault.';
    case 'trading_status':return await tradingStatus(a.details||{});
@@ -3992,7 +4047,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'barge_setting':jset('max_barge',a.details?.on!=='off');return a.details?.on!=='off'?'Voice interrupt is on — say “stop” or just start talking while I speak.':'Voice interrupt is off. Tap the circle to stop me while I speak.';
    case 'whatsapp_draft':return whatsappDraft(a.details||{text:a.query});
    case 'deadlines':return deadlinesSay(a.details||{});
-   case 'show_crew':setSection('crew');return 'Here are your seven departments: apps, websites, trading, notes, schedule, training, and music. Each has its own workers. Name one and tell them what you need.';
+   case 'show_crew':setSection('crew');return 'Here are your eight departments: apps, websites, trading, notes, schedule, training, music, and the guard. Each has its own workers. Name one and tell them what you need.';
    case 'watch_topic':return watchTopic(a.query||a.details?.topic);
    case 'unwatch_topic':return unwatchTopic(a.query||a.details?.topic);
    case 'check_watch':return await checkWatch(true);
@@ -4152,7 +4207,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft','play_music','music_control','activity'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft','play_music','music_control','activity','guard_report','guard_run','backup_now'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }
