@@ -9,4 +9,4 @@ jobs:
       - name: Read the health page
         run: |
           curl -fsS "https://max-ai-backend.mjgaly-mg.workers.dev/health" > health.json
-          node -e 'const h=require("./health.json");console.log("version="+h.version);console.log("reportsNow="+(h.reportsNow||"?"));console.log("guard="+(h.guard||"?"))'
+          node -e 'const h=require("./health.json");console.log("version="+h.version);console.log("reportsNow="+(h.reportsNow||"?"));console.log("guard="+(h.guard||"?"));console.log("coreNotes="+(h.coreNotes||"?"))'

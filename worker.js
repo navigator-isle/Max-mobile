@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-15e";
+const WORKER_VERSION = "max-worker-2026-11-15f";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -2375,6 +2375,7 @@ export default {
         brainChain: [...(env.ANTHROPIC_API_KEY ? [cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE] : []), ...modelChain(env), ...(env.GROQ_API_KEY ? GROQ_MODELS.map(m => "groq:" + m) : []), ...(env.AI ? WAI_MODELS.map(m => "workers-ai:" + m) : [])],
         resting, departments: DEPT_IDS.map(id => DEPTS[id].icon + " " + DEPTS[id].name),
         lastTrigger: await (async () => { try { return env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_last_cron") || "null") : null; } catch { return null; } })(),
+        coreNotes: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const out = []; for (const x of SEED_NOTES) { const k = "max_srv_seed_" + x.id.replace(/[^a-z0-9]/gi, "_").slice(0, 30) + (x.v > 1 ? "_v" + x.v : ""); out.push(x.title + (await srvSetting(env, k) ? " ✓" : " waiting")); } return out.join("; "); } catch { return "unknown"; } })(),
         reportsNow: await (async () => { try { const d = env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_catchup") || "{}") : {}; return Object.entries(d).map(([k, v]) => k + ": " + v.status).join("; ") || "waiting to start"; } catch { return "unknown"; } })(),
         deepChain: modelChain(env, true), checker: env.GROQ_API_KEY ? "groq:openai/gpt-oss-120b" : env.AI ? "workers-ai:llama-3.3-70b" : "none (add GROQ_API_KEY)",
         guard: await (async () => { try { const r = env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_guard_report") || "null") : null; return r ? "last check " + new Date(r.at).toISOString().slice(0, 16) + "Z, " + r.problems.length + " problem(s)" : "no check yet (daily at 22:45 UTC)"; } catch { return "unknown"; } })(), brain: (env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini") + (env.GROQ_API_KEY || env.AI ? " · free backups: " + [env.GROQ_API_KEY ? "groq" : "", env.AI ? "workers-ai" : ""].filter(Boolean).join(", ") : ""), version:WORKER_VERSION,
