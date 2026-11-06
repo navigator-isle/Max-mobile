@@ -1994,11 +1994,12 @@ async function agentsCron(env, when) {
   return out.join("; ") || "nothing due";
 }
 // "Now": every agent's report once, straight away, instead of waiting for Sunday (asked 6 Nov 2026, 9:34 am Manila).
-const CATCHUP = {until: Date.parse("2026-11-06T09:00:00Z"), order: ["business", "investments", "trading", "notes", "research", "web", "apps", "security", "music", "schedule", "email"]};
+const CATCHUP = {from: Date.parse("2026-11-06T01:30:00Z"), until: Date.parse("2026-11-06T09:00:00Z"), order: ["business", "investments", "trading", "notes", "research", "web", "apps", "security", "music", "schedule", "email"]};
 // Rough outside requests per report, so one run stays under Cloudflare's 50-request limit.
 const REPORT_COST = {business: 3, investments: 9, trading: 3, notes: 7, research: 5, music: 2, schedule: 5, email: 16, security: 8, web: 25, apps: 32};
-async function agentsCatchup(env, max = 1) {
-  if (!env.MAX_MEMORY || Date.now() > CATCHUP.until) return "";
+async function agentsCatchup(env, max = 1, when) {
+  const t = Number(when) || Date.now();
+  if (!env.MAX_MEMORY || t < CATCHUP.from || t > CATCHUP.until || Date.now() > CATCHUP.until) return "";
   const out = []; let spent = 0;
   for (let k = 0; k < max; k++) {
     const done = await setting(env, "max_srv_catchup", {});
@@ -2323,8 +2324,8 @@ export default {
   async scheduled(event, env, ctx) {
     if (env.MAX_MEMORY) ctx.waitUntil(srvSetting(env, "max_srv_last_cron", JSON.stringify({cron: event?.cron || "?", at: new Date().toISOString()})).catch(() => {}));
     // The 10-minute trigger only runs reports he asked for "now" (one agent per run, so each stays within Cloudflare's limits).
-    if (event && event.cron && event.cron !== "45 * * * *") { ctx.waitUntil(agentsCatchup(env).then(r => { if (r) console.log("catch-up:", r); }).catch(e => console.log("catch-up failed:", e.message))); return; }
-    ctx.waitUntil(agentsCatchup(env, 4).then(r => { if (r) console.log("catch-up:", r); }).catch(e => console.log("catch-up failed:", e.message)));
+    if (event && event.cron && event.cron !== "45 * * * *") { ctx.waitUntil(agentsCatchup(env, 1, event.scheduledTime).then(r => { if (r) console.log("catch-up:", r); }).catch(e => console.log("catch-up failed:", e.message))); return; }
+    ctx.waitUntil(agentsCatchup(env, 4, event && event.scheduledTime).then(r => { if (r) console.log("catch-up:", r); }).catch(e => console.log("catch-up failed:", e.message)));
     ctx.waitUntil(agentsCron(env, event && event.scheduledTime).then(r => { if (r !== "nothing due") console.log("agents:", r); }).catch(e => console.log("agents failed:", e.message)));
     ctx.waitUntil(guardDaily(env, event && event.scheduledTime).then(r => { if (r !== "not now") console.log("guard:", r); }).catch(async e => { console.log("guard failed:", e.message); await logAct(env, {dept: "guard", kind: "guard check", text: "The daily guard check failed", detail: e.message, ok: false, source: "schedule"}); }));
     ctx.waitUntil(traderNotify(env).then(async r => { console.log("trader notify:", r); if (/^sent/.test(r)) await logAct(env, {dept: "trading", kind: "email", text: "Emailed you the paper-trading update (" + r.replace("sent ", "") + " updates)", source: "schedule"}); })
