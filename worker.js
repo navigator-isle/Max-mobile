@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-15a";
+const WORKER_VERSION = "max-worker-2026-11-15b";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -1993,6 +1993,17 @@ async function agentsCron(env, when) {
   for (const a of AGENT_LIST) if (a.day === day && a.hour === hour) await once("report_" + a.id, async () => (await runAgentReport(env, a.id, {source: "schedule"})).emailed);
   return out.join("; ") || "nothing due";
 }
+// "Now": every agent's report once, straight away, instead of waiting for Sunday (asked 6 Nov 2026, 9:34 am Manila).
+const CATCHUP = {until: Date.parse("2026-11-06T09:00:00Z"), order: ["business", "investments", "trading", "notes", "research", "web", "apps", "security", "music", "schedule", "email"]};
+async function agentsCatchup(env) {
+  if (!env.MAX_MEMORY || Date.now() > CATCHUP.until) return "";
+  const done = await setting(env, "max_srv_catchup", {});
+  const id = CATCHUP.order.find(a => !done[a]); if (!id) return "";
+  done[id] = {at: Date.now(), status: "running"}; await srvSetting(env, "max_srv_catchup", JSON.stringify(done));
+  let r; try { r = await runAgentReport(env, id, {source: "asked"}); done[id] = {at: Date.now(), status: r.emailed}; } catch (e) { done[id] = {at: Date.now(), status: "failed: " + cleanText(String(e.message), 120)}; }
+  await srvSetting(env, "max_srv_catchup", JSON.stringify(done));
+  return id + " → " + done[id].status;
+}
 async function agentRoutes(request, env, url, origin) {
   if (url.pathname === "/api/agents" && request.method === "GET") {
     const list = [];
@@ -2299,6 +2310,8 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
+    // The 10-minute trigger only runs reports he asked for "now" (one agent per run, so each stays within Cloudflare's limits).
+    if (event && event.cron && event.cron !== "45 * * * *") { ctx.waitUntil(agentsCatchup(env).then(r => { if (r) console.log("catch-up:", r); }).catch(e => console.log("catch-up failed:", e.message))); return; }
     ctx.waitUntil(agentsCron(env, event && event.scheduledTime).then(r => { if (r !== "nothing due") console.log("agents:", r); }).catch(e => console.log("agents failed:", e.message)));
     ctx.waitUntil(guardDaily(env, event && event.scheduledTime).then(r => { if (r !== "not now") console.log("guard:", r); }).catch(async e => { console.log("guard failed:", e.message); await logAct(env, {dept: "guard", kind: "guard check", text: "The daily guard check failed", detail: e.message, ok: false, source: "schedule"}); }));
     ctx.waitUntil(traderNotify(env).then(async r => { console.log("trader notify:", r); if (/^sent/.test(r)) await logAct(env, {dept: "trading", kind: "email", text: "Emailed you the paper-trading update (" + r.replace("sent ", "") + " updates)", source: "schedule"}); })
@@ -2318,6 +2331,7 @@ export default {
       const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env),
         brainChain: [...(env.ANTHROPIC_API_KEY ? [cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE] : []), ...modelChain(env), ...(env.GROQ_API_KEY ? GROQ_MODELS.map(m => "groq:" + m) : []), ...(env.AI ? WAI_MODELS.map(m => "workers-ai:" + m) : [])],
         resting, departments: DEPT_IDS.map(id => DEPTS[id].icon + " " + DEPTS[id].name),
+        reportsNow: await (async () => { try { const d = env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_catchup") || "{}") : {}; return Object.entries(d).map(([k, v]) => k + ": " + v.status).join("; ") || "waiting to start"; } catch { return "unknown"; } })(),
         deepChain: modelChain(env, true), checker: env.GROQ_API_KEY ? "groq:openai/gpt-oss-120b" : env.AI ? "workers-ai:llama-3.3-70b" : "none (add GROQ_API_KEY)",
         guard: await (async () => { try { const r = env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_guard_report") || "null") : null; return r ? "last check " + new Date(r.at).toISOString().slice(0, 16) + "Z, " + r.problems.length + " problem(s)" : "no check yet (daily at 22:45 UTC)"; } catch { return "unknown"; } })(), brain: (env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini") + (env.GROQ_API_KEY || env.AI ? " · free backups: " + [env.GROQ_API_KEY ? "groq" : "", env.AI ? "workers-ai" : ""].filter(Boolean).join(", ") : ""), version:WORKER_VERSION,
         geminiKey: env.GEMINI_API_KEY ? "set" : "missing", passcodeRequired: passcodeSet(env),

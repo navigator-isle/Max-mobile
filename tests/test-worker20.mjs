@@ -135,6 +135,12 @@ gemDown = true; sent = [];
 r = await run("schedule");
 ok(r.status === 200 && /plain facts/.test(r.data.report.status[0]) && /PSC inspection/.test(r.data.report.facts) && sent.length === 1, "if the brain is out of free quota, the report still goes out with the plain facts", JSON.stringify(r.data.report.status));
 gemDown = false;
+// "now": the 10-minute trigger sends every agent's report once, one per run (only inside the one-time window)
+sent = []; const cron10 = () => w.scheduled({ cron: "*/10 * * * *", scheduledTime: Date.now() }, env, { waitUntil: p => (globalThis.__c = p) }).then(() => globalThis.__c);
+await cron10(); await cron10();
+const subj10 = sent.map(m => Buffer.from((m.match(/Subject: =\?UTF-8\?B\?([^?]+)\?=/) || [])[1] || "", "base64").toString());
+if (Date.now() < Date.parse("2026-11-06T09:00:00Z")) ok(subj10.length === 2 && /Business/.test(subj10[0]) && /Investments/.test(subj10[1]), "“now”: the reports go out one by one (Business first, then Investments…)", JSON.stringify(subj10));
+else ok(subj10.length === 0, "after the one-time window the 10-minute trigger does nothing", JSON.stringify(subj10));
 // the router knows the new agents
 const chat = async m => (await call("/api/chat", { method: "POST", body: { message: m, allowActions: true }, session })).data;
 ok((await chat("how much is the MP2 dividend this year?")).dept.id === "investments", "“MP2 dividend” → 💰 Investments");
