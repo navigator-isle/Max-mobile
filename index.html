@@ -1528,7 +1528,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function metaSummary(){const c=splitPath($('editorCategory').value).join(' › ')||'Unsorted',t=$('editorTags').value.split(',').map(x=>x.trim()).filter(Boolean);$('metaSummary').textContent='📁 '+c+(t.length?'  ·  '+t.map(x=>'#'+x).join(' '):'  ·  tap to change folder or tags')}
  ['editorCategory','editorTags'].forEach(id=>$(id).addEventListener('input',metaSummary));
  // ---------- the Maritime structure (added once; more folders can be added any time) ----------
- const MARITIME_TREE=['Maritime › IMO › Conventions','Maritime › IMO › Codes','Maritime › IMO › Resolutions & Circulars','Maritime › IMO › Amendments & Updates',
+ const MARITIME_TREE=['Maritime › IMO › Conventions','Maritime › IMO › Codes','Maritime › IMO › Resolutions & Circulars','Maritime › IMO › Amendments & Updates','Maritime › ILO › Conventions',
   'Maritime › US Regulations › USCG & CFR','Maritime › US Regulations › Environment (OPA 90, VGP, ECA)','Maritime › US Regulations › Port Entry & Security',
   'Maritime › School Subjects › Navigation','Maritime › School Subjects › Seamanship','Maritime › School Subjects › Ship Stability','Maritime › School Subjects › Cargo Handling & Stowage',
   'Maritime › School Subjects › Meteorology & Oceanography','Maritime › School Subjects › Ship Construction','Maritime › School Subjects › Electronic Navigation (Radar, ARPA, ECDIS)',
