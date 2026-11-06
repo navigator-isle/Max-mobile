@@ -1,0 +1,9 @@
+name: Check Max's server
+# Reads Max's public health page (no secrets) so progress can be checked from anywhere.
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS "https://max-ai-backend.mjgaly-mg.workers.dev/health" | tee health.json; echo; node -e 'const h=require("./health.json");console.log("::notice::version "+h.version+" · reports now: "+(h.reportsNow||"?")+" · guard: "+(h.guard||"?"))'
