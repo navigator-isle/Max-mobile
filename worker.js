@@ -1998,8 +1998,8 @@ const CATCHUP = {from: Date.parse("2026-11-06T01:30:00Z"), until: Date.parse("20
 // Rough outside requests per report, so one run stays under Cloudflare's 50-request limit.
 const REPORT_COST = {business: 3, investments: 9, trading: 3, notes: 7, research: 5, music: 2, schedule: 5, email: 16, security: 8, web: 25, apps: 32};
 async function agentsCatchup(env, max = 1, when) {
-  const t = Number(when) || Date.now();
-  if (!env.MAX_MEMORY || t < CATCHUP.from || t > CATCHUP.until || Date.now() > CATCHUP.until) return "";
+  const t = Number(when); // real triggers always carry their time
+  if (!t || !env.MAX_MEMORY || t < CATCHUP.from || t > CATCHUP.until || Date.now() > CATCHUP.until) return "";
   const out = []; let spent = 0;
   for (let k = 0; k < max; k++) {
     const done = await setting(env, "max_srv_catchup", {});
