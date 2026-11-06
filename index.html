@@ -56,6 +56,7 @@ body.vault-mode .mini-orb,body.vault-mode .mini-orb canvas{width:34px!important;
 body.vault-mode .mini-you{font-size:.66rem}body.vault-mode .mini-say{font-size:.78rem;-webkit-line-clamp:1;line-height:1.25}
 /* links stand out while editing too */
 #editorBody a{color:#7cc4ff;text-decoration:underline;text-underline-offset:2px}
+.read-check{margin:6px 0 10px;padding:7px 9px;border-radius:9px;font-size:.78rem;line-height:1.35;border:1px solid #3a3c52;background:#25263a}.read-check.ok{border-color:#2f6b4f;background:#1c3329}.read-check.bad{border-color:#8a6420;background:#3a2c14}.read-check .rc-head{font-weight:600;margin-bottom:2px}.read-check .rc-issue{margin:2px 0}
 </style><style>
 /* MAX two-section layout */
 :root{--max-bg:#07111e;--max-panel:#0b1a2b;--max-line:#1c344c;--max-accent:#77d7ff;--max-text:#e8f3ff;--max-muted:#8fa8c0}
@@ -557,6 +558,7 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
       <div id="readPath" class="read-path"></div>
       <h1 id="readTitle" class="read-title"></h1>
       <div id="readTags" class="read-tags"></div>
+      <div id="readCheck" class="read-check" hidden></div>
       <div id="readBody" class="read-body"></div>
     </article>
     <section class="notes-editor full-editor">
@@ -914,7 +916,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- phone ↔ laptop sync of everything else (watchlist, routines progress, projects, settings) ----------
  // Notes, sales, routines and skills already sync as notes. These lists sync too; the newest change wins.
  // Not synced on purpose: passcode/sign-in, hands-free (each device decides), caches, the offline outbox.
- const SYNC_KEYS=['max_hear_fixes','max_listen_lang','max_folders','max_watchlist','max_price_alerts','max_currencies','max_routine_state','max_watch','max_crew_inbox','max_projects','max_learned_phrases','max_weather_place','max_personality','max_barge','max_pp_speed','max_last_brief'];
+ const SYNC_KEYS=['max_music','max_hear_fixes','max_listen_lang','max_folders','max_watchlist','max_price_alerts','max_currencies','max_routine_state','max_watch','max_crew_inbox','max_projects','max_learned_phrases','max_weather_place','max_personality','max_barge','max_pp_speed','max_last_brief'];
  const SYNC_META='max_sync_meta';
  const strHash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h+':'+t.length};
  function syncMeta(){try{return JSON.parse(localStorage.getItem(SYNC_META)||'null')}catch{return null}}
@@ -1252,7 +1254,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(on){
    const path=splitPath($('editorCategory').value).filter(x=>x!=='Unsorted');
    $('readPath').textContent=path.join(' / ');$('readTags').replaceChildren(...$('editorTags').value.split(',').map(t=>t.trim()).filter(Boolean).map(t=>{const x=document.createElement('span');x.textContent='#'+t;return x}));$('readTitle').textContent=$('editorTitle').value||'Untitled note';
-   const body=$('readBody');body.replaceChildren(safeFragment(cleanNoteHtml($('editorBody'))));wikiLinks(body);linkify(body);hydrateMedia(body,false);
+   const body=$('readBody');body.replaceChildren(safeFragment(cleanNoteHtml($('editorBody'))));wikiLinks(body);linkify(body);hydrateMedia(body,false);showNoteCheck(activeNoteId);
    $('fmtBar').hidden=true;closeEdMenus();$('linkPop').hidden=true;$('linkRow').hidden=true;
   }
  }
@@ -1908,15 +1910,26 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(softer|quieter|volume down|hinaan)\b/)&&wc<=6)return {type:'music_control',details:{op:'softer'}};
   if(has(/\b(what'?s|what is) (this |that )?(playing|song)\b|\bwhat song is (this|that|playing)\b|\banong kanta (ito|to|yan)\b/))return {type:'music_control',details:{op:'what'}};
   {const pm=raw.match(/^\s*(?:(?:hey|ok|okay)\s+)?(?:max[, ]+)?(?:please\s+|can you\s+|could you\s+)?(?:play|put on|i-?play|patugtugin|patugtog(?:in)?|tumugtog ka ng)\s+(?:me\s+|us\s+)?(?:some\s+|a\s+)?(.{2,100}?)(?:\s+(?:please|for me|po|naman))?[.!?]*$/i);
-   if(pm&&!/^(?:the\s+)?(?:play ?store|store|console|reviews?|listing|google play|routine|walk ?through|step)\b/i.test(pm[1])&&!/\b(play ?store|google play|closed test)\b/i.test(raw)){
+   if(pm&&!/^(?:the\s+)?(?:play ?store|store|console|reviews?|listing|google play|routine|walk ?through|step)\b/i.test(pm[1])&&!/\b(play ?store|google play|closed test)\b/i.test(raw)&&!/^(?:my\s+)?(?:favou?rites?|favou?rite songs|.{1,30}\s+playlist)$/i.test(pm[1])){
     let q=pm[1].replace(/\s+(?:on|in|from)\s+(?:youtube(?: music)?|spotify)$/i,'').trim();
     if(/^(music|something|anything|a song|songs|any song|kanta|music na lang)$/i.test(q))q='popular hits mix';
     return {type:'play_music',details:{query:q,mode:/\b(radio|station|fm)\b/i.test(q)?'radio':'video'}};
    }}
   if(has(/^(play|put on) (some )?music$|^(music|music please|patugtog)$/))return {type:'play_music',details:{query:'popular hits mix'}};
+  // ---- agents' reports ----
+  {const m=n.match(/^(?:max )?(?:please )?(?:(send|email|run|make|give|show|open|read|get)(?: me)? )?(?:the |my |a |your )?(?:new |fresh |latest |last |weekly )?(.{2,40}?) (?:agent'?s? )?(?:weekly )?report(?: now| please| ngayon)?$/);
+   if(m){const id=agentOf(m[2]);if(id)return {type:'agent_report',details:{agent:id,send:/^(send|email|run|make)$/.test(m[1]||'')||/\b(now|new|fresh)\b/.test(n)}}}}
+  // ---- music library ----
+  {const m=n.match(/^(?:max )?(?:please )?(?:add|save|put) (?:this|it|this song|the song|that) (?:to|in|into) (?:my )?(.{2,30}?)$/);
+   if(m&&/favou?rites?|playlist/.test(m[1]))return {type:'music_fav',details:{op:'add',name:/favou?rites?/.test(m[1])?'':m[1].replace(/ playlist$/,'')}};}
+  {const m=n.match(/^(?:max )?(?:please )?(?:remove|delete|take) (?:this|it|this song|that) (?:from|out of) (?:my )?(.{2,30}?)$/);
+   if(m&&/favou?rites?|playlist/.test(m[1]))return {type:'music_fav',details:{op:'remove',name:/favou?rites?/.test(m[1])?'':m[1].replace(/ playlist$/,'')}};}
+  if(has(/^(max )?(please )?play (my )?(favou?rites?|favou?rite songs)( please)?$/))return {type:'music_fav',details:{op:'play'}};
+  {const m=n.match(/^(?:max )?(?:please )?play (?:my )?(.{2,30}) playlist$/);if(m)return {type:'music_fav',details:{op:'play',name:m[1]}};}
+  if(has(/^(max )?(show|open)( me)? (my )?(music|favou?rites?|playlists?|songs)( library)?$/))return {type:'music_fav',details:{op:'show'}};
   // ---- guard ----
   if(has(/\b(run|do)( a| the)? (system|guard|security|health|full) check\b|\bcheck (everything|all systems|my systems|all my (sites|apps))( now)?\b/))return {type:'guard_run'};
-  if(has(/\b(guard|security|system|status) report\b|\bis everything (ok|okay|fine|working|alright|good)\b|\banything broken\b|\bok ba lahat\b/))return {type:'guard_report'};
+  if(has(/\b(guard|system|status) report\b|\bis everything (ok|okay|fine|working|alright|good)\b|\banything broken\b|\bok ba lahat\b/))return {type:'guard_report'};
   if(has(/^(max )?(please )?(back ?up|backup)( my| all my)? (notes|max|everything|data|memory|notes and memory)( now)?$|^(max )?(back ?up|backup)( now)?$/))return {type:'backup_now'};
   // ---- activity log ----
   if(has(/\bactivity( log)?\b|\bwhat (did|have) (you|max|my desks?|the desks?|my departments?|my team|the team) (do|done|been doing)\b|\bwhat (failed|went wrong)\b|\bany(thing)? (fail|failed|failures|errors?)\b/)&&!has(/\b(remind|add|schedule|offline|while i was away)\b/)){
@@ -3460,7 +3473,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   try{const {r,data}=await fetchJson(workerBase()+'/api/trader/summary'+(fresh?'?fresh=1':''),{},20000);if(!r.ok)throw Object.assign(new Error(data.error||'HTTP '+r.status),{plain:r.status===404});jset(TR_CACHE,{at:Date.now(),data});return data}
   catch(e){const c=jget(TR_CACHE,null);if(c&&!e.plain)return {...c.data,stale:c.at};throw e}
  }
- const trMoney=(m,x,fx)=>m.ccy==='USDT'?Math.round(x*fx).toLocaleString('en-US',{style:'currency',currency:'PHP',maximumFractionDigits:0})+' ('+x.toFixed(2)+' USDT)':Math.round(x).toLocaleString('en-US',{style:'currency',currency:'PHP',maximumFractionDigits:0});
+ const trName=k=>k==='pse'?'PSE stocks':k==='fx'?'Forex':'Crypto';
+ const trMoney=(m,x,fx)=>m.ccy==='USD'?Math.round(x*fx).toLocaleString('en-US',{style:'currency',currency:'PHP',maximumFractionDigits:0})+' ($'+x.toFixed(2)+')':m.ccy==='USDT'?Math.round(x*fx).toLocaleString('en-US',{style:'currency',currency:'PHP',maximumFractionDigits:0})+' ('+x.toFixed(2)+' USDT)':Math.round(x).toLocaleString('en-US',{style:'currency',currency:'PHP',maximumFractionDigits:0});
  const trPct=x=>(x>=0?'+':'')+(x*100).toFixed(1)+'%';
  function sparkline(curve,start){
   if(!curve||curve.length<2)return null;
@@ -3476,8 +3490,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const fx=s.fx||58,want=d?.project&&s.markets[d.project]?[d.project]:Object.keys(s.markets),cards=[],said=[];
   for(const k of want){
    const m=s.markets[k];if(!m)continue;
-   const name=k==='pse'?'PSE stocks':'Crypto';
-   cards.push({badge:k==='pse'?'PSE · COL FEES':'CRYPTO · BINANCE FEES',badgeClass:'badge-res',meta:'through '+m.lastDate+' · market '+m.regime+(m.halted?' · new buys paused':''),title:name+': '+trMoney(m,m.equity,fx)+' ('+trPct(m.returnPct)+')',node:sparkline(m.curve,m.start),
+   const name=trName(k);
+   cards.push({badge:k==='pse'?'PSE · COL FEES':k==='fx'?'FOREX · SPREAD COSTS':'CRYPTO · BINANCE FEES',badgeClass:'badge-res',meta:'through '+m.lastDate+' · market '+m.regime+(m.halted?' · new buys paused':''),title:name+': '+trMoney(m,m.equity,fx)+' ('+trPct(m.returnPct)+')',node:sparkline(m.curve,m.start),
     lines:['Started with '+trMoney(m,m.start,fx)+' of pretend money · cash '+trMoney(m,m.cash,fx),...(m.orders?.length?m.orders.map(o=>({text:'Next open: '+o.side.toUpperCase()+' '+(k==='pse'?Math.round(o.qty).toLocaleString('en-US'):+o.qty.toFixed(6))+' '+o.sym+' — '+o.why,cls:'miss'})):[])]});
    cards.push({badge:'HOLDINGS',title:m.positions.length?m.positions.length+' open position'+(m.positions.length===1?'':'s'):'All in cash',lines:m.positions.map(p=>({text:p.sym+' · '+(k==='pse'?p.qty.toLocaleString('en-US'):+p.qty.toFixed(6))+' @ '+p.entry+' → '+(+p.last).toFixed(k==='pse'?2:4)+' ('+trPct(p.pnlPct)+')',cls:p.pnlPct>=0?'ok':'miss'}))});
    cards.push({badge:'STRATEGIES',badgeClass:'badge-draft',title:'Who gets the money',lines:m.strategies.filter(x=>x.status==='active').slice(0,8).map(x=>(x.weight?Math.round(x.weight*100)+'% ':'0% ')+x.id+' — '+x.kind+(x.score!=null?' · score '+x.score:'')+' · '+trPct(x.returnPct)+(x.trades?' · '+x.wins+'/'+x.trades+' wins':''))});
@@ -3486,7 +3500,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   }
   const ev=(s.events||[]).filter(e=>want.includes(e.market)).slice(0,6);
   if(ev.length)cards.push({badge:'UPDATES',title:'Latest',lines:ev.map(e=>e.day+' · '+e.text)});
-  if(s.replay)cards.push({badge:'TEST RUN',title:'Same engine on 2026 so far',lines:Object.entries(s.replay).map(([k,r])=>(k==='pse'?'PSE':'Crypto')+': '+trPct(r.returnPct)+' vs '+trPct(r.buyHoldPct)+' buy-and-hold ('+r.from+' to '+r.to+')')});
+  if(s.replay)cards.push({badge:'TEST RUN',title:'Same engine on 2026 so far',lines:Object.entries(s.replay).map(([k,r])=>(k==='pse'?'PSE':k==='fx'?'Forex':'Crypto')+': '+trPct(r.returnPct)+' vs '+trPct(r.buyHoldPct)+' buy-and-hold ('+r.from+' to '+r.to+')')});
   cards.push({badge:'NOTE',title:'Pretend money only',lines:['Nothing real is bought or sold. Copying a trade is always your own decision.','Trading emails are '+(s.emails?'on':'off')+' — say “turn '+(s.emails?'off':'on')+' trading emails”.']});
   showDisplay('Paper trading',(s.stale?'Offline — from '+new Date(s.stale).toLocaleString():'Updated '+new Date(s.updated).toLocaleString()),cards);
   return said.join('. ')+'. Pretend money only.';
@@ -3580,7 +3594,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    {badge:'SECRETARY',title:'Today',lines:[schedText||(/^linked/.test(cloud.google||'')?'Calendar: couldn’t read it right now.':'Calendar not connected (Google is off) — I only know what’s in your notes.')]},
    {badge:'SECRETARY',title:'Deadlines — next 30 days',lines:dl.length?dl.slice(0,6).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['Nothing due.'],buttons:dl.length?[['All deadlines',()=>doAction({type:'deadlines'},'').then(t=>{setSub('',t);speak(t)})]]:[]},
    ...(mailData?[{badge:'EMAIL',badgeClass:'badge-res',title:'Unread email (last 24 h)',lines:mailData.items?.length?[mailData.say,...mailData.items.filter(x=>x.priority==='high').slice(0,4).map(x=>({text:'• '+x.from+' — '+x.subject,cls:'miss'}))]:['No new email.'],buttons:mailData.items?.length?[['Open inbox',()=>checkEmail('unread today').then(t=>{setSub('',t);speak(t)})]]:[]}]:[]),
-   ...(tr&&tr.markets?[{badge:'PAPER TRADING',badgeClass:'badge-res',title:'Pretend accounts',lines:Object.entries(tr.markets).map(([k,m])=>(k==='pse'?'PSE':'Crypto')+': '+trPct(m.returnPct)+' · '+m.positions.length+' open'+(m.orders?.length?' · '+m.orders.length+' order(s) for the next open':'')),buttons:[['Open',()=>tradingStatus({}).then(t=>{setSub('',t);speak(t)})]]}]:[]),
+   ...(tr&&tr.markets?[{badge:'PAPER TRADING',badgeClass:'badge-res',title:'Pretend accounts',lines:Object.entries(tr.markets).map(([k,m])=>(k==='pse'?'PSE':k==='fx'?'Forex':'Crypto')+': '+trPct(m.returnPct)+' · '+m.positions.length+' open'+(m.orders?.length?' · '+m.orders.length+' order(s) for the next open':'')),buttons:[['Open',()=>tradingStatus({}).then(t=>{setSub('',t);speak(t)})]]}]:[]),
    ...(wx?[{badge:'WEATHER',badgeClass:'badge-res',title:wx.place+' — '+Math.round(wx.now.temp)+'°C, '+wx.now.sky,lines:['Today: '+wxLine(wx,0),'Tomorrow: '+wxLine(wx,1)],buttons:[['Full forecast',()=>weatherNow({location:wxPlace.name}).then(t=>{setSub('',t);speak(t)})]]}]:[]),
    {badge:'WAITING',badgeClass:'badge-draft',title:'Waiting for you',lines:wait.length?wait.map(x=>'• '+x):['Nothing waiting.']},
    {badge:'WEBMASTER',badgeClass:'badge-res',title:'Your projects',lines:[down.length?{text:'Down: '+down.join(', '),cls:'miss'}:{text:'All sites I can check are up.',cls:'ok'},visitors.length?'Visitors today: '+visitors.join(' · '):statsProblem==='not connected'?'Visitor numbers not connected.':'',Object.keys(sales).length?'Sales this month: '+totalsText(sales):'No sales logged this month.'].filter(Boolean)},
@@ -3919,7 +3933,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
      'Pictures: send a photo with 📎 and ask for alt text and a file name.','Comments: tell me where comments are kept (e.g. WordPress, Disqus) to connect them.'],
     buttons:sites.flatMap(p=>[['Check '+p.name,run('site_audit',{project:p.name})],['SEO ideas',run('seo_ideas',{project:p.name})],['Write a post',()=>{const t='What should the post for '+p.name+' be about? Say “write a post about …”.';setSub('',t);speak(t)}]])},
    {badge:'TRADING',badgeClass:'badge-note',title:'📈 Trading desk',meta:'paper trader · strategy researcher · market watcher — pretend money only',
-    lines:[...(tr?.markets?Object.entries(tr.markets).map(([k,m])=>(k==='pse'?'PSE':'Crypto')+' paper account: '+trPct(m.returnPct)+' · '+m.positions.length+' open'):['Paper trading: ask “how’s my paper trading?”']),'Watchlist: '+(wl.length?wl.length+' symbol'+(wl.length===1?'':'s'):'empty'),'Forex: prices and conversions only (no forex paper account yet).'],
+    lines:[...(tr?.markets?Object.entries(tr.markets).map(([k,m])=>(k==='pse'?'PSE':k==='fx'?'Forex':'Crypto')+' paper account: '+trPct(m.returnPct)+' · '+m.positions.length+' open'):['Paper trading: ask “how’s my paper trading?”']),'Watchlist: '+(wl.length?wl.length+' symbol'+(wl.length===1?'':'s'):'empty'),'Forex: prices and conversions only (no forex paper account yet).'],
     buttons:[['Paper trading',run('trading_status')],['Watchlist',run('show_watchlist')],['Price alerts',run('list_alerts')]]},
    {badge:'NOTES',badgeClass:'badge-res',title:'🗂 Notes & research',meta:'librarian · researcher',
     lines:[notes.length+' notes'+(unsorted?' · '+unsorted+' not filed':' · all filed'),...(inbox.length?[{text:inbox.length+' research update'+(inbox.length===1?'':'s')+' waiting for you',cls:'miss'}]:[]),...(watch.length?['Watching: '+watch.map(t=>t.topic).join(', ')]:[])],
@@ -3939,7 +3953,29 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    {badge:'ACTIVITY',badgeClass:'badge-draft',title:'🧾 Activity log',meta:'what each desk did · which brain answered · what failed',
     lines:(()=>{const l=jget(ACT_KEY,[]).filter(x=>x.at>Date.now()-864e5);const f=l.filter(x=>!x.ok).length;return [l.length?l.length+' action'+(l.length===1?'':'s')+' on this phone today'+(f?' · '+f+' failed':''):'Nothing done on this phone today yet.','Answers and background jobs (like trading emails) are logged by Max’s server.']})(),
     buttons:[['Today',run('activity',{range:'today'})],['Last 7 days',run('activity',{range:'week'})]]}];
-  depts.forEach(c=>{
+  // ---- Max's agents: same cards, rearranged, plus the new agents; every agent has a weekly report ----
+  const byB=Object.fromEntries(depts.map(c=>[c.badge,c]));
+  Object.assign(byB.NOTES,{title:'🗂 Notes & Attachments',meta:'librarian · fact-checker (checks notes against the web daily) · Maritime expert · attachment reader',lines:byB.NOTES.lines.filter(l=>!/^Watching:|research update/.test(typeof l==='string'?l:l.text))});
+  Object.assign(byB.GUARD,{badge:'SECURITY',title:'🛡 Security',meta:'checks everything daily 6:45 am · threat watcher · leads the security worker of every site and app'});
+  Object.assign(byB.MUSIC,{title:'🎵 Music',meta:'DJ · favorites & playlists · YouTube songs · internet radio'});byB.MUSIC.buttons.push(['★ My music',run('music_fav',{op:'show'})]);
+  byB.WEBSITES.lines.unshift('Each site has its own team: security, pictures, SEO, mobile & desktop speed, content (published only with your OK), social media, affiliate, analytics, keyword research.');
+  byB.APPS.lines.unshift('Each app has its own team: releases (GitHub, Netlify, Play Store), security, errors, analytics, improvements.');
+  Object.assign(byB.TRADING,{meta:'PSE · crypto · forex paper traders · strategy researcher (web + backtests, never stops) — pretend money only'});
+  Object.assign(byB.SCHEDULE,{title:'📅 Schedule',meta:'secretary · calendar · reminders · tasks · routines'});
+  const extra=[
+   {badge:'RESEARCH',badgeClass:'badge-res',title:'🔎 Researcher',meta:'your research topics · detailed but simple, short structure, with data',lines:[...(watch.length?['Watching: '+watch.map(t=>t.topic).join(', ')]:['No topics yet — say “watch IMO amendments” or “research …”.']),...(inbox.length?[{text:inbox.length+' finding'+(inbox.length===1?'':'s')+' waiting for you',cls:'miss'}]:[])],
+    buttons:[['Check topics now',run('check_watch')],...(inbox.length?[['Findings',run('research_inbox')]]:[])]},
+   {badge:'EMAIL',badgeClass:'badge-res',title:'✉️ Email',meta:'inbox manager · replies in your voice (sent only with your yes) · organize · mailing list (when you set one up)',lines:['Deleting moves mail to Trash (recoverable for 30 days) — never permanent.'],buttons:[['Check inbox',run('check_email')]]},
+   {badge:'INVESTMENTS',badgeClass:'badge-note',title:'💰 Investments',meta:'MP2 · high-yield savings · UITF · VUL · bonds · dividend stocks — researched weekly, not financial advice',lines:['Your holdings: not set up yet — tell me what you hold (e.g. “I have ₱50,000 in MP2”).','Each week: current rates, what changed, new perks, catches, sources.']},
+   {badge:'BUSINESS',badgeClass:'badge-note',title:'🏪 Business',meta:'standing by for your business · 10 new simple, boring, earning ideas every week (never repeated)',lines:['Costs and profits in PHP, risks, permits, how to run it while at sea, first steps.']}];
+  const ORDER=['NOTES','RESEARCH','WEBSITES','APPS','SECURITY','TRADING','INVESTMENTS','BUSINESS','MUSIC','SCHEDULE','EMAIL','TRAINING','ACTIVITY'];
+  const AGB={NOTES:'notes',RESEARCH:'research',WEBSITES:'web',APPS:'apps',SECURITY:'security',TRADING:'trading',INVESTMENTS:'investments',BUSINESS:'business',MUSIC:'music',SCHEDULE:'schedule',EMAIL:'email'};
+  const info=jget(AG_KEY,null)?.data,allCards=[...depts,...extra],shown=ORDER.map(b=>allCards.find(c=>c.badge===b)).filter(Boolean);
+  for(const c of shown){const id=AGB[c.badge];if(!id)continue;const a=info?.agents?.find(x=>x.id===id);
+   c.lines=[...(c.lines||[]),{text:'📧 Weekly report: '+(a?a.reportDay:'Sunday')+(a?.lastReport?' · last one '+whenText(localDate(new Date(a.lastReport.at))):' · none yet'),cls:'agent-rep'}];
+   c.buttons=[...(c.buttons||[]),['📧 Report now',run('agent_report',{agent:id,send:true})],['Last report',run('agent_report',{agent:id})]]}
+  if(!info||Date.now()-(jget(AG_KEY,null)?.at||0)>10*60e3)agentsInfo(true).then(d=>{if(d&&screen==='crew'&&!renderCrew.again){renderCrew.again=true;renderCrew();renderCrew.again=false}});
+  shown.forEach(c=>{c.lines=c.lines||[];c.buttons=c.buttons||[];
    const card=document.createElement('article');card.className='disp-card';card.dataset.dept=c.badge.toLowerCase();
    const head=document.createElement('div');head.className='disp-head';const b=document.createElement('span');b.className='badge '+(c.badgeClass||'badge-note');b.textContent=c.badge;const m=document.createElement('span');m.className='muted small';m.textContent=c.meta;head.append(b,m);
    const h=document.createElement('h2');h.textContent=c.title;card.append(head,h);
@@ -4141,7 +4177,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   try{res=await fetchJson(base+'/api/music?q='+encodeURIComponent(q)+'&mode='+mode,{},15000)}catch(e){return 'I couldn’t reach the music finder. '+e.message}
   const {r,data}=res;
   if(!r.ok)return data.error||'I couldn’t find music for “'+q+'”.';
-  MUSIC.q=q;MUSIC.i=0;MUSIC.startedAt=Date.now();
+  MUSIC.q=q;MUSIC.i=0;MUSIC.startedAt=Date.now();musicRemember(q);
   if(data.mode==='radio'){MUSIC.list=data.stations||[];if(!musicStartRadio())return 'I couldn’t find a radio station for “'+q+'”.';return (data.note?data.note+' ':'')+'Playing '+(MUSIC.list[0].name||q+' radio')+'.'}
   MUSIC.list=data.videos||[];
   try{await musicStartVideo()}catch(e){
@@ -4254,6 +4290,83 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(x.kind==='chat')return 'Answered: “'+String(x.text||'').slice(0,90)+'”'+(x.detail?' ('+x.detail+')':'');
   return String(x.text||x.kind||'');
  }
+ // ---------- Max's agents: weekly reports (one email per agent every Sunday), shown on the phone too ----------
+ const AGENTS_UI={notes:['🗂','Notes & Attachments'],research:['🔎','Researcher'],web:['🌐','Websites'],apps:['📱','Apps'],security:['🛡','Security'],trading:['📈','Trading'],investments:['💰','Investments'],business:['🏪','Business'],music:['🎵','Music'],schedule:['📅','Schedule'],email:['✉️','Email']};
+ const AGENT_ALIASES=[[/\b(notes?|librarian|attachments?|fact[- ]?check\w*)\b/,'notes'],[/\bresearch(er)?\b/,'research'],[/\b(web ?sites?|sites?|hobby isle|seo)\b/,'web'],[/\b(apps?|play store|passage planner)\b/,'apps'],[/\b(security|threats?|attacks?)\b/,'security'],
+  [/\b(trading|trades?|paper|stocks?|crypto|forex|strateg(y|ies))\b/,'trading'],[/\b(invest\w*|mp2|savings|uitf|vul|bonds?|dividends?)\b/,'investments'],[/\b(business(es)?|negosyo)\b/,'business'],[/\b(music|songs?)\b/,'music'],[/\b(schedule|calendar|tasks?|reminders?)\b/,'schedule'],[/\b(e-?mails?|inbox|gmail)\b/,'email']];
+ const agentOf=t=>{for(const [re,id] of AGENT_ALIASES)if(re.test(t))return id;return ''};
+ const AG_KEY='max_cache_agents';
+ async function agentsInfo(fresh){
+  const c=jget(AG_KEY,null);if(!fresh&&c&&Date.now()-c.at<10*60e3)return c.data;
+  if(!workerBase()||isOffline())return c?.data||null;
+  try{const {r,data}=await fetchJson(workerBase()+'/api/agents',{},15000);if(r.ok){jset(AG_KEY,{at:Date.now(),data});return data}}catch{}
+  return c?.data||null;
+ }
+ function showReport(rep){
+  const id=rep.agent,[icon,name]=AGENTS_UI[id]||['','Agent'];
+  const T=[['status','Status'],['done','What was done this week'],['problems','Problems & errors'],['improvements','What needs improvement'],['missing','What’s missing'],['suggestions','Suggestions'],['next','Next week']];
+  const cards=T.filter(([k])=>(rep[k]||[]).length).map(([k,t])=>({badge:t.toUpperCase(),badgeClass:k==='problems'?'badge-draft':k==='status'?'badge-res':'badge-note',tone:k==='problems'?'warn':'',title:t,lines:rep[k].map(x=>({text:x,cls:k==='problems'?'miss':''}))}));
+  for(const tb of rep.tables||[])cards.push({badge:'TABLE',title:tb.title,lines:tb.rows.map(r=>(tb.head?r.map((c,i)=>(i&&tb.head[i]?tb.head[i]+': ':'')+c):r).join(' · '))});
+  if(rep.facts)cards.push({badge:'FACTS',title:'The plain facts',lines:String(rep.facts).split('\n').slice(0,80)});
+  if((rep.sources||[]).length){const box=document.createElement('div');box.className='disp-lines';rep.sources.slice(0,15).forEach(s=>{const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.className='ext-link';a.textContent=s.title||s.url;const d=document.createElement('div');d.append(a);box.append(d)});cards.push({badge:'SOURCES',title:'Sources',node:box})}
+  cards.push({badge:'MORE',title:'Get a fresh one',lines:['This report: '+new Date(rep.at).toLocaleString()+(rep.emailed?' · '+rep.emailed:'')+(rep.model?' · written by '+rep.model:'')],buttons:[['📧 New report now',()=>doAction({type:'agent_report',details:{agent:id,send:true}},'').then(t=>{if(t){setSub('',t);speak(t)}})]]});
+  showDisplay(icon+' '+name+' report','Weekly report',cards);
+ }
+ async function agentReport(d){
+  const id=AGENTS_UI[d?.agent]?d.agent:'';if(!id)return 'Which report? Notes, research, websites, apps, security, trading, investments, business, music, schedule or email.';
+  const [icon,name]=AGENTS_UI[id];
+  if(!workerBase())return 'Reports come from Max’s server — connect the Worker first.';
+  if(isOffline()){const c=jget('max_cache_report_'+id,null);if(c){showReport(c);return 'You’re offline — here is the last '+name+' report I saved.'}return 'I can’t get reports while offline.'}
+  setSection('display');$('dispTitle').textContent=d.send?icon+' '+name+' agent is working…':'Getting the '+name+' report…';$('dispSub').textContent=d.send?'This can take a few minutes — it searches the web and checks everything.':'';$('dispBody').replaceChildren();
+  let res;
+  try{res=d.send?await postJson('/api/agents/run',{agent:id,email:true},420000):await fetchJson(workerBase()+'/api/agents/report?agent='+id,{},20000)}catch(e){$('dispTitle').textContent=name+' report';return 'I couldn’t reach the '+name+' agent. '+e.message}
+  const {r,data}=res;
+  if(r.status===404&&!d.send){$('dispTitle').textContent=name+' report';$('dispSub').textContent='No report yet';
+   showDisplay(icon+' '+name+' report','No report yet',[{badge:'REPORT',title:'No report yet',lines:['The first one comes on Sunday. You can ask for one now.'],buttons:[['📧 Make one now',()=>doAction({type:'agent_report',details:{agent:id,send:true}},'').then(t=>{if(t){setSub('',t);speak(t)}})]]}]);
+   return 'There’s no '+name+' report yet. Say “send me the '+name.toLowerCase()+' report now” and the agent will make one.'}
+  if(!r.ok||!data.report){$('dispTitle').textContent=name+' report';return data.error||'The '+name+' agent didn’t answer.'}
+  jset('max_cache_report_'+id,data.report);showReport(data.report);
+  const st=(data.report.status||[])[0]||'';
+  return (d.send?name+' report ready'+(/emailed/.test(data.report.emailed||'')?' and emailed to you':'')+'. ':'Here’s the latest '+name+' report. ')+st;
+ }
+ // ---------- fact-check results on a note (from the Notes agent's daily check) ----------
+ const NC_KEY='max_cache_notechecks';
+ async function noteChecks(){const c=jget(NC_KEY,null);if(c&&Date.now()-c.at<15*60e3)return c.data;if(!workerBase()||isOffline()||!cloud.memory)return c?.data||{};
+  try{const {r,data}=await fetchJson(workerBase()+'/api/notes/checks',{},12000);if(r.ok){jset(NC_KEY,{at:Date.now(),data:data.checks||{}});return data.checks||{}}}catch{}return c?.data||{}}
+ async function showNoteCheck(id){
+  const box=$('readCheck');if(!box)return;box.hidden=true;box.replaceChildren();if(!id)return;
+  const c=(await noteChecks())[id];if(!c||activeNoteId!==id)return;
+  const ok=/correct/.test(c.verdict),bad=/wrong|update/.test(c.verdict);
+  box.className='read-check '+(ok?'ok':bad?'bad':'');
+  const h=document.createElement('div');h.className='rc-head';h.textContent=(ok?'✓ ':bad?'⚠ ':'? ')+(c.expert||'Fact-checker')+' — '+c.verdict+' · '+new Date(c.at).toLocaleDateString();box.append(h);
+  if(c.summary){const p=document.createElement('div');p.textContent=c.summary;box.append(p)}
+  for(const i of c.issues||[]){const p=document.createElement('div');p.className='rc-issue';p.textContent='• '+(i.problem||i.claim)+(i.correct?' → '+i.correct:'')+(i.source?' ('+i.source+')':'');box.append(p)}
+  for(const s of (c.sources||[]).slice(0,3)){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.className='ext-link';a.textContent=s.title||s.url;const d=document.createElement('div');d.append(a);box.append(d)}
+  box.hidden=false;
+ }
+ // ---------- 🎵 music library: favorites, playlists, what he asks for most ----------
+ const MLIB='max_music';
+ const mlib=()=>{const v=jget(MLIB,{});return {favorites:v.favorites||[],playlists:v.playlists||{},history:v.history||[]}};
+ function musicRemember(q){const L=mlib(),h=L.history.find(x=>x.q.toLowerCase()===q.toLowerCase());if(h){h.count=(h.count||1)+1;h.at=Date.now()}else L.history.unshift({q,count:1,at:Date.now()});L.history=L.history.slice(0,200);jset(MLIB,L)}
+ const curItem=()=>{const c=MUSIC.list[MUSIC.i];if(!c||!MUSIC.mode)return null;return MUSIC.mode==='radio'?{kind:'radio',name:c.name,url:c.url,title:'📻 '+c.name,q:MUSIC.q}:{kind:'video',id:c.id,title:c.title||MUSIC.q,channel:c.channel||'',q:MUSIC.q}};
+ async function musicFav(d){
+  const op=d?.op||'show',list=String(d?.name||'').trim().toLowerCase().replace(/\s+playlist$/,''),L=mlib();
+  const items=list?(L.playlists[list]||[]):L.favorites,label=list?'your '+list+' playlist':'your favorites';
+  if(op==='add'){const it=curItem();if(!it)return 'Play a song first, then say “add this to my favorites”.';
+   if(items.some(x=>(x.id&&x.id===it.id)||(x.url&&x.url===it.url)))return 'It’s already in '+label+'.';
+   items.unshift({...it,at:Date.now()});if(list)L.playlists[list]=items;else L.favorites=items;jset(MLIB,L);return 'Added “'+it.title+'” to '+label+' ('+items.length+').'}
+  if(op==='remove'){const it=curItem();const n=items.length;const keep=items.filter(x=>!(it&&((x.id&&x.id===it.id)||(x.url&&x.url===it.url))));if(keep.length===n)return 'That song isn’t in '+label+'.';if(list)L.playlists[list]=keep;else L.favorites=keep;jset(MLIB,L);return 'Removed it from '+label+'.'}
+  if(op==='play'){if(!items.length)return list?'There’s no '+list+' playlist yet. While a song plays, say “add this to my '+list+' playlist”.':'No favorites yet. While a song plays, say “add this to my favorites”.';
+   const vids=items.filter(x=>x.kind==='video'&&x.id),radios=items.filter(x=>x.kind==='radio'&&x.url);
+   MUSIC.q=list?list+' playlist':'favorites';MUSIC.i=0;MUSIC.startedAt=Date.now();
+   if(vids.length){MUSIC.list=[...vids].sort(()=>Math.random()-0.5).map(x=>({id:x.id,title:x.title,channel:x.channel}));try{await musicStartVideo()}catch(e){return 'The player didn’t load: '+e.message}return 'Playing '+label+' — '+vids.length+' song'+(vids.length===1?'':'s')+', shuffled.'}
+   MUSIC.list=radios.map(x=>({name:x.name,url:x.url}));musicStartRadio();return 'Playing '+label+': '+radios[0].name+'.'}
+  const pls=Object.entries(L.playlists);
+  showDisplay('🎵 My music','Favorites, playlists and what you play most',[{badge:'FAVORITES',title:L.favorites.length+' favorite'+(L.favorites.length===1?'':'s'),lines:L.favorites.length?L.favorites.slice(0,40).map(x=>x.title):['While a song plays, say “add this to my favorites”.'],buttons:L.favorites.length?[['▶ Play favorites',()=>doAction({type:'music_fav',details:{op:'play'}},'').then(t=>{setSub('',t);speak(t)})]]:[]},
+   ...pls.map(([n,l])=>({badge:'PLAYLIST',title:n+' ('+l.length+')',lines:l.slice(0,20).map(x=>x.title),buttons:[['▶ Play '+n,()=>doAction({type:'music_fav',details:{op:'play',name:n}},'').then(t=>{setSub('',t);speak(t)})]]})),
+   {badge:'MOST ASKED',title:'What you ask for most',lines:L.history.length?[...L.history].sort((a,b)=>(b.count||0)-(a.count||0)).slice(0,12).map(h=>h.q+' · '+h.count+'×'):['Nothing yet.'],buttons:[...L.history].sort((a,b)=>(b.count||0)-(a.count||0)).slice(0,4).map(h=>['▶ '+h.q,()=>doAction({type:'play_music',details:{query:h.q}},'').then(t=>{setSub('',t);speak(t)})])}]);
+  return 'You have '+L.favorites.length+' favorites and '+pls.length+' playlist'+(pls.length===1?'':'s')+'. They’re on the screen.';
+ }
  // Every action Max carries out goes into the activity log (except small screen moves).
  async function doAction(a,raw,aiReply){
   const t0=Date.now();
@@ -4319,6 +4432,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'set_weather_place':return await setWeatherPlace(a.details||{location:a.query});
    case 'set_personality':return setPersonality(a.details||{name:a.query});
    case 'usage':return usageReport();
+   case 'agent_report':return await agentReport(a.details||{});
+   case 'music_fav':return await musicFav(a.details||{});
    case 'hear_fix':return teachHearing(a.details||{});
    case 'listen_lang':{const l=a.details?.lang==='fil-PH'?'fil-PH':'en-PH';jset(LISTEN_LANG,l);return l==='fil-PH'?'Sige, makikinig ako sa Filipino. Say “listen in English” to switch back.':'Okay, I’m listening in English again — Taglish works too.'}
    case 'show_hearing':return showHearing();
@@ -4345,7 +4460,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'barge_setting':jset('max_barge',a.details?.on!=='off');return a.details?.on!=='off'?'Voice interrupt is on — say “stop” or just start talking while I speak.':'Voice interrupt is off. Tap the circle to stop me while I speak.';
    case 'whatsapp_draft':return whatsappDraft(a.details||{text:a.query});
    case 'deadlines':return deadlinesSay(a.details||{});
-   case 'show_crew':setSection('crew');return 'Here are your eight departments: apps, websites, trading, notes, schedule, training, music, and the guard. Each has its own workers. Name one and tell them what you need.';
+   case 'show_crew':setSection('crew');return 'Here are my agents: notes and attachments, researcher, websites, apps, security, trading, investments, business, music, schedule and email — plus your coaches. Each has its own workers. Name one and tell them what you need.';
    case 'watch_topic':return watchTopic(a.query||a.details?.topic);
    case 'unwatch_topic':return unwatchTopic(a.query||a.details?.topic);
    case 'check_watch':return await checkWatch(true);
@@ -4505,7 +4620,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
    if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft','play_music','music_control','activity','guard_report','guard_run','backup_now','hear_fix','listen_lang','show_hearing'].includes(data.action.type)?'':reply);
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft','play_music','music_control','activity','guard_report','guard_run','backup_now','hear_fix','listen_lang','show_hearing','agent_report','music_fav'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
    }

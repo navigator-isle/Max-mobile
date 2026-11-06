@@ -28,6 +28,8 @@ const cases = [
  ["show the play store status","play_overview"],["show my activity log","activity"],["what did my desks do today","activity"],["what failed today","activity"],["what did you do while I was offline","offline_results"],
  ["double check that",null],["are you sure?",null],["sigurado ka ba",null],["verify your last answer",null],
  ["when you hear hobby aisle, I mean Hobby Isle","hear_fix"],["when I say the site I mean Hobby Isle","hear_fix"],["listen in Filipino","listen_lang"],["listen in English","listen_lang"],["show my word fixes","show_hearing"],
+ ["send me the trading report now","agent_report"],["show the investments report","agent_report"],["email me the business report","agent_report"],["show my website report","agent_report"],["give me the security report","agent_report"],["what's in the notes report","agent_report"],
+ ["add this to my favorites","music_fav"],["play my favorites","music_fav"],["play my workout playlist","music_fav"],["add this song to my gym playlist","music_fav"],["show my music","music_fav"],
  ["go back","go_home"],["just talk","go_home"],["close the notes","go_home"],["balik","go_home"],["let's just talk","go_home"],
 ];
 const res = await p.evaluate(cs => cs.map(([t]) => { const a = window.MaxDebug.understand(t); return a ? a.type + (a.query ? ":" + a.query : "") : null; }), cases);

@@ -2,27 +2,34 @@
 // PAPER MONEY ONLY. Nothing here can place a real order: there is no broker or exchange key anywhere.
 // Signals are read at a day's close and filled at the NEXT day's open (no look-ahead).
 
+export const FX_MAJORS = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'USDCHF', 'NZDUSD'];
 export const MARKETS = {
   pse: { name: 'PSE (COL Financial fees)', ccy: 'PHP', start: 100_000 },
   crypto: { name: 'Crypto (Binance spot fees)', ccy: 'USDT', startPhp: 100_000 },
+  fx: { name: 'Forex (spread costs, no leverage)', ccy: 'USD', startPhp: 100_000 },
 };
+// PSE trades in board lots; crypto and forex in fractions.
+export const frac = market => market !== 'pse';
 
 // ---------- fees ----------
 // COL Financial: 0.25% commission (min ₱20) + 12% VAT; PSE fee 0.005%; SCCP 0.01%; sells add 0.1% stock transaction tax (RA 12214, from 1 Jul 2025).
 // Binance spot (regular user, no BNB discount): 0.1% per side.
-const SLIP = { blue: 0.0015, middle: 0.003, spec: 0.006, crypto: 0.0005 };
+// Forex: no commission, the cost is the spread — about 1.5 pips on a major pair (≈0.015% per side), plus a little slippage.
+const SLIP = { blue: 0.0015, middle: 0.003, spec: 0.006, crypto: 0.0005, fx: 0.00005 };
 export function fee(market, gross, side) {
   if (market === 'crypto') return gross * 0.001;
+  if (market === 'fx') return gross * 0.00015;
   const comm = Math.max(20, gross * 0.0025) * 1.12;
   return comm + gross * 0.00015 + (side === 'sell' ? gross * 0.001 : 0);
 }
-export const slip = (market, tier) => SLIP[market === 'crypto' ? 'crypto' : tier] ?? 0.003;
+export const slip = (market, tier) => SLIP[market === 'crypto' ? 'crypto' : market === 'fx' ? 'fx' : tier] ?? 0.003;
 export function boardLot(p) {
   for (const [lim, lot] of [[0.01, 1e6], [0.05, 1e5], [0.5, 1e4], [5, 1e3], [50, 100], [1000, 10]]) if (p < lim) return lot;
   return 5;
 }
 export function roundQty(market, qty, price) {
   if (market === 'crypto') return Math.floor(qty * 1e6) / 1e6;
+  if (market === 'fx') return Math.floor(qty * 100) / 100;
   const lot = boardLot(price); return Math.floor(qty / lot) * lot;
 }
 
@@ -85,8 +92,8 @@ export function stepBook(book, ctx) {
       const price = open * (1 + sl);
       let qty = roundQty(M, Math.min(od.qty ?? Infinity, (od.amount ?? Infinity) / price), price);
       const cost = q => q * price + fee(M, q * price, 'buy');
-      while (qty > 0 && cost(qty) > book.cash) qty = roundQty(M, qty - (M === 'crypto' ? qty * 0.02 : boardLot(price)), price);
-      if (qty <= 0 || (M === 'crypto' && qty * price < 5)) continue;
+      while (qty > 0 && cost(qty) > book.cash) qty = roundQty(M, qty - (frac(M) ? qty * 0.02 : boardLot(price)), price);
+      if (qty <= 0 || (frac(M) && qty * price < 5)) continue;
       book.cash -= cost(qty);
       const stop = od.stopDist ? price - od.stopDist : 0;
       book.positions[od.sym] = { qty, entry: price, date: ctx.date, stop, hi: price, last: open, bars: 0, why: od.why };
@@ -116,7 +123,7 @@ export function stepBook(book, ctx) {
   const halted = ctx.halt;  // master risk breaker: no new entries
   if (book.template === 'rotation') {
     book.sinceRotate = (book.sinceRotate ?? 99) + 1;
-    const due = (M === 'crypto' ? ctx.newWeek : ctx.newMonth) && book.sinceRotate >= 5;
+    const due = (frac(M) ? ctx.newWeek : ctx.newMonth) && book.sinceRotate >= 5;
     if (due) {
       book.sinceRotate = 0;
       const ranked = live.map(([sym, s]) => { const i = s.idx, look = P.look, skip = P.skip || 0; const m = i > look ? s.I.c[i - skip] / s.I.c[i - look] - 1 : NaN; const ok = s.I.c[i] > (P.trendSma === 100 ? s.I.sma100[i] : s.I.sma200[i]) && m > 0; return { sym, m, ok }; })
@@ -196,6 +203,13 @@ export function regime(market, data, date) {
     const share = blue.filter(Boolean).length / blue.length;
     return share >= 0.6 ? 'bull' : share <= 0.4 ? 'bear' : 'sideways';
   }
+  if (market === 'fx') {
+    // Forex: is money trending (pairs far from their 200-day average) or going sideways?
+    const far = Object.entries(data).filter(([s]) => FX_MAJORS.includes(s)).map(([, d]) => { const i = d.index.get(date); return i != null && Number.isFinite(d.I.sma200[i]) ? Math.abs(d.I.c[i] / d.I.sma200[i] - 1) : null; }).filter(x => x !== null);
+    if (!far.length) return 'unknown';
+    const avg = far.reduce((a, x) => a + x, 0) / far.length;
+    return avg >= 0.03 ? 'trending' : avg <= 0.015 ? 'quiet' : 'sideways';
+  }
   const b = data.BTC; const i = b && b.index.get(date); if (i == null || !Number.isFinite(b.I.sma200[i])) return 'unknown';
   const r20 = b.I.c[i] / b.I.c[Math.max(0, i - 20)] - 1;
   return b.I.c[i] > b.I.sma200[i] ? (r20 < -0.1 ? 'sideways' : 'bull') : (r20 > 0.1 ? 'sideways' : 'bear');
@@ -249,10 +263,10 @@ export function rebalanceMaster(master, books, weights, ctx, events) {
       const pnl = q * (fill - p.entry) - fee(M, gross, 'sell') - fee(M, q * p.entry, 'buy');
       master.trades.push({ sym: od.sym, side: 'sell', date: ctx.date, qty: q, price: round4(fill), pnl: round2(pnl), why: od.why });
       events.push({ type: 'master-sell', sym: od.sym, qty: q, price: fill, pnl, why: od.why });
-      p.qty = round4(p.qty - q); if (p.qty <= (M === 'crypto' ? 1e-6 : 0)) delete master.positions[od.sym];
+      p.qty = round4(p.qty - q); if (p.qty <= (frac(M) ? 1e-6 : 0)) delete master.positions[od.sym];
     } else {
       const fill = open * (1 + slip(M, s.tier)); let q = roundQty(M, od.qty, fill);
-      while (q > 0 && q * fill + fee(M, q * fill, 'buy') > master.cash) q = roundQty(M, q - (M === 'crypto' ? q * 0.02 : boardLot(fill)), fill);
+      while (q > 0 && q * fill + fee(M, q * fill, 'buy') > master.cash) q = roundQty(M, q - (frac(M) ? q * 0.02 : boardLot(fill)), fill);
       if (q <= 0) continue;
       master.cash -= q * fill + fee(M, q * fill, 'buy');
       const p = master.positions[od.sym] || { qty: 0, entry: fill, date: ctx.date };
@@ -281,7 +295,7 @@ export function rebalanceMaster(master, books, weights, ctx, events) {
   for (const sym of new Set([...Object.keys(target), ...Object.keys(master.positions)])) {
     const s = ctx.syms[sym]; if (!s || s.idx < 0) continue;
     const price = s.I.c[s.idx], cur = master.positions[sym]?.qty || 0, want = roundQty(M, target[sym] || 0, price), diff = want - cur;
-    const minTrade = M === 'crypto' ? Math.max(10, eq * 0.005) : Math.max(1000, boardLot(price) * price);
+    const minTrade = frac(M) ? Math.max(10, eq * 0.005) : Math.max(1000, boardLot(price) * price);
     // only trade when it matters: opening, closing, or a change of at least a quarter of the position
     if (want > 0 && cur > 0 && Math.abs(diff) < 0.25 * cur) continue;
     if (Math.abs(diff) * price < minTrade && want !== 0) continue;
@@ -308,9 +322,9 @@ export function backtest(market, data, cfg, from, to) {
   const e = book.equity; if (e.length < 20) return null;
   const r = []; for (let i = 1; i < e.length; i++) r.push(e[i][1] / e[i - 1][1] - 1);
   const m = r.reduce((s, x) => s + x, 0) / r.length, sd = Math.sqrt(r.reduce((s, x) => s + (x - m) ** 2, 0) / r.length) || 1e-9;
-  const yrs = Math.max(0.25, e.length / (market === 'crypto' ? 365 : 250));
+  const yrs = Math.max(0.25, e.length / (market === 'crypto' ? 365 : market === 'fx' ? 260 : 250));
   let peak = -Infinity, dd = 0; for (const [, v] of e) { peak = Math.max(peak, v); dd = Math.min(dd, v / peak - 1); }
-  const per = market === 'crypto' ? 365 : 252;
+  const per = market === 'crypto' ? 365 : market === 'fx' ? 260 : 252;
   return { sharpe: round2(m / sd * Math.sqrt(per)), cagr: round4((e.at(-1)[1] / 100_000) ** (1 / yrs) - 1), maxDD: round4(dd), trades: book.trades.length, from, to };
 }
 

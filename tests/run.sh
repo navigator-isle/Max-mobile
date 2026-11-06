@@ -28,6 +28,7 @@ run "Brain router & desks" tests/test-worker16.mjs "$TMP/worker.mjs"
 run "Activity log & music finder" tests/test-worker17.mjs "$TMP/worker.mjs"
 run "Guard: daily check & backup" tests/test-worker18.mjs "$TMP/worker.mjs"
 run "Smarter free brain & second check" tests/test-worker19.mjs "$TMP/worker.mjs"
+run "Agents & weekly reports" tests/test-worker20.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
@@ -59,5 +60,6 @@ run "Phone: skills, learning and meaning search" tests/e2e26.mjs "$PWD/index.htm
 run "Phone: music desk and activity log" tests/e2e27.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: guard and restore" tests/e2e28.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: understanding his accent" tests/e2e29.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: agents, reports, fact-checks, music library" tests/e2e31.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: new notes (structure, media, links)" tests/e2e30.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

@@ -5,10 +5,11 @@ on:
     - cron: '30 8 * * 1-5'   # PSE: 4:30 pm Manila, after the close
     - cron: '20 0 * * *'     # Crypto: just after Binance's daily candle closes (8:20 am Manila)
     - cron: '0 2 * * 0'      # Researcher: Sunday 10:00 am Manila
+    - cron: '30 16 * * 1-5'  # Forex: after the European Central Bank's daily rates (00:30 Manila)
   workflow_dispatch:
     inputs:
       mode:
-        description: 'bootstrap, pse, crypto or research'
+        description: 'bootstrap, pse, crypto, fx or research'
         default: 'pse'
 permissions:
   contents: write
@@ -36,8 +37,8 @@ jobs:
           SCHED: ${{ github.event.schedule }}
         run: |
           MODE="$MODE_IN"
-          if [ -z "$MODE" ]; then case "$SCHED" in "30 8 * * 1-5") MODE=pse;; "20 0 * * *") MODE=crypto;; "0 2 * * 0") MODE=research;; esac; fi
-          case "$MODE" in bootstrap|pse|crypto|research) ;; *) echo "unknown mode"; exit 1;; esac
+          if [ -z "$MODE" ]; then case "$SCHED" in "30 8 * * 1-5") MODE=pse;; "20 0 * * *") MODE=crypto;; "0 2 * * 0") MODE=research;; "30 16 * * 1-5") MODE=fx;; esac; fi
+          case "$MODE" in bootstrap|pse|crypto|fx|research) ;; *) echo "unknown mode"; exit 1;; esac
           [ -f trader-data/state.json ] || MODE=bootstrap
           echo "Mode: $MODE"
           node trader/run.mjs "$MODE" trader-data
@@ -45,4 +46,7 @@ jobs:
         run: |
           cd trader-data
           git config user.name "Max paper trader"; git config user.email "max-bot@users.noreply.github.com"
-          git add -A && git commit -qm "paper trader $(date -u +%F) [skip ci]" && git push -q origin HEAD:trader-data || echo "nothing new"
+          git add -A && git commit -qm "paper trader $(date -u +%F) [skip ci]" || { echo "nothing new"; exit 0; }
+          # Max's server may have added this week's strategy ideas meanwhile: take them, then save.
+          for i in 1 2 3; do git push -q origin HEAD:trader-data && exit 0; git pull -q --rebase -X theirs origin trader-data || true; done
+          echo "::error::could not save the paper accounts"; exit 1

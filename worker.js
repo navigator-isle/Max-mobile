@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-14a";
+const WORKER_VERSION = "max-worker-2026-11-15a";
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || "").trim();
   const accepted = allowed && origin === allowed ? origin : "null";
@@ -409,18 +409,27 @@ const DEPTS = {
   trading: {name: "Trading desk", icon: "📈",
     words: /\b(?:stocks?|shares?|pse|psei|crypto|bitcoin|btc|eth|ethereum|solana|sol|forex|fx|trad(?:e|es|ing|er)|paper|strateg(?:y|ies)|candles?|candlestick|chart|portfolio|watchlist|binance|col financial|bull(?:ish)?|bear(?:ish)?|breakout|rsi|support|resistance|smc|order blocks?|stake|dividends?|presyo|bili|benta)\b/gi,
     brief: "You are acting as Max's TRADING DESK: paper trader, strategy researcher and market watcher. Rules: pretend money only, you never place real trades. Never tell him to buy or sell anything with real money; give facts, risks and what the paper account did, and say it is not financial advice when you discuss trades. Use ONLY the paper-account numbers in TRADING DESK DATA below. Never invent prices, returns or trades. Explain strategies plainly: what the signal is, the fees, the risk, and what the backtest showed. If the data is missing or old, say so."},
-  notes: {name: "Librarian", icon: "🗂",
+  notes: {name: "Notes & Attachments", icon: "🗂",
     words: /\b(?:notes?|vault|obsidian|folders?|skills?|playbook|learn this|summari[sz]e|summary|organi[sz]e|conflicts?|duplicates?|library|knowledge|second brain|tala)\b/gi,
     brief: "You are acting as Max's LIBRARIAN: keeper of his second brain (notes, skills and research). Answer from his notes first and name the note. Point out gaps, outdated facts and notes that conflict. Suggest where a new note belongs in his folders. Turn procedures into skills when he wants to repeat them."},
   schedule: {name: "Secretary", icon: "📅",
-    words: /\b(?:remind(?:er|ers)?|calendar|schedule|meetings?|events?|alarm|appointment|tasks?|to-?do|deadlines?|due|tomorrow|today|tonight|later|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|emails?|gmail|inbox|reply|whatsapp|routines?|briefing|paalala|bukas|mamaya|ngayon)\b/gi,
+    words: /\b(?:remind(?:er|ers)?|calendar|schedule|meetings?|events?|alarm|appointment|tasks?|to-?do|deadlines?|due|tomorrow|today|tonight|later|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|whatsapp|routines?|briefing|paalala|bukas|mamaya|ngayon)\b/gi,
     brief: "You are acting as Max's SECRETARY: calendar, reminders, tasks, email and routines. Always repeat back the day of the week, the date and the time you understood, in his time zone. Never say an email or message was sent unless the app confirmed it. Spot clashes and deadlines, and keep confirmations to one short sentence."},
   music: {name: "Music desk", icon: "🎵",
     words: /\b(?:music|songs?|kanta|kantahan|tugtog|patugtog(?:in)?|playlist|radio|album|artist|band|spotify|youtube music|volume|louder|softer|lofi|lo-fi|jazz|opm|karaoke|(?<!google )play(?!\s?store|\s+console|\s+reviews?|\s+listing))\b/gi,
     brief: "You are acting as Max's MUSIC DESK: his DJ. When he asks for music, set play_music with exactly what to play — the app finds and plays it at once, so never say you cannot play music. For a mood or activity (working, sleeping, gym, rainy day), pick a fitting genre or artist yourself. Keep the spoken reply to a few words, like \"Playing OPM love songs.\""},
-  guard: {name: "Guard", icon: "🛡",
+  guard: {name: "Security", icon: "🛡",
     words: /\b(?:guard|backups?|back ?up|uptime|outage|downtime|hacked|malware|system check|status report|security report|is everything (?:ok|okay|fine|working|alright)|anything broken|failed builds?)\b/gi,
     brief: "You are acting as Max's GUARD: security and reliability. You watch his sites, app builds, Max's own health and the backups. Use guard_report to show the latest check, guard_run to check now, and backup_now to email him a backup. Be specific about what is wrong and what to do. Never claim something is fine without checking."},
+  email: {name: "Email", icon: "✉️",
+    words: /\b(?:emails?|e-mails?|gmail|inbox|mail|reply|replies|unsubscribe|newsletter|mailing list|spam)\b/gi,
+    brief: "You are acting as Max's EMAIL agent: inbox manager. Read, summarize, draft replies in his voice, and organize. Never say an email was sent unless the app confirms it; he approves every send. Deleting moves mail to Trash (recoverable 30 days), never permanently."},
+  investments: {name: "Investments", icon: "💰",
+    words: /\b(?:invest(?:ment|ments|ing)?|mp2|pag-?ibig|hysa|high[- ]yield|savings account|interest rate|uitf|vul|insurance|bonds?|rtb|t-?bills?|treasury|dividends?|reit|passive income|digital bank|gotyme|maya|tonik|seabank|cimb)\b/gi,
+    brief: "You are acting as Max's INVESTMENTS agent: you monitor Pag-IBIG MP2, Philippine high-yield savings (digital banks), UITFs, VULs, bonds (RTB, T-bills, corporate) and PSE dividend stocks. Give current facts with dates and sources, explain simply (safety, liquidity, return, tax), and never tell him what to buy — say it is not financial advice."},
+  business: {name: "Business", icon: "🏪",
+    words: /\b(?:business(?:es)?|negosyo|side hustle|franchise|small business|startup|start-up|sari-?sari|business ideas?)\b/gi,
+    brief: "You are acting as Max's BUSINESS agent: you scout simple, boring businesses that usually earn in the Philippines and can be run while he is at sea. Give realistic costs and profits in PHP with sources, risks and first steps. Standing by for his own business updates."},
   training: {name: "Coach", icon: "🎯",
     words: /\b(?:coach(?:ing)?|train(?:ing)?|workout|exercise|fitness|gym|run(?:ning)?|push-?ups?|sleep|habit|study|exam|marina|review(?:er)?|career|promotion|interview|motivation|goal|goals|discipline|ehersisyo)\b/gi,
     brief: "You are acting as Max's COACH desk: fitness, study (including his MARINA exams), skills, business, career and life coaching. Be warm and direct. Give one clear next step at a time and follow up on his progress. For health, injury or medical questions give general guidance only and tell him to see a professional. Keep fitness and diet advice moderate and safe."}
@@ -437,6 +446,7 @@ function deptOfAction(t) {
   if (/^coach_/.test(t)) return "training";
   if (/^(play_music|music_control)$/.test(t)) return "music";
   if (/^(guard_report|guard_run|backup_now)$/.test(t)) return "guard";
+  if (/^(check_email|read_email|draft_email|send_email|cancel_email|modify_email)$/.test(t)) return "email";
   return "";
 }
 // Sounds like it continues the last topic: "why?", "and the second one", "what about that", "explain more", "bakit", "yung isa".
@@ -475,7 +485,7 @@ async function deptContext(env, id) {
   } catch { return "\nTRADING DESK DATA: could not be loaded right now, so do not quote any paper-trading numbers."; }
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["hear_fix","listen_lang","show_hearing","guard_report","guard_run","backup_now","play_music","music_control","activity","learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["agent_report","hear_fix","listen_lang","show_hearing","guard_report","guard_run","backup_now","play_music","music_control","activity","learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
@@ -496,7 +506,7 @@ function cleanAction(a) {
     steps: Array.isArray(d.steps) ? d.steps.map(x => cleanText(String(x), 120)).filter(Boolean).slice(0, 20) : undefined, time: cleanText(String(d.time || ""), 5),
     speed: Number.isFinite(Number(d.speed)) ? Number(d.speed) : undefined, depart: cleanText(String(d.depart || ""), 25), arriveBy: cleanText(String(d.arriveBy || ""), 25), delays: Number.isFinite(Number(d.delays)) ? Number(d.delays) : undefined,
     days: Number.isFinite(Number(d.days)) ? Number(d.days) : undefined, topic: cleanText(String(d.topic || ""), 200), name: cleanText(String(d.name || ""), 80), url: cleanText(String(d.url || ""), 500), skill: cleanText(String(d.skill || ""), 1500),
-    mode: ["radio","video"].includes(d.mode) ? d.mode : undefined, heard: cleanText(String(d.heard || ""), 60), meant: cleanText(String(d.meant || ""), 80), lang: ["fil-PH","en-PH"].includes(d.lang) ? d.lang : undefined, dept: ["apps","web","trading","notes","schedule","training","music"].includes(d.dept) ? d.dept : undefined};
+    mode: ["radio","video"].includes(d.mode) ? d.mode : undefined, agent: ["notes","research","web","apps","security","trading","investments","business","music","schedule","email"].includes(d.agent) ? d.agent : undefined, send: d.send === true, heard: cleanText(String(d.heard || ""), 60), meant: cleanText(String(d.meant || ""), 80), lang: ["fil-PH","en-PH"].includes(d.lang) ? d.lang : undefined, dept: ["apps","web","trading","notes","schedule","training","music"].includes(d.dept) ? d.dept : undefined};
   if (out.details) for (const k of Object.keys(out.details)) if (out.details[k] === undefined || out.details[k] === "" || out.details[k] === false) delete out.details[k];
   return out;
 }
@@ -1353,7 +1363,7 @@ async function actTable(db) {
     db.prepare("CREATE INDEX IF NOT EXISTS idx_max_activity_at ON max_activity(at)")]);
   actReady = true;
 }
-const ACT_DEPTS = ["apps", "web", "trading", "notes", "schedule", "training", "music", "guard", "general", "system"];
+const ACT_DEPTS = ["apps", "web", "trading", "notes", "research", "schedule", "email", "training", "music", "guard", "investments", "business", "general", "system"];
 async function logAct(env, a) {
   const db = env.MAX_MEMORY; if (!db) return;
   try {
@@ -1604,6 +1614,403 @@ async function mediaRoutes(request, env, url, origin) {
   const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0)); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; }
   const h = new Headers(corsHeaders(origin, env)); h.set("Content-Type", rows[0].mime || "application/octet-stream"); h.set("Cache-Control", "private, max-age=86400");
   return new Response(out, {status: 200, headers: h});
+}
+// ---------- Max's agents: daily work, and one detailed weekly report per agent by email ----------
+// Every Sunday (Manila time) each agent gathers its real numbers, then the brain writes a complete bulleted report from
+// those facts only (status, what was done, problems & errors, what needs improvement, what's missing, suggestions, next week).
+// Agents that need the web (researcher, security, investments, business, websites, trading ideas) search with Google.
+// If the brain is out of free quota, the report is still sent with the raw facts. Reports are kept in Max's database.
+const AGENT_LIST = [
+  {id: "notes", name: "Notes & Attachments", icon: "🗂", day: 6, hour: 23, workers: ["Librarian — organizes and files notes and attachments", "Fact-checker — checks notes against the web every day", "Maritime expert — IMO conventions & codes, US regulations, school subjects, duties by rank", "Attachment reader — reads pictures, videos and files you add"]},
+  {id: "research", name: "Researcher", icon: "🔎", day: 0, hour: 0, workers: ["Topic watcher — your research topics, every week", "Writes detailed but simple, short, structured findings with data and sources"]},
+  {id: "web", name: "Websites", icon: "🌐", day: 0, hour: 1, workers: ["Site guard (security & threats)", "Picture editor", "SEO specialist", "Mobile & desktop speed", "Content planner — publishes only with your OK", "Social media", "Affiliate manager", "Analytics manager", "Keyword researcher"]},
+  {id: "apps", name: "Apps", icon: "📱", day: 0, hour: 2, workers: ["Release manager — GitHub, Netlify, Play Store", "App security", "Error manager", "Analytics", "Improvement advisor"]},
+  {id: "security", name: "Security", icon: "🛡", day: 0, hour: 3, workers: ["Daily system check (6:45 am)", "Threat watcher — searches the web for new attacks and fixes", "Leads the security workers of every site and app"]},
+  {id: "trading", name: "Trading", icon: "📈", day: 0, hour: 4, workers: ["PSE paper trader", "Crypto paper trader", "Forex paper trader", "Strategy researcher — finds strategies on the web, backtests them, folds the winners in"]},
+  {id: "investments", name: "Investments", icon: "💰", day: 0, hour: 5, workers: ["Pag-IBIG MP2", "High-yield savings (PH digital banks)", "UITF", "VUL", "Bonds (RTB, T-bills, corporate)", "Dividend stocks (PSE)"]},
+  {id: "business", name: "Business", icon: "🏪", day: 0, hour: 6, workers: ["Idea scout — 10 new simple, boring, earning businesses every week (never repeated)"]},
+  {id: "music", name: "Music", icon: "🎵", day: 0, hour: 7, workers: ["DJ — plays on request", "Curator — favorites and playlists"]},
+  {id: "schedule", name: "Schedule", icon: "📅", day: 0, hour: 8, workers: ["Calendar manager", "Reminders", "Tasks"]},
+  {id: "email", name: "Email", icon: "✉️", day: 0, hour: 9, workers: ["Inbox manager — read, reply, organize (trash is recoverable for 30 days)", "Mailing-list manager (when you set one up)"]}];
+const AGENT = Object.fromEntries(AGENT_LIST.map(a => [a.id, a]));
+// Background brain use per day: notes first, trading second, a small share for the rest.
+const BUDGET = {notes: 40, trading: 20, investments: 14, research: 8, web: 4, apps: 3, security: 3, business: 3, music: 2, schedule: 2, email: 2};
+async function budgetOk(env, id, n = 1) {
+  if (!env.MAX_MEMORY) return true;
+  const day = new Date().toISOString().slice(0, 10);
+  let b = {}; try { b = JSON.parse(await srvSetting(env, "max_srv_ai_budget") || "{}"); } catch {}
+  if (b.day !== day) b = {day, used: {}};
+  if ((b.used[id] || 0) + n > (BUDGET[id] || 2)) return false;
+  b.used[id] = (b.used[id] || 0) + n; await srvSetting(env, "max_srv_ai_budget", JSON.stringify(b));
+  return true;
+}
+// One brain call; with search it uses Google Search and returns the sources it used.
+async function agentAsk(env, id, prompt, opts = {}) {
+  if (!(await budgetOk(env, id))) return {error: "today's brain budget for this agent is used up"};
+  const payload = {contents: [{role: "user", parts: [{text: prompt}]}], generationConfig: {temperature: opts.temp ?? 0.3, maxOutputTokens: 8192, ...(opts.search ? {} : {responseMimeType: "application/json"})}, ...(opts.search ? {tools: [{google_search: {}}]} : {})};
+  let g = await gemini(env, payload, {deep: !!opts.deep}).catch(e => ({ok: false, data: {error: {message: e.message}}}));
+  if ((!g || !g.ok) && opts.search && g?.status !== 429) g = await gemini(env, {...payload, tools: undefined}).catch(() => null); // search refused → plain
+  if (!g || !g.ok) return {error: String(g?.data?.error?.message || "no brain answered").slice(0, 200)};
+  const cand = g.data?.candidates?.[0] || {}, text = (cand.content?.parts || []).map(p => p.text || "").join("\n");
+  const sources = (cand.groundingMetadata?.groundingChunks || []).map(c => c.web).filter(Boolean).map(w => ({title: cleanText(String(w.title || ""), 120), url: String(w.uri || "")})).filter(s => /^https:\/\//.test(s.url)).slice(0, 12);
+  let data = null; try { const m = text.replace(/```(?:json)?/g, "").match(/\{[\s\S]*\}/); data = m ? JSON.parse(m[0]) : null; } catch {}
+  return {data, text, sources, model: g.model};
+}
+const SECTIONS = [["status", "Status"], ["done", "What was done this week"], ["problems", "Problems & errors"], ["improvements", "What needs improvement"], ["missing", "What's missing"], ["suggestions", "Suggestions"], ["next", "Next week"]];
+const WRITE_RULES = "Write ONLY from the FACTS below (and, if you searched, from what you found — cite it). Never invent numbers, results, rankings, prices or events. If something is unknown, say it is unknown. Be detailed and complete but plain and simple: short bullets, one fact per bullet, numbers and dates where available, Philippine context (PHP). Not financial or legal advice. Reply ONLY with JSON: {\"status\": [\"...\"], \"done\": [...], \"problems\": [...], \"improvements\": [...], \"missing\": [...], \"suggestions\": [...], \"next\": [...]" ;
+const asList = x => (Array.isArray(x) ? x : x ? [x] : []).map(v => cleanText(typeof v === "string" ? v : JSON.stringify(v), 600)).filter(Boolean).slice(0, 25);
+// Turn the facts (+ optional web search) into the report. Falls back to the plain facts if the brain is out.
+async function writeReport(env, id, facts, opts = {}) {
+  const a = AGENT[id], factText = typeof facts === "string" ? facts : JSON.stringify(facts, null, 1).slice(0, 24000);
+  const extra = opts.extraKeys ? ", " + opts.extraKeys : "";
+  const r = await agentAsk(env, id, `You are Max's ${a.name} agent (${a.workers.join("; ")}), writing your weekly report for Mark Jun, a ship officer from the Philippines who works from his phone.\n${opts.brief || ""}\n${WRITE_RULES}${extra}}.\n\nFACTS (gathered by Max this week):\n${factText}`, {search: !!opts.search, deep: true});
+  const d = r.data || {};
+  const rep = {agent: id, name: a.name, icon: a.icon, at: Date.now(), model: r.model || "", sources: r.sources || [], extra: {}};
+  for (const [k] of SECTIONS) rep[k] = asList(d[k]);
+  for (const k of (opts.extraList || [])) rep.extra[k] = d[k];
+  if (!SECTIONS.some(([k]) => rep[k].length)) {
+    rep.status = ["The brain couldn't write this week's summary (" + (r.error || "no answer") + "), so here are the plain facts."];
+    rep.facts = factText.slice(0, 12000);
+  }
+  return rep;
+}
+const esc2 = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+function renderReport(rep) {
+  const date = new Date(rep.at).toLocaleDateString("en-PH", {timeZone: "Asia/Manila", weekday: "short", year: "numeric", month: "short", day: "numeric"});
+  const subject = `${rep.icon} Max ${rep.name} — weekly report, ${date}`;
+  const text = [subject, ""], html = [`<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45;color:#1c2333;max-width:720px"><h2 style="margin:0 0 4px">${esc2(rep.icon + " " + rep.name)}</h2><div style="color:#667;margin:0 0 12px">Weekly report · ${esc2(date)}${rep.model ? " · written by " + esc2(rep.model) : ""}</div>`];
+  const block = (title, items) => { if (!items || !items.length) return; text.push(title.toUpperCase()); items.forEach(x => text.push("• " + x)); text.push("");
+    html.push(`<h3 style="margin:14px 0 4px;font-size:15px;border-bottom:1px solid #dde">${esc2(title)}</h3><ul style="margin:4px 0 8px 18px;padding:0">${items.map(x => `<li style="margin:2px 0">${esc2(x)}</li>`).join("")}</ul>`); };
+  for (const [k, t] of SECTIONS) block(t, rep[k]);
+  for (const sec of rep.tables || []) {
+    text.push(sec.title.toUpperCase()); for (const row of sec.rows) text.push("• " + row.join(" · ")); text.push("");
+    html.push(`<h3 style="margin:14px 0 4px;font-size:15px;border-bottom:1px solid #dde">${esc2(sec.title)}</h3><table style="border-collapse:collapse;font-size:13px;width:100%">${sec.head ? `<tr>${sec.head.map(h => `<th style="text-align:left;border-bottom:1px solid #ccd;padding:3px 6px">${esc2(h)}</th>`).join("")}</tr>` : ""}${sec.rows.map(r => `<tr>${r.map(c => `<td style="border-bottom:1px solid #eef;padding:3px 6px;vertical-align:top">${esc2(c)}</td>`).join("")}</tr>`).join("")}</table>`);
+  }
+  if (rep.facts) { text.push("FACTS", rep.facts, ""); html.push(`<h3>Facts</h3><pre style="white-space:pre-wrap;font-size:12px">${esc2(rep.facts)}</pre>`); }
+  if (rep.sources && rep.sources.length) { text.push("SOURCES"); rep.sources.forEach(s => text.push("• " + (s.title || s.url) + " — " + s.url)); text.push("");
+    html.push(`<h3 style="margin:14px 0 4px;font-size:15px">Sources</h3><ul style="margin:4px 0 8px 18px;padding:0">${rep.sources.map(s => `<li><a href="${esc2(s.url)}">${esc2(s.title || s.url)}</a></li>`).join("")}</ul>`); }
+  const foot = "Pretend money only for trading. Not financial or legal advice. Ask Max “show the " + rep.name.toLowerCase() + " report” to see it on your phone.";
+  text.push(foot); html.push(`<p style="color:#889;font-size:12px;margin-top:16px">${esc2(foot)}</p></div>`);
+  return {subject, text: text.join("\n"), html: html.join("")};
+}
+async function emailReport(env, rep) {
+  if (!env.MAX_OWNER_EMAIL || !(await googleRow(env))) return "not emailed (Gmail isn't connected)";
+  const {subject, text, html} = renderReport(rep), b = "maxrep" + Math.random().toString(36).slice(2);
+  const raw = ["To: " + String(env.MAX_OWNER_EMAIL).trim(), "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent(subject))) + "?=", "MIME-Version: 1.0", `Content-Type: multipart/alternative; boundary="${b}"`, "",
+    "--" + b, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "", b64lines(text), "--" + b, "Content-Type: text/html; charset=UTF-8", "Content-Transfer-Encoding: base64", "", b64lines(html), "--" + b + "--", ""].join("\r\n");
+  await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})});
+  return "emailed";
+}
+let repReady = false;
+async function repTable(db) { if (repReady) return; await db.prepare("CREATE TABLE IF NOT EXISTS max_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, agent TEXT NOT NULL, at INTEGER NOT NULL, subject TEXT, data TEXT NOT NULL)").run(); repReady = true; }
+async function saveReport(env, rep) {
+  if (!env.MAX_MEMORY) return; const db = env.MAX_MEMORY; await repTable(db);
+  await db.prepare("INSERT INTO max_reports (agent, at, subject, data) VALUES (?, ?, ?, ?)").bind(rep.agent, rep.at, renderReport(rep).subject, JSON.stringify(rep).slice(0, 400000)).run();
+  await db.prepare("DELETE FROM max_reports WHERE agent = ? AND id NOT IN (SELECT id FROM max_reports WHERE agent = ? ORDER BY at DESC LIMIT 20)").bind(rep.agent, rep.agent).run();
+}
+async function lastReport(env, id) {
+  if (!env.MAX_MEMORY) return null; const db = env.MAX_MEMORY; await repTable(db);
+  const r = await db.prepare("SELECT data FROM max_reports WHERE agent = ? ORDER BY at DESC LIMIT 1").bind(id).first();
+  try { return r ? JSON.parse(r.data) : null; } catch { return null; }
+}
+const setting = async (env, k, d) => { try { const v = env.MAX_MEMORY ? await srvSetting(env, k) : null; return v == null ? d : JSON.parse(v); } catch { return d; } };
+const weekAgo = () => Date.now() - 7 * 864e5;
+const fmtDay = t => new Date(t).toLocaleString("en-PH", {timeZone: "Asia/Manila", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"});
+async function actRows(env, where, args) { try { await actTable(env.MAX_MEMORY); return (await env.MAX_MEMORY.prepare("SELECT at, dept, kind, text, detail, model, ok FROM max_activity WHERE at > ? " + where + " ORDER BY at DESC LIMIT 200").bind(weekAgo(), ...args).all()).results || []; } catch { return []; } }
+
+// ----- 🗂 notes: daily fact-check by a topic expert, weekly report -----
+const EXPERTS = {maritime: "a senior maritime regulatory expert and master mariner who knows IMO conventions and codes (SOLAS, MARPOL, STCW, COLREG, ISM, ISPS, MLC, Load Lines, BWM, IMDG, IMSBC), the latest amendments and their entry-into-force dates, US rules (USCG, 33 and 46 CFR, OPA 90, VGP/VIDA, ECA), maritime school subjects, and the duties of the Master, Chief Officer, Second Officer and Third Officer"};
+const expertFor = cat => EXPERTS[String(cat || "").split(/\s*›\s*/)[0].toLowerCase()] || "a careful subject-matter expert in the note's topic";
+async function notesDailyCheck(env, max = 4) {
+  if (!env.MAX_MEMORY) return "no database";
+  const notes = (await listNotes(env.MAX_MEMORY)).filter(n => !n.deleted && plainText(n.body).length > 40 && !/^Max › Skills/.test(n.category || ""));
+  const checks = await setting(env, "max_srv_notecheck", {});
+  const due = notes.filter(n => !checks[n.id] || checks[n.id].at < (n.updatedAt || 0) || Date.now() - checks[n.id].at > 90 * 864e5)
+    .sort((a, b) => (/^Maritime/.test(b.category || "") - /^Maritime/.test(a.category || "")) || ((checks[a.id]?.at || 0) - (checks[b.id]?.at || 0))).slice(0, max);
+  let done = 0;
+  for (const n of due) {
+    const r = await agentAsk(env, "notes", `You are ${expertFor(n.category)}, checking one of Mark Jun's personal study/work notes for correctness against current, official sources (search the web: IMO, flag states, USCG/eCFR, classification societies, MARINA, manufacturers). Today is ${new Date().toISOString().slice(0, 10)}.\nNOTE TITLE: ${n.title}\nFOLDER: ${n.category}\nNOTE:\n${plainText(n.body).slice(0, 6000)}\n\nReply ONLY with JSON: {"verdict": "correct" | "needs update" | "wrong" | "can't verify", "summary": "one or two plain sentences", "issues": [{"claim": "what the note says", "problem": "what is wrong or outdated", "correct": "the correct current information", "source": "which source"}]}. Only list real errors or outdated facts — not style. If the note is right, issues is empty.`, {search: true});
+    if (!r.data || !r.data.verdict) continue;
+    checks[n.id] = {at: Date.now(), title: cleanText(n.title || "", 120), folder: cleanText(n.category || "", 120), verdict: cleanText(String(r.data.verdict), 20), summary: cleanText(String(r.data.summary || ""), 400),
+      issues: (Array.isArray(r.data.issues) ? r.data.issues : []).slice(0, 6).map(i => ({claim: cleanText(String(i.claim || ""), 300), problem: cleanText(String(i.problem || ""), 300), correct: cleanText(String(i.correct || ""), 400), source: cleanText(String(i.source || ""), 160)})),
+      sources: r.sources.slice(0, 5), expert: /maritime/.test(expertFor(n.category)) ? "Maritime expert" : "Topic expert"};
+    done++;
+  }
+  const keys = Object.keys(checks); if (keys.length > 600) for (const k of keys.sort((a, b) => checks[a].at - checks[b].at).slice(0, keys.length - 600)) delete checks[k];
+  await srvSetting(env, "max_srv_notecheck", JSON.stringify(checks));
+  if (done) await logAct(env, {dept: "notes", kind: "fact-check", text: `Fact-checked ${done} note${done === 1 ? "" : "s"} against the web`, detail: due.slice(0, done).map(n => n.title).join("; ").slice(0, 280), source: "schedule"});
+  return "checked " + done;
+}
+async function factsNotes(env) {
+  const notes = env.MAX_MEMORY ? (await listNotes(env.MAX_MEMORY)).filter(n => !n.deleted) : [];
+  const checks = await setting(env, "max_srv_notecheck", {}), folders = await setting(env, "max_folders", []);
+  const top = {}, sub = {}; for (const n of notes) { const p = String(n.category || "Unsorted").split(/\s*›\s*/); top[p[0]] = (top[p[0]] || 0) + 1; const k = p.slice(0, 3).join(" › "); sub[k] = (sub[k] || 0) + 1; }
+  const norm = t => String(t || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(), seen = {}, dups = [];
+  for (const n of notes) { const k = norm(n.title); if (!k) continue; if (seen[k]) dups.push(n.title); else seen[k] = 1; }
+  const wk = Object.values(checks).filter(c => c.at > weekAgo());
+  const used = new Set(notes.map(n => String(n.category || ""))), emptyFolders = (Array.isArray(folders) ? folders : []).filter(f => typeof f === "string" && ![...used].some(u => u === f || u.startsWith(f + " ›"))).slice(0, 40);
+  return {totalNotes: notes.length, newThisWeek: notes.filter(n => (n.createdAt || 0) > weekAgo()).map(n => n.title).slice(0, 30), editedThisWeek: notes.filter(n => (n.updatedAt || 0) > weekAgo() && (n.createdAt || 0) <= weekAgo()).length,
+    byTopFolder: top, bySubFolder: sub, unsorted: notes.filter(n => !n.category || n.category === "Unsorted").map(n => n.title).slice(0, 30),
+    withoutTags: notes.filter(n => !(n.tags || []).length).length, notAnalyzedByMax: notes.filter(n => !n.analysis).map(n => n.title).slice(0, 30),
+    withPicturesOrVideos: notes.filter(n => /data-media=/.test(n.body || "")).length, possibleDuplicates: dups.slice(0, 20), emptyFolders,
+    regulationNotesNotUpdatedIn2Years: notes.filter(n => /IMO|Regulation|Convention|Code/i.test(n.category || "") && Date.now() - (n.updatedAt || 0) > 730 * 864e5).map(n => n.title).slice(0, 20),
+    factChecksThisWeek: wk.length, factCheckResults: wk.map(c => ({note: c.title, verdict: c.verdict, summary: c.summary, issues: c.issues})),
+    notesNeedingUpdate: Object.values(checks).filter(c => /update|wrong/.test(c.verdict)).map(c => ({note: c.title, verdict: c.verdict, checked: fmtDay(c.at), issues: c.issues.map(i => i.problem + " → " + i.correct)})).slice(0, 30),
+    notesNeverChecked: notes.filter(n => !checks[n.id]).length};
+}
+// ----- 🔎 researcher -----
+async function factsResearch(env) {
+  const watch = (await setting(env, "max_watch", [])).filter(t => t && t.topic).map(t => t.topic).slice(0, 5);
+  const topics = watch.length ? watch : ["IMO amendments entering into force in the next 12 months (SOLAS, MARPOL, STCW)", "MARINA Philippines advisories for seafarers and STCW certificates", "USCG marine safety alerts and port state control focus areas"];
+  const found = [], sources = [];
+  for (const t of topics) {
+    const r = await agentAsk(env, "research", `Research what is NEW (last 7–14 days, or the latest available) about: ${t}\nFor Mark Jun, a Filipino ship officer. Be detailed but simple, with a short clear structure and real data (dates, numbers, names). Reply ONLY with JSON: {"topic": "...", "headline": "one line", "points": ["..."], "data": ["number or date facts"], "whatItMeansForMark": "...", "confidence": "high|medium|low"}`, {search: true});
+    if (r.data) found.push({...r.data, topic: t}); else found.push({topic: t, error: r.error || "no answer"});
+    sources.push(...(r.sources || []));
+  }
+  return {facts: {watchedTopics: watch, usedDefaultTopics: !watch.length, findings: found}, sources};
+}
+// ----- 🌐 websites -----
+async function pageSpeed(url, strategy) {
+  try { const {r} = await timedFetch("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=" + encodeURIComponent(url) + "&strategy=" + strategy + "&category=performance&category=seo&category=accessibility&category=best-practices", {}, 60000);
+    const d = await r.json().catch(() => ({})); if (!r.ok) return {error: String(d?.error?.message || r.status).slice(0, 120)};
+    const c = d.lighthouseResult?.categories || {}, a = d.lighthouseResult?.audits || {}, sc = k => c[k] ? Math.round(c[k].score * 100) : null;
+    return {performance: sc("performance"), seo: sc("seo"), accessibility: sc("accessibility"), bestPractices: sc("best-practices"), lcp: a["largest-contentful-paint"]?.displayValue, cls: a["cumulative-layout-shift"]?.displayValue, tbt: a["total-blocking-time"]?.displayValue,
+      bigImages: a["uses-optimized-images"]?.details?.items?.length || 0, oversizedImages: a["uses-responsive-images"]?.details?.items?.length || 0};
+  } catch (e) { return {error: cleanText(String(e.message), 100)}; }
+}
+async function factsWeb(env) {
+  const sites = (await guardSites(env)).filter(s => s.site).slice(0, 3), out = [];
+  const guard = await setting(env, "max_srv_guard_report", null);
+  for (const s of sites) {
+    const f = {site: s.name, url: s.url};
+    try { const a = await siteAudit(s.url); f.securityAndSeoScore = a.score; f.title = a.title; f.issues = (a.issues || []).map(i => `[${i.sev}] ${i.area}: ${i.text}`).slice(0, 15); f.good = (a.good || []).map(g => g.text).slice(0, 10); } catch (e) { f.auditError = e.message; }
+    f.mobile = await pageSpeed(s.url, "mobile"); f.desktop = await pageSpeed(s.url, "desktop");
+    try { const {r} = await timedFetch(s.url, {}, 12000); const html = await r.text(); const links = [...html.matchAll(/href=["']([^"']+)["']/gi)].map(m => m[1]);
+      const aff = links.filter(l => /amazon\.|amzn\.to|shopee|lazada|aliexpress|ebay\.|tiktok\.com\/.*shop|involve\.asia/i.test(l));
+      f.affiliate = {linksOnHomepage: aff.length, amazonWithoutTag: aff.filter(l => /amazon\./i.test(l) && !/[?&]tag=/.test(l)).length, disclosureOnPage: /affiliate|associate|commission/i.test(html), stores: [...new Set(aff.map(l => (l.match(/(amazon|amzn|shopee|lazada|aliexpress|ebay|involve)/i) || [""])[0].toLowerCase()))]};
+      f.socialLinks = [...new Set(links.filter(l => /facebook\.com|instagram\.com|tiktok\.com|youtube\.com|x\.com|twitter\.com|pinterest\./i.test(l)).map(l => l.split("?")[0]))].slice(0, 8);
+    } catch (e) { f.homepageError = e.message; }
+    if (statsReady(env)) { try { const host = new URL(s.url).host, now = new Date(); f.analytics = await siteStats(env, host, new Date(now - 864e5).toISOString(), new Date(now - 7 * 864e5).toISOString(), now.toISOString()); } catch (e) { f.analyticsError = e.message; } }
+    else f.analytics = "not connected (Cloudflare analytics key missing)";
+    f.uptimeToday = guard?.sites?.find(x => x.url === s.url) || null;
+    out.push(f);
+  }
+  return {sites: out, siteCount: out.length};
+}
+// ----- 📱 apps -----
+const APPS_DEFAULT = [
+  {name: "Max", url: "https://navigator-isle.github.io/Max-mobile/", repo: "navigator-isle/Max-mobile"},
+  {name: "Passage Planner", url: "https://navigator-isle.github.io/", repo: "navigator-isle/navigator-isle.github.io", androidRepo: "navigator-isle/passage-planner-android", play: "passage planner"},
+  {name: "Quick Draft Calculator", url: "https://draft-calculator.github.io/Draft-Calculator/"}];
+async function appList(env) {
+  const mine = await setting(env, "max_projects", null);
+  const list = Array.isArray(mine) && mine.length ? mine.filter(p => p && !p.site && (p.repo || /^https:\/\//.test(p.url || ""))).map(p => ({name: p.name, url: p.url, repo: p.repo, androidRepo: p.androidRepo, play: p.play ? String(p.name).toLowerCase() : ""})) : APPS_DEFAULT;
+  return list.slice(0, 8);
+}
+async function factsApps(env) {
+  const apps = await appList(env), out = [], since = new Date(weekAgo()).toISOString();
+  let netlify = null;
+  if (env.NETLIFY_TOKEN) {
+    try { const r = await fetch("https://api.netlify.com/api/v1/sites?per_page=20", {headers: {Authorization: "Bearer " + env.NETLIFY_TOKEN, "User-Agent": UA}}); const d = await r.json().catch(() => []);
+      if (!r.ok) netlify = {error: "Netlify answered " + r.status}; else { netlify = [];
+        for (const s of d.slice(0, 6)) { let deploys = []; try { const dr = await fetch(`https://api.netlify.com/api/v1/sites/${s.id}/deploys?per_page=8`, {headers: {Authorization: "Bearer " + env.NETLIFY_TOKEN, "User-Agent": UA}}); deploys = dr.ok ? await dr.json() : []; } catch {}
+          netlify.push({site: s.name, url: s.ssl_url || s.url, state: s.published_deploy?.state || s.state, lastPublished: s.published_deploy?.published_at, deploysThisWeek: deploys.filter(x => x.created_at > since).length, failedThisWeek: deploys.filter(x => x.created_at > since && x.state === "error").map(x => cleanText(String(x.error_message || "error"), 160))}); } }
+    } catch (e) { netlify = {error: e.message}; }
+  } else netlify = "not connected — add a NETLIFY_TOKEN secret in Cloudflare to watch Netlify deploys";
+  for (const app of apps) {
+    const f = {app: app.name, url: app.url};
+    if (/^https:\/\//.test(app.url || "") && !/claude\.ai\//.test(app.url)) { try { const {r, ms} = await timedFetch(app.url, {}, 12000); f.up = r.status < 400; f.status = r.status; f.responseMs = ms; } catch (e) { f.up = false; f.error = e.message; }
+      f.mobileSpeed = await pageSpeed(app.url, "mobile"); }
+    for (const repo of [app.repo, app.androidRepo].filter(r => r && allowedRepos(env).includes(r) && env.GITHUB_TOKEN)) {
+      try {
+        const [commits, runs, issues] = await Promise.all([gh(env, `/repos/${repo}/commits?since=${since}&per_page=30`), gh(env, `/repos/${repo}/actions/runs?per_page=30&created=>${since.slice(0, 19)}Z`), gh(env, `/repos/${repo}/issues?state=open&per_page=30`)]);
+        const wr = runs.workflow_runs || [];
+        f[repo] = {commitsThisWeek: commits.length, changes: commits.slice(0, 8).map(c => cleanText(String(c.commit?.message || "").split("\n")[0], 120)), buildsThisWeek: wr.length, failedBuilds: wr.filter(x => x.conclusion === "failure").map(x => x.name + " (" + x.created_at.slice(0, 10) + ")").slice(0, 10),
+          openIssues: issues.filter(i => !i.pull_request).map(i => "#" + i.number + " " + cleanText(i.title, 100)).slice(0, 10), openPullRequests: issues.filter(i => i.pull_request).map(i => "#" + i.number + " " + cleanText(i.title, 100)).slice(0, 10)};
+      } catch (e) { f[repo] = {error: cleanText(String(e.message), 120)}; }
+    }
+    if (app.play && env.PLAY_SERVICE_ACCOUNT) {
+      const pa = playApp(env, app.play);
+      if (pa) { try { const edit = await papi(env, pa.pkg + "/edits", {method: "POST", body: "{}"});
+          try { const tr = await papi(env, pa.pkg + "/edits/" + edit.id + "/tracks"); f.playStore = {package: pa.pkg, tracks: (tr.tracks || []).map(t => ({track: t.track, releases: (t.releases || []).map(r => (r.name || "") + " " + (r.versionCodes || []).join(",") + " " + r.status)}))}; }
+          finally { await papi(env, pa.pkg + "/edits/" + edit.id, {method: "DELETE"}).catch(() => {}); }
+          try { const rv = await papi(env, pa.pkg + "/reviews?maxResults=10"); f.playStore.reviews = (rv.reviews || []).map(x => { const c = x.comments?.[0]?.userComment || {}; return (c.starRating || "?") + "★ " + cleanText(String(c.text || ""), 160); }); } catch (e) { f.playStore.reviewsError = cleanText(String(e.message), 100); }
+        } catch (e) { f.playStore = {error: cleanText(String(e.message), 160)}; } }
+    } else if (app.play) f.playStore = "not connected (PLAY_SERVICE_ACCOUNT missing)";
+    out.push(f);
+  }
+  return {apps: out, netlify, playCrashReports: "not connected yet (needs the Play Developer Reporting permission)"};
+}
+// ----- 🛡 security -----
+async function factsSecurity(env) {
+  const guard = await setting(env, "max_srv_guard_report", null), rows = await actRows(env, "AND dept = 'guard'", []);
+  const failures = await actRows(env, "AND ok = 0", []);
+  const dependabot = [];
+  for (const repo of allowedRepos(env).slice(0, 4)) { if (!env.GITHUB_TOKEN) break; try { const a = await gh(env, `/repos/${repo}/dependabot/alerts?state=open&per_page=20`); dependabot.push({repo, openAlerts: a.length, alerts: a.slice(0, 5).map(x => (x.security_advisory?.severity || "") + " " + (x.dependency?.package?.name || "") + ": " + cleanText(String(x.security_advisory?.summary || ""), 120))}); } catch (e) { dependabot.push({repo, note: "can't read alerts (" + cleanText(String(e.message), 80) + ")"}); } }
+  return {latestDailyCheck: guard ? {at: fmtDay(guard.at), problems: guard.problems, sites: (guard.sites || []).map(s => ({site: s.name, up: s.up, ms: s.ms, score: s.score, issues: s.issues})), builds: guard.builds, max: guard.max} : "no daily check yet",
+    dailyChecksThisWeek: rows.map(r => fmtDay(r.at) + " — " + r.text), failuresInActivityLog: failures.length, failureSamples: failures.slice(0, 10).map(r => fmtDay(r.at) + " " + r.dept + ": " + r.text + (r.detail ? " (" + r.detail.slice(0, 100) + ")" : "")),
+    dependabot, protectedThings: ["Hobby Isle (Cloudflare)", "GitHub Pages sites", "Max's server (Cloudflare Worker, passcode + Google sign-in)", "GitHub repositories and their secrets", "Google account (Gmail, Calendar)", "Play Console"]};
+}
+// ----- 📈 trading -----
+async function tradingIdeasJob(env) {
+  if (!env.GITHUB_TOKEN || !allowedRepos(env).includes("navigator-isle/Max-mobile")) return "GitHub not connected";
+  const s = await traderFile("summary.json", true).catch(() => null), out = {at: new Date().toISOString()}, found = [];
+  const B = {rotation: "K 2–6, look 60–300 days, skip 0–30, trendSma 100 or 200", breakout: "N 10–55, volx 0–2.5 (0 = no volume rule; forex has no volume), stopATR 1.5–4, maxDays 10–120, trailATR 0–6, risk 0.5–1.5, maxPos 3–8", rsi2: "th 3–20, stopATR 2–4, maxDays 3–15, risk 0.5–1.5, maxPos 3–6", trend: "fast 20–100, slow 100–250, maxPos 3–8", candle: "stopATR 1.5–4, maxDays 10–90, trailATR 0–6, risk 0.25–1, maxPos 3–8 (not for forex)"};
+  for (const mk of ["pse", "crypto", "fx"]) {
+    const have = (s?.markets?.[mk]?.strategies || []).map(x => x.template + " " + JSON.stringify(x.params)).join("; "), tried = (s?.research?.[mk]?.ideas || []).map(x => x.name).join("; ");
+    const r = await agentAsk(env, "trading", `You are a quantitative trading researcher. Search the web for well-documented, rule-based strategies that trade on DAILY bars, long-only, for ${mk === "pse" ? "Philippine stocks (PSE)" : mk === "crypto" ? "major cryptocurrencies (spot, Binance)" : "major forex pairs (long a pair or its inverse)"} — from books, academic papers or well-known traders, with evidence they worked after costs. Each must be expressible with one of these templates and parameter ranges: ${Object.entries(B).map(([k, v]) => k + " (" + v + ")").join("; ")}.\nAlready running: ${have || "none"}. Already tested: ${tried || "none"}. Propose up to 3 NEW ones (different parameters or templates).\nReply ONLY with JSON: {"ideas": [{"name": "...", "template": "rotation|breakout|rsi2|trend|candle", "params": {...}, "universe": "${mk === "pse" ? "blue|middle|spec|all" : "all"}", "source": "author / title / site", "why": "the evidence, one line"}]}`, {search: true});
+    const ideas = (r.data?.ideas || []).filter(x => x && TRADE_BOUNDS[x.template] && !(mk === "fx" && x.template === "candle")).slice(0, 3).map(x => ({name: cleanText(String(x.name || ""), 80), template: x.template, params: clampParams(x.template, x.params || {}), universe: cleanText(String(x.universe || "all"), 20), source: cleanText(String(x.source || ""), 160), why: cleanText(String(x.why || ""), 240)}));
+    out[mk] = ideas; found.push(...ideas.map(i => mk + ": " + i.name));
+  }
+  const path = "/repos/navigator-isle/Max-mobile/contents/ideas.json";
+  let sha; try { sha = (await gh(env, path + "?ref=trader-data")).sha; } catch {}
+  await gh(env, path, {method: "PUT", body: JSON.stringify({message: "Strategy ideas from Max's web researcher [skip ci]", branch: "trader-data", content: btoa(unescape(encodeURIComponent(JSON.stringify(out, null, 1)))), ...(sha ? {sha} : {})})});
+  await srvSetting(env, "max_srv_trade_ideas", JSON.stringify(out));
+  await logAct(env, {dept: "trading", kind: "strategy research", text: `Found ${found.length} strategy idea${found.length === 1 ? "" : "s"} on the web for the paper trader to backtest`, detail: found.join("; ").slice(0, 280), source: "schedule"});
+  return found.length + " ideas";
+}
+const TRADE_BOUNDS = {rotation: {K: [2, 6], look: [60, 300], skip: [0, 30], trendSma: [100, 200]}, breakout: {N: [10, 55], volx: [0, 2.5], stopATR: [1.5, 4], maxDays: [10, 120], trailATR: [0, 6], risk: [0.5, 1.5], maxPos: [3, 8]},
+  rsi2: {th: [3, 20], stopATR: [2, 4], maxDays: [3, 15], risk: [0.5, 1.5], maxPos: [3, 6]}, trend: {fast: [20, 100], slow: [100, 250], maxPos: [3, 8]}, candle: {stopATR: [1.5, 4], maxDays: [10, 90], trailATR: [0, 6], risk: [0.25, 1], maxPos: [3, 8]}};
+function clampParams(tpl, p) {
+  const b = TRADE_BOUNDS[tpl], out = {};
+  for (const [k, [lo, hi]] of Object.entries(b)) { const v = Number(p[k]); out[k] = Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo + (hi - lo) / 2; if (["K", "look", "skip", "N", "maxDays", "maxPos", "fast", "slow", "th"].includes(k)) out[k] = Math.round(out[k]); }
+  if (tpl === "rotation") out.trendSma = out.trendSma >= 150 ? 200 : 100;
+  if (tpl === "trend" && out.fast >= out.slow) out.slow = Math.min(250, out.fast + 50);
+  return out;
+}
+async function factsTrading(env) {
+  const s = await traderFile("summary.json", true).catch(() => null);
+  if (!s) return {error: "paper trading data unreadable"};
+  const markets = {};
+  for (const [k, m] of Object.entries(s.markets || {})) {
+    const curve = m.curve || [], wk = curve.filter(c => Date.parse(c[0]) >= weekAgo() - 864e5), w0 = wk[0]?.[1] ?? m.start;
+    const tradesWk = (m.trades || []).filter(t => Date.parse(t.date) >= weekAgo()), sells = (m.trades || []).filter(t => t.side === "sell");
+    markets[k] = {account: m.name, currency: m.ccy, start: m.start, equity: m.equity, returnSinceStartPct: +(100 * m.returnPct).toFixed(2), returnThisWeekPct: +(100 * (m.equity / w0 - 1)).toFixed(2), cash: m.cash, marketMood: m.regime, riskBreakerOn: m.halted,
+      openPositions: (m.positions || []).map(p => `${p.sym} ${p.qty} @ ${p.entry} → ${p.last} (${(100 * p.pnlPct).toFixed(1)}%)`), ordersForNextOpen: (m.orders || []).map(o => `${o.side} ${o.qty} ${o.sym} — ${o.why}`),
+      tradesThisWeek: tradesWk.map(t => `${t.date} ${t.side} ${t.qty} ${t.sym} @ ${t.price}${t.pnl != null ? " P/L " + t.pnl : ""}`), closedTradesAllTime: sells.length, winRateAllTimePct: sells.length ? Math.round(100 * sells.filter(t => t.pnl > 0).length / sells.length) : null,
+      strategies: (m.strategies || []).filter(x => x.status === "active").map(x => `${x.id} (${x.kind}) — money share ${Math.round(100 * x.weight)}%, score ${x.score}, live ${x.liveDays} d, ${(100 * x.returnPct).toFixed(1)}%, ${x.trades} trades, ${x.wins} wins, from ${x.origin}`),
+      researcherThisWeek: s.research?.[k] ? {at: s.research[k].at, variantsTested: s.research[k].tested, webIdeasTested: s.research[k].ideasTested, adopted: s.research[k].adopted, webIdeas: (s.research[k].ideas || []).map(i => `${i.name}: in-sample ${i.ins}, unseen-data ${i.oos} → ${i.adopted ? "ADOPTED" : "not used"}`)} : null};
+  }
+  return {updated: s.updated, markets, events: (s.events || []).filter(e => Date.parse(e.at) >= weekAgo()).map(e => `${e.day} [${e.market}] ${e.text}`).slice(0, 40), test2026: s.replay, ideasFromWeb: await setting(env, "max_srv_trade_ideas", null), howItCombines: "Every strategy trades its own pretend money; the main account (the one you could copy) gives more money to the strategies scoring best in the current market mood, max 40% each, losers get none — that is the one big combined strategy."};
+}
+// ----- 💰 investments -----
+const INVEST_TOPICS = [
+  ["mp2", "Pag-IBIG MP2 savings: the latest declared annual dividend rates (each recent year), how dividends are computed, minimums, the 5-year term, payout options, any new rules or perks this year"],
+  ["hysa", "High-yield savings accounts in the Philippines (digital banks such as GoTyme, Maya, Tonik, CIMB, SeaBank, Netbank, OwnBank, UNO, Komo, Diskartech, MariBank): each bank's CURRENT base interest rate and promo rates, conditions, PDIC insurance, withholding tax, and any rate changes in the last weeks"],
+  ["uitf", "UITFs in the Philippines (BPI, BDO, Metrobank, Security Bank, Landbank, RCBC, Chinabank): notable peso and dollar money market, bond, balanced and equity index funds — latest 1-year and year-to-date returns, minimums, fees"],
+  ["vul", "Variable universal life (VUL) insurance in the Philippines: how charges work, typical fund returns, recent changes or regulator (Insurance Commission) rules, and honest pros and cons versus buying term insurance and investing separately"],
+  ["bonds", "Philippine government and corporate bonds for retail investors: current or upcoming Retail Treasury Bonds (RTB), Premyo Bonds, latest T-bill and T-bond auction rates from the Bureau of the Treasury, and recent corporate bond offerings — rates, tenors, minimums, dates"],
+  ["dividends", "Philippine Stock Exchange dividend stocks: the top regular dividend payers and REITs (e.g. AREIT, MREIT, RCR, FILRT, DDMPR, CREIT, VREIT, GLO, TEL, MER, DMC, SCC), their latest dividend per share, current yield, and upcoming ex-dividend dates"]];
+async function factsInvestments(env) {
+  const prev = await setting(env, "max_srv_invest_last", {}), now = {}, sources = [], sections = [];
+  for (const [k, ask] of INVEST_TOPICS) {
+    const r = await agentAsk(env, "investments", `Research the latest information on: ${ask}.\nToday is ${new Date().toISOString().slice(0, 10)}. Use current official or reputable sources (Pag-IBIG, BSP, PDIC, bank websites, Bureau of the Treasury, PSE, Insurance Commission, reputable news). Reply ONLY with JSON: {"rows": [{"name": "product / bank / fund / stock", "rate": "current rate, return or yield with its unit", "details": "conditions, minimum, term, risks", "asOf": "date of the figure", "source": "site"}], "news": ["important changes or perks this week"], "watchOut": ["risks or catches"]}`, {search: true});
+    const rows = (r.data?.rows || []).slice(0, 14).map(x => ({name: cleanText(String(x.name || ""), 80), rate: cleanText(String(x.rate || ""), 60), details: cleanText(String(x.details || ""), 260), asOf: cleanText(String(x.asOf || ""), 30), source: cleanText(String(x.source || ""), 80)}));
+    for (const row of rows) { const old = (prev[k] || []).find(o => o.name.toLowerCase() === row.name.toLowerCase()); row.change = !old ? "new this week" : old.rate !== row.rate ? "was " + old.rate : "same"; }
+    now[k] = rows; sources.push(...(r.sources || []));
+    sections.push({key: k, rows, news: asList(r.data?.news), watchOut: asList(r.data?.watchOut), error: r.data ? null : r.error});
+  }
+  await srvSetting(env, "max_srv_invest_last", JSON.stringify(now));
+  const holdings = await setting(env, "max_investments", null);
+  return {facts: {yourHoldings: holdings || "not set up yet — tell Max what you hold (e.g. “I have ₱50,000 in MP2”) to have them tracked", research: sections}, sections, sources};
+}
+// ----- 🏪 business -----
+async function factsBusiness(env) {
+  const seen = await setting(env, "max_srv_biz_seen", []);
+  const r = await agentAsk(env, "business", `Search the web for simple, "boring" small businesses that usually earn steady money in the Philippines (low-tech, proven demand, can be started part-time or managed while working at sea). Give exactly 10 ideas. DO NOT repeat or rephrase any of these earlier ideas: ${seen.slice(-200).join("; ") || "none yet"}. Make the 10 different from each other too.\nFor each: realistic startup cost in PHP, typical monthly net profit range in PHP (cite the source of the figures), why it earns, the main risks, permits/licences needed, how to run it while away, and 3 first steps. Reply ONLY with JSON: {"ideas": [{"name": "...", "startupCostPhp": "...", "monthlyProfitPhp": "...", "whyItEarns": "...", "risks": "...", "permits": "...", "runWhileAway": "...", "firstSteps": ["..."], "source": "..."}]}`, {search: true, temp: 0.7});
+  const ideas = (r.data?.ideas || []).filter(x => x && x.name && !seen.some(s => s.toLowerCase() === String(x.name).toLowerCase())).slice(0, 10);
+  if (ideas.length) await srvSetting(env, "max_srv_biz_seen", JSON.stringify([...seen, ...ideas.map(x => cleanText(String(x.name), 80))].slice(-500)));
+  return {ideas, sources: r.sources || [], error: ideas.length ? null : r.error || "no ideas returned", pastIdeasCount: seen.length};
+}
+// ----- 🎵 music -----
+async function factsMusic(env) {
+  const lib = await setting(env, "max_music", {}), plays = await actRows(env, "AND dept = 'music'", []);
+  return {favorites: (lib.favorites || []).map(f => f.title || f.q).slice(0, 60), playlists: Object.fromEntries(Object.entries(lib.playlists || {}).map(([n, l]) => [n, (l || []).map(x => x.title || x.q).slice(0, 30)])),
+    mostRequested: (lib.history || []).sort((a, b) => (b.count || 0) - (a.count || 0)).slice(0, 15).map(h => `${h.q} (${h.count}×)`), playsThisWeek: plays.filter(p => /^Playing|^Next/i.test(p.text)).map(p => fmtDay(p.at) + " " + p.text).slice(0, 40)};
+}
+// ----- 📅 schedule & ✉️ email -----
+async function factsSchedule(env) {
+  if (!(await googleRow(env))) return {error: "Google Calendar isn't connected"};
+  const now = new Date(), wk = new Date(Date.now() + 7 * 864e5), past = new Date(weekAgo());
+  const f = {};
+  try { const ev = await gapi(env, CAL + "?singleEvents=true&orderBy=startTime&maxResults=50&timeMin=" + encodeURIComponent(now.toISOString()) + "&timeMax=" + encodeURIComponent(wk.toISOString()));
+    f.next7Days = (ev.items || []).map(e => (e.start?.dateTime || e.start?.date || "") + " — " + cleanText(String(e.summary || "(no title)"), 100)); } catch (e) { f.calendarError = e.message; }
+  try { const ev = await gapi(env, CAL + "?singleEvents=true&maxResults=100&timeMin=" + encodeURIComponent(past.toISOString()) + "&timeMax=" + encodeURIComponent(now.toISOString())); f.eventsLast7Days = (ev.items || []).length; } catch {}
+  try { const t = await gapi(env, TASKS + "?showCompleted=true&showHidden=true&maxResults=100&updatedMin=" + encodeURIComponent(new Date(Date.now() - 30 * 864e5).toISOString()));
+    const items = t.items || []; f.openTasks = items.filter(x => x.status !== "completed").map(x => cleanText(String(x.title || ""), 100) + (x.due ? " (due " + x.due.slice(0, 10) + ")" : "")).slice(0, 30);
+    f.overdueTasks = items.filter(x => x.status !== "completed" && x.due && Date.parse(x.due) < Date.now() - 864e5).map(x => cleanText(String(x.title || ""), 100)).slice(0, 20); f.completedLast7Days = items.filter(x => x.status === "completed" && Date.parse(x.completed || 0) > weekAgo()).length; } catch (e) { f.tasksError = e.message; }
+  return f;
+}
+async function factsEmail(env) {
+  if (!(await googleRow(env))) return {error: "Gmail isn't connected"};
+  const f = {}, q = async (query, n) => { const l = await gapi(env, GMAIL + "/messages?maxResults=" + n + "&q=" + encodeURIComponent(query)); return l; };
+  const meta = async id => { const m = await gapi(env, GMAIL + "/messages/" + id + "?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date"); const h = n => (m.payload?.headers || []).find(x => x.name === n)?.value || ""; return cleanText(h("From").replace(/<.*>/, "").trim(), 60) + " — " + cleanText(h("Subject"), 100) + " (" + cleanText(h("Date"), 25) + ")"; };
+  try { f.unreadInInbox = (await q("in:inbox is:unread", 1)).resultSizeEstimate ?? null; } catch (e) { f.error = e.message; }
+  try { const l = await q("in:inbox is:unread is:important newer_than:7d", 8); f.importantUnread = await Promise.all((l.messages || []).map(m => meta(m.id).catch(() => "?"))); } catch {}
+  try { const l = await q("in:inbox is:important older_than:3d newer_than:21d -from:me -category:promotions -category:social", 6); f.importantOlderThan3DaysMayNeedReply = await Promise.all((l.messages || []).map(m => meta(m.id).catch(() => "?"))); } catch {}
+  try { f.promotionsThisWeek = (await q("category:promotions newer_than:7d", 1)).resultSizeEstimate ?? null; f.receivedThisWeek = (await q("in:inbox newer_than:7d", 1)).resultSizeEstimate ?? null; } catch {}
+  f.mailingList = "not set up yet — when you start one for your sites, this agent will manage it";
+  f.rules = "Max drafts and organizes; he sends only after your clear yes; deleting moves mail to Trash (recoverable for 30 days), never permanently.";
+  return f;
+}
+// ----- run one agent's weekly report -----
+async function runAgentReport(env, id, opts = {}) {
+  const t0 = Date.now(); let rep;
+  if (id === "notes") { if (opts.check !== false) await notesDailyCheck(env, 3).catch(() => {}); rep = await writeReport(env, id, await factsNotes(env), {brief: "Cover: how organized the vault is (folders, unsorted, tags, duplicates, empty folders), which notes the fact-checker found wrong or outdated (list each with the correction), what Max analyzed, pictures/videos/attachments, and exactly what Mark should fix next."}); }
+  else if (id === "research") { const r = await factsResearch(env); rep = await writeReport(env, id, r.facts, {brief: "For each topic give a short headline then detailed but simple bullets with the data. If no topics were set, say so and suggest topics based on his maritime notes."}); rep.sources = [...rep.sources, ...r.sources].slice(0, 20); }
+  else if (id === "web") { const f = await factsWeb(env); rep = await writeReport(env, id, f, {search: true, brief: "Cover EACH site separately: security & threats, pictures (alt text, sizes), SEO, mobile and desktop speed, content (search for 5 keyword ideas with real search intent, and 5 post ideas for this week — drafts only, he approves before anything is published), 3 social-media post ideas, affiliate links (working, tagged, disclosed), analytics (visitors). Then what is missing for each site."});
+    rep.tables = f.sites.map(s => ({title: s.site + " — numbers", head: ["Check", "Result"], rows: [["Security & SEO score", s.securityAndSeoScore ?? "?"], ["Mobile speed / SEO / accessibility", s.mobile?.error ? "couldn't test: " + s.mobile.error : `${s.mobile?.performance} / ${s.mobile?.seo} / ${s.mobile?.accessibility} (LCP ${s.mobile?.lcp || "?"})`], ["Desktop speed / SEO", s.desktop?.error ? "couldn't test" : `${s.desktop?.performance} / ${s.desktop?.seo}`], ["Affiliate links on home page", s.affiliate ? `${s.affiliate.linksOnHomepage} (${s.affiliate.amazonWithoutTag} Amazon links without a tag; disclosure ${s.affiliate.disclosureOnPage ? "yes" : "NO"})` : "?"], ["Visitors (7 days)", typeof s.analytics === "object" && s.analytics.week ? s.analytics.week.visitors : String(s.analytics || "?")]]})); }
+  else if (id === "apps") { const f = await factsApps(env); rep = await writeReport(env, id, f, {brief: "Cover EACH app separately: is it up and fast on mobile, GitHub changes and failed builds, Netlify deploys, Play Store tracks and reviews, errors, security, and concrete improvement suggestions. Then what is missing (e.g. crash reports, analytics)."});
+    rep.tables = [{title: "Apps at a glance", head: ["App", "Up", "Mobile speed", "Failed builds (7 d)"], rows: f.apps.map(a => [a.app, a.up === undefined ? "—" : a.up ? "yes" : "DOWN", a.mobileSpeed?.performance ?? "—", Object.values(a).filter(v => v && v.failedBuilds).reduce((n, v) => n + v.failedBuilds.length, 0)])}]; }
+  else if (id === "security") { const f = await factsSecurity(env); rep = await writeReport(env, id, f, {search: true, brief: "First report what the daily checks found this week and how each problem was or should be solved. Then search the web for NEW threats this week relevant to his setup (Cloudflare Workers and sites, GitHub Pages and Actions, Android apps on Play, Google/Gmail accounts, phishing aimed at seafarers and Filipinos) and say exactly what to do about each."}); }
+  else if (id === "trading") { const f = await factsTrading(env); rep = await writeReport(env, id, f, {brief: "Cover PSE, crypto and forex separately: account value, this week and since start, trades, win rate, which strategies get the money and why, what the researcher tested (variants and web ideas) and what was adopted, risks. Pretend money only; never tell him to buy or sell for real."});
+    rep.tables = Object.entries(f.markets || {}).map(([k, m]) => ({title: m.account, head: ["Item", "Value"], rows: [["Account", `${m.equity} ${m.currency} (start ${m.start})`], ["Since start", m.returnSinceStartPct + "%"], ["This week", m.returnThisWeekPct + "%"], ["Market mood", m.marketMood + (m.riskBreakerOn ? " · risk breaker ON" : "")], ["Win rate (all closed trades)", m.winRateAllTimePct == null ? "no closed trades yet" : m.winRateAllTimePct + "% of " + m.closedTradesAllTime], ["Open positions", m.openPositions.length]]})); }
+  else if (id === "investments") { const f = await factsInvestments(env); rep = await writeReport(env, id, {yourHoldings: f.facts.yourHoldings, research: f.sections.map(s => ({topic: s.key, rows: s.rows, news: s.news, watchOut: s.watchOut}))}, {brief: "Be detailed. For each area (MP2, high-yield savings, UITF, VUL, bonds, dividend stocks): the current rates, what CHANGED since last week (the 'change' field), new perks, and the catches. Then compare them simply (safety, liquidity, return, tax). Not financial advice."});
+    const T = {mp2: "Pag-IBIG MP2", hysa: "High-yield savings (PH)", uitf: "UITF", vul: "VUL", bonds: "Bonds", dividends: "Dividend stocks (PSE)"};
+    rep.tables = f.sections.filter(s => s.rows.length).map(s => ({title: T[s.key], head: ["Name", "Rate / return", "Change", "Details", "As of"], rows: s.rows.map(r => [r.name, r.rate, r.change, r.details, r.asOf])}));
+    rep.sources = [...rep.sources, ...f.sources].slice(0, 25); }
+  else if (id === "business") { const f = await factsBusiness(env); rep = await writeReport(env, id, {ideas: f.ideas.map(i => i.name), error: f.error, pastIdeasCount: f.pastIdeasCount}, {brief: "Status: how many ideas this week and that none repeat earlier weeks. Suggestions: which 2 fit a seafarer best and why. Keep it short — the ideas themselves are in the table."});
+    rep.tables = f.ideas.length ? [{title: "Top 10 simple businesses this week", head: ["#", "Business", "Start-up (₱)", "Monthly profit (₱)", "Why it earns", "Risks", "Permits", "While at sea", "First steps"], rows: f.ideas.map((i, n) => [n + 1, i.name, i.startupCostPhp, i.monthlyProfitPhp, i.whyItEarns, i.risks, i.permits, i.runWhileAway, (i.firstSteps || []).join("; ")])}] : [];
+    rep.sources = [...rep.sources, ...f.sources].slice(0, 20); }
+  else if (id === "music") rep = await writeReport(env, id, await factsMusic(env), {brief: "Summarize his favorites and playlists, what he played this week, and suggest 10 similar songs or artists he may like (say they are suggestions)."});
+  else if (id === "schedule") rep = await writeReport(env, id, await factsSchedule(env), {brief: "The coming 7 days day by day, clashes, overdue tasks, and how to plan the week."});
+  else if (id === "email") rep = await writeReport(env, id, await factsEmail(env), {brief: "Inbox health, important unread mail, mail that may need a reply, promotions to unsubscribe from, and what Max can draft for him (he approves before anything is sent)."});
+  else throw new Error("unknown agent");
+  rep.ms = Date.now() - t0;
+  await saveReport(env, rep);
+  rep.emailed = opts.email === false ? "not emailed" : await emailReport(env, rep).catch(e => "email failed: " + e.message);
+  await logAct(env, {dept: id === "security" ? "guard" : ACT_DEPTS.includes(id) ? id : "general", kind: "weekly report", text: `${AGENT[id].icon} ${AGENT[id].name} weekly report — ${rep.emailed}`, detail: (rep.status || []).slice(0, 2).join(" ").slice(0, 280), model: rep.model, ok: !/failed/.test(rep.emailed), ms: rep.ms, source: opts.source || "schedule"});
+  return rep;
+}
+// Called by the hourly cron (:45). Sunday mornings Manila: one agent per hour. Daily: notes fact-check. Saturday: trading ideas.
+async function agentsCron(env, when) {
+  if (!env.MAX_MEMORY) return "no database";
+  const d = new Date(when || Date.now()), day = d.getUTCDay(), hour = d.getUTCHours(), out = [];
+  const once = async (key, fn) => { const k = "max_srv_once_" + key, stamp = d.toISOString().slice(0, 13); if ((await srvSetting(env, k)) === stamp) return; await srvSetting(env, k, stamp); out.push(key + ": " + await fn().catch(e => "failed " + e.message)); };
+  if (hour === 21 && day !== 6) await once("notescheck", () => notesDailyCheck(env, 4));
+  if (hour === 20 && day === 6) await once("tradeideas", () => tradingIdeasJob(env));
+  for (const a of AGENT_LIST) if (a.day === day && a.hour === hour) await once("report_" + a.id, async () => (await runAgentReport(env, a.id, {source: "schedule"})).emailed);
+  return out.join("; ") || "nothing due";
+}
+async function agentRoutes(request, env, url, origin) {
+  if (url.pathname === "/api/agents" && request.method === "GET") {
+    const list = [];
+    for (const a of AGENT_LIST) { const r = await lastReport(env, a.id).catch(() => null); list.push({id: a.id, name: a.name, icon: a.icon, workers: a.workers, reportDay: "Sunday " + ((a.hour + 8) % 24) + ":45 (Manila)", lastReport: r ? {at: r.at, status: (r.status || []).slice(0, 2), emailed: r.emailed} : null}); }
+    return json({agents: list, budget: BUDGET}, 200, origin, env);
+  }
+  if (url.pathname === "/api/agents/report" && request.method === "GET") {
+    const id = url.searchParams.get("agent"); if (!AGENT[id]) return json({error: "Which agent? " + AGENT_LIST.map(a => a.id).join(", ")}, 400, origin, env);
+    const r = await lastReport(env, id); return json({report: r, rendered: r ? renderReport(r) : null}, r ? 200 : 404, origin, env);
+  }
+  if (url.pathname === "/api/agents/run" && request.method === "POST") {
+    let body = {}; try { body = await request.json(); } catch {}
+    if (!AGENT[body.agent]) return json({error: "Which agent? " + AGENT_LIST.map(a => a.id).join(", ")}, 400, origin, env);
+    const rep = await runAgentReport(env, body.agent, {email: body.email !== false, source: "asked"});
+    return json({report: rep, rendered: renderReport(rep)}, 200, origin, env);
+  }
+  if (url.pathname === "/api/notes/checks" && request.method === "GET") return json({checks: await setting(env, "max_srv_notecheck", {})}, 200, origin, env);
+  return json({error: "Not found."}, 404, origin, env);
 }
 // ---------- markets: crypto (CoinGecko), Philippine stocks (PSE Edge), currencies (Frankfurter / ECB) ----------
 // Prices are reported, never advised on, and Max never trades.
@@ -1892,6 +2299,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
+    ctx.waitUntil(agentsCron(env, event && event.scheduledTime).then(r => { if (r !== "nothing due") console.log("agents:", r); }).catch(e => console.log("agents failed:", e.message)));
     ctx.waitUntil(guardDaily(env, event && event.scheduledTime).then(r => { if (r !== "not now") console.log("guard:", r); }).catch(async e => { console.log("guard failed:", e.message); await logAct(env, {dept: "guard", kind: "guard check", text: "The daily guard check failed", detail: e.message, ok: false, source: "schedule"}); }));
     ctx.waitUntil(traderNotify(env).then(async r => { console.log("trader notify:", r); if (/^sent/.test(r)) await logAct(env, {dept: "trading", kind: "email", text: "Emailed you the paper-trading update (" + r.replace("sent ", "") + " updates)", source: "schedule"}); })
     .catch(async e => { console.log("trader notify failed:", e.message); await logAct(env, {dept: "trading", kind: "email", text: "Trading update email failed", detail: e.message, ok: false, source: "schedule"}); })); },
@@ -1975,6 +2383,7 @@ export default {
     if (url.pathname === "/api/activity" && ["GET", "POST"].includes(request.method)) return activityRoutes(request, env, url, origin);
     if (url.pathname === "/api/music" && request.method === "GET") return musicRoutes(request, env, url, origin);
     if (url.pathname === "/api/media" && ["GET", "POST", "DELETE"].includes(request.method)) return mediaRoutes(request, env, url, origin);
+    if (url.pathname.startsWith("/api/agents") || url.pathname === "/api/notes/checks") return agentRoutes(request, env, url, origin);
     if ((url.pathname === "/api/guard" && request.method === "GET") || (url.pathname === "/api/guard/run" && request.method === "POST")) return guardRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/trader/")) return traderRoutes(request, env, url, origin);
     if ((url.pathname === "/api/site/audit" || url.pathname.startsWith("/api/content/")) && request.method === "POST") return contentRoutes(request, env, url, origin);
@@ -2112,7 +2521,7 @@ export default {
             "edit_event (change, move or rename an existing calendar event, or change its reminders; details = {find: words from its title, on: \"YYYY-MM-DD\" if he said which day, then only what changes: title, start, durationMinutes, location, reminders: [minutes before, e.g. 60, 10]}) · delete_event (cancel/remove an event; details = {find, on}) · alarms: an alarm is add_event with title starting \"⏰ \", reminderMinutes 0, durationMinutes 5 · several reminders: add_event with reminders: [60, 10] · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
-          "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}) · LEARNING: learn_this (he wants you to learn / study / summarize the file, link or note he is looking at into a detailed note; query = what) · make_skill (turn a note, file or link into a skill you follow; details = {name: the skill or note name}) · improve_skill (he corrects how you did a skill; details = {name: skill name, instruction: the correction}) · walk_through (he wants step-by-step guidance through a procedure or skill, one step at a time; details = {name}) · check_conflicts (find notes that contradict each other or look outdated) · WEBSITE TEAM (for his sites like Hobby Isle): site_audit (check a site's security, SEO, pictures and broken links; details = {project}) · seo_ideas (SEO / keyword / content ideas; details = {project, topic if he gave one}) · content_draft (write a blog post, review, guide, comparison or social post; details = {project, topic, name: \"blog\"|\"review\"|\"comparison\"|\"guide\"|\"social\"}) — drafts only, he decides what gets published · PAPER TRADING (pretend money only — you never place real trades): trading_status (how his paper trading is doing, positions, orders for the next open, which strategies are winning; details = {project: \"pse\" or \"crypto\" if he named one}) · trading_emails (turn the trading update emails on/off; details = {on: \"on\"|\"off\"}) · VOICE: hands_free (he wants you to always listen for \"Hey Max\" / stop doing that; details = {on: \"on\"|\"off\"}) · barge_setting (allow or stop interrupting you by voice; details = {on: \"on\"|\"off\"}) · WEATHER & SEA: weather (forecast, wind, waves, swell for a place; details = {location: the place, or empty for his saved place, on: \"today\"|\"tomorrow\"|\"week\"}) · set_weather_place (his default weather place; details = {location}) · set_personality (he wants you to talk differently; details = {name: \"butler\"|\"concise\"|\"witty\"|\"formal\"}) · usage (how much AI was used today / which brain answered) · whatsapp_draft (he wants to send a WhatsApp message; details = {to: the person or phone number, text: the finished message written in his voice and language}; the app opens WhatsApp with it filled in and HE taps send — never say it was sent) · play_build (build a NEW VERSION of the Android app from the latest website and upload it to his Play closed test; details = {project, notes: what's new if he said}; the app asks him first; never production) · build_status (is the app build finished / how did it go; details = {project}). The app always shows the new text and asks him before publishing. · MUSIC (the app plays it right away): play_music (he wants music played — a song, artist, album, genre or mood; query = exactly what to play, e.g. \"Ben&Ben Maybe the Night\", \"OPM love songs\", \"lofi\"; details = {mode: \"radio\" if he asked for a radio station or wants it to keep playing with the screen off, otherwise \"video\"}) · music_control (details = {op: \"pause\"|\"resume\"|\"stop\"|\"next\"|\"louder\"|\"softer\"|\"what\" (what is playing)}) · HOW YOU HEAR HIM: hear_fix (he teaches you a word you keep mishearing, e.g. \"when you hear hobby aisle I mean Hobby Isle\"; details = {heard, meant}) · listen_lang (listen in Filipino or English; details = {lang: \"fil-PH\"|\"en-PH\"}) · show_hearing (the words he taught you / how you understand him) · GUARD: guard_report (is everything OK / security or status report / anything broken) · guard_run (check everything now) · backup_now (back up his notes and memory now — emailed to himself) · ACTIVITY: activity (he asks what you or his desks did, which brain answered, what failed, or for the activity log; details = {dept: \"apps\"|\"web\"|\"trading\"|\"notes\"|\"schedule\"|\"training\"|\"music\" if he named one, range: \"today\"|\"week\"}) · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
+          "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}) · LEARNING: learn_this (he wants you to learn / study / summarize the file, link or note he is looking at into a detailed note; query = what) · make_skill (turn a note, file or link into a skill you follow; details = {name: the skill or note name}) · improve_skill (he corrects how you did a skill; details = {name: skill name, instruction: the correction}) · walk_through (he wants step-by-step guidance through a procedure or skill, one step at a time; details = {name}) · check_conflicts (find notes that contradict each other or look outdated) · WEBSITE TEAM (for his sites like Hobby Isle): site_audit (check a site's security, SEO, pictures and broken links; details = {project}) · seo_ideas (SEO / keyword / content ideas; details = {project, topic if he gave one}) · content_draft (write a blog post, review, guide, comparison or social post; details = {project, topic, name: \"blog\"|\"review\"|\"comparison\"|\"guide\"|\"social\"}) — drafts only, he decides what gets published · PAPER TRADING (pretend money only — you never place real trades): trading_status (how his paper trading is doing, positions, orders for the next open, which strategies are winning; details = {project: \"pse\" or \"crypto\" if he named one}) · trading_emails (turn the trading update emails on/off; details = {on: \"on\"|\"off\"}) · VOICE: hands_free (he wants you to always listen for \"Hey Max\" / stop doing that; details = {on: \"on\"|\"off\"}) · barge_setting (allow or stop interrupting you by voice; details = {on: \"on\"|\"off\"}) · WEATHER & SEA: weather (forecast, wind, waves, swell for a place; details = {location: the place, or empty for his saved place, on: \"today\"|\"tomorrow\"|\"week\"}) · set_weather_place (his default weather place; details = {location}) · set_personality (he wants you to talk differently; details = {name: \"butler\"|\"concise\"|\"witty\"|\"formal\"}) · usage (how much AI was used today / which brain answered) · whatsapp_draft (he wants to send a WhatsApp message; details = {to: the person or phone number, text: the finished message written in his voice and language}; the app opens WhatsApp with it filled in and HE taps send — never say it was sent) · play_build (build a NEW VERSION of the Android app from the latest website and upload it to his Play closed test; details = {project, notes: what's new if he said}; the app asks him first; never production) · build_status (is the app build finished / how did it go; details = {project}). The app always shows the new text and asks him before publishing. · MUSIC (the app plays it right away): play_music (he wants music played — a song, artist, album, genre or mood; query = exactly what to play, e.g. \"Ben&Ben Maybe the Night\", \"OPM love songs\", \"lofi\"; details = {mode: \"radio\" if he asked for a radio station or wants it to keep playing with the screen off, otherwise \"video\"}) · music_control (details = {op: \"pause\"|\"resume\"|\"stop\"|\"next\"|\"louder\"|\"softer\"|\"what\" (what is playing)}) · HIS AGENTS (each sends a detailed weekly report by email on Sunday): agent_report (he wants an agent's report — show the last one, or run a fresh one now when he says now/new/send; details = {agent: \"notes\"|\"research\"|\"web\"|\"apps\"|\"security\"|\"trading\"|\"investments\"|\"business\"|\"music\"|\"schedule\"|\"email\", send: true to run a new one now and email it}) · HOW YOU HEAR HIM: hear_fix (he teaches you a word you keep mishearing, e.g. \"when you hear hobby aisle I mean Hobby Isle\"; details = {heard, meant}) · listen_lang (listen in Filipino or English; details = {lang: \"fil-PH\"|\"en-PH\"}) · show_hearing (the words he taught you / how you understand him) · GUARD: guard_report (is everything OK / security or status report / anything broken) · guard_run (check everything now) · backup_now (back up his notes and memory now — emailed to himself) · ACTIVITY: activity (he asks what you or his desks did, which brain answered, what failed, or for the activity log; details = {dept: \"apps\"|\"web\"|\"trading\"|\"notes\"|\"schedule\"|\"training\"|\"music\" if he named one, range: \"today\"|\"week\"}) · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +

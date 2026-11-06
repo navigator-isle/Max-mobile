@@ -22,7 +22,7 @@ const cases = [
   ["how is my paper trading doing?", "trading"], ["kumusta ang crypto ko", "trading"], ["what's the RSI strategy", "trading"],
   ["any new reviews on Passage Planner?", "apps"], ["send a new build to the closed test", "apps"],
   ["write a blog post for Hobby Isle about gunpla tools", "web"], ["check my website security headers", "web"],
-  ["remind me tomorrow at 9 to call the agency", "schedule"], ["any important emails?", "schedule"], ["paalala bukas 8am", "schedule"],
+  ["remind me tomorrow at 9 to call the agency", "schedule"], ["any important emails?", "email"], ["paalala bukas 8am", "schedule"],
   ["summarize my notes about ballast water", "notes"], ["organize my vault folders", "notes"],
   ["I want to start a workout habit", "training"], ["help me study for the MARINA exam", "training"],
   ["what's the capital of Norway", "general"], ["tell me a joke", "general"]];
@@ -56,5 +56,5 @@ r = await chat("tell me a joke", {}, { ...base, GROQ_API_KEY: "g" });
 ok(r.status === 200 && r.data.reply === "Backup here." && groqCalls === 1 && /groq/.test(r.data.model), "an empty Gemini answer goes to a free backup brain instead of an error", JSON.stringify(r.data).slice(0, 200));
 gemMode = "ok";
 r = await call("/health", null, { ...base, GROQ_API_KEY: "g" }, "GET");
-ok(Array.isArray(r.data.brainChain) && r.data.brainChain[0] === "gemini-3.5-flash" && r.data.brainChain.some(m => m.startsWith("groq:")) && r.data.departments.length === 8, "health shows the full brain chain and the eight desks", JSON.stringify(r.data.brainChain));
+ok(Array.isArray(r.data.brainChain) && r.data.brainChain[0] === "gemini-3.5-flash" && r.data.brainChain.some(m => m.startsWith("groq:")) && r.data.departments.length === 11, "health shows the full brain chain and the eleven desks", JSON.stringify(r.data.brainChain));
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

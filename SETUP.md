@@ -48,6 +48,22 @@
 - 🧠 **Smarter free brain.** Each question gets a difficulty score from its words (no extra AI call). Everyday questions use the usual fast brain. Hard ones — explain, compare, calculate, plan, regulations (SOLAS, MARPOL, STCW…), stability, money, long or multi-part questions, or when you say "think hard" — go to the strongest free model (Gemini 3.8 Flash, then 3.6 Flash, then 2.5 Pro if your project has it) with deep thinking on. Then a **second AI from a different company** (Groq's gpt-oss-120b; Cloudflare's Llama if Groq answered) checks the answer for wrong facts, numbers, dates, unsafe advice or contradictions with your notes. If it says the answer is wrong, Max thinks again with its points and decides who is right. The answer shows "🧠 Deep thinking" and "✓ Double-checked" (or "✓ Fixed after a second check"); tap it to see what the checker said. Say "double-check that" or "are you sure?" any time to have your last answer checked. `/health?deep=1` tests every free model live ("freeModels")
 - **Brain backups:** Claude (if set up) → Gemini 3.5 Flash → 3.5 Flash-Lite → 3.8 Flash → 3.6 Flash → 3.1 Flash-Lite → Groq (gpt-oss-120b, Qwen 3.8, gpt-oss-20b) → Cloudflare Workers AI. Each Gemini model has its own free daily limit, so the longer chain means more free answers per day. A one-off hiccup gets one quick retry on the same brain; an empty answer goes to a backup brain; a brain that hit its limit rests for 10–60 min. `/health` shows the whole chain ("brainChain") and which brains are resting
 
+**🤖 Max's agents (each emails you a detailed weekly report on Sunday, Manila time)**
+- 🗂 Notes & Attachments (7:45 am) — librarian, fact-checker, Maritime expert, attachment reader. Every morning (5:45 am) it checks up to 4 notes against the web; an outdated or wrong note shows a ⚠ banner with the correction and source when you open it
+- 🔎 Researcher (8:45 am) — your watched topics ("watch IMO amendments"); detailed but simple, short structure, with data and sources
+- 🌐 Websites (9:45 am) — per site: security, pictures, SEO, mobile & desktop speed (Google PageSpeed), content and keyword ideas, social posts, affiliate links, analytics. Publishes nothing without your OK
+- 📱 Apps (10:45 am) — per app: up/speed, GitHub changes and failed builds, Netlify deploys (needs NETLIFY_TOKEN), Play Store tracks and reviews, errors, suggestions
+- 🛡 Security (11:45 am) — the daily 6:45 am check plus a web search for new threats relevant to your setup, and what to do
+- 📈 Trading (12:45 pm) — PSE, crypto and forex paper accounts. Every Saturday night the strategy researcher searches the web for documented strategies; the paper trader backtests them on Sunday and puts winners on trial; the main account gives money to whatever is winning (the combined strategy). Pretend money only
+- 💰 Investments (1:45 pm) — Pag-IBIG MP2, PH high-yield savings, UITF, VUL, bonds, PSE dividend stocks: current rates, what changed since last week, perks, catches, sources. Not financial advice
+- 🏪 Business (2:45 pm) — 10 simple, boring, earning businesses each week, never repeating an earlier idea
+- 🎵 Music (3:45 pm) — favorites ("add this to my favorites", "play my favorites"), playlists ("add this to my gym playlist", "play my gym playlist"), what you ask for most ("show my music")
+- 📅 Schedule (4:45 pm) — the coming week, clashes, overdue tasks
+- ✉️ Email (5:45 pm) — inbox health, important unread, mail that may need a reply. Sends only with your yes; delete = Trash (30 days)
+- Ask any time: "send me the trading report now", "show the investments report"
+- Brain budget for background work each day: notes first (40), trading second (20), investments 14, the rest a few each. Chat with you is never limited by this
+- Netlify: create a personal access token in Netlify (User settings → Applications → Personal access tokens), then add it yourself in Cloudflare → Workers → max-ai-backend → Settings → Variables and Secrets as a secret named NETLIFY_TOKEN
+
 **🗂 Notes like Obsidian**
 - Notes screen = your vault: folders inside folders (any depth) with arrows, guide lines, "My vault · N files, M folders", and a bottom bar: ✎ new note (inside the folder you tapped), 🗀+ new folder, ⇅ sort A–Z / newest, collapse all, ⋯ more
 - Opening a note shows it like Obsidian's reading view: folder path, big title, #tags, numbered steps, bold, tables, ☐/☑ tasks, and [[links]] you can tap. ✎ Edit to change it

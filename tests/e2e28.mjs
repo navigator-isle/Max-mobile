@@ -63,7 +63,7 @@ siteDown = false;
 await say("run a system check");
 ok(!/Passage Planner is DOWN/.test(await spoken() + await disp()) && /Hobby Isle: The plain http/.test(await disp()), "once fixed, the site drops off the list (real security issues still show)", await spoken());
 await say("show my departments");
-ok(/🛡 Guard/.test(await p.evaluate(() => document.getElementById("crewBody").innerText)), "the Guard has its own card on the departments screen");
+ok(/🛡 Security/.test(await p.evaluate(() => document.getElementById("crewBody").innerText)), "the Guard has its own card on the departments screen");
 // restore from a backup file
 const f = path.join(os.tmpdir(), "max-backup-2026-11-08.json");
 fs.writeFileSync(f, JSON.stringify({ kind: "Max backup", exportedAt: "2026-11-08T22:45:00Z", notes: [{ id: "n1", title: "Ballast log", category: "Ship", tags: [], body: "BWM D-2", createdAt: 1, updatedAt: 2 }, { id: "keep", title: "Older in backup", body: "old", category: "Ship", tags: [], createdAt: 1, updatedAt: 3 }],

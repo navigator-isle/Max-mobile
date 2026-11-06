@@ -32,15 +32,28 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "trader-")); fs.mkdirSync(path
 const walk = (seed, start, n, vol) => { const g = L.rng(seed); let x = start; const out = []; for (let i = 0; i < n; i++) { const o = x; x = x * Math.exp((g() - 0.48) * vol); out.push([day(i), o, Math.max(o, x) * 1.01, Math.min(o, x) * 0.99, x, 5e6 + g() * 3e7]); } return out; };
 const syms = ["SM", "ALI", "BDO", "AC", "ICT", "JFC", "PCOR", "CEB", "MAC", "DITO"]; syms.forEach((s, i) => fs.writeFileSync(path.join(dir, `bars/pse/${s}.json`), JSON.stringify(walk(i + 1, 10 + i * 30, 700, 0.03))));
 ["BTC", "ETH", "SOL", "XRP"].forEach((s, i) => fs.writeFileSync(path.join(dir, `bars/crypto/${s}.json`), JSON.stringify(walk(50 + i, 100 * (i + 1), 700, 0.05))));
+fs.mkdirSync(path.join(dir, "bars/fx"), { recursive: true });
+// forex: one price a day (open = yesterday's close), no volume — like the free ECB data
+const fxWalk = (seed, start, n) => { const g = L.rng(seed); let x = start; const out = []; for (let i = 0; i < n; i++) { const o = x; x = x * Math.exp((g() - 0.49) * 0.006); out.push([day(i), o, Math.max(o, x), Math.min(o, x), x, 0]); } return out; };
+["EURUSD", "USDJPY", "GBPUSD", "USDEUR", "JPYUSD", "USDGBP"].forEach((s, i) => fs.writeFileSync(path.join(dir, `bars/fx/${s}.json`), JSON.stringify(fxWalk(90 + i, [1.1, 150, 1.3, 0.9, 0.0067, 0.77][i], 700))));
+// two strategy ideas "found on the web" by Max's server
+fs.writeFileSync(path.join(dir, "ideas.json"), JSON.stringify({ at: day(699), crypto: [{ name: "Faber 10-month trend filter", template: "trend", params: { fast: 40, slow: 150, maxPos: 3 }, source: "Faber (2007), A Quantitative Approach to Tactical Asset Allocation" }, { name: "Broken idea", template: "nope", params: {} }], fx: [{ name: "Carry-free trend", template: "trend", params: { fast: 30, slow: 100, maxPos: 3 }, source: "example.com" }] }));
 fs.writeFileSync(path.join(dir, "universe.json"), JSON.stringify(Object.fromEntries(syms.map(s => [s, { cmpyId: "1", securityId: "1" }]))));
 const env = { ...process.env, TRADER_OFFLINE: "1", TRADER_TODAY: day(699) };
 const out = execFileSync("node", ["trader/run.mjs", "bootstrap", dir], { env, encoding: "utf8" });
 const S = JSON.parse(fs.readFileSync(path.join(dir, "summary.json"), "utf8"));
 ok(S.paperOnly === true && S.markets.pse?.start === 100000 && S.markets.crypto?.start > 0, "bootstrap: two pretend ₱100,000 accounts (crypto held in USDT)", JSON.stringify(Object.keys(S.markets)));
 ok(S.markets.pse.strategies.length === 6 && S.markets.crypto.strategies.length === 5, "starts with 6 PSE and 5 crypto strategies, each with a backtest prior");
+ok(S.markets.fx && S.markets.fx.ccy === "USD" && S.markets.fx.start > 1000 && S.markets.fx.start < 2500 && S.markets.fx.strategies.length === 4 && !S.markets.fx.strategies.some(x => x.template === "candle"), "a forex account too: ₱100,000 in US dollars, 4 strategies (no candle patterns — only one price a day)", JSON.stringify({ s: S.markets.fx?.start, n: S.markets.fx?.strategies.length }));
+ok(Math.abs(L.fee("fx", 10000, "buy") - 1.5) < 1e-9 && L.roundQty("fx", 1234.5678, 1.1) === 1234.56, "forex costs: the spread (~1.5 pips) and fractional units");
 ok(/Paper trading started/.test(out) && S.replay?.pse && S.replay?.crypto, "test run over 2026 so far is saved and reported");
 const out2 = execFileSync("node", ["trader/run.mjs", "research", dir], { env: { ...env, TRADER_TODAY: day(700) }, encoding: "utf8" });
 ok(/research: tested \d+ variants/.test(out2) && /Week in review/.test(out2), "weekly researcher runs and writes a week-in-review", out2.slice(-300));
+const S2 = JSON.parse(fs.readFileSync(path.join(dir, "summary.json"), "utf8"));
+ok(/From the web: “Faber 10-month trend filter”/.test(out2) && /\(1 from the web\)/.test(out2) && /\[fx\] research: tested \d+ variants \(1 from the web\)/.test(out2), "strategies found on the web are backtested (crypto and forex); broken ideas are skipped", out2.match(/.*from the web.*/g)?.join(" | "));
+ok(S2.research.crypto.ideas.some(x => x.name === "Faber 10-month trend filter" && Number.isFinite(x.oos)), "the test results of each web idea are kept for the weekly report", JSON.stringify(S2.research.crypto));
+const out3 = execFileSync("node", ["trader/run.mjs", "research", dir], { env: { ...env, TRADER_TODAY: day(707) }, encoding: "utf8" });
+ok(/\(0 from the web\)/.test(out3), "the same idea isn't tested twice");
 const st = JSON.parse(fs.readFileSync(path.join(dir, "state.json"), "utf8"));
 const neg = Object.values(st.markets).some(m => m.master.cash < -1e-6 || Object.values(m.books).some(b => b.cash < -1e-6));
 ok(!neg, "no account or strategy ever goes below zero cash");

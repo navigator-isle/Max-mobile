@@ -89,5 +89,5 @@ ok(r.data.report.backup.ok && sent.length === 1 && /max-backup-/.test(sent[0]), 
 r = await call("/api/guard");
 ok(r.status === 401, "the Guard report is private");
 r = await call("/health");
-ok(r.data.departments.some(d => /Guard/.test(d)), "the Guard is one of Max's desks");
+ok(r.data.departments.some(d => /Security/.test(d)), "the Guard (Security) is one of Max's desks");
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
