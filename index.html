@@ -1801,11 +1801,39 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return getNotes().map(n=>{
    const t=(n.title||'').toLowerCase(),tg=(n.tags||[]).join(' ').toLowerCase(),c=(n.category||'').toLowerCase(),b=(plain(n.body)+' '+(n.analysis?.summary||'')).toLowerCase();
    let s=0;ws.forEach(w=>{if(hit(t,w))s+=3;if(hit(tg,w))s+=2;if(hit(c,w))s+=1;if(hit(b,w))s+=1});
+   if(s>0&&(n.tags||[]).some(x=>String(x).toLowerCase()==='core'))s+=1;
    return {n,s};
   }).filter(x=>x.s>=2).sort((a,b)=>b.s-a.s||b.n.updatedAt-a.n.updatedAt).slice(0,k).map(x=>x.n);
  }
  let lastNote={id:null,at:0};
  function noteText(n){return plain(n.body)+(n.analysis?.summary?' (Max’s summary: '+n.analysis.summary+')':'')}
+ // Long core notes (SOLAS, MARPOL…): send Max the parts that match the question, not just the first pages.
+ const ROMAN=['','i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii','xiii','xiv','xv'];
+ function excerptWords(q){const ws=new Set(qWords(q));String(q||'').toLowerCase().replace(/\b(chapter|annex|title|ch|reg|regulation|part)\s*(\d{1,2}|[ivx]{1,4}(?:-\d)?)\b/g,(m,a,d)=>{if(/^\d+$/.test(d)){if(ROMAN[+d])ws.add(ROMAN[+d])}else{const k=ROMAN.indexOf(d);if(k>0)ws.add(String(k))}ws.add(d);return m});(String(q||'').toLowerCase().match(/\b[ivx]{1,4}(?:-\d)?\/\d+(?:-\d)?\b|\b\d+(?:\.\d+)+\b|\b[ivx]{1,4}-\d\b/g)||[]).forEach(w=>ws.add(w));return [...ws]}
+ function noteExcerpt(n,q,cap=4800){
+  const full=noteText(n);if(full.length<=cap||!q)return full;
+  const own=norm((n.title||'')+' '+(n.tags||[]).join(' ')+' convention regulation note say does what about tell explain').split(' ');
+  const ws=excerptWords(q).filter(w=>!own.includes(w));if(!ws.length)return full.slice(0,cap);
+  const ta=document.createElement('textarea');
+  ta.innerHTML=String(n.body||'').replace(/<p>\s*<(b|strong)>/gi,'\n§').replace(/<hr\b[^>]*>/gi,'\n§').replace(/<br\s*\/?>|<\/(p|li|div|h\d)>/gi,'\n').replace(/<[^>]*>/g,' ');
+  const lines=ta.value.split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const chunks=[];let head='',cur=null;
+  for(const l of lines){if(l.startsWith('§')){head=l.slice(1).trim();cur=null;chunks.push({head,t:'',h:1});continue}
+   if(!cur||cur.t.length+l.length>650){cur={head,t:''};chunks.push(cur)}cur.t+=(cur.t?'\n':'')+l}
+  const esc=w=>w.replace(/[.*+?^${}()|[\]\\/]/g,'\\$&');
+  const lowAll=full.toLowerCase(),df=w=>Math.max(1,lowAll.split(w).length-1);
+  chunks.forEach((c,i)=>{c.i=i;c.s=0;if(c.h)return;const low=c.t.toLowerCase(),hl=c.head.toLowerCase();
+   ws.forEach(w=>{const re=new RegExp('(^|[^a-z0-9/])'+esc(w)+'(?=$|[^a-z0-9])','g');const k=(low.match(re)||[]).length,wt=1/Math.sqrt(df(w));if(re.test(hl))c.s+=1.5*wt;c.s+=Math.min(3,k)*wt})});
+  const keep=new Set();let used=0;
+  const openEnd=chunks.findIndex((c,i)=>i>0&&c.h&&!/^(what is|history)/i.test(c.head));
+  chunks.slice(0,openEnd>0?openEnd:2).forEach(c=>{if(!/^history/i.test(c.head)&&used<900){keep.add(c.i);used+=c.t.length+c.head.length}});
+  for(const c of [...chunks].filter(c=>!c.h&&c.s>0).sort((a,b)=>b.s-a.s)){if(keep.has(c.i))continue;if(used+c.t.length>cap)continue;keep.add(c.i);used+=c.t.length+30}
+  if(![...keep].some(i=>chunks[i].s>0))return full.slice(0,cap);
+  let out='(Parts of a long note that match the question)',last=null;
+  [...keep].sort((a,b)=>a-b).forEach(i=>{const c=chunks[i];if(c.h){out+='\n'+c.head;last=c.head;return}if(c.head!==last){out+='\n'+c.head+(c.s>0?' (part)':'');last=c.head}out+='\n'+c.t});
+  return out.slice(0,cap)+(n.analysis?.summary?' (Max’s summary: '+n.analysis.summary+')':'');
+ }
+ const isCore=n=>(n.tags||[]).some(t=>String(t).toLowerCase()==='core');
  function notesContext(q){
   const all=getNotes().sort((a,b)=>b.updatedAt-a.updatedAt);
   let items=rankNotes(q,6);
@@ -1814,7 +1842,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(screen==='editor'&&(activeNoteId||$('editorBody').innerText.trim()))active={id:activeNoteId||'unsaved',title:$('editorTitle').value.trim()||'Untitled (not saved yet)',category:$('editorCategory').value||'Unsorted',text:plain($('editorBody').innerHTML)};
   else if(attachFresh()&&(screen==='display'||/\b(file|document|pdf|photo|picture|screenshot|attachment|certificate|receipt|letter|form|it|this|that)\b/i.test(q))){const a=pendingAttach;active={id:'attachment',title:'The file he just sent: '+a.title+' ('+a.name+')',category:a.topic,text:[a.summary,...a.points,...a.dates.map(d=>d.what+': '+d.date),...a.amounts.map(x=>x.what+': '+x.currency+' '+x.amount),'Full text:',a.text].join('\n')}}
   else if(lastNote.id&&Date.now()-lastNote.at<20*60e3&&/\b(this|that|the|last) note\b|\b(it|ito|iyan|yan)\b/i.test(q)){const n=all.find(x=>x.id===lastNote.id);if(n)active={id:n.id,title:n.title,category:n.category,text:noteText(n)}}
-  return {index:all.slice(0,400).map(n=>({t:n.title||'Untitled',c:n.category})),items:items.map(n=>({id:n.id,title:n.title||'Untitled',category:n.category,text:noteText(n)})),active};
+  return {index:all.slice(0,400).map(n=>({t:n.title||'Untitled',c:n.category})),items:items.map(n=>({id:n.id,title:n.title||'Untitled',category:n.category,text:noteExcerpt(n,q)})),active};
  }
  // Without internet, Max answers from your notes on the phone.
  function bestSentences(text,q,max){
@@ -3857,9 +3885,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const base=notesContext(q);
   const qv=await queryVec(q);if(!qv)return base;
   const V=vecLoad(),notes=getNotes(),kw=new Map(rankNotes(q,20).map((n,i)=>[n.id,1-i/20]));
-  const scored=notes.map(n=>{const it=V.items[n.id];const c=it?dot(qv,vecDecode(it.v)):0;return {n,s:c+0.35*(kw.get(n.id)||0),c}}).filter(x=>x.c>=0.45||kw.has(x.n.id)).sort((a,b)=>b.s-a.s).slice(0,8);
+  const scored=notes.map(n=>{const it=V.items[n.id];const c=it?dot(qv,vecDecode(it.v)):0;return {n,s:c+0.35*(kw.get(n.id)||0)+(isCore(n)?0.08:0),c}}).filter(x=>x.c>=0.45||kw.has(x.n.id)).sort((a,b)=>b.s-a.s).slice(0,8);
   if(!scored.length)return base;
-  return {...base,items:scored.map(({n})=>({id:n.id,title:n.title||'Untitled',category:n.category,text:noteText(n)}))};
+  return {...base,items:scored.map(({n})=>({id:n.id,title:n.title||'Untitled',category:n.category,text:noteExcerpt(n,q)}))};
  }
  // ---------- Librarian: notes that contradict each other or look outdated ----------
  async function checkConflicts(){
