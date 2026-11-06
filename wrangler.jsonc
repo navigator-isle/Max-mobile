@@ -9,6 +9,8 @@
   "workers_dev": true,
   // Keep the plain-text variables set in the dashboard (ALLOWED_ORIGIN, GEMINI_MODEL).
   "keep_vars": true,
+  // Only the real Max adds the notes Claude prepared for Mark (tests and copies don't).
+  "vars": { "MAX_SEED_NOTES": "on" },
   // Max's long-term memory database. The code uses the name MAX_MEMORY.
   "d1_databases": [
     {
