@@ -1,6 +1,6 @@
 // Max personal butler Cloudflare Worker backend.
 // Store GEMINI_API_KEY using Cloudflare's Secrets UI or `npx wrangler secret put GEMINI_API_KEY`.
-// Set ALLOWED_ORIGIN to your exact GitHub Pages origin, e.g. https://yourname.github.io
+// The phone app is served by this Worker (same address). ALLOWED_ORIGIN can add one more origin, e.g. the old GitHub Pages copy.
 // Long-term memory (v2): bind a D1 database as MAX_MEMORY and add a secret MAX_PASSCODE.
 // Cloud memory and notes sync stay switched off until BOTH exist. Tables are created automatically.
 // Max's brain. Gemini Flash first (smarter, free tier), Flash-Lite as automatic backup when Flash
@@ -130,10 +130,11 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-15h";
+const WORKER_VERSION = "max-worker-2026-11-16a";
+// Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
+const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
-  const allowed = (env.ALLOWED_ORIGIN || "").trim();
-  const accepted = allowed && origin === allowed ? origin : "null";
+  const accepted = originOk(origin, env) ? origin : "null";
   return {
     "Access-Control-Allow-Origin": accepted,
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
@@ -608,8 +609,8 @@ const callbackUrl = request => new URL("/auth/google/callback", request.url).hre
 async function googleStart(request, env, url) {
   if (!googleConfigured(env)) return page("Google not set up", "Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and MAX_OWNER_EMAIL in Cloudflare first.", 503);
   const ret = String(url.searchParams.get("return") || "");
-  const allowed = (env.ALLOWED_ORIGIN || "").trim();
-  if (!/^https?:\/\//.test(ret) || (allowed && !ret.startsWith(allowed + "/"))) return page("Not allowed", "Max can only send you back to your own app.", 400);
+  const allowed = (env.ALLOWED_ORIGIN || "").trim(), self = new URL(request.url).origin;
+  if (!/^https?:\/\//.test(ret) || (allowed && !ret.startsWith(allowed + "/") && !ret.startsWith(self + "/"))) return page("Not allowed", "Max can only send you back to your own app.", 400);
   const body = b64u(enc.encode(JSON.stringify({r: ret, t: Date.now(), n: b64u(crypto.getRandomValues(new Uint8Array(9)))})));
   const state = body + "." + await hmac(env, body);
   const q = new URLSearchParams({client_id: env.GOOGLE_CLIENT_ID, redirect_uri: callbackUrl(request), response_type: "code", scope: GOOGLE_SCOPES,
@@ -1266,7 +1267,7 @@ async function learnRoutes(request, env, url, origin) {
 // The checker only reads public pages (like a visitor would). The writer drafts; nothing is published without you.
 async function timedFetch(url, opts = {}, ms = 10000) {
   const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms), t0 = Date.now();
-  try { const r = await fetch(url, {...opts, signal: ctl.signal, headers: {"User-Agent": "Max-site-check (personal; +https://navigator-isle.github.io/Max-mobile/)", ...(opts.headers || {})}}); return {r, ms: Date.now() - t0}; }
+  try { const r = await fetch(url, {...opts, signal: ctl.signal, headers: {"User-Agent": "Max-site-check (personal; +https://max-ai-backend.mjgaly-mg.workers.dev/)", ...(opts.headers || {})}}); return {r, ms: Date.now() - t0}; }
   finally { clearTimeout(t); }
 }
 async function siteAudit(raw) {
@@ -1482,7 +1483,7 @@ async function musicRoutes(request, env, url, origin) {
 // it sends an all-clear summary with a backup of Max's notes and memory attached (to his own Gmail — never to
 // GitHub, because the Max-mobile repository is public). He can also ask for a check or a backup any time.
 const GUARD_SITES = [
-  {name: "Max", url: "https://navigator-isle.github.io/Max-mobile/"},
+  {name: "Max", url: "https://max-ai-backend.mjgaly-mg.workers.dev/"},
   {name: "Passage Planner", url: "https://navigator-isle.github.io/"},
   {name: "Quick Draft Calculator", url: "https://draft-calculator.github.io/Draft-Calculator/"},
   {name: "Hobby Isle", url: "https://hobbyisle.com/", site: true}];
@@ -1554,6 +1555,24 @@ async function guardRun(env, opts = {}) {
     await logAct(env, {dept: "guard", kind: "guard check", text: problems.length ? problems.length + " problem" + (problems.length === 1 ? "" : "s") + ": " + problems.slice(0, 3).join("; ") : "All clear — sites up, builds passing, Max healthy" + (report.backup?.ok ? ", backup sent" : ""), ok: !problems.length, ms: report.ms, source: opts.source || "guard"}); }
   return report;
 }
+// ---------- Code backup (works without GitHub) ----------
+// build.mjs packs all of Max's code into site/_src/max-code.zip; it ships with the app but is never public.
+async function codeBackup(env) {
+  if (!env.ASSETS) return null;
+  try {
+    const info = await env.ASSETS.fetch(new Request("https://max.assets/_src/files.json"));
+    if (!info.ok) return null;
+    const meta = await info.json(), r = await env.ASSETS.fetch(new Request("https://max.assets/_src/max-code.zip"));
+    if (!r.ok) return null;
+    return {bytes: new Uint8Array(await r.arrayBuffer()), files: (meta.files || []).length, built: meta.built};
+  } catch { return null; }
+}
+const b64bytes = b => { let o = ""; for (let i = 0; i < b.length; i += 32768) o += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(o).replace(/.{76}/g, "$&\r\n"); };
+async function backupRoutes(request, env, url, origin) {
+  const code = await codeBackup(env);
+  if (!code) return json({error: "No code copy is attached to this Max yet — it appears after the next deploy."}, 404, origin, env);
+  return new Response(code.bytes, {status: 200, headers: {...corsHeaders(origin, env), "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="max-code-${String(code.built || "").slice(0, 10)}.zip"`, "Cache-Control": "no-store"}});
+}
 async function guardBackup(env) {
   if (!env.MAX_MEMORY) throw new Error("no database");
   const db = env.MAX_MEMORY; await ensureSchema(db);
@@ -1563,10 +1582,15 @@ async function guardBackup(env) {
   const out = {ok: true, notes: notes.length, memories: memories.length, settings: settings.length, bytes: data.length, at: Date.now()};
   if (!env.MAX_OWNER_EMAIL || !(await googleRow(env))) throw new Error("Gmail isn't connected, so there is nowhere private to send it");
   const to = String(env.MAX_OWNER_EMAIL).trim(), day = new Date().toISOString().slice(0, 10), bound = "maxbackup" + Math.random().toString(36).slice(2);
-  const body = `Max's weekly backup — ${notes.length} notes, ${memories.length} memories, ${settings.length} settings (${Math.round(data.length / 1024)} KB).\n\nKeep this email. To restore: save the attached file, then in Max open Notes → ⋯ → "Restore from a Max backup" and choose it. Nothing newer is overwritten.\nPasswords, keys and sign-ins are never included.`;
+  const code = await codeBackup(env);
+  out.code = code ? code.files + " files" : "not attached";
+  const body = `Max's weekly backup — ${notes.length} notes, ${memories.length} memories, ${settings.length} settings (${Math.round(data.length / 1024)} KB).\n\nKeep this email. To restore: save the attached file, then in Max open Notes → ⋯ → "Restore from a Max backup" and choose it. Nothing newer is overwritten.\nPasswords, keys and sign-ins are never included.` +
+    (code ? `\n\nAlso attached: max-code-${day}.zip — all of Max's code (${code.files} files, built ${String(code.built).slice(0, 10)}). If GitHub or anything else goes away, this zip plus DEPLOY.md inside it rebuilds Max on Cloudflare.` : "");
   const raw = ["To: " + to, "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent("Max backup " + day + " — " + notes.length + " notes"))) + "?=", "MIME-Version: 1.0", `Content-Type: multipart/mixed; boundary="${bound}"`, "",
     "--" + bound, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", body, "",
-    "--" + bound, `Content-Type: application/json; name="max-backup-${day}.json"`, `Content-Disposition: attachment; filename="max-backup-${day}.json"`, "Content-Transfer-Encoding: base64", "", b64lines(data), "--" + bound + "--", ""].join("\r\n");
+    "--" + bound, `Content-Type: application/json; name="max-backup-${day}.json"`, `Content-Disposition: attachment; filename="max-backup-${day}.json"`, "Content-Transfer-Encoding: base64", "", b64lines(data),
+    ...(code ? ["--" + bound, `Content-Type: application/zip; name="max-code-${day}.zip"`, `Content-Disposition: attachment; filename="max-code-${day}.zip"`, "Content-Transfer-Encoding: base64", "", b64bytes(code.bytes)] : []),
+    "--" + bound + "--", ""].join("\r\n");
   if (raw.length > 30e6) throw new Error("the backup is too big for one email (" + Math.round(raw.length / 1e6) + " MB)");
   await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})});
   await srvSetting(env, "max_srv_guard_backup", JSON.stringify(out)).catch(() => {});
@@ -1829,7 +1853,7 @@ async function factsWeb(env) {
 }
 // ----- 📱 apps -----
 const APPS_DEFAULT = [
-  {name: "Max", url: "https://navigator-isle.github.io/Max-mobile/", repo: "navigator-isle/Max-mobile"},
+  {name: "Max", url: "https://max-ai-backend.mjgaly-mg.workers.dev/", repo: "navigator-isle/Max-mobile"},
   {name: "Passage Planner", url: "https://navigator-isle.github.io/", repo: "navigator-isle/navigator-isle.github.io", androidRepo: "navigator-isle/passage-planner-android", play: "passage planner"},
   {name: "Quick Draft Calculator", url: "https://draft-calculator.github.io/Draft-Calculator/"}];
 async function appList(env) {
@@ -2066,7 +2090,7 @@ async function agentRoutes(request, env, url, origin) {
 }
 // ---------- markets: crypto (CoinGecko), Philippine stocks (PSE Edge), currencies (Frankfurter / ECB) ----------
 // Prices are reported, never advised on, and Max never trades.
-const UA = "MaxPersonalAssistant/1.0 (personal use; +https://navigator-isle.github.io/Max-mobile/)";
+const UA = "MaxPersonalAssistant/1.0 (personal use; +https://max-ai-backend.mjgaly-mg.workers.dev/)";
 const mcache = new Map();
 async function cached(key, ms, fn) { const c = mcache.get(key); if (c && Date.now() - c.at < ms) return c.v; const v = await fn(); mcache.set(key, {at: Date.now(), v}); if (mcache.size > 400) mcache.delete(mcache.keys().next().value); return v; }
 const CRYPTO = {btc: "bitcoin", bitcoin: "bitcoin", eth: "ethereum", ethereum: "ethereum", usdt: "tether", tether: "tether", usdc: "usd-coin", bnb: "binancecoin", sol: "solana", solana: "solana", xrp: "ripple", ripple: "ripple",
@@ -2362,7 +2386,10 @@ export default {
     .catch(async e => { console.log("trader notify failed:", e.message); await logAct(env, {dept: "trading", kind: "email", text: "Trading update email failed", detail: e.message, ok: false, source: "schedule"}); })); },
   async fetch(request, env) {
     const url = new URL(request.url);
+    env = {...env, SELF_ORIGIN: url.origin};
     const origin = request.headers.get("Origin") || "";
+    // Max's source copy is kept with the app for backups; it is never served to the public.
+    if (url.pathname.startsWith("/_src/")) return new Response("Not found", {status: 404});
     if (request.method === "OPTIONS") {
       return new Response(null, {status: 204, headers: corsHeaders(origin, env)});
     }
@@ -2376,6 +2403,8 @@ export default {
         brainChain: [...(env.ANTHROPIC_API_KEY ? [cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE] : []), ...modelChain(env), ...(env.GROQ_API_KEY ? GROQ_MODELS.map(m => "groq:" + m) : []), ...(env.AI ? WAI_MODELS.map(m => "workers-ai:" + m) : [])],
         resting, departments: DEPT_IDS.map(id => DEPTS[id].icon + " " + DEPTS[id].name),
         lastTrigger: await (async () => { try { return env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_last_cron") || "null") : null; } catch { return null; } })(),
+        app: env.ASSETS ? "served by this Worker" : "not attached (GitHub Pages only)",
+        codeBackup: await (async () => { const c = await codeBackup(env); return c ? c.files + " files, built " + c.built : "not attached"; })(),
         coreNotes: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const out = []; for (const x of SEED_NOTES) { const k = "max_srv_seed_" + x.id.replace(/[^a-z0-9]/gi, "_").slice(0, 30) + (x.v > 1 ? "_v" + x.v : ""); out.push(x.title + (await srvSetting(env, k) ? " ✓" : " waiting")); } return out.join("; "); } catch { return "unknown"; } })(),
         reportsNow: await (async () => { try { const d = env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_catchup") || "{}") : {}; return Object.entries(d).map(([k, v]) => k + ": " + v.status).join("; ") || "waiting to start"; } catch { return "unknown"; } })(),
         deepChain: modelChain(env, true), checker: env.GROQ_API_KEY ? "groq:openai/gpt-oss-120b" : env.AI ? "workers-ai:llama-3.3-70b" : "none (add GROQ_API_KEY)",
@@ -2417,7 +2446,7 @@ export default {
       }
       return json(health, 200, origin, env);
     }
-    if (origin && env.ALLOWED_ORIGIN && origin !== env.ALLOWED_ORIGIN) {
+    if (origin && env.ALLOWED_ORIGIN && !originOk(origin, env)) {
       return json({error:"Origin not allowed. Check ALLOWED_ORIGIN in Worker settings."}, 403, origin, env);
     }
     // Once MAX_PASSCODE is set (or Google is linked), every /api/ call must be signed in.
@@ -2444,6 +2473,7 @@ export default {
     if (url.pathname === "/api/music" && request.method === "GET") return musicRoutes(request, env, url, origin);
     if (url.pathname === "/api/media" && ["GET", "POST", "DELETE"].includes(request.method)) return mediaRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/agents") || url.pathname === "/api/notes/checks") return agentRoutes(request, env, url, origin);
+    if (url.pathname === "/api/backup/code" && request.method === "GET") return backupRoutes(request, env, url, origin);
     if ((url.pathname === "/api/guard" && request.method === "GET") || (url.pathname === "/api/guard/run" && request.method === "POST")) return guardRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/trader/")) return traderRoutes(request, env, url, origin);
     if ((url.pathname === "/api/site/audit" || url.pathname.startsWith("/api/content/")) && request.method === "POST") return contentRoutes(request, env, url, origin);

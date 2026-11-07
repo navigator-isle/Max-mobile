@@ -1,6 +1,6 @@
 // Cloudflare settings for Max's backend (the Worker "max-ai-backend").
-// When Cloudflare is connected to this GitHub repo, every change pushed to `main`
-// is deployed automatically using these settings.
+// Deploy with:  npx wrangler deploy   (or double-click deploy.bat / run ./deploy.sh)
+// This one Worker serves Max's phone app AND his backend, so nothing depends on GitHub.
 // Nothing secret is in this file: GEMINI_API_KEY and MAX_PASSCODE stay as Cloudflare secrets.
 {
   "name": "max-ai-backend",
@@ -23,5 +23,9 @@
   "ai": { "binding": "AI" },
   // Hourly at :45 — emails you new paper-trading updates (only if you keep trading emails on).
   "triggers": { "crons": ["45 * * * *"] },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // Max's phone app (built into ./site by build.mjs). Files are served directly; /api/* and /health go to worker.js.
+  // _src/ holds a private copy of Max's code for backups — the Worker answers those paths itself and never serves them.
+  "build": { "command": "node build.mjs" },
+  "assets": { "directory": "./site", "binding": "ASSETS", "run_worker_first": ["/_src/*"] }
 }

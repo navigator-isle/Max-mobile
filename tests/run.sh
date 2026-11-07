@@ -30,6 +30,8 @@ run "Guard: daily check & backup" tests/test-worker18.mjs "$TMP/worker.mjs"
 run "Smarter free brain & second check" tests/test-worker19.mjs "$TMP/worker.mjs"
 run "Agents & weekly reports" tests/test-worker20.mjs "$TMP/worker.mjs"
 run "Notes added for Mark" tests/test-worker21.mjs "$TMP/worker.mjs"
+node build.mjs >/dev/null
+run "Max without GitHub (app on Cloudflare, code backups)" tests/test-worker22.mjs "$TMP/worker.mjs" "$PWD/site"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
@@ -64,4 +66,5 @@ run "Phone: understanding his accent" tests/e2e29.mjs "$PWD/index.html" "$TMP/wo
 run "Phone: agents, reports, fact-checks, music library" tests/e2e31.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: new notes (structure, media, links)" tests/e2e30.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: long core notes (SOLAS, MARPOL, STCW, MLC)" tests/e2e32.mjs "$PWD/index.html" "$PWD/worker.js"
+run "Phone: app on Cloudflare, code backup button" tests/e2e33.mjs "$PWD/index.html"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

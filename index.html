@@ -400,11 +400,17 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
 .media-viewer{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center}.media-viewer img{max-width:100vw;max-height:100vh;object-fit:contain}
 </style></head>
 <body>
+<div id="movedNote" hidden style="background:#3a2a05;color:#ffe9a8;padding:8px 12px;font:13px system-ui;text-align:center">Max now lives on Cloudflare: <a style="color:#ffd76a" href="https://max-ai-backend.mjgaly-mg.workers.dev/">max-ai-backend.mjgaly-mg.workers.dev</a> — open it and add it to your home screen.</div>
+<script>if(/\.github\.io$/.test(location.hostname))document.getElementById('movedNote').hidden=false;</script>
 <script>
 // Max boot guard (runs first): shows any startup problem on screen instead of a frozen app,
 // and adds the passcode to calls going to Max's own Worker. The passcode stays on this phone.
 (function(){
   var DEFAULT_WORKER='https://max-ai-backend.mjgaly-mg.workers.dev';
+  // Max's app is served by his own Worker (Cloudflare), so on that address the backend is "here".
+  var SERVED_BY_WORKER=/\.workers\.dev$/.test(location.hostname);
+  if(SERVED_BY_WORKER){DEFAULT_WORKER=location.origin;try{if(!localStorage.getItem('jarvis_api_base_v2'))localStorage.setItem('jarvis_api_base_v2',location.origin)}catch(e){}}
+  window.__maxHome=SERVED_BY_WORKER?location.origin+'/':DEFAULT_WORKER+'/';
   window.__maxErrors=[];
   window.maxShowProblem=function(msg){
     window.__maxErrors.push(msg);
@@ -523,6 +529,7 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
       <button id="exportAll" class="pill">Export all as one file</button>
       <button id="organizeBtn" class="pill">Organize with Max</button>
       <button id="restoreBackup" class="pill">⟲ Restore from a Max backup (.json)</button>
+      <button id="codeBackupBtn" class="pill">⬇ Download all of Max's code (.zip)</button>
     </div>
     <div class="vault-bar" role="toolbar" aria-label="Vault actions">
       <button id="newNote" title="New note" aria-label="New note">✎</button>
@@ -993,6 +1000,16 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return 'Restored the backup from '+String(b.exportedAt||'').slice(0,10)+': '+added+' notes added, '+updated+' updated'+(before?', '+(b.notes.length-added-updated)+' already up to date':'')+'.'+cloudMsg;
  }
  $('restoreBackup').onclick=()=>$('backupInput').click();
+ // A full copy of Max's code, so he can be rebuilt on Cloudflare even if GitHub is gone. Save it to Google Drive.
+ async function downloadCode(){
+  const base=apiBase()||window.maxWorker();
+  try{const r=await fetch(base+'/api/backup/code');if(!r.ok){let m='';try{m=(await r.json()).error}catch{}return 'Could not get the code backup'+(m?': '+m:' ('+r.status+')')}
+   const b=await r.blob(),name=(/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition')||'')||[])[1]||'max-code.zip';
+   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+   return 'Saved '+name+' ('+Math.round(b.size/1024)+' KB). Keep it in Google Drive — it rebuilds Max without GitHub.'}
+  catch(e){return 'Could not get the code backup: '+(e.message||e)}
+ }
+ $('codeBackupBtn').onclick=async()=>{const t=await downloadCode();status(t)};
  $('backupInput').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const t=await restoreBackup(f);status(t);try{speak(t)}catch{}};
 
  // ---------- long-term memory list (in ⚙ settings) ----------
