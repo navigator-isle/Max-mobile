@@ -1003,7 +1003,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // A full copy of Max's code, so he can be rebuilt on Cloudflare even if GitHub is gone. Save it to Google Drive.
  async function downloadCode(){
   const base=apiBase()||window.maxWorker();
-  try{const r=await fetch(base+'/api/backup/code');if(!r.ok){let m='';try{m=(await r.json()).error}catch{}return 'Could not get the code backup'+(m?': '+m:' ('+r.status+')')}
+  try{const r=await fetch(base+'/api/backup/code');if(!r.ok){let m='';try{m=(await r.json()).error}catch{}if(r.status===404&&!m)m='this needs the next update of Max’s server — your weekly Gmail backup and the backup kit in Drive have your work';return 'Could not get the code backup'+(m?': '+m:' ('+r.status+')')}
    const b=await r.blob(),name=(/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition')||'')||[])[1]||'max-code.zip';
    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
    return 'Saved '+name+' ('+Math.round(b.size/1024)+' KB). Keep it in Google Drive — it rebuilds Max without GitHub.'}
