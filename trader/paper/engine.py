@@ -161,6 +161,36 @@ def equity_crypto(B, px, d):
         last = max([dd for dd in px.get(p["sym"], {}) if dd <= d], default=None)
         v += p["qty"] * (px[p["sym"]][last] if last else p["ep"])
     return v
+def btc_trend(B, U, upto):
+    """Hold Bitcoin only while it closes above its 100-day average; size = 40% yearly volatility ÷ Bitcoin's recent volatility (max 100%).
+       Re-size only when the target moves by 10 points or more. Decided at close, traded next close, 0.15%/side. Tested 2011–2026."""
+    cost = 0.0015; s = U["BTC"]; px = {d: p for d, p, _ in s}; dates = [d for d, _, _ in s]
+    last = D(B.get("last_day", iso(upto - dt.timedelta(days=1))))
+    for d in [x for x in dates if last < x <= upto]:
+        p = px[d]
+        q = B.get("qty", 0.0)
+        if B["pending"]:
+            o = B["pending"].pop(0); eq = B["cash"] + q * p; tgt = o["w"] * eq; cur = q * p; delta = tgt - cur
+            if delta > 0: buy = min(delta, B["cash"]) / (1 + cost); q += buy / p; B["cash"] -= buy * (1 + cost)
+            else: sell = -delta; q -= sell / p; B["cash"] += sell * (1 - cost)
+            B["qty"] = q; side = "BUY" if delta > 0 else "SELL"
+            if q * p < 1e-6: B["positions"] = []
+            else: B["positions"] = [{"sym": "BTC", "qty": q, "entry": B.get("since", iso(d)), "ep": B.get("avg", p), "stop": 0}]
+            if side == "BUY": B["avg"] = p; B["since"] = B.get("since") or iso(d)
+            if q * p < 1: B["since"] = None
+            B["trades"].append({"sym": "BTC", "date": iso(d), "side": side, "px": p, "usd": round(abs(delta), 2), "pnl": 0})
+            log(B["name"], side, f"{side} ${abs(delta):,.2f} of Bitcoin @ ${p:,.0f} → now {o['w']*100:.0f}% of this book in BTC. Why: {o['why']}", date=iso(d))
+        hist = [x for dd, x, _ in s if dd <= d]
+        if len(hist) >= 101:
+            sma = sum(hist[-100:]) / 100; r = [hist[i] / hist[i - 1] - 1 for i in range(-30, 0)]; vol = stx.pstdev(r) * math.sqrt(365)
+            w = min(1.0, 0.40 / vol) if p > sma else 0.0
+            eq = B["cash"] + q * p; cw = q * p / eq if eq else 0
+            if abs(w - cw) >= 0.10 or (w == 0 and cw > 0.001):
+                why = (f"Bitcoin closed ${p:,.0f}, {'ABOVE' if p > sma else 'BELOW'} its 100-day average (${sma:,.0f}). " +
+                       (f"Uptrend → hold Bitcoin. Its recent swings are {vol*100:.0f}% a year, so Max holds {w*100:.0f}% (target 40% swings) to limit losses." if w > 0 else
+                        "Downtrend → Max sells and waits in cash; in 2011–2026 this avoided most of Bitcoin's big crashes (−92% worst drop for buy & hold vs −35% with this rule)."))
+                B["pending"] = [{"w": round(w, 3), "why": why}]; log(B["name"], "SIGNAL", why, date=iso(d))
+        B["hist"].append([iso(d), round(B["cash"] + q * p, 2)]); B["last_day"] = iso(d)
 def crypto_momentum(B, U, upto):
     """REJECTED in testing (kept to show live): weekly top-5 by 14-day return among top-20, only when BTC > SMA50."""
     cost = 0.0015; px = {c: {d: p for d, p, _ in s} for c, s in U.items()}
@@ -378,6 +408,10 @@ def main(state_f, dir_f, out):
     if U:
         step("crypto_swing", lambda: crypto_swing(S["books"]["crypto_swing"], U, upto))
         step("crypto_momentum", lambda: crypto_momentum(S["books"]["crypto_momentum"], U, upto))
+        if "btc_trend" not in S["books"]:
+            nb = new_book("Bitcoin trend (above 100-day avg, volatility-sized)", "USDT", S["books"]["crypto_swing"]["start"]); nb.update(status="main", weight=0.09, opened=iso(dt.date.today()), last_day=iso(upto - dt.timedelta(days=1))); S["books"]["btc_trend"] = nb
+            S["books"]["crypto_swing"]["weight"] = 0.21; log("MAX-MASTER-2", "CHANGE", "Crypto part is now 70% swing (21% of total) + 30% Bitcoin trend (9% of total), after the 2011–2026 test")
+        step("btc_trend", lambda: btc_trend(S["books"]["btc_trend"], U, upto))
     step("pse_dividend", lambda: pse_dividend(S["books"]["pse_dividend"], DIR, dt.date.today()))
     step("fx_cot", lambda: fx_cot(S["books"]["fx_cot"], upto))
     step("copy_steady", lambda: copy_book(S["books"]["copy_steady"], dt.date.today(), "steady"))
@@ -398,7 +432,7 @@ def main(state_f, dir_f, out):
     rows = []
     for k, B in S["books"].items():
         v = B["hist"][-1][1] if B["hist"] else B.get("equity", B["start"])
-        rows.append({"key": k, "name": B["name"], "status": B["status"], "weight": B.get("weight", 0), "ccy": B["ccy"], "value": round(v, 2), "week_%": round(pct(v, week0[k]), 2), "since_start_%": round(pct(v, B["start"]), 2),
+        rows.append({"key": k, "name": B["name"], "status": B["status"], "weight": B.get("weight", 0), "ccy": B["ccy"], "value": round(v, 2), "week_%": round(pct(v, week0.get(k, B["start"])), 2), "since_start_%": round(pct(v, B["start"]), 2),
                      "open": len(B["positions"]), "closed_trades": len(B["trades"]), "wins": sum(1 for t in B["trades"] if t.get("pnl", 0) > 0)})
     main_ = [r for r in rows if r["weight"]]; combo = sum(r["weight"] * r["since_start_%"] for r in main_); comboW = sum(r["weight"] * r["week_%"] for r in main_)
     weeks = max(1, (dt.date.today() - D(S["opened"])).days // 7)
