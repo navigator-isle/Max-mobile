@@ -4004,7 +4004,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     lines:[MUSIC.mode?'Now playing: '+((MUSIC.list[MUSIC.i]||{}).title||(MUSIC.list[MUSIC.i]||{}).name||MUSIC.q):'Say “play Ben&Ben”, “play some chill music”, or “play jazz radio”.','Songs play in a small player; radio keeps playing with the screen off.','The music turns down by itself while I listen or talk.'],
     buttons:[['🎧 My songs',run('my_songs')],['▶ Chill',run('play_music',{query:'chill lofi mix'})],['📻 OPM radio',run('play_music',{query:'opm',mode:'radio'})],['📻 Jazz radio',run('play_music',{query:'jazz',mode:'radio'})],...(MUSIC.mode?[['⏹ Stop',run('music_control',{op:'stop'})]]:[])]},
    {badge:'SHOPPING',badgeClass:'badge-res',title:'🛒 Deal Finder',meta:'best real price · legit stores only',
-    lines:['Say “find the best price for …” and the product. I compare LazMall, Shopee Mall, Zalora and official stores, and check if the discount is real.','“Watch the price of …” → I re-check daily and tell you when it drops. I never buy anything.'],
+    lines:['Say “find the best price for …” and the product. I compare ALL legit sellers in the Philippines — official brand stores, authorized resellers and department stores, LazMall, Shopee Mall, TikTok Shop Mall, Zalora — and check if the discount is real.','“Watch the price of …” → I re-check daily and tell you when it drops. I never buy anything.'],
     buttons:[['🛒 My deals',run('deal_list')]]},
    {badge:'GUARD',badgeClass:'badge-draft',title:'🛡 Guard',meta:'security & reliability · daily check 6:45 am · Sunday backup',
     lines:['Checks your sites (up, speed, security & SEO), GitHub builds, the paper trader and Max himself every morning.','Emails you only when something new is wrong; on Sundays an all-clear plus a backup of your notes and memory.'],
@@ -4369,8 +4369,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const dealsAll=()=>jget(DEALS,{items:{}});
  const dealKey=q=>norm(q).replace(/\b(the|a|an|po|naman|please)\b/g,'').replace(/\s+/g,' ').trim().slice(0,60);
  function dealTopic(q){
-  return ('Best value to buy now in the Philippines: "'+q+'". Search Lazada (LazMall/official stores only), Shopee Mall, Zalora and the brand official store. '+
-   'For each seller: store name, price ₱, regular price, discount %, rating and number of reviews. Real or inflated discount? Skip unofficial sellers. Last point: BEST VALUE pick and why.').slice(0,400);
+  // ALL legit PH sellers. A discount is judged against the brand's CURRENT official price, not the store's "was" price.
+  return ('Best buy now in PH: "'+q.slice(0,70)+'". Check ALL legit sellers: brand official site, authorized resellers & stores (Abenson, SM, Robinsons etc), LazMall, Shopee Mall, TikTok Shop Mall, Zalora. Each: store, ₱ price, stock, rating/reviews. Compare to the brand\'s CURRENT official price (not "was" price). Skip unofficial. Last: BEST VALUE + why.').slice(0,400);
  }
  const pesos=t=>[...String(t).matchAll(/(?:₱|PHP|Php|P)\s?(\d{1,3}(?:,\d{3})+|\d{2,7})(?:\.\d{1,2})?/g)].map(m=>Number(m[1].replace(/,/g,''))).filter(n=>n>=20&&n<5e6);
  function dealVerdict(key,points){
@@ -4411,12 +4411,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    buttons:[['🔄 Check again',()=>findDeal({product:it.q}).then(t=>{setSub('',t);speak(t)})],[it.watch?'🔕 Stop watching':'👀 Watch this price',()=>{const t=dealWatch({product:it.q,on:!it.watch});setSub('',t);showDeal(key)}],['🛒 All my deals',()=>showDeals()]]}];
   if(h.sources&&h.sources.length)cards.push({badge:'SOURCES',title:'Where the prices came from',lines:['Tap to open and confirm the price before buying:'],buttons:h.sources.map(x=>['↗ '+String(x.title).slice(0,28),()=>window.open(x.url,'_blank','noopener')])});
   if(older.length)cards.push({badge:'PRICE HISTORY',title:'Earlier checks',lines:older.map(x=>whenText(localDate(new Date(x.at)))+': lowest ₱'+x.low.toLocaleString())});
-  cards.push({badge:'RULES',title:'How I pick',lines:['Only official/mall sellers: LazMall, Shopee Mall, Zalora, brand official stores.','A real discount = lower than the usual price, not a raised “original” price. My price history shows fake markups over time.','I never buy anything — you decide.']});
+  cards.push({badge:'RULES',title:'How I pick',lines:['Only legit sellers: brand official stores, authorized resellers and department stores, LazMall, Shopee Mall, TikTok Shop Mall, Zalora. Unofficial sellers are skipped.','A real discount = lower than the brand’s CURRENT official price — not the store’s “was” price (those are often inflated). My price history also shows fake markups over time.','“Official store” on Lazada/Shopee may be run by a reseller, not the brand itself — check it’s authorized.','I never buy anything — you decide.']});
   showDisplay('Deal Finder','Best real price from legit stores',cards);
  }
  function showDeals(){
   const items=Object.entries(dealsAll().items).sort((a,b)=>(b[1].history[0]?.at||0)-(a[1].history[0]?.at||0));
-  showDisplay('Deal Finder','Best real price from legit stores — Lazada, Shopee, Zalora, official stores',[{badge:'DEAL FINDER',badgeClass:'badge-res',title:'🛒 My deal checks',
+  showDisplay('Deal Finder','Best real price from all legit sellers in the Philippines',[{badge:'DEAL FINDER',badgeClass:'badge-res',title:'🛒 My deal checks',
    lines:items.length?items.slice(0,30).map(([k,it])=>(it.watch?'👀 ':'')+it.q+(it.history[0]?.low?' — ₱'+it.history[0].low.toLocaleString():'')+' · '+whenText(localDate(new Date(it.history[0]?.at||Date.now())))):['Nothing yet. Say “find the best price for …” and the product.'],
    buttons:items.slice(0,6).map(([k,it])=>['🛒 '+it.q.slice(0,20),()=>showDeal(k)])}]);
   return items.length?'You have '+items.length+' products in the Deal Finder'+(items.some(([,it])=>it.watch)?', some on price watch':'')+'.':'No deal checks yet. Tell me a product and I’ll find the best legit price.';

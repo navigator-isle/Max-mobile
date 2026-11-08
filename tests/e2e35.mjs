@@ -13,7 +13,7 @@ let price = 13999; const gem = [];
 globalThis.fetch = async (u, o = {}) => {
   const url = String(u);
   if (url.includes("generativelanguage")) { const b = JSON.parse(o.body); gem.push(b); const q = b.contents?.at(-1)?.parts?.[0]?.text || "";
-    if (/Best value to buy now/.test(q)) {
+    if (/Best buy now in PH/.test(q)) {
       const text = `TITLE: Samsung A56 prices\nTOPIC: Shopping\nPOINTS:\n- LazMall Samsung Official Store: ₱${price.toLocaleString()} (regular ₱21,990, 36% off), 4.9 stars, 2,140 reviews.\n- Shopee Mall Samsung Official: ₱${(price + 500).toLocaleString()} (regular ₱21,990), 4.8 stars, 1,900 reviews.\n- A third-party seller lists ₱9,999 "from ₱30,000" — inflated discount, not an official store, skipped.\n- BEST VALUE: LazMall Samsung Official Store at ₱${price.toLocaleString()} — lowest official price, real discount vs usual ₱18,990.\nCONFLICTS:\n- none\nCONFIDENCE: medium — prices change daily`;
       return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text }] }, groundingMetadata: { groundingChunks: [{ web: { uri: "https://www.lazada.com.ph/products/samsung-a56", title: "lazada.com.ph" } }, { web: { uri: "https://shopee.ph/samsung-a56", title: "shopee.ph" } }] } }] })); }
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ reply: "ok", action: null }) }] } }] })); }
@@ -47,9 +47,9 @@ const say = async t => { const n = await p.evaluate(() => window.__spoken.length
 let mark = 0; const spoken = () => p.evaluate(m => window.__spoken.slice(m).join(" "), mark);
 const shown = () => p.evaluate(() => document.getElementById("dispBody")?.textContent || "");
 await say("find the best price for Samsung A56 256GB");
-const sent = gem.find(g => /Best value to buy now/.test(g.contents?.at(-1)?.parts?.[0]?.text || ""));
+const sent = gem.find(g => /Best buy now in PH/.test(g.contents?.at(-1)?.parts?.[0]?.text || ""));
 const prompt = sent ? sent.contents.at(-1).parts[0].text : "";
-ok(/Samsung A56 256GB/.test(prompt) && /LazMall/.test(prompt) && /Shopee Mall/.test(prompt) && /Zalora/.test(prompt) && /official/.test(prompt) && sent.tools?.[0]?.google_search, "searches the web (Google) for legit stores only: LazMall, Shopee Mall, Zalora, official", prompt.slice(0, 300));
+ok(/Samsung A56 256GB/.test(prompt) && /LazMall/.test(prompt) && /Shopee Mall/.test(prompt) && /TikTok Shop/.test(prompt) && /Zalora/.test(prompt) && /authorized resellers/.test(prompt) && /CURRENT official price/.test(prompt) && sent.tools?.[0]?.google_search, "searches ALL legit PH sellers (official, authorized resellers, LazMall, Shopee Mall, TikTok Shop, Zalora) against the brand's current price", prompt.slice(0, 300));
 ok(/Best value: LazMall Samsung Official Store at ₱13,999/.test(await spoken()) && /confirm before buying/.test(await spoken()), "says the best value and reminds him to confirm", await spoken());
 ok(/🛒 Samsung A56 256GB/.test(await shown()) && /inflated discount/.test(await shown()) && /Lowest legit price found: ₱13,999/.test(await shown()), "the screen lists each store, flags the fake discount", (await shown()).slice(0, 400));
 await p.locator("#dispBody button", { hasText: "lazada.com.ph" }).click();
@@ -63,7 +63,7 @@ ok(/Watching Samsung A56 256GB/.test(await spoken()), "“watch the price of …
 await say("my deals");
 ok(/👀 Samsung A56 256GB/.test(await shown()), "“my deals” lists products, with the watched one marked", (await shown()).slice(0, 200));
 ok(JSON.parse(await p.evaluate(() => localStorage.getItem("max_deals"))).items["samsung a56 256gb"].history.length === 2, "keeps the price history (synced to Max's server)");
-const dealCalls = () => gem.filter(g => /Best value to buy now/.test(g.contents?.at(-1)?.parts?.[0]?.text || "")).length;
+const dealCalls = () => gem.filter(g => /Best buy now in PH/.test(g.contents?.at(-1)?.parts?.[0]?.text || "")).length;
 const before = dealCalls(); await say("find the best price for bitcoin");
 ok(dealCalls() === before, "crypto/stock prices don't go to the Deal Finder (that's the trading desk)");
 ok(/Higher than before: I found ₱13,999 earlier today/.test(await p.evaluate(() => window.__spoken.join(" "))), "the price rise is spotted against the real legit price (₱13,999, not the fake ₱9,999)", await p.evaluate(() => window.__spoken.join(" | ").slice(-600)));
