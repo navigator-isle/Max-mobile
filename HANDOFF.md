@@ -57,6 +57,8 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - One-tap updater (small updater Worker + Cloudflare token he pastes himself) so future updates need no laptop/GitHub
 - New Worker version (serves app, code in weekly Gmail backup), brain improvements (needs his examples + /health screenshot)
 - Deal Finder as a full server agent (weekly email report, structured prices); app version already works via /api/research
+- Permanent keyboard (always-visible text box) on Max's home screen
+- Import into Max's memory everything from Claude chats since 8 Nov — Claude acts as Max meanwhile (his standing instruction); see Claude memory /areas/max-secretary-app.md
 
 **Open next steps**
 1. Upload latest max-app.zip (new site addresses + project-list migration) to Pages project max-app
