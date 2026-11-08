@@ -1,0 +1,116 @@
+{
+ "A every breakout (current)": {
+  "2018-2021": {
+   "cagr": 51.0,
+   "sharpe": 1.61,
+   "maxdd": -27.5,
+   "total": 420.1,
+   "turnover_yr": 0.0
+  },
+  "2022-Nov 2026": {
+   "cagr": 5.5,
+   "sharpe": 0.36,
+   "maxdd": -30.2,
+   "total": 29.9,
+   "turnover_yr": 0.0
+  },
+  "trades_2022+": 589,
+  "win_%": 32.9,
+  "avg_R": -0.01
+ },
+ "B only when BTC above 200-day avg": {
+  "2018-2021": {
+   "cagr": 38.9,
+   "sharpe": 1.55,
+   "maxdd": -18.4,
+   "total": 273.0,
+   "turnover_yr": 0.0
+  },
+  "2022-Nov 2026": {
+   "cagr": 2.2,
+   "sharpe": 0.21,
+   "maxdd": -31.1,
+   "total": 10.9,
+   "turnover_yr": 0.0
+  },
+  "trades_2022+": 369,
+  "win_%": 32.5,
+  "avg_R": 0.04
+ },
+ "C only when BTC above 50-day avg": {
+  "2018-2021": {
+   "cagr": 53.0,
+   "sharpe": 1.77,
+   "maxdd": -19.9,
+   "total": 448.1,
+   "turnover_yr": 0.0
+  },
+  "2022-Nov 2026": {
+   "cagr": 9.1,
+   "sharpe": 0.54,
+   "maxdd": -28.3,
+   "total": 52.4,
+   "turnover_yr": 0.0
+  },
+  "trades_2022+": 453,
+  "win_%": 35.5,
+  "avg_R": 0.16
+ },
+ "D breakout with 1.5x volume": {
+  "2018-2021": {
+   "cagr": 33.9,
+   "sharpe": 1.37,
+   "maxdd": -25.2,
+   "total": 221.6,
+   "turnover_yr": 0.0
+  },
+  "2022-Nov 2026": {
+   "cagr": 3.8,
+   "sharpe": 0.29,
+   "maxdd": -31.3,
+   "total": 19.6,
+   "turnover_yr": 0.0
+  },
+  "trades_2022+": 391,
+  "win_%": 35.0,
+  "avg_R": 0.08
+ },
+ "E coin above its 50-day avg + BTC above 200-day": {
+  "2018-2021": {
+   "cagr": 43.4,
+   "sharpe": 1.72,
+   "maxdd": -14.1,
+   "total": 323.3,
+   "turnover_yr": 0.0
+  },
+  "2022-Nov 2026": {
+   "cagr": 5.0,
+   "sharpe": 0.38,
+   "maxdd": -27.8,
+   "total": 26.8,
+   "turnover_yr": 0.0
+  },
+  "trades_2022+": 337,
+  "win_%": 33.2,
+  "avg_R": 0.13
+ },
+ "F all filters (BTC>200d, coin>50d, 1.5x volume)": {
+  "2018-2021": {
+   "cagr": 25.5,
+   "sharpe": 1.22,
+   "maxdd": -18.5,
+   "total": 148.5,
+   "turnover_yr": 0.0
+  },
+  "2022-Nov 2026": {
+   "cagr": 4.9,
+   "sharpe": 0.42,
+   "maxdd": -18.4,
+   "total": 26.4,
+   "turnover_yr": 0.0
+  },
+  "trades_2022+": 226,
+  "win_%": 35.4,
+  "avg_R": 0.21
+ }
+}

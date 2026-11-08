@@ -73,15 +73,18 @@ FX = {"EUR": ("EURUSD=X", False, "EURO FX - "), "JPY": ("JPY=X", True, "JAPANESE
 def cot_signals():
     q = urllib.parse.quote("report_date_as_yyyy_mm_dd > '" + iso(dt.date.today() - dt.timedelta(days=200)) + "'")
     d = http(f"https://publicreporting.cftc.gov/resource/gpe5-46if.json?$where={q}&$select=market_and_exchange_names,report_date_as_yyyy_mm_dd,lev_money_positions_long,lev_money_positions_short,open_interest_all&$limit=20000")
-    sig = {}; last = None
+    sig = {}; last = None; why = {}
     for c, (_, _, name) in FX.items():
         rows = sorted([x for x in d if x["market_and_exchange_names"].startswith(name) and "XRATE" not in x["market_and_exchange_names"]], key=lambda x: x["report_date_as_yyyy_mm_dd"])
         net = [(float(x["lev_money_positions_long"]) - float(x["lev_money_positions_short"])) / float(x["open_interest_all"]) for x in rows]
         if len(net) >= 14:
             ch = net[-1] - sum(net[-13:]) / 13
             sig[c] = -1 if ch > 0 else 1          # FADE: leveraged funds adding → go the other way
+            why[c] = f"hedge funds' net position in {c} is {net[-1]*100:+.1f}% of all contracts vs a 13-week average of {sum(net[-13:])/13*100:+.1f}% — they {'added' if ch>0 else 'cut'} {abs(ch)*100:.1f} points, so Max goes {'SHORT' if ch>0 else 'LONG'} (crowded bets tend to reverse)"
             last = rows[-1]["report_date_as_yyyy_mm_dd"][:10]
+    COT_WHY.clear(); COT_WHY.update(why)
     return sig, last
+COT_WHY = {}
 _HL = {}
 def hl_portfolio(a):
     if a in _HL: return _HL[a]
@@ -117,14 +120,14 @@ def crypto_swing(B, U, upto):
                 if need > B["cash"]: q = B["cash"] / (p * (1 + cost)); need = B["cash"]
                 if q * p < 10: continue
                 B["cash"] -= need; B["positions"].append({"sym": o["sym"], "qty": q, "entry": iso(d), "ep": p, "stop": p - 2 * a, "hi": p, "risk": 2 * a})
-                log(B["name"], "BUY", f"BUY {o['sym']} {q:.6g} @ ${p:,.6g} (breakout above 20-day high; stop ${p-2*a:,.6g}; risk 0.5%)", date=iso(d))
+                log(B["name"], "BUY", f"BUY {o['sym']} {q:.6g} @ ${p:,.6g} = ${q*p:,.2f} ({q*p/eq*100:.1f}% of book). Stop ${p-2*a:,.6g} → if hit, loss ≈ ${q*2*a:,.2f} (0.5% of book). Why: " + o.get("why", "breakout above 20-day high"), date=iso(d))
             else:
                 pos = next((x for x in B["positions"] if x["sym"] == o["sym"]), None)
                 if not pos: continue
                 val = pos["qty"] * p * (1 - cost); B["cash"] += val; B["positions"].remove(pos)
                 pnl = val - pos["qty"] * pos["ep"] * (1 + cost); R = pnl / (pos["qty"] * pos["risk"])
                 t = {"sym": pos["sym"], "entry": pos["entry"], "exit": iso(d), "ep": pos["ep"], "xp": p, "pnl": round(pnl, 2), "R": round(R, 2), "reason": o["why"]}
-                B["trades"].append(t); log(B["name"], "SELL", f"SELL {pos['sym']} @ ${p:,.6g} ({o['why']}) → {'+' if pnl>=0 else ''}${pnl:,.2f} ({R:+.2f}R)", date=iso(d))
+                B["trades"].append(t); log(B["name"], "SELL", f"SELL {pos['sym']} @ ${p:,.6g}, held {pos['entry']} → {iso(d)}. Result {'+' if pnl>=0 else ''}${pnl:,.2f} ({R:+.2f}R = {R:+.2f}× the amount risked). Why: {pos['sym']} {o['why']}" + (" — profit locked in." if pnl > 0 else " — the loss is kept small, as planned."), date=iso(d))
         # 2) update trailing stops, exits signalled at today's close
         for pos in B["positions"]:
             p = px.get(pos["sym"], {}).get(d); a = atr(pos["sym"], d)
@@ -132,14 +135,25 @@ def crypto_swing(B, U, upto):
             pos["hi"] = max(pos["hi"], p)
             if a: pos["stop"] = max(pos["stop"], pos["hi"] - 2 * a)
             if p < pos["stop"] and not any(o["sym"] == pos["sym"] for o in B["pending"]):
-                B["pending"].append({"sym": pos["sym"], "side": "sell", "on": iso(d + dt.timedelta(days=1)), "why": f"closed ${p:,.6g} below trailing stop ${pos['stop']:,.6g}"})
-        # 3) new entries signalled today
+                gain = (pos["hi"] / pos["ep"] - 1) * 100
+                B["pending"].append({"sym": pos["sym"], "side": "sell", "on": iso(d + dt.timedelta(days=1)), "why": f"closed ${p:,.6g} below its trailing stop ${pos['stop']:,.6g}. Bought at ${pos['ep']:,.6g}; highest close since was ${pos['hi']:,.6g} ({gain:+.1f}%). The stop follows the highest close minus 2× the average daily move, so the trend is judged over and Max exits"})
+        # 3) new entries signalled today — only when Bitcoin is above its 50-day average (tested: more profit, fewer trades)
         T = top20(d); held = {x["sym"] for x in B["positions"]} | {o["sym"] for o in B["pending"]}
+        b = series("BTC", d, 50); btc_ok = len(b) == 50 and b[-1] > sum(b) / 50
+        B["market"] = {"date": iso(d), "btc": b[-1] if b else None, "btc_sma50": sum(b) / len(b) if b else None, "ok": btc_ok}
+        if not btc_ok:
+            brk = [c for c in T if len(series(c, d, 21)) == 21 and series(c, d, 21)[-1] > max(series(c, d, 21)[:-1])]
+            if brk: log(B["name"], "NO TRADE", f"{', '.join(sorted(brk))} broke above their 20-day high, but Bitcoin (${b[-1]:,.0f}) is below its 50-day average (${sum(b)/len(b):,.0f}). In this kind of market most breakouts fail, so Max waits.", date=iso(d))
+            T = set()
         for c in sorted(T):
             s = series(c, d, 21); a = atr(c, d)
             if c in held or len(s) < 21 or not a or len(B["positions"]) + sum(o["side"] == "buy" for o in B["pending"]) >= 8: continue
             if s[-1] > max(s[:-1]):
-                B["pending"].append({"sym": c, "side": "buy", "on": iso(d + dt.timedelta(days=1)), "atr": a}); log(B["name"], "SIGNAL", f"{c} closed ${s[-1]:,.6g} above its 20-day high → buy at next close", date=iso(d))
+                v = [q for dd, _, q in U[c] if dd <= d][-21:]; vr = v[-1] / (sum(v[:-1]) / 20) if len(v) == 21 and sum(v[:-1]) else 0
+                why = (f"{c} closed at ${s[-1]:,.6g}, above its highest close of the last 20 days (${max(s[:-1]):,.6g}) — a breakout. "
+                       f"Bitcoin is above its 50-day average (${b[-1]:,.0f} vs ${sum(b)/50:,.0f}), so the market supports it. {c} is one of the 20 most-traded coins (volume today {vr:.1f}× its 20-day average). "
+                       f"Plan: buy at the next close, stop {2*a:,.6g} (2× average daily move) below, trailing up as price rises; risk 0.5% of the book.")
+                B["pending"].append({"sym": c, "side": "buy", "on": iso(d + dt.timedelta(days=1)), "atr": a, "why": why}); log(B["name"], "SIGNAL", why, date=iso(d))
         B["hist"].append([iso(d), round(equity_crypto(B, px, d), 2)]); B["last_day"] = iso(d)
 def equity_crypto(B, px, d):
     v = B["cash"]
@@ -195,13 +209,13 @@ def pse_dividend(B, DIR, upto):
                 pos = next(x for x in B["positions"] if x["sym"] == o["sym"]); val = pos["shares"] * p * (1 - cost_sell - slip); B["cash"] += val
                 pnl = val - pos["cost"] + pos.get("divs", 0); B["positions"].remove(pos)
                 B["trades"].append({"sym": o["sym"], "entry": pos["entry"], "exit": iso(d), "ep": pos["ep"], "xp": p, "pnl": round(pnl, 2), "divs": round(pos.get("divs", 0), 2), "reason": "quarterly rebalance"})
-                log(B["name"], "SELL", f"SELL {pos['shares']:,} {o['sym']} @ ₱{p:,.4g} (rebalance) → {'+' if pnl>=0 else ''}₱{pnl:,.0f} incl. ₱{pos.get('divs',0):,.0f} dividends", date=iso(d))
+                log(B["name"], "SELL", f"SELL {pos['shares']:,} {o['sym']} @ ₱{p:,.4g} (bought ₱{pos['ep']:,.4g} on {pos['entry']}) → {'+' if pnl>=0 else ''}₱{pnl:,.0f} incl. ₱{pos.get('divs',0):,.0f} dividends. Why: " + o.get("why", "quarterly rebalance"), date=iso(d))
             else:
                 lot = board_lot(p); budget = min(o["php"], B["cash"]); sh = int(budget / (p * (1 + cost_buy + slip)) // lot * lot)
                 if sh <= 0: log(B["name"], "SKIP", f"{o['sym']}: ₱{budget:,.0f} buys less than one board lot ({lot} sh @ ₱{p:,.4g})", date=iso(d)); continue
                 c = sh * p * (1 + cost_buy + slip); B["cash"] -= c
                 B["positions"].append({"sym": o["sym"], "shares": sh, "ep": p, "cost": round(c, 2), "entry": iso(d), "divs": 0.0, "yield_at_buy": o.get("yield")})
-                log(B["name"], "BUY", f"BUY {sh:,} {o['sym']} @ ₱{p:,.4g} = ₱{c:,.0f} (dividend yield {o.get('yield',0)*100:.1f}%)", date=iso(d))
+                log(B["name"], "BUY", f"BUY {sh:,} {o['sym']} ({sh//lot} board lots of {lot}) @ ₱{p:,.4g} = ₱{c:,.0f} incl. COL fee. Why: " + o.get("why", f"dividend yield {o.get('yield',0)*100:.1f}%"), date=iso(d))
         B["hist"].append([iso(d), round(B["cash"] + sum(x["shares"] * (prices.get(x["sym"], {}).get(d) or last_px(prices, x)) for x in B["positions"]), 2)])
         B["last_day"] = iso(d)
     # dividends with ex-date inside the period
@@ -216,7 +230,7 @@ def pse_dividend(B, DIR, upto):
         time.sleep(0.3)
     if need_reb:
         log(B["name"], "SCAN", "Quarterly scan of all PSE stocks for dividend yield (takes a while)")
-        cand = []
+        cand = []; INFO = {}
         for r in DIR:
             try: s = pse_prices(r, upto - dt.timedelta(days=45))
             except Exception: continue
@@ -225,14 +239,16 @@ def pse_dividend(B, DIR, upto):
             p = s[-1][1]; val = sum(v for _, _, v in s[-20:]) / len(s[-20:])
             if p < 1 or val < 5e6: continue
             y = sa_ttm_yield(r["sym"], p); time.sleep(0.6)
-            if y >= 0.03: cand.append((y, r["sym"]))
-        pick = [s for _, s in sorted(cand, reverse=True)[:20]]; ydict = {s: y for y, s in cand}
+            if y >= 0.03: cand.append((y, r["sym"])); INFO[r["sym"]] = {"price": p, "value": val, "div12m": round(y * p, 4)}
+        pick = [s for _, s in sorted(cand, reverse=True)[:20]]; ydict = {s: y for y, s in cand}; B["scan_info"] = {s: v for s, v in INFO.items()}
         eq = equity_pse(B, prices)
         for p in B["positions"]:
-            if p["sym"] not in pick: B["pending"].append({"sym": p["sym"], "side": "sell"})
+            if p["sym"] not in pick: B["pending"].append({"sym": p["sym"], "side": "sell", "why": f"{p['sym']} is no longer in the top 20 by dividend yield" + (f" (now {ydict[p['sym']]*100:.1f}%, below the 20th stock's {sorted(ydict.values())[-20]*100:.1f}%)" if p['sym'] in ydict and len(ydict) >= 20 else " (its yield fell below 3% or it no longer trades ₱5M a day)") + ", so its money moves to a higher-paying stock."})
         keep = [p["sym"] for p in B["positions"] if p["sym"] in pick]
         for s in pick:
-            if s not in keep: B["pending"].append({"sym": s, "side": "buy", "php": eq / 20, "yield": ydict[s]})
+            if s not in keep:
+                i_ = INFO.get(s, {})
+                B["pending"].append({"sym": s, "side": "buy", "php": eq / 20, "yield": ydict[s], "why": f"{s} paid ₱{i_.get('div12m',0):,.4g} per share in cash dividends in the last 12 months; at ₱{i_.get('price',0):,.4g} that is a {ydict[s]*100:.1f}% yield, rank {pick.index(s)+1} of all PSE stocks. It trades about ₱{i_.get('value',0)/1e6:,.0f}M a day, so it is easy to buy and sell. High-dividend stocks earned +66% in 2021–2026 while the whole market earned −2%."})
         B["next_rebalance"] = iso(upto + dt.timedelta(days=91)); B["picks"] = [{"sym": s, "yield_%": round(ydict[s] * 100, 1)} for s in pick]
         log(B["name"], "REBALANCE", "New top-20 by dividend yield: " + ", ".join(f"{s} {ydict[s]*100:.1f}%" for s in pick) + " → orders at next trading day's close")
 def last_px(prices, x):
@@ -259,6 +275,7 @@ def fx_cot(B, upto):
         turn = sum(abs(new.get(c, 0) - w.get(c, 0)) for c in FX); eq *= 1 - turn * 0.0002
         ch = [f"{'LONG' if new[c]>0 else 'SHORT'} {c}" for c in new if math.copysign(1, new[c]) != math.copysign(1, w.get(c, 0)) or c not in w]
         log(B["name"], "REBALANCE", f"CFTC report {rep}: " + (", ".join(ch) if ch else "no change") + f" | now LONG {', '.join(c for c in new if new[c]>0)} · SHORT {', '.join(c for c in new if new[c]<0)}", date=rep)
+        for c in new: log(B["name"], "WHY", f"{c}: {COT_WHY.get(c,'')}", date=rep)
         B["weights"] = new; B["cot_date"] = rep
     B["equity"] = eq
 def copy_book(B, upto, mode):
@@ -308,6 +325,7 @@ def copy_book(B, upto, mode):
         B["base"] = B.get("equity", B["start"]); B["pick_date"] = iso(upto)
         B["positions"] = [{"addr": s["addr"], "pnl0": s["pnl0"], "cap0": s["cap0"], "score": round(s["sharpe"] if mode == "steady" else s["r30"], 3)} for s in pick]
         log(B["name"], "PICK", f"Copying {len(pick)} traders: " + ", ".join(f"{s['addr'][:8]}… ({'green ' + str(s['green']) + '/6' if mode=='steady' else f'last 30d {s['r30']*100:+.0f}%'})" for s in pick))
+        for s_ in pick: log(B["name"], "WHY", f"{s_['addr'][:10]}…: {s_['green']} of last 6 months profitable, last 90 days {s_['r90']*100:+.1f}%, last 30 days {s_['r30']*100:+.1f}%, consistency score {s_['sharpe']:.2f}, account ${s_['cap0']:,.0f}" + (" — chosen for steady results, not one lucky month" if mode == 'steady' else " — chosen only for the hottest last month (watch book, expected to do badly)"))
         B.setdefault("equity", B["start"])
 
 # ---------------- run ----------------
@@ -340,7 +358,7 @@ def main(state_f, dir_f, out):
     except Exception: pass
     try: usd = yahoo("PHP=X", "5d")[-1][1]; bm["usdphp"] = usd
     except Exception: usd = bm.get("usdphp", 58.0)
-    S["last_run"] = iso(dt.date.today()); S["events"] = (S.get("events", []) + [dict(x, run=iso(dt.date.today())) for x in LOG])[-600:]
+    S["last_run"] = iso(dt.date.today()); S["events"] = (S.get("events", []) + [dict(x, run=iso(dt.date.today())) for x in LOG])[-300:]
     # summary rows
     rows = []
     for k, B in S["books"].items():
@@ -385,6 +403,8 @@ def main(state_f, dir_f, out):
     L += ["", "**Every trade and action this week**"]
     for x in LOG: L.append(f"- [{x['book']}] {x.get('date','')} {x['kind']}: {x['text']}")
     if not LOG: L.append("- No trades this week (no setups met the rules)")
+    m = S["books"]["crypto_swing"].get("market")
+    if m and m.get("btc"): L.append(f"- [Crypto market check {m['date']}] Bitcoin ${m['btc']:,.0f} vs 50-day average ${m['btc_sma50']:,.0f} → " + ("new crypto trades ALLOWED" if m["ok"] else "new crypto trades PAUSED (waiting for a better market)"))
     L += ["", "**Open positions**"]
     for k, B in S["books"].items():
         for p in B["positions"]:
