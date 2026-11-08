@@ -1,0 +1,391 @@
+{
+ "crypto": {
+  "buy_hold": {
+   "params": {},
+   "in_sample": {
+    "cagr": 360.1,
+    "sharpe": 2.1,
+    "maxdd": -86.8,
+    "total": 956987.5,
+    "turnover_yr": 0.3
+   },
+   "out_of_sample": {
+    "cagr": -0.8,
+    "sharpe": 0.3,
+    "maxdd": -66.9,
+    "total": -3.9,
+    "turnover_yr": 0.4
+   }
+  },
+  "sma": {
+   "params": {
+    "n": 50
+   },
+   "in_sample": {
+    "cagr": 266.0,
+    "sharpe": 2.3,
+    "maxdd": -52.2,
+    "total": 242065.7,
+    "turnover_yr": 20.9
+   },
+   "out_of_sample": {
+    "cagr": 6.3,
+    "sharpe": 0.35,
+    "maxdd": -43.8,
+    "total": 34.7,
+    "turnover_yr": 25.1
+   }
+  },
+  "ma_cross": {
+   "params": {
+    "f": 20,
+    "s": 100
+   },
+   "in_sample": {
+    "cagr": 206.8,
+    "sharpe": 1.91,
+    "maxdd": -64.0,
+    "total": 83732.6,
+    "turnover_yr": 4.1
+   },
+   "out_of_sample": {
+    "cagr": 3.6,
+    "sharpe": 0.28,
+    "maxdd": -46.0,
+    "total": 18.7,
+    "turnover_yr": 5.1
+   }
+  },
+  "tsmom": {
+   "params": {
+    "L": 30
+   },
+   "in_sample": {
+    "cagr": 270.9,
+    "sharpe": 2.29,
+    "maxdd": -65.7,
+    "total": 262183.9,
+    "turnover_yr": 26.6
+   },
+   "out_of_sample": {
+    "cagr": 1.3,
+    "sharpe": 0.21,
+    "maxdd": -53.6,
+    "total": 6.4,
+    "turnover_yr": 34.3
+   }
+  },
+  "donchian": {
+   "params": {
+    "entry": 20,
+    "exit": 10
+   },
+   "in_sample": {
+    "cagr": 305.5,
+    "sharpe": 2.77,
+    "maxdd": -29.8,
+    "total": 448218.4,
+    "turnover_yr": 14.3
+   },
+   "out_of_sample": {
+    "cagr": 7.5,
+    "sharpe": 0.39,
+    "maxdd": -36.4,
+    "total": 42.0,
+    "turnover_yr": 15.3
+   }
+  },
+  "rsi2": {
+   "params": {
+    "lo": 5
+   },
+   "in_sample": {
+    "cagr": 12.8,
+    "sharpe": 0.6,
+    "maxdd": -22.7,
+    "total": 106.0,
+    "turnover_yr": 8.1
+   },
+   "out_of_sample": {
+    "cagr": 4.7,
+    "sharpe": 0.63,
+    "maxdd": -6.0,
+    "total": 24.9,
+    "turnover_yr": 6.1
+   }
+  },
+  "bollinger": {
+   "params": {
+    "k": 2.0
+   },
+   "in_sample": {
+    "cagr": 6.4,
+    "sharpe": 0.35,
+    "maxdd": -37.7,
+    "total": 45.3,
+    "turnover_yr": 4.0
+   },
+   "out_of_sample": {
+    "cagr": 3.2,
+    "sharpe": 0.34,
+    "maxdd": -9.4,
+    "total": 16.7,
+    "turnover_yr": 4.3
+   }
+  },
+  "xs_momentum": {
+   "params": {
+    "L": 14,
+    "top": 3,
+    "regime_sma": 50
+   },
+   "in_sample": {
+    "cagr": 443.2,
+    "sharpe": 2.65,
+    "maxdd": -55.8,
+    "total": 2592215.6,
+    "turnover_yr": 23.5
+   },
+   "out_of_sample": {
+    "cagr": 24.4,
+    "sharpe": 0.7,
+    "maxdd": -47.9,
+    "total": 188.2,
+    "turnover_yr": 25.1
+   }
+  },
+  "COMBINED": {
+   "params": {
+    "sleeves": [
+     "donchian",
+     "xs_momentum",
+     "sma"
+    ],
+    "rule": "passed the in-sample bar (Sharpe >= buy & hold and >= 0.3, max drop better than -60%)",
+    "vol_target": null
+   },
+   "in_sample": {
+    "cagr": 347.2,
+    "sharpe": 2.82,
+    "maxdd": -40.9,
+    "total": 806066.1,
+    "turnover_yr": 19.4
+   },
+   "out_of_sample": {
+    "cagr": 13.6,
+    "sharpe": 0.54,
+    "maxdd": -39.2,
+    "total": 85.6,
+    "turnover_yr": 21.7
+   }
+  },
+  "COMBINED_voltarget": {
+   "params": {
+    "sleeves": [
+     "donchian",
+     "xs_momentum",
+     "sma"
+    ],
+    "rule": "passed the in-sample bar (Sharpe >= buy & hold and >= 0.3, max drop better than -60%)",
+    "vol_target": 0.45
+   },
+   "in_sample": {
+    "cagr": 175.6,
+    "sharpe": 2.69,
+    "maxdd": -28.7,
+    "total": 43941.7,
+    "turnover_yr": 17.8
+   },
+   "out_of_sample": {
+    "cagr": 11.6,
+    "sharpe": 0.51,
+    "maxdd": -38.6,
+    "total": 70.5,
+    "turnover_yr": 21.5
+   }
+  }
+ },
+ "pse": {
+  "buy_hold": {
+   "params": {},
+   "in_sample": {
+    "cagr": 23.2,
+    "sharpe": 1.26,
+    "maxdd": -22.2,
+    "total": 546.1,
+    "turnover_yr": 0.1
+   },
+   "out_of_sample": {
+    "cagr": -2.1,
+    "sharpe": 0.01,
+    "maxdd": -42.4,
+    "total": -6.6,
+    "turnover_yr": 0.0
+   }
+  },
+  "sma": {
+   "params": {
+    "n": 200
+   },
+   "in_sample": {
+    "cagr": 3.4,
+    "sharpe": 0.34,
+    "maxdd": -33.4,
+    "total": 35.2,
+    "turnover_yr": 7.9
+   },
+   "out_of_sample": {
+    "cagr": -10.7,
+    "sharpe": -1.15,
+    "maxdd": -35.1,
+    "total": -30.1,
+    "turnover_yr": 10.1
+   }
+  },
+  "ma_cross": {
+   "params": {
+    "f": 20,
+    "s": 100
+   },
+   "in_sample": {
+    "cagr": 12.2,
+    "sharpe": 1.01,
+    "maxdd": -19.6,
+    "total": 179.4,
+    "turnover_yr": 2.8
+   },
+   "out_of_sample": {
+    "cagr": -3.8,
+    "sharpe": -0.34,
+    "maxdd": -21.2,
+    "total": -11.5,
+    "turnover_yr": 3.5
+   }
+  },
+  "tsmom": {
+   "params": {
+    "L": 180
+   },
+   "in_sample": {
+    "cagr": 5.4,
+    "sharpe": 0.47,
+    "maxdd": -32.3,
+    "total": 60.4,
+    "turnover_yr": 7.7
+   },
+   "out_of_sample": {
+    "cagr": -14.2,
+    "sharpe": -1.69,
+    "maxdd": -41.9,
+    "total": -38.5,
+    "turnover_yr": 10.3
+   }
+  },
+  "donchian": {
+   "params": {
+    "entry": 20,
+    "exit": 20
+   },
+   "in_sample": {
+    "cagr": 9.9,
+    "sharpe": 0.91,
+    "maxdd": -24.3,
+    "total": 132.1,
+    "turnover_yr": 6.6
+   },
+   "out_of_sample": {
+    "cagr": -2.1,
+    "sharpe": -0.16,
+    "maxdd": -20.1,
+    "total": -6.6,
+    "turnover_yr": 6.7
+   }
+  },
+  "rsi2": {
+   "params": {
+    "lo": 5
+   },
+   "in_sample": {
+    "cagr": 0.1,
+    "sharpe": 0.06,
+    "maxdd": -4.4,
+    "total": 1.3,
+    "turnover_yr": 7.8
+   },
+   "out_of_sample": {
+    "cagr": 0.3,
+    "sharpe": 0.12,
+    "maxdd": -2.8,
+    "total": 0.8,
+    "turnover_yr": 4.6
+   }
+  },
+  "bollinger": {
+   "params": {
+    "k": 1.5
+   },
+   "in_sample": {
+    "cagr": 1.8,
+    "sharpe": 0.3,
+    "maxdd": -13.6,
+    "total": 16.9,
+    "turnover_yr": 6.2
+   },
+   "out_of_sample": {
+    "cagr": 2.0,
+    "sharpe": 0.47,
+    "maxdd": -4.6,
+    "total": 6.4,
+    "turnover_yr": 5.5
+   }
+  },
+  "COMBINED": {
+   "params": {
+    "sleeves": [
+     "ma_cross",
+     "donchian"
+    ],
+    "rule": "NONE passed the bar; top-2 by in-sample Sharpe used, flagged",
+    "vol_target": null
+   },
+   "in_sample": {
+    "cagr": 11.1,
+    "sharpe": 1.02,
+    "maxdd": -19.2,
+    "total": 156.3,
+    "turnover_yr": 4.7
+   },
+   "out_of_sample": {
+    "cagr": -2.9,
+    "sharpe": -0.27,
+    "maxdd": -20.0,
+    "total": -8.9,
+    "turnover_yr": 5.1
+   }
+  },
+  "COMBINED_voltarget": {
+   "params": {
+    "sleeves": [
+     "ma_cross",
+     "donchian"
+    ],
+    "rule": "NONE passed the bar; top-2 by in-sample Sharpe used, flagged",
+    "vol_target": 0.15
+   },
+   "in_sample": {
+    "cagr": 10.4,
+    "sharpe": 1.0,
+    "maxdd": -18.3,
+    "total": 141.3,
+    "turnover_yr": 5.1
+   },
+   "out_of_sample": {
+    "cagr": -3.1,
+    "sharpe": -0.29,
+    "maxdd": -20.0,
+    "total": -9.4,
+    "turnover_yr": 5.3
+   }
+  }
+ }
+}
