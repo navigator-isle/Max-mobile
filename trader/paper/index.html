@@ -1,0 +1,152 @@
+<meta name="dash-one-writer">
+<style>
+.pt { display: grid; gap: var(--cds-gap-lg); font-family: var(--font-anthropic-sans); }
+.pt h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.pt .lede { color: var(--color-fg-muted); margin: var(--cds-gap-xs) 0 0; max-width: 62ch; }
+.pt .tiles { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); }
+.pt .card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); min-width: 0; }
+.pt .tile .lab { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.pt .tile .big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; }
+.pt h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0 0 var(--cds-gap-xs); }
+.pt .note { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); margin: 0 0 var(--cds-gap-md); }
+.pt .scroll { overflow: auto; max-height: 32rem; }
+.pt table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: var(--cds-font-size-body); }
+.pt th { text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); position: sticky; top: 0; background: var(--color-panel); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+.pt td { padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); vertical-align: top; }
+.pt td.num, .pt th.num { text-align: right; white-space: nowrap; }
+.pt .up { color: var(--color-ok); } .pt .down { color: var(--color-bad); }
+.pt .pill { display: inline-block; font-size: var(--cds-font-size-caption); padding: 0 var(--cds-pad-xs); border-radius: var(--cds-radius); border: 1px solid var(--color-border-line); color: var(--color-fg-muted); }
+.pt .chart { position: relative; min-height: 280px; }
+.pt .tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; }
+.pt details { color: var(--color-fg-muted); font-size: var(--cds-font-size-body); }
+.pt details ul { padding-left: 1.2em; } .pt details li { margin-bottom: var(--cds-gap-xs); }
+.pt [data-dash-source-state=empty] { color: transparent; }
+.pt [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+</style>
+<div class="pt">
+  <header>
+    <h1>Max Paper Trading</h1>
+    <p class="lede">MAX-MASTER-2 with pretend money: ₱100,000 per strategy, real prices, real fees. Updated every Sunday. Not financial advice.</p>
+  </header>
+
+  <div class="tiles">
+    <div class="card tile"><div class="lab">Combined strategy, since 8 Nov 2026</div><div class="big" data-draw="mSince" data-source="books" data-field="since_start_%" data-where="key=master2">—</div></div>
+    <div class="card tile"><div class="lab">Combined strategy, last week</div><div class="big" data-draw="mWeek" data-source="books" data-field="week_%" data-where="key=master2">—</div></div>
+    <div class="card tile"><div class="lab">PSE dividend book value</div><div class="big" data-draw="pseVal" data-source="books" data-field="value_php" data-where="key=pse_dividend">—</div></div>
+    <div class="card tile"><div class="lab">Crypto swing book value</div><div class="big" data-draw="cryVal" data-source="books" data-field="value_php" data-where="key=crypto_swing">—</div></div>
+  </div>
+
+  <section class="card" id="strategies">
+    <h2>Strategies</h2>
+    <p class="note">Main = part of MAX-MASTER-2. Watch = rejected in testing, run live to confirm it fails. Judge after about 12 weeks.</p>
+    <div class="scroll">
+      <table data-source="books" data-row-key="key">
+        <thead><tr><th data-field="name">Strategy</th><th data-field="status">Role</th><th class="num" data-field="week_%">Week</th><th class="num" data-field="since_start_%">Since start</th><th class="num" data-field="value_php">Value ₱</th><th class="num" data-field="open">Open</th><th class="num" data-field="closed_trades">Closed</th><th class="num" data-field="wins">Wins</th></tr></thead>
+        <tbody data-draw="booksTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" id="growth">
+    <h2>Growth of each strategy</h2>
+    <p class="note">Start = 100. Daily closes for crypto, PSE and forex; copy books are valued each Sunday.</p>
+    <div class="chart" data-draw="eqChart" data-source="equity"></div>
+  </section>
+
+  <section class="card" id="positions">
+    <h2>Open positions and orders</h2>
+    <p class="note">Orders fill at the next trading day's closing price.</p>
+    <div class="scroll">
+      <table data-source="positions" data-row-key="id">
+        <thead><tr><th data-field="book">Strategy</th><th data-field="what">Holding</th><th data-field="since">Since</th><th data-field="detail">Detail</th></tr></thead>
+        <tbody data-draw="posTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" id="trades">
+    <h2>Every trade and action</h2>
+    <p class="note">Newest first: signals, buys, sells, dividends, rebalances and data problems.</p>
+    <div class="scroll">
+      <table data-source="actions" data-row-key="n">
+        <thead><tr><th data-field="date">Date</th><th data-field="book">Strategy</th><th data-field="kind">Action</th><th data-field="text">What happened</th></tr></thead>
+        <tbody data-draw="actTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details class="card">
+    <summary>The rules of each strategy</summary>
+    <ul>
+      <li><b>Crypto swing</b>: Binance top 20 coins by 30-day traded value. Buy when a coin closes above its 20-day high. Stop 2×ATR below, trailing up from the highest close. Risk 0.5% of the book per trade, at most 8 coins, at most 25% in one. Fee and slippage 0.15% each side.</li>
+      <li><b>PSE high-dividend top 20</b>: the 20 stocks with the highest cash dividends of the last 12 months ÷ price (at least 3%), at least ₱5M traded a day, price at least ₱1. Equal pesos, whole board lots, rebalanced every 3 months. COL fees (buy 0.295%, sell 0.395%) plus 0.2% slippage. Dividends credited on the ex-date after 10% tax.</li>
+      <li><b>Forex fade big traders</b>: every CFTC report, for 10 currencies vs USD, go against the leveraged funds: if they raised their net position above the 13-week average, go short; if they cut it, go long. Equal size, no leverage.</li>
+      <li><b>Copy steady traders</b>: each month copy the 10 Hyperliquid traders with the best 6-month consistency (at least 4 of 6 green months, last 90 days positive, account at least $100k). 0.5% a month taken off for copy delay.</li>
+      <li><b>Watch only</b>: crypto momentum rotation (top 5 by 14-day return when BTC is above its 50-day average) and copy hot traders (top 10 by last 30 days). Both lost money in testing.</li>
+      <li><b>MAX-MASTER-2</b>: 30% crypto swing, 30% PSE dividend, 25% forex, 15% copy steady. Backtest 2022 to Oct 2026: +85% (13.6%/yr), worst drop −7.2%.</li>
+    </ul>
+  </details>
+</div>
+<script>
+const P = (v) => v == null || isNaN(v) ? '—' : (v > 0 ? '+' : '') + d3.format('.2f')(v) + '%';
+const cls = (el, v) => { el.classList.toggle('up', v > 0); el.classList.toggle('down', v < 0); };
+const row = (id, key) => { const g = dash.data(id); return g.status === 'ok' ? (g.data.rows || g.data).find((r) => r.key === key) : null; };
+const rows = (id) => { const g = dash.data(id); return g.status === 'ok' ? (g.data.rows || g.data) : null; };
+const tile = (name, key, field, fmt) => dash.draw(name, (el) => {
+  const r = row('books', key); el.classList.toggle('dash-skeleton', dash.data('books').status === 'loading');
+  if (!r || r[field] == null) { el.textContent = '—'; return; }
+  el.textContent = fmt(r[field]); if (fmt === P) cls(el, r[field]);
+});
+tile('mSince', 'master2', 'since_start_%', P);
+tile('mWeek', 'master2', 'week_%', P);
+tile('pseVal', 'pse_dividend', 'value_php', (v) => '₱' + d3.format(',.0f')(v));
+tile('cryVal', 'crypto_swing', 'value_php', (v) => '₱' + d3.format(',.0f')(v));
+dash.draw('booksTable', (tb) => {
+  const R = rows('books'); tb.replaceChildren();
+  if (!R) return;
+  for (const r of R) {
+    const tr = document.createElement('tr');
+    const cells = [r.key, r.status, P(r['week_%']), P(r['since_start_%']), r.value_php == null ? '' : d3.format(',.0f')(r.value_php), r.open ?? '', r.closed_trades ?? '', r.wins ?? ''];
+    cells.forEach((c, i) => { const td = document.createElement('td'); if (i >= 2) td.className = 'num'; td.textContent = i === 0 ? r.name : c; if (i === 2) cls(td, r['week_%']); if (i === 3) cls(td, r['since_start_%']); tr.append(td); });
+    tr.dataset.key = r.key; tb.append(tr);
+  }
+});
+const simple = (name, id, cols) => dash.draw(name, (tb) => {
+  const R = rows(id); tb.replaceChildren(); if (!R) return;
+  for (const r of R) { const tr = document.createElement('tr'); tr.dataset.key = r.id; for (const c of cols) { const td = document.createElement('td'); td.textContent = r[c] ?? ''; tr.append(td); } tb.append(tr); }
+});
+simple('posTable', 'positions', ['book', 'what', 'since', 'detail']);
+dash.draw('actTable', (tb) => {
+  const R = rows('actions'); tb.replaceChildren(); if (!R) return;
+  for (const r of R) { const tr = document.createElement('tr'); tr.dataset.key = r.n; for (const c of ['date', 'book', 'kind', 'text']) { const td = document.createElement('td'); if (c === 'kind') { const s = document.createElement('span'); s.className = 'pill'; s.textContent = r[c]; td.append(s); } else td.textContent = r[c] ?? ''; tr.append(td); } tb.append(tr); }
+});
+dash.draw('eqChart', (el) => {
+  el.replaceChildren(); const R = rows('equity');
+  if (!R) { el.classList.toggle('dash-skeleton', dash.data('equity').status === 'loading'); return; }
+  el.classList.remove('dash-skeleton');
+  const groups = d3.groups(R.map((r) => ({ ...r, d: new Date(r.date) })), (r) => r.name);
+  const W = el.clientWidth || 600, H = 280;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const all = R.map((r) => r.index); const lo = Math.min(95, d3.min(all)), hi = Math.max(105, d3.max(all));
+  const dates = R.map((r) => new Date(r.date)); let d0 = d3.min(dates), d1 = d3.max(dates); if (+d0 === +d1) d1 = d3.utcDay.offset(d0, 7);
+  const m = { t: 10, r: 12, b: 26, l: 40 };
+  const x = d3.scaleUtc([d0, d1], [m.l, W - m.r]), y = d3.scaleLinear([lo, hi], [H - m.b, m.t]).nice();
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor(W / 110))).tickFormat(d3.utcFormat('%b %-d'))).attr('font-size', null).attr('font-family', null).call((g) => g.selectAll('text').attr('fill', 'var(--color-fg-muted)')).call((g) => g.selectAll('line,path').attr('stroke', 'var(--cds-chart-axis)'));
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r))).attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove()).call((g) => g.selectAll('line').attr('stroke', 'var(--cds-chart-grid)')).call((g) => g.selectAll('text').attr('fill', 'var(--color-fg-muted)'));
+  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(100)).attr('y2', y(100)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 3');
+  const line = d3.line().x((r) => x(r.d)).y((r) => y(r.index));
+  groups.forEach(([n, g], i) => {
+    svg.append('path').datum(g.sort((a, b) => a.d - b.d)).attr('d', line).attr('fill', 'none').attr('stroke', dash.colors[i % dash.colors.length]).attr('stroke-width', 2).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round').attr('opacity', /watch/i.test(n) ? 0.45 : 1);
+  });
+  const leg = d3.select(el).append('div').style('display', 'flex').style('flex-wrap', 'wrap').style('gap', '0.4rem 1rem').style('font-size', 'var(--cds-font-size-caption)').style('margin-top', '0.4rem');
+  groups.forEach(([n], i) => { const s = leg.append('span'); s.append('span').style('display', 'inline-block').style('width', '0.7rem').style('height', '0.2rem').style('margin-right', '0.3rem').style('vertical-align', 'middle').style('background', dash.colors[i % dash.colors.length]); s.append('span').text(n); });
+  const tip = d3.select(el).append('div').attr('class', 'tip').style('opacity', 0);
+  svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+    .on('pointermove', (ev) => {
+      const [px] = d3.pointer(ev); const t = x.invert(px); const near = groups.map(([n, g]) => [n, g.reduce((a, b) => Math.abs(b.d - t) < Math.abs(a.d - t) ? b : a)]);
+      tip.replaceChildren(); tip.append('div').text(d3.utcFormat('%b %-d, %Y')(near[0][1].d)).style('color', 'var(--cds-text-secondary)');
+      near.forEach(([n, r]) => tip.append('div').text(`${n}: ${d3.format('.2f')(r.index)}`));
+      const left = Math.min(Math.max(0, px + 12), W - 260); tip.style('left', left + 'px').style('top', '8px').style('opacity', 1);
+    }).on('pointerleave', () => tip.style('opacity', 0));
+});
+</script>
