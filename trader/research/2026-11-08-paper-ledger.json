@@ -24,6 +24,11 @@
       "at": "2026-11-08T13:30:00+08:00",
       "type": "research",
       "text": "Day-trading research done (3 markets). No solid profitable day-trading strategy after costs; 3 probation books added (paper only). MAX-COMBINED-1 stays the main crypto strategy."
+    },
+    {
+      "at": "2026-11-08T14:10:00+08:00",
+      "type": "research",
+      "text": "Swing research: 198 setups. Crypto 66/66 profitable on 2022+; MAX-SWING-1 +98% (drop −34%). PSE 4/66, forex & gold 28/66 — no reliable edge. MAX-SWING-1 added next to MAX-COMBINED-1; no open trades."
     }
   ],
   "entry_triggers_btc": {
@@ -55,6 +60,19 @@
       "market": "pse",
       "rules": "Blue chip up >0.5% by 11:00 → buy, sell at close",
       "status": "collect data only; costs ~0.9% make it unprofitable so far"
+    }
+  ],
+  "strategies": [
+    {
+      "id": "MAX-SWING-1",
+      "market": "crypto",
+      "rules": "Donchian-20 close breakout; trailing stop = highest close since entry − 2 or 3 × ATR(20); 4 equal parts (2×/3× ATR, with/without BTC>SMA200 filter); risk 0.5% per trade; max 8 positions; max 25% per position",
+      "status": "no open trade; BTC entry above $84,023 (as of 6 Nov 2026)"
+    },
+    {
+      "id": "MAX-COMBINED-1",
+      "market": "crypto",
+      "status": "100% cash"
     }
   ]
 }
