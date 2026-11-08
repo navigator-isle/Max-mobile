@@ -67,4 +67,5 @@ run "Phone: agents, reports, fact-checks, music library" tests/e2e31.mjs "$PWD/i
 run "Phone: new notes (structure, media, links)" tests/e2e30.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: long core notes (SOLAS, MARPOL, STCW, MLC)" tests/e2e32.mjs "$PWD/index.html" "$PWD/worker.js"
 run "Phone: app on Cloudflare, code backup button" tests/e2e33.mjs "$PWD/index.html"
+run "Phone: My songs (no ads) and music that pauses for the mic" tests/e2e34.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

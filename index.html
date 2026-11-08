@@ -1961,6 +1961,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     return {type:'play_music',details:{query:q,mode:/\b(radio|station|fm)\b/i.test(q)?'radio':'video'}};
    }}
   if(has(/^(play|put on) (some )?music$|^(music|music please|patugtog)$/))return {type:'play_music',details:{query:'popular hits mix'}};
+  if(has(/^(?:(?:show|open|manage)\s+)?(?:my )?(?:own )?(?:songs|music library|song library|offline music)$|^(?:add|import|upload|copy)\s+(?:my\s+|some\s+|more\s+)?(?:songs|music|mp3s?)(?:\s+(?:from|on)\s+(?:my\s+)?phone)?$/))return {type:'my_songs'};
+  if(has(/^(?:shuffle|play)\s+(?:all\s+)?(?:of\s+)?my\s+(?:own\s+)?(?:music|songs|playlist|library)$|^shuffle(?: music| songs)?$/))return {type:'play_music',details:{query:'my songs'}};
   // ---- agents' reports ----
   {const m=n.match(/^(?:max )?(?:please )?(?:(send|email|run|make|give|show|open|read|get)(?: me)? )?(?:the |my |a |your )?(?:new |fresh |latest |last |weekly )?(.{2,40}?) (?:agent'?s? )?(?:weekly )?report(?: now| please| ngayon)?$/);
    if(m){const id=agentOf(m[2]);if(id)return {type:'agent_report',details:{agent:id,send:/^(send|email|run|make)$/.test(m[1]||'')||/\b(now|new|fresh)\b/.test(n)}}}}
@@ -3995,7 +3997,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     buttons:[...COACH_IDS.map(id=>[COACHES[id].icon+' '+COACHES[id].name.replace(' coach',''),()=>{const t=coachTalk({coach:id});setSub('',t);speak(t)}]),...skills.slice(0,4).map(n=>['▶ '+n.title.replace(/^Skill:\s*/,''),()=>{const t=walkThrough({name:n.title.replace(/^Skill:\s*/,'')});setSub('',t);speak(t)}])]},
    {badge:'MUSIC',badgeClass:'badge-res',title:'🎵 Music desk',meta:'DJ · YouTube songs · internet radio',
     lines:[MUSIC.mode?'Now playing: '+((MUSIC.list[MUSIC.i]||{}).title||(MUSIC.list[MUSIC.i]||{}).name||MUSIC.q):'Say “play Ben&Ben”, “play some chill music”, or “play jazz radio”.','Songs play in a small player; radio keeps playing with the screen off.','The music turns down by itself while I listen or talk.'],
-    buttons:[['▶ Chill',run('play_music',{query:'chill lofi mix'})],['📻 OPM radio',run('play_music',{query:'opm',mode:'radio'})],['📻 Jazz radio',run('play_music',{query:'jazz',mode:'radio'})],...(MUSIC.mode?[['⏹ Stop',run('music_control',{op:'stop'})]]:[])]},
+    buttons:[['🎧 My songs',run('my_songs')],['▶ Chill',run('play_music',{query:'chill lofi mix'})],['📻 OPM radio',run('play_music',{query:'opm',mode:'radio'})],['📻 Jazz radio',run('play_music',{query:'jazz',mode:'radio'})],...(MUSIC.mode?[['⏹ Stop',run('music_control',{op:'stop'})]]:[])]},
    {badge:'GUARD',badgeClass:'badge-draft',title:'🛡 Guard',meta:'security & reliability · daily check 6:45 am · Sunday backup',
     lines:['Checks your sites (up, speed, security & SEO), GitHub builds, the paper trader and Max himself every morning.','Emails you only when something new is wrong; on Sundays an all-clear plus a backup of your notes and memory.'],
     buttons:[['Is everything OK?',run('guard_report')],['Check now',run('guard_run')],['Back up now',run('backup_now')]]},
@@ -4173,12 +4175,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const bar=musicBar();bar.hidden=!MUSIC.mode;
   $('musicVideoWrap').hidden=MUSIC.mode!=='video';
   const cur=MUSIC.list[MUSIC.i]||{};
-  $('musicTitle').textContent=MUSIC.mode?(MUSIC.mode==='radio'?'📻 '+(cur.name||'Radio')+(cur.country?' · '+cur.country:''):'🎵 '+(cur.title||MUSIC.q)+(cur.channel?' · '+cur.channel:'')):'';
+  $('musicTitle').textContent=MUSIC.mode?(MUSIC.mode==='local'?'🎧 '+(cur.title||'My song')+(cur.artist?' · '+cur.artist:''):MUSIC.mode==='radio'?'📻 '+(cur.name||'Radio')+(cur.country?' · '+cur.country:''):'🎵 '+(cur.title||MUSIC.q)+(cur.channel?' · '+cur.channel:'')):'';
   $('musicPlay').textContent=MUSIC.playing?'⏸':'▶';
   bar.querySelectorAll('.music-link').forEach(a=>a.href=a.dataset.base+encodeURIComponent(MUSIC.q||''));
   document.body.classList.toggle('music-on',!!MUSIC.mode);
   if('mediaSession' in navigator&&MUSIC.mode)try{navigator.mediaSession.metadata=new MediaMetadata({title:cur.title||cur.name||MUSIC.q,artist:cur.channel||(MUSIC.mode==='radio'?'Internet radio':'Max'),album:'Max · '+MUSIC.q});
-   navigator.mediaSession.setActionHandler('play',()=>musicControl({op:'resume'}));navigator.mediaSession.setActionHandler('pause',()=>musicControl({op:'pause'}));navigator.mediaSession.setActionHandler('nexttrack',()=>musicControl({op:'next'}))}catch{}
+   navigator.mediaSession.setActionHandler('play',()=>musicControl({op:'resume'}));navigator.mediaSession.setActionHandler('pause',()=>musicTalkButton());try{navigator.mediaSession.setActionHandler('previoustrack',()=>{if(MUSIC.mode==='local'){MUSIC.i=Math.max(0,MUSIC.i-1);musicStartLocal()}})}catch{}navigator.mediaSession.setActionHandler('nexttrack',()=>musicControl({op:'next'}))}catch{}
  }
  function ytApi(){
   if(window.YT&&window.YT.Player)return Promise.resolve();
@@ -4219,8 +4221,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function playMusic(d,raw){
   const q=String((d&&(d.query||d.q))||'').replace(/^(?:some|me|a|the)\s+/i,'').replace(/[.!?]+$/,'').trim();
   if(!q)return 'What would you like to hear? Say a song, an artist, or a mood like “chill music”.';
+  // 1st choice: his own songs (no ads, instant, offline)
+  if(d.mode!=='radio'&&!/\b(on|from) (youtube|yt)\b/i.test(raw||'')){
+   const own=findMySongs(q);
+   if(own.length)return playMine(/\b(shuffle|random|halo)\b/i.test((raw||'')+' '+q)?shuffled(own):own,q);
+   if(/^(?:popular hits mix|music|songs|my music|my songs)$/i.test(q)&&mySongs().length)return playMine(shuffled(mySongs()),'my songs (shuffle)');
+   if(/^(?:my|all my)\b/i.test(q))return mySongs().length?'I couldn’t find “'+q+'” in My songs.':showMySongs();
+  }
   const base=workerBase();if(!base)return 'Music needs Max’s connection (the Worker) to find songs.';
-  if(isOffline())return 'I can’t find music without internet.';
+  if(isOffline())return mySongs().length?playMine(shuffled(mySongs()),'my songs (offline)'):'I can’t find music without internet. Add your own songs (Music → My songs) and they’ll play offline.';
   const mode=d.mode==='radio'||/\b(radio|station|fm)\b/i.test(q+' '+(raw||''))?'radio':'video';
   let res;
   try{res=await fetchJson(base+'/api/music?q='+encodeURIComponent(q)+'&mode='+mode,{},15000)}catch(e){return 'I couldn’t reach the music finder. '+e.message}
@@ -4236,13 +4245,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    MUSIC.mode='';musicShow();return 'Sorry, '+e.message+'. Try “play '+q+' radio”.';
   }
   setTimeout(()=>{if(MUSIC.mode==='video'&&!MUSIC.playing&&Date.now()-MUSIC.startedAt>4000)status('Tap ▶ on the music bar if it hasn’t started — some phones need one tap.')},5000);
-  return 'Playing '+(MUSIC.list[0].title||q)+'.';
+  const tip=!jget('max_yt_ads_tip',false)?(jset('max_yt_ads_tip',true),' YouTube may show ads — for ad-free music, add your own songs: say “my songs”.'):'';
+  return 'Playing '+(MUSIC.list[0].title||q)+'.'+tip;
  }
  async function musicNext(auto){
   if(!MUSIC.mode)return 'Nothing is playing.';
   MUSIC.i++;
   if(MUSIC.i>=MUSIC.list.length){if(auto){musicControl({op:'stop'});status('That’s the end of “'+MUSIC.q+'”. Ask for more anytime.');return ''}MUSIC.i=0}
   if(MUSIC.mode==='radio'){musicStartRadio();return 'Next station: '+(MUSIC.list[MUSIC.i].name||'radio')+'.'}
+  if(MUSIC.mode==='local'){await musicStartLocal();return auto?'':'Next: '+(MUSIC.list[MUSIC.i].title||'the next song')+'.'}
   try{await musicStartVideo()}catch(e){return 'The next song didn’t load: '+e.message}
   return auto?'':'Next: '+(MUSIC.list[MUSIC.i].title||'the next song')+'.';
  }
@@ -4251,17 +4262,99 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!MUSIC.mode&&op!=='what')return 'Nothing is playing right now. Say “play” and what you’d like.';
   const cur=MUSIC.list[MUSIC.i]||{};
   switch(op){
-   case 'pause':try{MUSIC.yt&&MUSIC.yt.pauseVideo&&MUSIC.yt.pauseVideo()}catch{}if(MUSIC.audio)MUSIC.audio.pause();MUSIC.playing=false;musicShow();return 'Paused.';
+   case 'pause':MUSIC.held=false;try{MUSIC.yt&&MUSIC.yt.pauseVideo&&MUSIC.yt.pauseVideo()}catch{}if(MUSIC.audio)MUSIC.audio.pause();MUSIC.playing=false;musicShow();return 'Paused.';
    case 'resume':try{MUSIC.mode==='video'&&MUSIC.yt&&MUSIC.yt.playVideo&&MUSIC.yt.playVideo()}catch{}if(MUSIC.audio)MUSIC.audio.play().catch(()=>{});musicShow();return 'Playing.';
-   case 'stop':try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch{}if(MUSIC.audio){MUSIC.audio.pause();MUSIC.audio.src='';MUSIC.audio=null}MUSIC.mode='';MUSIC.playing=false;musicShow();return 'Music off.';
+   case 'stop':try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch{}if(MUSIC.audio){MUSIC.audio.pause();if(MUSIC.audio._url)URL.revokeObjectURL(MUSIC.audio._url);MUSIC.audio.src='';MUSIC.audio=null}MUSIC.mode='';MUSIC.playing=false;MUSIC.held=false;musicShow();setTimeout(()=>{try{hfResume()}catch{}},800);return 'Music off.';
    case 'next':return await musicNext(false);
    case 'louder':case 'softer':MUSIC.vol=Math.min(100,Math.max(5,MUSIC.vol+(op==='louder'?15:-15)));try{localStorage.setItem(MUSIC_VOL,MUSIC.vol)}catch{}musicApplyVol();return 'Volume '+MUSIC.vol+'%.';
-   case 'what':return MUSIC.mode?(MUSIC.mode==='radio'?'This is '+(cur.name||'a radio station')+(cur.tags?' — '+cur.tags.split(',').slice(0,3).join(', '):'')+'.':'This is '+(cur.title||MUSIC.q)+(cur.channel?' by '+cur.channel:'')+'.'):'Nothing is playing.';
+   case 'what':return MUSIC.mode?(MUSIC.mode==='local'?'This is '+(cur.title||'your song')+(cur.artist?' by '+cur.artist:'')+', from My songs.':MUSIC.mode==='radio'?'This is '+(cur.name||'a radio station')+(cur.tags?' — '+cur.tags.split(',').slice(0,3).join(', '):'')+'.':'This is '+(cur.title||MUSIC.q)+(cur.channel?' by '+cur.channel:'')+'.'):'Nothing is playing.';
   }
   return 'Say pause, play, next, louder, softer or stop.';
  }
- // Turn the music down while Max listens or talks (so he can hear you and you can hear him).
- try{const orbEl=$('maxOrb');if(orbEl)new MutationObserver(()=>musicDuck(orbEl.classList.contains('listening')||orbEl.classList.contains('speaking'))).observe(orbEl,{attributes:true,attributeFilter:['class']})}catch{}
+ // ---------- 🎧 My songs: his own music, copied once from the phone into Max — no ads, no internet ----------
+ // A web app can't browse the phone's music by itself, so he picks the songs once; Max keeps a copy (IndexedDB).
+ const MYSONGS='max_my_songs',MDB={db:null};
+ const mySongs=()=>jget(MYSONGS,[]);
+ function mdb(){if(MDB.db)return Promise.resolve(MDB.db);return new Promise((res,rej)=>{let r;try{r=indexedDB.open('max_music_files',1)}catch(e){rej(e);return}r.onupgradeneeded=()=>{r.result.createObjectStore('songs',{keyPath:'id'})};r.onsuccess=()=>{MDB.db=r.result;res(r.result)};r.onerror=()=>rej(r.error||new Error('storage is blocked'))})}
+ function mstore(mode,fn){return mdb().then(db=>new Promise((res,rej)=>{const t=db.transaction('songs',mode),st=t.objectStore('songs');let out;const req=fn(st);if(req)req.onsuccess=()=>{out=req.result};t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error||new Error('not enough space'))}))}
+ function songMeta(f){
+  const base=String(f.name||'song').replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[_]+/g,' ').replace(/^\d{1,3}[\s.\-]+/,'').trim();
+  const m=base.match(/^(.{1,60}?)\s+[-–—]\s+(.+)$/);
+  return {id:'s'+(f.size||0)+'_'+base.toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40),title:m?m[2].trim():base,artist:m?m[1].trim():'',size:f.size||0,added:Date.now()};
+ }
+ async function addSongs(files){
+  files=[...(files||[])].filter(f=>/^audio\//.test(f.type)||/\.(mp3|m4a|aac|ogg|opus|wav|flac)$/i.test(f.name));
+  if(!files.length)return 'No songs were chosen. Pick music files (MP3, M4A…) from your phone.';
+  try{navigator.storage&&navigator.storage.persist&&await navigator.storage.persist()}catch{}
+  const list=mySongs(),have=new Set(list.map(x=>x.id));let added=0,skipped=0,mb=0;
+  for(const f of files){const m=songMeta(f);if(have.has(m.id)){skipped++;continue}
+   try{await mstore('readwrite',st=>st.put({id:m.id,blob:f}));list.push(m);have.add(m.id);added++;mb+=f.size/1048576}
+   catch(e){jset(MYSONGS,list);return 'Saved '+added+' song'+(added===1?'':'s')+', then your phone ran out of space for Max ('+(e.message||e)+'). Free some space or add fewer songs.'}}
+  jset(MYSONGS,list);
+  return 'Added '+added+' song'+(added===1?'':'s')+' ('+Math.round(mb)+' MB) to My songs'+(skipped?' — '+skipped+' already there':'')+'. Say “play my music” anytime — no ads, works offline.';
+ }
+ async function removeSong(id){try{await mstore('readwrite',st=>st.delete(id))}catch{}jset(MYSONGS,mySongs().filter(x=>x.id!==id))}
+ function pickSongs(){
+  let inp=$('songPicker');
+  if(!inp){inp=document.createElement('input');inp.type='file';inp.id='songPicker';inp.accept='audio/*,.mp3,.m4a,.aac,.ogg,.opus,.wav,.flac';inp.multiple=true;inp.hidden=true;document.body.append(inp);
+   inp.onchange=async()=>{const fs=[...inp.files];inp.value='';status('Saving songs…');const t=await addSongs(fs);status(t);setSub('',t);if($('dispTitle')&&$('dispTitle').textContent==='My songs')showMySongs()}}
+  inp.click();
+ }
+ function songWords(t){return norm(t).split(' ').filter(w=>w.length>1&&!/^(the|a|an|by|ng|song|songs|music|mp3)$/.test(w))}
+ function findMySongs(q){
+  const L=mySongs();if(!L.length)return [];
+  if(/^(?:my|all my|all of my)?\s*(?:own |phone |offline |downloaded |saved )?(?:music|songs|playlist|library|tracks|kanta|mga kanta ko)$|^(?:my|own)\b.*\b(?:music|songs)$/i.test(String(q).trim()))return L.slice();
+  const qw=songWords(q);if(!qw.length)return [];
+  return L.map(x=>{const hay=songWords(x.title+' '+x.artist);const hit=qw.filter(w=>hay.some(h=>h===w||(w.length>3&&h.startsWith(w)))).length;return {x,s:hit/qw.length}})
+   .filter(o=>o.s>=0.6).sort((a,b)=>b.s-a.s).map(o=>o.x);
+ }
+ const shuffled=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+ async function musicStartLocal(){
+  const sg=MUSIC.list[MUSIC.i];if(!sg)return false;
+  try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch{}
+  if(MUSIC.audio){MUSIC.audio.pause();if(MUSIC.audio._url)URL.revokeObjectURL(MUSIC.audio._url)}
+  let rec=null;try{rec=await mstore('readonly',st=>st.get(sg.id))}catch{}
+  if(!rec||!rec.blob){jset(MYSONGS,mySongs().filter(x=>x.id!==sg.id));return musicNext(true).then(()=>true)}
+  const a=new Audio(),url=URL.createObjectURL(rec.blob);a._url=url;a.src=url;MUSIC.audio=a;MUSIC.mode='local';musicApplyVol();
+  a.onplaying=()=>{MUSIC.playing=true;musicShow()};a.onpause=()=>{MUSIC.playing=false;musicShow()};
+  a.onended=()=>{if(MUSIC.audio===a)musicNext(true)};a.onerror=()=>{if(MUSIC.audio===a)musicNext(true)};
+  musicBar();musicShow();
+  a.play().catch(e=>{if(e&&e.name==='NotAllowedError')status('Tap ▶ to start the music — your phone needs one tap first.')});
+  return true;
+ }
+ function playMine(list,label){
+  MUSIC.list=list.map(x=>({...x,local:true}));MUSIC.i=0;MUSIC.q=label;MUSIC.startedAt=Date.now();MUSIC.held=false;
+  musicStartLocal();const cur=MUSIC.list[0];
+  return 'Playing '+(list.length>1?list.length+' of your songs, starting with ':'')+(cur.title||'your song')+(cur.artist?' by '+cur.artist:'')+'.';
+ }
+ function showMySongs(){
+  const L=mySongs(),mb=Math.round(L.reduce((t,x)=>t+(x.size||0),0)/1048576);
+  const cards=[{badge:'MY SONGS',badgeClass:'badge-res',title:'🎧 My songs — '+L.length+' song'+(L.length===1?'':'s')+(L.length?' · '+mb+' MB':''),
+   lines:['Your own music, copied into Max: no ads, no waiting, works offline and with the screen off.','Say “play my music”, “shuffle my songs”, or a song or artist name.'],
+   buttons:[['📁 Add songs from phone',()=>pickSongs()],...(L.length?[['▶ Play all',()=>{const t=playMine(L,'my songs');setSub('',t)}],['🔀 Shuffle',()=>{const t=playMine(shuffled(L),'my songs (shuffle)');setSub('',t)}]]:[])]}];
+  if(L.length)cards.push({badge:'LIST',title:'Songs',lines:L.slice().sort((a,b)=>(a.artist+a.title).localeCompare(b.artist+b.title)).slice(0,200).map(x=>'🎵 '+x.title+(x.artist?' — '+x.artist:'')),
+   buttons:L.slice(-6).reverse().map(x=>['✕ '+x.title.slice(0,18),async()=>{await removeSong(x.id);showMySongs()}])});
+  showDisplay('My songs','Max’s music library on this phone',cards);
+  return L.length?'You have '+L.length+' songs in My songs.':'My songs is empty. Tap “Add songs from phone” and pick your music — I keep a copy, so it plays with no ads.';
+ }
+ // ---------- music and the microphone: no fighting ----------
+ // On phones the microphone and the music fight over the speaker (beeps, stutter, long gaps). So while music plays,
+ // hands-free stops listening for "Hey Max". To talk: tap the circle, or press pause on earphones / lock screen.
+ // While you talk the music PAUSES (not just quieter); it comes back the moment the conversation ends.
+ function musicHold(on){
+  if(!MUSIC.mode)return;
+  if(on){if(MUSIC.held||!MUSIC.playing)return;MUSIC.held=true;try{MUSIC.yt&&MUSIC.yt.pauseVideo&&MUSIC.yt.pauseVideo()}catch{}if(MUSIC.audio)MUSIC.audio.pause();return}
+  if(!MUSIC.held)return;MUSIC.held=false;
+  try{MUSIC.mode==='video'&&MUSIC.yt&&MUSIC.yt.playVideo&&MUSIC.yt.playVideo()}catch{}if(MUSIC.audio)MUSIC.audio.play().catch(()=>{});
+ }
+ function musicTalkCheck(){
+  const o=$('maxOrb');if(!o||!MUSIC.mode)return;
+  const busy=convo||o.classList.contains('listening')||o.classList.contains('speaking')||o.classList.contains('processing');
+  if(busy)musicHold(true);else if(MUSIC.held){clearTimeout(MUSIC.holdT);MUSIC.holdT=setTimeout(()=>{const o2=$('maxOrb');if(!convo&&!o2.classList.contains('speaking')&&!o2.classList.contains('listening')&&!o2.classList.contains('processing'))musicHold(false)},600)}
+ }
+ try{const orbEl=$('maxOrb');if(orbEl)new MutationObserver(musicTalkCheck).observe(orbEl,{attributes:true,attributeFilter:['class']});setInterval(()=>{if(MUSIC.held)musicTalkCheck()},800)}catch{}
+ // Earphone / lock-screen pause = "Max, listen": pause the song and listen; it resumes after.
+ function musicTalkButton(){if(!MUSIC.mode)return;if(MUSIC.playing&&(hf.on||convo)){musicHold(true);startConversation();return}musicControl({op:'pause'})}
 
  // ---------- activity log: what each desk did, which brain answered, what failed ----------
  const DESKS={apps:['📱','Apps desk'],web:['🌐','Website team'],trading:['📈','Trading desk'],notes:['🗂','Librarian'],schedule:['📅','Secretary'],training:['🎯','Coach'],music:['🎵','Music desk'],guard:['🛡','Guard'],general:['🤵','Max'],system:['⚙','System']};
@@ -4486,8 +4579,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'hear_fix':return teachHearing(a.details||{});
    case 'listen_lang':{const l=a.details?.lang==='fil-PH'?'fil-PH':'en-PH';jset(LISTEN_LANG,l);return l==='fil-PH'?'Sige, makikinig ako sa Filipino. Say “listen in English” to switch back.':'Okay, I’m listening in English again — Taglish works too.'}
    case 'show_hearing':return showHearing();
-   case 'play_music':return await playMusic({...(a.details||{}),query:(a.details&&a.details.query)||a.query},raw);
-   case 'music_control':return await musicControl(a.details||{op:a.query});
+   case 'my_songs':return showMySongs();
+   case 'play_music':{const t=await playMusic({...(a.details||{}),query:(a.details&&a.details.query)||a.query},raw);if(MUSIC.mode)MUSIC.endTalk=true;return t}
+   case 'music_control':{const op=(a.details&&a.details.op)||a.query,t=await musicControl(a.details||{op});if(MUSIC.mode&&/^(resume|next|louder|softer)$/.test(op||''))MUSIC.endTalk=true;return t}
    case 'activity':return await activityScreen(a.details||{});
    case 'guard_report':return await guardScreen('report');
    case 'guard_run':return await guardScreen('run');
@@ -4784,6 +4878,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(prefix&&lastHeard)lastHeard.chosen=q;
    if(END_WORDS.test(q)){setSub(q,'');endConversation(null);showAnswer('Very well. I’ll be here when you need me.',()=>hfResume());return}
    await handleUtterance(q,true);
+   // Music just started: stop listening so it plays right away (tap or earphone pause to talk again).
+   if(MUSIC.endTalk){MUSIC.endTalk=false;if(convo&&token===listenToken){endConversation(null);return}}
    if(convo&&token===listenToken)setTimeout(()=>{if(token===listenToken)listenOnce()},350);
   };
   if(bargeQ){const q=fixHearing(bargeQ);bargeQ=null;take(q);return}
@@ -4802,7 +4898,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    $('maxOrb').classList.remove('listening');
    if(heard||fatal||!convo)return;
    misses++;
-   if(misses>=3){endConversation(hf.on?'Standing by — say “Hey Max” when you need me.':'Standing by. Tap the circle when you need me.');hfResume();return}
+   if(misses>=3||(MUSIC.held&&misses>=1)){endConversation(hf.on?'Standing by — say “Hey Max” when you need me.':'Standing by. Tap the circle when you need me.');hfResume();return}
    setTimeout(()=>{if(token===listenToken)listenOnce()},250);
   };
   try{recognition.start();$('maxOrb').classList.add('listening');status('Listening…')}
@@ -4852,6 +4948,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!hf.on)return;clearTimeout(hf.timer);
   hf.timer=setTimeout(()=>{
    if(!hf.on||document.visibilityState==='hidden')return;
+   if(MUSIC.mode&&MUSIC.playing){hfResume();return} // no "Hey Max" listening over music (it fights the speaker)
    const busyNow=convo||$('maxOrb').classList.contains('speaking')||$('maxOrb').classList.contains('processing')||!$('quickMenu').hidden||modalOpen();
    if(busyNow){hfResume();return}
    hfListen();
