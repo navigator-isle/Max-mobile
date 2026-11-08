@@ -51,8 +51,8 @@ Done by Claude acting as Max's Trading agent. Paper money only — not buy/sell 
 - More intraday data (PSE 6+ months, fresh forex hourly)
 
 **Sources**
-- Opening-range breakout study (Zarattini & Aziz, "Can Day Trading Really Be Profitable?"): https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4416622
-- Intraday momentum (Gao, Han, Li, Zhou, JFE 2018): https://doi.org/10.1016/j.jfineco.2018.05.009
+- Opening-range breakout study (Zarattini & Aziz, "Can Day Trading Really Be Profitable?"): https://papers.ssrn.com/abstract=4416622
+- Intraday momentum (Gao, Han, Li, Zhou, JFE 2018): https://econpapers.repec.org/RePEc:eee:jfinec:v:129:y:2018:i:2:p:394-414
 - Connors RSI(2): https://www.luxalgo.com/library/concept/rsi-2/
 - COL Financial fees: https://colfinancial.freshdesk.com/support/solutions/articles/6000073098-what-are-the-fees-charged-for-executing-trades-buy-and-sell-
 - Data: BTC 1-min https://github.com/ff137/bitstamp-btcusd-minute-data · FX hourly https://github.com/ejtraderLabs/historical-data · EURUSD 15-min 2026 https://github.com/getdata-finance/eurusd-15m-ohlcv-forex-historical-data · FX daily (FRED) https://github.com/datasets/exchange-rates · PSE 30-min https://github.com/zhameersheraz/ph-stocks · PSE archive https://github.com/carlo01092/pse
