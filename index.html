@@ -2220,8 +2220,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  // ---------- your projects: open by voice, check if they're up, pass on change requests ----------
  const DEFAULT_PROJECTS=[
-  {id:'max',name:'Max',url:'https://navigator-isle.github.io/Max-mobile/',repo:'navigator-isle/Max-mobile',aliases:['max app','this app','yourself']},
-  {id:'passage',name:'Passage Planner',play:true,niche:'passage planning app for ship officers (distances, ETA, weather routing)',url:'https://navigator-isle.github.io/',repo:'navigator-isle/navigator-isle.github.io',androidRepo:'navigator-isle/passage-planner-android',aliases:['passage plan','passage','route planner','voyage planner','navigator isle']},
+  {id:'max',name:'Max',url:'https://max-app-axv.pages.dev/',repo:'navigator-isle/Max-mobile',aliases:['max app','this app','yourself']},
+  {id:'passage',name:'Passage Planner',play:true,niche:'passage planning app for ship officers (distances, ETA, weather routing)',url:'https://passage-planner-6pm.pages.dev/',repo:'navigator-isle/navigator-isle.github.io',androidRepo:'navigator-isle/passage-planner-android',aliases:['passage plan','passage','route planner','voyage planner','navigator isle']},
   {id:'draft',name:'Quick Draft Calculator',appLike:true,niche:'draft survey calculator for ship officers',url:'https://draft-calculator.github.io/Draft-Calculator/',repo:'',aliases:['draft calculator','draft calc','quick draft','draft survey']},
   {id:'hobby',name:'Hobby Isle',url:'https://hobbyisle.com/',repo:'navigator-isle/hobbyisle',analytics:true,earns:true,site:true,niche:'Gundam / Gunpla model kits and anime collectibles — affiliate site with buying guides and lists',aliases:['hobbyisle','hobby site','gundam site','gunpla site','my website']},
   {id:'checklist',name:'Officer Checklist',url:'https://claude.ai/artifact/9j5SkqSG5sMiX8tpC2ieqS',repo:'',aliases:['checklist','officer checklist','ship app','inventory','ship checklist']},
@@ -2232,8 +2232,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   {id:'sulit',name:'Sulit o Hindi',url:'https://claude.ai/artifact/6JCrJXetpmjKbEYHvoe54B',repo:'',earns:true,aliases:['sulit','deal finder','deals app','lazada app']}
  ];
  const PROJ_KEY='max_projects';
- function projects(){try{const v=JSON.parse(localStorage.getItem(PROJ_KEY)||'null');return Array.isArray(v)&&v.length?v:DEFAULT_PROJECTS}catch{return DEFAULT_PROJECTS}}
+ // Nov 2026: the navigator-isle GitHub account was suspended, so these sites moved to Cloudflare Pages.
+ const MOVED_URLS={'https://navigator-isle.github.io/Max-mobile/':'https://max-app-axv.pages.dev/','https://navigator-isle.github.io/':'https://passage-planner-6pm.pages.dev/','https://navigator-isle.github.io':'https://passage-planner-6pm.pages.dev/'};
+ function projects(){try{const v=JSON.parse(localStorage.getItem(PROJ_KEY)||'null');if(!(Array.isArray(v)&&v.length))return DEFAULT_PROJECTS;
+  let moved=false;const out=v.map(p=>p&&MOVED_URLS[p.url]?(moved=true,{...p,url:MOVED_URLS[p.url]}):p);if(moved)saveProjects(out);return out}catch{return DEFAULT_PROJECTS}}
  const saveProjects=l=>{try{localStorage.setItem(PROJ_KEY,JSON.stringify(l))}catch{}scheduleSync()};
+ setTimeout(()=>{try{projects()}catch{}},1200);setTimeout(()=>{try{projects()}catch{}},9000); // move old GitHub addresses (also after the first sync)
  const projKind=p=>/claude\.ai\//.test(p.url)?'Inside Claude':p.repo?'Website · GitHub':'Website';
  const projStatus={};
  let ghInfo=null,pendingMerge=null;

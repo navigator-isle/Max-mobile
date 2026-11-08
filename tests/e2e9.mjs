@@ -9,7 +9,7 @@ globalThis.fetch = async (u, o = {}) => {
   if (url === "https://api.cloudflare.com/client/v4/graphql") { cfCalls++;
     return new Response(JSON.stringify({ data: { viewer: { accounts: [{ today: [{ count: 52, sum: { visits: 37 } }], week: [{ count: 410, sum: { visits: 260 } }],
       pages: [{ count: 20, dimensions: { requestPath: "/gundam/pg/" } }], countries: [{ count: 30, dimensions: { countryName: "US" } }] }] } } })); }
-  if (url === "https://hobbyisle.com/" || url.startsWith("https://navigator-isle.github.io") || url.startsWith("https://draft-calculator")) return new Response("ok");
+  if (url === "https://hobbyisle.com/" || (url.startsWith("https://navigator-isle.github.io") || /^https:\/\/(max-app-axv|passage-planner-6pm)\.pages\.dev/.test(url)) || url.startsWith("https://draft-calculator")) return new Response("ok");
   if (url.includes("generativelanguage")) { const b = JSON.parse(o.body); const all = JSON.stringify(b);
     const file = b.contents?.[0]?.parts?.find(x => x.inline_data);
     let text;

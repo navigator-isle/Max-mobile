@@ -1483,8 +1483,8 @@ async function musicRoutes(request, env, url, origin) {
 // it sends an all-clear summary with a backup of Max's notes and memory attached (to his own Gmail — never to
 // GitHub, because the Max-mobile repository is public). He can also ask for a check or a backup any time.
 const GUARD_SITES = [
-  {name: "Max", url: "https://max-ai-backend.mjgaly-mg.workers.dev/"},
-  {name: "Passage Planner", url: "https://navigator-isle.github.io/"},
+  {name: "Max", url: "https://max-app-axv.pages.dev/"},
+  {name: "Passage Planner", url: "https://passage-planner-6pm.pages.dev/"},
   {name: "Quick Draft Calculator", url: "https://draft-calculator.github.io/Draft-Calculator/"},
   {name: "Hobby Isle", url: "https://hobbyisle.com/", site: true}];
 const b64lines = s => { const b = new TextEncoder().encode(s); let o = ""; for (let i = 0; i < b.length; i += 32768) o += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(o).replace(/.{76}/g, "$&\r\n"); };
@@ -1853,8 +1853,8 @@ async function factsWeb(env) {
 }
 // ----- 📱 apps -----
 const APPS_DEFAULT = [
-  {name: "Max", url: "https://max-ai-backend.mjgaly-mg.workers.dev/", repo: "navigator-isle/Max-mobile"},
-  {name: "Passage Planner", url: "https://navigator-isle.github.io/", repo: "navigator-isle/navigator-isle.github.io", androidRepo: "navigator-isle/passage-planner-android", play: "passage planner"},
+  {name: "Max", url: "https://max-app-axv.pages.dev/", repo: "navigator-isle/Max-mobile"},
+  {name: "Passage Planner", url: "https://passage-planner-6pm.pages.dev/", repo: "navigator-isle/navigator-isle.github.io", androidRepo: "navigator-isle/passage-planner-android", play: "passage planner"},
   {name: "Quick Draft Calculator", url: "https://draft-calculator.github.io/Draft-Calculator/"}];
 async function appList(env) {
   const mine = await setting(env, "max_projects", null);

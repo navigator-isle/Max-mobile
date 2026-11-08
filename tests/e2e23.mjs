@@ -24,7 +24,8 @@ const sqlite = new DatabaseSync(":memory:"); const ORIGIN = "http://127.0.0.1:80
 const env = { GEMINI_API_KEY: "k", ALLOWED_ORIGIN: ORIGIN, MAX_PASSCODE: "pw", MAX_MEMORY: new D1(sqlite), MAX_OWNER_EMAIL: "owner@example.com", GOOGLE_CLIENT_ID: "c", GOOGLE_CLIENT_SECRET: "s", MAX_SEAL_KEY: "x" };
 let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
 // ---- the hourly email (worker scheduled handler) ----
-const run = async () => { let p; await worker.scheduled({}, env, { waitUntil: x => { p = x; } }); await p; };
+// A fixed weekday hour, so weekly agent reports (Sunday slots) never land inside this test.
+const run = async () => { const ps = []; await worker.scheduled({ cron: "45 * * * *", scheduledTime: Date.parse("2026-11-04T13:45:00Z") }, env, { waitUntil: x => ps.push(x) }); await Promise.all(ps); };
 await run();
 ok(sent.length === 0, "no email while Google isn't connected (nothing crashes)");
 // pretend Google is linked: seal a refresh token the way the worker does

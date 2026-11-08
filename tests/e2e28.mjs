@@ -12,8 +12,8 @@ class D1 { constructor(db) { this.db = db; } prepare(s) { return new Stmt(this.d
 let siteDown = true;
 globalThis.fetch = async (u, o = {}) => {
   const url = String(u);
-  if (url === "https://navigator-isle.github.io/") return siteDown ? new Response("x", { status: 503 }) : new Response("ok");
-  if (/^https:\/\/(navigator-isle\.github\.io\/Max-mobile|max-ai-backend\.mjgaly-mg\.workers\.dev|draft-calculator\.github\.io)/.test(url)) return new Response("ok");
+  if (url === "https://passage-planner-6pm.pages.dev/") return siteDown ? new Response("x", { status: 503 }) : new Response("ok");
+  if (/^https:\/\/(navigator-isle\.github\.io\/Max-mobile|max-ai-backend\.mjgaly-mg\.workers\.dev|max-app-axv\.pages\.dev|draft-calculator\.github\.io)/.test(url)) return new Response("ok");
   if (url.startsWith("https://hobbyisle.com") || url.startsWith("http://hobbyisle.com")) return new Response("<html><head><title>Hobby Isle</title></head><body><h1>x</h1></body></html>", { headers: { "content-type": "text/html" } });
   if (url.includes("generativelanguage") && url.includes("embed")) return new Response(JSON.stringify({ embeddings: [{ values: Array(256).fill(0.1) }] }));
   if (url.includes("generativelanguage")) return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ reply: "ok", action: null }) }] } }] }));

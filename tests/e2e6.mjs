@@ -15,7 +15,7 @@ globalThis.fetch = async (u, o = {}) => {
     if (url.includes("/check-runs")) return new Response(JSON.stringify({ check_runs: [{ name: "test", status: "completed", conclusion: "success" }] }));
     if (url.endsWith("/merge")) return new Response(JSON.stringify({ merged: true }));
   }
-  if (url === "https://hobbyisle.com/" || url.startsWith("https://navigator-isle.github.io")) return new Response("ok");
+  if (url === "https://hobbyisle.com/" || (url.startsWith("https://navigator-isle.github.io") || /^https:\/\/(max-app-axv|passage-planner-6pm)\.pages\.dev/.test(url))) return new Response("ok");
   if (url.startsWith("https://draft-calculator.github.io")) return new Response("err", { status: 404 });
   if (url.includes("generativelanguage")) {
     const b = JSON.parse(o.body); gem.push(b); const q = b.contents.at(-1).parts[0].text;

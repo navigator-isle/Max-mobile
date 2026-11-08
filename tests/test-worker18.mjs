@@ -15,8 +15,8 @@ globalThis.fetch = async (u, o = {}) => {
     if (p.get("grant_type") === "authorization_code") return new Response(JSON.stringify({ access_token: "AT1", expires_in: 3600, refresh_token: "RT", scope: "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send", id_token: "h." + b64u({ email: "mark@example.com" }) + ".s" }));
     return new Response(JSON.stringify({ access_token: "AT2", expires_in: 3600 })); }
   if (url === "https://gmail.googleapis.com/gmail/v1/users/me/messages/send") { sent.push(Buffer.from(JSON.parse(o.body).raw, "base64url").toString()); return new Response(JSON.stringify({ id: "s" + sent.length })); }
-  if (url.startsWith("https://max-ai-backend.mjgaly-mg.workers.dev/")) return new Response("ok");
-  if (url === "https://navigator-isle.github.io/") return siteDown ? new Response("down", { status: 503 }) : new Response("ok");
+  if (url.startsWith("https://max-ai-backend.mjgaly-mg.workers.dev/") || url.startsWith("https://max-app-axv.pages.dev/")) return new Response("ok");
+  if (url === "https://passage-planner-6pm.pages.dev/") return siteDown ? new Response("down", { status: 503 }) : new Response("ok");
   if (url.startsWith("https://draft-calculator.github.io/")) return new Response("ok");
   if (url === "https://hobbyisle.com/") return new Response(HOBBY, { headers: { "content-type": "text/html", "strict-transport-security": "max-age=1", "content-security-policy": "default-src 'self'", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "referrer-policy": "strict-origin" } });
   if (url.startsWith("http://hobbyisle.com")) return new Response(null, { status: 301, headers: { location: "https://hobbyisle.com/" } });
