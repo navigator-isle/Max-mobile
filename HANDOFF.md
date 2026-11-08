@@ -58,6 +58,7 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - New Worker version (serves app, code in weekly Gmail backup), brain improvements (needs his examples + /health screenshot)
 - Deal Finder as a full server agent (weekly email report, structured prices); app version already works via /api/research
 - Permanent keyboard (always-visible text box) on Max's home screen
+- Option 1 (his choice, free): teach Max Claude's working method — Deal Finder reads the store's own product page for the EXACT variant (Shopify /products/<handle>.json, JSON-LD), compares with the brand's current official price, gives link + time read for every price, flags anything not confirmed live. No paid Claude API for now.
 - Import into Max's memory everything from Claude chats since 8 Nov — Claude acts as Max meanwhile (his standing instruction); see Claude memory /areas/max-secretary-app.md
 
 **Open next steps**
