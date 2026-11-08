@@ -5,7 +5,7 @@
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const APP = ['index.html', 'privacy.html', 'manifest.webmanifest', 'sw.js', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
-const EXTRA = ['worker.js', 'wrangler.jsonc', 'build.mjs', 'deploy.sh', 'deploy.bat', 'DEPLOY.md', 'SETUP.md', 'README.md', 'README.txt', '.gitignore'];
+const EXTRA = ['worker.js', 'wrangler.jsonc', 'build.mjs', 'deploy.sh', 'deploy.bat', 'HANDOFF.md', 'DEPLOY.md', 'SETUP.md', 'README.md', 'README.txt', '.gitignore'];
 const dirFiles = d => fs.existsSync(path.join(ROOT, d)) ? fs.readdirSync(path.join(ROOT, d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? dirFiles(d + '/' + e.name) : [d + '/' + e.name]) : [];
 // Never pack secrets or local junk.
 const SKIP = /(^|\/)(\.env|\.dev\.vars|node_modules|\.wrangler|site|test-results)(\/|$)|\.(p12|jks|keystore|pem|key)$/i;
