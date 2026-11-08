@@ -1,0 +1,337 @@
+{
+ "crypto": {
+  "Trend top-20 (SMA)": {
+   "family": "regular / position",
+   "params": {
+    "n": 20
+   },
+   "in_sample": {
+    "cagr": 241.4,
+    "sharpe": 2.62,
+    "maxdd": -48.0,
+    "total": 159439.8,
+    "turnover_yr": 45.9
+   },
+   "out_of_sample": {
+    "cagr": 4.7,
+    "sharpe": 0.3,
+    "maxdd": -53.8,
+    "total": 24.7,
+    "turnover_yr": 51.8
+   }
+  },
+  "Momentum rotation top-20": {
+   "family": "regular / rotation",
+   "params": {
+    "L": 14,
+    "top": 5,
+    "reg": 50
+   },
+   "in_sample": {
+    "cagr": 388.8,
+    "sharpe": 2.31,
+    "maxdd": -66.7,
+    "total": 1375042.9,
+    "turnover_yr": 32.3
+   },
+   "out_of_sample": {
+    "cagr": 34.3,
+    "sharpe": 0.81,
+    "maxdd": -60.5,
+    "total": 318.7,
+    "turnover_yr": 28.9
+   }
+  },
+  "RSI(2) pullback top-20": {
+   "family": "swing / mean reversion",
+   "params": {
+    "lo": 5
+   },
+   "in_sample": {
+    "cagr": 6.0,
+    "sharpe": 0.48,
+    "maxdd": -16.9,
+    "total": 41.9,
+    "turnover_yr": 6.0
+   },
+   "out_of_sample": {
+    "cagr": 2.4,
+    "sharpe": 0.36,
+    "maxdd": -7.5,
+    "total": 12.2,
+    "turnover_yr": 5.6
+   }
+  },
+  "Swing breakout + ATR trail (top-20)": {
+   "family": "swing / trend",
+   "params": {
+    "k_atr": 2,
+    "btc_filter": false
+   },
+   "in_sample": {
+    "cagr": 73.0,
+    "sharpe": 2.11,
+    "maxdd": -31.4,
+    "total": 2590.9,
+    "turnover_yr": 0.0
+   },
+   "out_of_sample": {
+    "cagr": 17.9,
+    "sharpe": 0.62,
+    "maxdd": -28.9,
+    "total": 122.2,
+    "turnover_yr": 0.0
+   },
+   "extra": {
+    "win_%": 34.7,
+    "avg_win_R": 4.38,
+    "avg_loss_R": -2.64
+   }
+  },
+  "Copy big traders: Bitcoin (CME) (fade)": {
+   "family": "copy trading (COT)",
+   "params": {
+    "mode": "fade"
+   },
+   "in_sample": {
+    "cagr": 51.5,
+    "sharpe": 1.04,
+    "maxdd": -66.0,
+    "total": 343.9,
+    "turnover_yr": 0.0
+   },
+   "out_of_sample": {
+    "cagr": 9.0,
+    "sharpe": 0.42,
+    "maxdd": -42.3,
+    "total": 51.7,
+    "turnover_yr": 0.0
+   }
+  },
+  "Copy big traders: Ether (CME) (fade)": {
+   "family": "copy trading (COT)",
+   "params": {
+    "mode": "fade"
+   },
+   "in_sample": {
+    "cagr": 15.0,
+    "sharpe": 0.73,
+    "maxdd": -30.6,
+    "total": 65.1,
+    "turnover_yr": 0.0
+   },
+   "out_of_sample": {
+    "cagr": -10.7,
+    "sharpe": -0.01,
+    "maxdd": -67.9,
+    "total": -42.4,
+    "turnover_yr": 0.0
+   }
+  },
+  "Benchmark: hold top-20 equally": {
+   "family": "benchmark",
+   "params": null,
+   "in_sample": {
+    "cagr": 242.5,
+    "sharpe": 1.88,
+    "maxdd": -91.0,
+    "total": 162548.1,
+    "turnover_yr": 5.6
+   },
+   "out_of_sample": {
+    "cagr": -3.0,
+    "sharpe": 0.22,
+    "maxdd": -70.0,
+    "total": -13.6,
+    "turnover_yr": 4.8
+   }
+  }
+ },
+ "pse": {
+  "Trend all stocks (SMA)": {
+   "family": "regular / position",
+   "params": {
+    "n": 100
+   },
+   "in_sample": {
+    "cagr": 0.8,
+    "sharpe": 0.24,
+    "maxdd": -20.8,
+    "total": 6.8,
+    "turnover_yr": 6.3
+   },
+   "out_of_sample": {
+    "cagr": -6.2,
+    "sharpe": -1.62,
+    "maxdd": -28.0,
+    "total": -23.4,
+    "turnover_yr": 9.0
+   }
+  },
+  "Momentum rotation all stocks": {
+   "family": "regular / rotation",
+   "params": {
+    "L": 126,
+    "top": 10
+   },
+   "in_sample": {
+    "cagr": 12.1,
+    "sharpe": 0.75,
+    "maxdd": -34.5,
+    "total": 147.5,
+    "turnover_yr": 6.2
+   },
+   "out_of_sample": {
+    "cagr": 9.3,
+    "sharpe": 0.6,
+    "maxdd": -26.9,
+    "total": 45.0,
+    "turnover_yr": 5.2
+   }
+  },
+  "Swing breakout + ATR trail (all stocks)": {
+   "family": "swing / trend",
+   "params": {
+    "k_atr": 4,
+    "psei_filter": false
+   },
+   "in_sample": {
+    "cagr": 9.5,
+    "sharpe": 0.86,
+    "maxdd": -36.6,
+    "total": 105.3,
+    "turnover_yr": 0.0
+   },
+   "out_of_sample": {
+    "cagr": -4.1,
+    "sharpe": -0.37,
+    "maxdd": -32.9,
+    "total": -16.1,
+    "turnover_yr": 0.0
+   }
+  },
+  "Benchmark: hold all stocks equally": {
+   "family": "benchmark",
+   "params": null,
+   "in_sample": {
+    "cagr": 2.9,
+    "sharpe": 0.3,
+    "maxdd": -39.3,
+    "total": 25.6,
+    "turnover_yr": 15.2
+   },
+   "out_of_sample": {
+    "cagr": -5.1,
+    "sharpe": -0.33,
+    "maxdd": -53.3,
+    "total": -19.7,
+    "turnover_yr": 15.7
+   }
+  }
+ },
+ "forex": {
+  "Trend each currency (long/short)": {
+   "family": "regular / position",
+   "params": {
+    "L": 126
+   },
+   "in_sample": {
+    "cagr": 1.8,
+    "sharpe": 0.37,
+    "maxdd": -12.4,
+    "total": 35.7,
+    "turnover_yr": 19.4
+   },
+   "out_of_sample": {
+    "cagr": -1.7,
+    "sharpe": -0.42,
+    "maxdd": -19.8,
+    "total": -13.9,
+    "turnover_yr": 21.8
+   }
+  },
+  "Currency momentum rotation": {
+   "family": "regular / rotation",
+   "params": {
+    "L": 126,
+    "k": 3
+   },
+   "in_sample": {
+    "cagr": -0.1,
+    "sharpe": 0.0,
+    "maxdd": -17.3,
+    "total": -2.6,
+    "turnover_yr": 9.3
+   },
+   "out_of_sample": {
+    "cagr": -1.6,
+    "sharpe": -0.37,
+    "maxdd": -17.7,
+    "total": -13.0,
+    "turnover_yr": 10.0
+   }
+  },
+  "Carry basket (high-yield vs JPY/CHF)": {
+   "family": "carry (interest-rate \"dividend\")",
+   "params": {
+    "note": "price only \u2014 real carry also earns the interest gap"
+   },
+   "in_sample": {
+    "cagr": -1.4,
+    "sharpe": -0.21,
+    "maxdd": -28.8,
+    "total": -22.2,
+    "turnover_yr": 0.0
+   },
+   "out_of_sample": {
+    "cagr": -0.9,
+    "sharpe": -0.18,
+    "maxdd": -14.9,
+    "total": -7.3,
+    "turnover_yr": 0.0
+   }
+  },
+  "Swing breakout + ATR trail (both ways)": {
+   "family": "swing / trend",
+   "params": {
+    "k_atr": 3,
+    "trend_filter": false
+   },
+   "in_sample": {
+    "cagr": 1.4,
+    "sharpe": 0.28,
+    "maxdd": -21.3,
+    "total": 26.6,
+    "turnover_yr": 0.0
+   },
+   "out_of_sample": {
+    "cagr": -1.6,
+    "sharpe": -0.32,
+    "maxdd": -18.6,
+    "total": -13.5,
+    "turnover_yr": 0.0
+   }
+  },
+  "Copy big traders: 10 currencies (fade)": {
+   "family": "copy trading (COT)",
+   "params": {
+    "mode": "fade",
+    "note": "COT starts 2018 \u2192 older years = 2018\u20132021"
+   },
+   "in_sample": {
+    "cagr": 5.0,
+    "sharpe": 1.27,
+    "maxdd": -2.4,
+    "total": 19.0,
+    "turnover_yr": 16.7
+   },
+   "out_of_sample": {
+    "cagr": 1.0,
+    "sharpe": 0.28,
+    "maxdd": -8.9,
+    "total": 5.0,
+    "turnover_yr": 20.6
+   }
+  }
+ }
+}

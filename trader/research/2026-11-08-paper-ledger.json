@@ -29,6 +29,11 @@
       "at": "2026-11-08T14:10:00+08:00",
       "type": "research",
       "text": "Swing research: 198 setups. Crypto 66/66 profitable on 2022+; MAX-SWING-1 +98% (drop −34%). PSE 4/66, forex & gold 28/66 — no reliable edge. MAX-SWING-1 added next to MAX-COMBINED-1; no open trades."
+    },
+    {
+      "at": "2026-11-08T15:00:00+08:00",
+      "type": "research",
+      "text": "MAX-MASTER-1 built from all strategy types (regular, swing, day, dividend, carry, copy/COT) across crypto, PSE, forex. Unseen 2022→Oct 2026: +33%, 6.1%/yr, worst drop −20%."
     }
   ],
   "entry_triggers_btc": {
@@ -74,5 +79,48 @@
       "market": "crypto",
       "status": "100% cash"
     }
-  ]
+  ],
+  "master": {
+    "id": "MAX-MASTER-1",
+    "budget": {
+      "crypto": 0.5,
+      "forex": 0.25,
+      "pse": 0.25
+    },
+    "parts": {
+      "crypto": [
+        "trend top-20 SMA20",
+        "momentum rotation top-5 of top-20, 14d, BTC>SMA50",
+        "swing Donchian-20 + 2xATR trail",
+        "CME BTC/ETH leveraged-fund fade"
+      ],
+      "forex": [
+        "COT fade 10 currencies"
+      ],
+      "pse": [
+        "momentum rotation top-10 by 126d, PSEi>SMA200",
+        "swing Donchian-20 + 4xATR trail"
+      ]
+    },
+    "signals_2026_11_08": {
+      "crypto": "mostly cash (BTC below SMA50; COT fade OUT; alt data stale since 18 Oct)",
+      "forex": {
+        "LONG": [
+          "EUR",
+          "CHF",
+          "CAD",
+          "AUD",
+          "NZD",
+          "MXN"
+        ],
+        "SHORT": [
+          "JPY",
+          "GBP",
+          "BRL",
+          "ZAR"
+        ]
+      },
+      "pse": "collecting data (needs 126 trading days)"
+    }
+  }
 }
