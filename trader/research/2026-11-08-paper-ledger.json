@@ -1,11 +1,60 @@
 {
   "kind": "Max paper trading ledger (run by Claude acting as Max's Trading agent)",
   "strategy": "MAX-COMBINED-1 (crypto): equal thirds of Donchian 20/10 breakout, cross-sectional momentum (top 3 by 14-day return, weekly, only when BTC > SMA50) and SMA50 trend; universe BTC ETH BNB XRP ADA DOGE LINK LTC; spot, long-only, no leverage",
-  "account": {"market": "crypto", "ccy": "USDT", "startPhp": 100000, "opened": "2026-11-08", "cash_pct": 100, "positions": []},
+  "account": {
+    "market": "crypto",
+    "ccy": "USDT",
+    "startPhp": 100000,
+    "opened": "2026-11-08",
+    "cash_pct": 100,
+    "positions": []
+  },
   "events": [
-    {"at": "2026-11-08T12:40:00+08:00", "type": "open", "text": "Paper account opened with ₱100,000 (pretend money). Data: BTC to 6 Nov 2026; other coins only to 15–18 Oct 2026 (stale), so they are held at 0 until fresh prices arrive."},
-    {"at": "2026-11-08T12:40:00+08:00", "type": "signal", "text": "BTC close 6 Nov $75,747: below SMA50 ($81,976) and SMA100 ($77,062), and closed under its 10-day low → all three sleeves say CASH. Paper position: 100% cash. No trade."}
+    {
+      "at": "2026-11-08T12:40:00+08:00",
+      "type": "open",
+      "text": "Paper account opened with ₱100,000 (pretend money). Data: BTC to 6 Nov 2026; other coins only to 15–18 Oct 2026 (stale), so they are held at 0 until fresh prices arrive."
+    },
+    {
+      "at": "2026-11-08T12:40:00+08:00",
+      "type": "signal",
+      "text": "BTC close 6 Nov $75,747: below SMA50 ($81,976) and SMA100 ($77,062), and closed under its 10-day low → all three sleeves say CASH. Paper position: 100% cash. No trade."
+    },
+    {
+      "at": "2026-11-08T13:30:00+08:00",
+      "type": "research",
+      "text": "Day-trading research done (3 markets). No solid profitable day-trading strategy after costs; 3 probation books added (paper only). MAX-COMBINED-1 stays the main crypto strategy."
+    }
   ],
-  "entry_triggers_btc": {"donchian_buy_above": 84023.24, "sma_sleeve_buy_above_sma50": 81976, "xs_momentum_needs": "BTC above SMA50 and positive 14-day return", "as_of": "2026-11-06"},
-  "next": "When Max's paper trader is online again: import this ledger as the crypto account's starting state, load MAX-COMBINED-1 as a strategy book, and run it daily with fresh prices."
+  "entry_triggers_btc": {
+    "donchian_buy_above": 84023.24,
+    "sma_sleeve_buy_above_sma50": 81976,
+    "xs_momentum_needs": "BTC above SMA50 and positive 14-day return",
+    "as_of": "2026-11-06"
+  },
+  "next": "When Max's paper trader is online again: import this ledger as the crypto account's starting state, load MAX-COMBINED-1 as a strategy book, and run it daily with fresh prices.",
+  "probation_books": [
+    {
+      "id": "btc-orb-2h",
+      "market": "crypto",
+      "rules": "Range = first 2 hours UTC; buy on break of range high only if yesterday's BTC close > SMA50; stop 0.5x range below entry; exit by 23:59 UTC",
+      "costs_tracked": [
+        "0.24% (Binance spot)",
+        "0.10% (low-fee)"
+      ],
+      "status": "filter OFF today (BTC below SMA50) — no trade"
+    },
+    {
+      "id": "audusd-asian-mr",
+      "market": "fx",
+      "rules": "00:00–06:00 UTC: if hourly close is >2 std from its 24h mean, fade it; exit at mean or after 6 hours",
+      "status": "waiting for live hourly FX prices"
+    },
+    {
+      "id": "pse-intraday-mom",
+      "market": "pse",
+      "rules": "Blue chip up >0.5% by 11:00 → buy, sell at close",
+      "status": "collect data only; costs ~0.9% make it unprofitable so far"
+    }
+  ]
 }

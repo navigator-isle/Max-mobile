@@ -1,0 +1,639 @@
+{
+ "crypto": {
+  "Opening-range breakout": {
+   "params": {
+    "range_min": 120,
+    "trend_filter": true,
+    "stop_x_range": 1.0
+   },
+   "in_sample": {
+    "trades": 830,
+    "total_%": 32.7,
+    "yearly_%": 5.0,
+    "win_%": 36.4,
+    "avg_trade_%": 0.063,
+    "profit_factor": 1.07,
+    "sharpe": 0.41,
+    "max_drop_%": -59.9
+   },
+   "out_of_sample": {
+    "trades": 474,
+    "total_%": -37.9,
+    "yearly_%": -15.7,
+    "win_%": 30.2,
+    "avg_trade_%": -0.087,
+    "profit_factor": 0.86,
+    "sharpe": -0.84,
+    "max_drop_%": -47.2
+   }
+  },
+  "Intraday momentum": {
+   "params": {
+    "first_hours": 9,
+    "trend_filter": true
+   },
+   "in_sample": {
+    "trades": 512,
+    "total_%": 135.5,
+    "yearly_%": 15.8,
+    "win_%": 48.6,
+    "avg_trade_%": 0.209,
+    "profit_factor": 1.24,
+    "sharpe": 1.14,
+    "max_drop_%": -46.5
+   },
+   "out_of_sample": {
+    "trades": 304,
+    "total_%": -35.6,
+    "yearly_%": -14.5,
+    "win_%": 42.4,
+    "avg_trade_%": -0.126,
+    "profit_factor": 0.83,
+    "sharpe": -1.04,
+    "max_drop_%": -41.3
+   }
+  },
+  "Hourly RSI(2) dip-buy": {
+   "params": {
+    "rsi2_below": 10,
+    "trend_filter": true
+   },
+   "in_sample": {
+    "trades": 666,
+    "total_%": -27.7,
+    "yearly_%": -5.5,
+    "win_%": 64.1,
+    "avg_trade_%": -0.039,
+    "profit_factor": 0.91,
+    "sharpe": -0.55,
+    "max_drop_%": -28.7
+   },
+   "out_of_sample": {
+    "trades": 352,
+    "total_%": -50.6,
+    "yearly_%": -22.4,
+    "win_%": 44.9,
+    "avg_trade_%": -0.196,
+    "profit_factor": 0.46,
+    "sharpe": -4.06,
+    "max_drop_%": -51.4
+   }
+  },
+  "ORB with limit orders (0.04% rt)": {
+   "params": {
+    "range_min": 120,
+    "trend_filter": true,
+    "stop_x_range": 1.0
+   },
+   "in_sample": {
+    "trades": 830,
+    "total_%": 596.5,
+    "yearly_%": 39.5,
+    "win_%": 37.5,
+    "avg_trade_%": 0.263,
+    "profit_factor": 1.37,
+    "sharpe": 1.71,
+    "max_drop_%": -37.1
+   },
+   "out_of_sample": {
+    "trades": 474,
+    "total_%": 60.1,
+    "yearly_%": 18.3,
+    "win_%": 33.8,
+    "avg_trade_%": 0.113,
+    "profit_factor": 1.23,
+    "sharpe": 1.08,
+    "max_drop_%": -17.9
+   }
+  },
+  "ORB fee sensitivity (2024\u2192Nov 2026)": {
+   "0.04% round trip": {
+    "trades": 474,
+    "total_%": 60.1,
+    "yearly_%": 18.3,
+    "win_%": 33.8,
+    "avg_trade_%": 0.113,
+    "profit_factor": 1.23,
+    "sharpe": 1.08,
+    "max_drop_%": -17.9
+   },
+   "0.08% round trip": {
+    "trades": 474,
+    "total_%": 32.5,
+    "yearly_%": 10.6,
+    "win_%": 33.1,
+    "avg_trade_%": 0.073,
+    "profit_factor": 1.14,
+    "sharpe": 0.7,
+    "max_drop_%": -23.5
+   },
+   "0.10% round trip": {
+    "trades": 474,
+    "total_%": 20.5,
+    "yearly_%": 6.9,
+    "win_%": 32.3,
+    "avg_trade_%": 0.053,
+    "profit_factor": 1.1,
+    "sharpe": 0.51,
+    "max_drop_%": -26.1
+   },
+   "0.14% round trip": {
+    "trades": 474,
+    "total_%": -0.3,
+    "yearly_%": -0.1,
+    "win_%": 31.6,
+    "avg_trade_%": 0.013,
+    "profit_factor": 1.02,
+    "sharpe": 0.12,
+    "max_drop_%": -31.3
+   },
+   "0.20% round trip": {
+    "trades": 474,
+    "total_%": -25.0,
+    "yearly_%": -9.7,
+    "win_%": 30.6,
+    "avg_trade_%": -0.047,
+    "profit_factor": 0.92,
+    "sharpe": -0.45,
+    "max_drop_%": -39.1
+   }
+  }
+ },
+ "forex": {
+  "London breakout \u2014 EURUSD": {
+   "params": {},
+   "in_sample": {
+    "trades": 1524,
+    "total_%": -6.7,
+    "yearly_%": -1.2,
+    "win_%": 39.9,
+    "avg_trade_%": -0.004,
+    "profit_factor": 0.96,
+    "sharpe": -0.24,
+    "max_drop_%": -10.4
+   },
+   "out_of_sample": {
+    "trades": 810,
+    "total_%": -4.0,
+    "yearly_%": -1.3,
+    "win_%": 40.1,
+    "avg_trade_%": -0.005,
+    "profit_factor": 0.94,
+    "sharpe": -0.36,
+    "max_drop_%": -7.8
+   }
+  },
+  "London breakout + daily trend \u2014 EURUSD": {
+   "params": {},
+   "in_sample": {
+    "trades": 1086,
+    "total_%": -24.4,
+    "yearly_%": -4.6,
+    "win_%": 35.1,
+    "avg_trade_%": -0.025,
+    "profit_factor": 0.78,
+    "sharpe": -1.59,
+    "max_drop_%": -24.7
+   },
+   "out_of_sample": {
+    "trades": 586,
+    "total_%": -12.4,
+    "yearly_%": -4.1,
+    "win_%": 35.8,
+    "avg_trade_%": -0.022,
+    "profit_factor": 0.75,
+    "sharpe": -1.83,
+    "max_drop_%": -13.3
+   }
+  },
+  "Asian-session mean reversion \u2014 EURUSD": {
+   "params": {},
+   "in_sample": {
+    "trades": 167,
+    "total_%": 2.6,
+    "yearly_%": 0.4,
+    "win_%": 57.5,
+    "avg_trade_%": 0.016,
+    "profit_factor": 1.21,
+    "sharpe": 1.14,
+    "max_drop_%": -3.3
+   },
+   "out_of_sample": {
+    "trades": 72,
+    "total_%": -0.7,
+    "yearly_%": -0.2,
+    "win_%": 45.8,
+    "avg_trade_%": -0.009,
+    "profit_factor": 0.87,
+    "sharpe": -0.77,
+    "max_drop_%": -1.8
+   }
+  },
+  "London breakout \u2014 GBPUSD": {
+   "params": {},
+   "in_sample": {
+    "trades": 1535,
+    "total_%": -9.3,
+    "yearly_%": -1.6,
+    "win_%": 37.9,
+    "avg_trade_%": -0.006,
+    "profit_factor": 0.95,
+    "sharpe": -0.31,
+    "max_drop_%": -15.7
+   },
+   "out_of_sample": {
+    "trades": 808,
+    "total_%": 1.4,
+    "yearly_%": 0.4,
+    "win_%": 42.1,
+    "avg_trade_%": 0.002,
+    "profit_factor": 1.02,
+    "sharpe": 0.11,
+    "max_drop_%": -7.4
+   }
+  },
+  "London breakout + daily trend \u2014 GBPUSD": {
+   "params": {},
+   "in_sample": {
+    "trades": 1155,
+    "total_%": -20.9,
+    "yearly_%": -3.9,
+    "win_%": 34.0,
+    "avg_trade_%": -0.02,
+    "profit_factor": 0.83,
+    "sharpe": -1.15,
+    "max_drop_%": -23.7
+   },
+   "out_of_sample": {
+    "trades": 568,
+    "total_%": -18.8,
+    "yearly_%": -6.4,
+    "win_%": 33.6,
+    "avg_trade_%": -0.036,
+    "profit_factor": 0.72,
+    "sharpe": -1.98,
+    "max_drop_%": -19.1
+   }
+  },
+  "Asian-session mean reversion \u2014 GBPUSD": {
+   "params": {},
+   "in_sample": {
+    "trades": 151,
+    "total_%": -0.6,
+    "yearly_%": -0.1,
+    "win_%": 57.6,
+    "avg_trade_%": -0.002,
+    "profit_factor": 0.98,
+    "sharpe": -0.09,
+    "max_drop_%": -7.5
+   },
+   "out_of_sample": {
+    "trades": 66,
+    "total_%": -2.4,
+    "yearly_%": -0.8,
+    "win_%": 36.4,
+    "avg_trade_%": -0.036,
+    "profit_factor": 0.6,
+    "sharpe": -2.66,
+    "max_drop_%": -3.0
+   }
+  },
+  "London breakout \u2014 USDJPY": {
+   "params": {},
+   "in_sample": {
+    "trades": 1404,
+    "total_%": 36.6,
+    "yearly_%": 5.3,
+    "win_%": 50.3,
+    "avg_trade_%": 0.023,
+    "profit_factor": 1.24,
+    "sharpe": 1.21,
+    "max_drop_%": -4.5
+   },
+   "out_of_sample": {
+    "trades": 741,
+    "total_%": 2.1,
+    "yearly_%": 0.6,
+    "win_%": 47.2,
+    "avg_trade_%": 0.003,
+    "profit_factor": 1.04,
+    "sharpe": 0.23,
+    "max_drop_%": -4.7
+   }
+  },
+  "London breakout + daily trend \u2014 USDJPY": {
+   "params": {},
+   "in_sample": {
+    "trades": 812,
+    "total_%": 12.8,
+    "yearly_%": 2.1,
+    "win_%": 48.4,
+    "avg_trade_%": 0.015,
+    "profit_factor": 1.16,
+    "sharpe": 0.87,
+    "max_drop_%": -4.4
+   },
+   "out_of_sample": {
+    "trades": 428,
+    "total_%": -4.0,
+    "yearly_%": -1.3,
+    "win_%": 43.2,
+    "avg_trade_%": -0.009,
+    "profit_factor": 0.88,
+    "sharpe": -0.8,
+    "max_drop_%": -4.8
+   }
+  },
+  "Asian-session mean reversion \u2014 USDJPY": {
+   "params": {},
+   "in_sample": {
+    "trades": 443,
+    "total_%": 1.5,
+    "yearly_%": 0.2,
+    "win_%": 51.2,
+    "avg_trade_%": 0.004,
+    "profit_factor": 1.04,
+    "sharpe": 0.18,
+    "max_drop_%": -5.1
+   },
+   "out_of_sample": {
+    "trades": 184,
+    "total_%": -1.3,
+    "yearly_%": -0.4,
+    "win_%": 50.5,
+    "avg_trade_%": -0.007,
+    "profit_factor": 0.91,
+    "sharpe": -0.52,
+    "max_drop_%": -2.4
+   }
+  },
+  "London breakout \u2014 AUDUSD": {
+   "params": {},
+   "in_sample": {
+    "trades": 1434,
+    "total_%": -4.7,
+    "yearly_%": -0.8,
+    "win_%": 47.7,
+    "avg_trade_%": -0.003,
+    "profit_factor": 0.98,
+    "sharpe": -0.14,
+    "max_drop_%": -10.0
+   },
+   "out_of_sample": {
+    "trades": 771,
+    "total_%": 1.1,
+    "yearly_%": 0.4,
+    "win_%": 49.0,
+    "avg_trade_%": 0.002,
+    "profit_factor": 1.02,
+    "sharpe": 0.1,
+    "max_drop_%": -6.3
+   }
+  },
+  "London breakout + daily trend \u2014 AUDUSD": {
+   "params": {},
+   "in_sample": {
+    "trades": 858,
+    "total_%": 1.6,
+    "yearly_%": 0.3,
+    "win_%": 49.9,
+    "avg_trade_%": 0.002,
+    "profit_factor": 1.02,
+    "sharpe": 0.11,
+    "max_drop_%": -4.7
+   },
+   "out_of_sample": {
+    "trades": 448,
+    "total_%": -3.5,
+    "yearly_%": -1.1,
+    "win_%": 44.9,
+    "avg_trade_%": -0.008,
+    "profit_factor": 0.94,
+    "sharpe": -0.38,
+    "max_drop_%": -6.8
+   }
+  },
+  "Asian-session mean reversion \u2014 AUDUSD": {
+   "params": {},
+   "in_sample": {
+    "trades": 479,
+    "total_%": 5.1,
+    "yearly_%": 0.8,
+    "win_%": 48.6,
+    "avg_trade_%": 0.011,
+    "profit_factor": 1.11,
+    "sharpe": 0.6,
+    "max_drop_%": -3.2
+   },
+   "out_of_sample": {
+    "trades": 220,
+    "total_%": 6.4,
+    "yearly_%": 2.0,
+    "win_%": 54.5,
+    "avg_trade_%": 0.029,
+    "profit_factor": 1.32,
+    "sharpe": 1.27,
+    "max_drop_%": -1.9
+   }
+  },
+  "London breakout \u2014 4 pairs together": {
+   "params": {
+    "cost": "~1 pip/trade"
+   },
+   "in_sample": {
+    "trades": 5897,
+    "total_%": 13.5,
+    "yearly_%": 2.1,
+    "win_%": 43.8,
+    "avg_trade_%": 0.003,
+    "profit_factor": 1.02,
+    "sharpe": 0.23,
+    "max_drop_%": -15.6
+   },
+   "out_of_sample": {
+    "trades": 3130,
+    "total_%": 2.0,
+    "yearly_%": 0.6,
+    "win_%": 44.5,
+    "avg_trade_%": 0.001,
+    "profit_factor": 1.01,
+    "sharpe": 0.09,
+    "max_drop_%": -17.7
+   }
+  },
+  "London breakout + daily trend \u2014 4 pairs together": {
+   "params": {
+    "cost": "~1 pip/trade"
+   },
+   "in_sample": {
+    "trades": 3911,
+    "total_%": -30.2,
+    "yearly_%": -5.9,
+    "win_%": 40.8,
+    "avg_trade_%": -0.009,
+    "profit_factor": 0.92,
+    "sharpe": -0.7,
+    "max_drop_%": -34.2
+   },
+   "out_of_sample": {
+    "trades": 2030,
+    "total_%": -33.5,
+    "yearly_%": -12.1,
+    "win_%": 38.9,
+    "avg_trade_%": -0.02,
+    "profit_factor": 0.81,
+    "sharpe": -1.65,
+    "max_drop_%": -34.7
+   }
+  },
+  "Asian-session mean reversion \u2014 4 pairs together": {
+   "params": {
+    "cost": "~1 pip/trade"
+   },
+   "in_sample": {
+    "trades": 1240,
+    "total_%": 9.8,
+    "yearly_%": 1.6,
+    "win_%": 52.3,
+    "avg_trade_%": 0.008,
+    "profit_factor": 1.08,
+    "sharpe": 0.53,
+    "max_drop_%": -11.8
+   },
+   "out_of_sample": {
+    "trades": 542,
+    "total_%": 2.2,
+    "yearly_%": 0.7,
+    "win_%": 50.0,
+    "avg_trade_%": 0.004,
+    "profit_factor": 1.05,
+    "sharpe": 0.28,
+    "max_drop_%": -4.7
+   }
+  },
+  "London breakout \u2014 EURUSD Mar\u2013Sep 2026": {
+   "params": {},
+   "in_sample": null,
+   "out_of_sample": {
+    "trades": 129,
+    "total_%": 1.5,
+    "yearly_%": 3.0,
+    "win_%": 48.8,
+    "avg_trade_%": 0.012,
+    "profit_factor": 1.19,
+    "sharpe": 1.14,
+    "max_drop_%": -1.6
+   }
+  },
+  "Asian-session mean reversion \u2014 EURUSD Mar\u2013Sep 2026": {
+   "params": {},
+   "in_sample": null,
+   "out_of_sample": {
+    "trades": 18,
+    "total_%": -0.3,
+    "yearly_%": -0.6,
+    "win_%": 50.0,
+    "avg_trade_%": -0.016,
+    "profit_factor": 0.77,
+    "sharpe": -1.81,
+    "max_drop_%": -0.4
+   }
+  }
+ },
+ "pse": {
+  "Intraday momentum (first 1.5h up >0.5%, hold to close)": {
+   "params": {
+    "data": "25 Sep\u20136 Nov 2026, 21 blue chips"
+   },
+   "in_sample": null,
+   "out_of_sample": {
+    "trades": 158,
+    "total_%": -74.2,
+    "yearly_%": -100.0,
+    "win_%": 20.9,
+    "avg_trade_%": -0.841,
+    "profit_factor": 0.27,
+    "sharpe": -19.81,
+    "max_drop_%": -74.1
+   },
+   "extra": {
+    "before_costs": {
+     "trades": 158,
+     "total_%": 5.7,
+     "yearly_%": 70.7,
+     "win_%": 46.8,
+     "avg_trade_%": 0.049,
+     "profit_factor": 1.09,
+     "sharpe": 1.13,
+     "max_drop_%": -16.6
+    }
+   }
+  },
+  "Morning-high breakout (hold to close)": {
+   "params": {
+    "data": "25 Sep\u20136 Nov 2026"
+   },
+   "in_sample": null,
+   "out_of_sample": {
+    "trades": 302,
+    "total_%": -94.5,
+    "yearly_%": -100.0,
+    "win_%": 11.9,
+    "avg_trade_%": -0.948,
+    "profit_factor": 0.13,
+    "sharpe": -40.87,
+    "max_drop_%": -94.4
+   },
+   "extra": {
+    "before_costs": {
+     "trades": 302,
+     "total_%": -17.9,
+     "yearly_%": -84.2,
+     "win_%": 33.1,
+     "avg_trade_%": -0.058,
+     "profit_factor": 0.85,
+     "sharpe": -2.6,
+     "max_drop_%": -20.6
+    }
+   }
+  },
+  "RSI(2) pullback swing (swing 2\u20135 days, not day trade)": {
+   "params": {
+    "lo": 5
+   },
+   "in_sample": {
+    "cagr": -10.9,
+    "sharpe": -0.54,
+    "maxdd": -68.0,
+    "total": -64.4,
+    "turnover_yr": 72.9
+   },
+   "out_of_sample": {
+    "cagr": -4.9,
+    "sharpe": -0.21,
+    "maxdd": -27.4,
+    "total": -14.7,
+    "turnover_yr": 46.9
+   }
+  },
+  "Bollinger pullback swing (swing 2\u20135 days, not day trade)": {
+   "params": {
+    "k": 1.5
+   },
+   "in_sample": {
+    "cagr": -5.3,
+    "sharpe": -0.17,
+    "maxdd": -69.0,
+    "total": -38.4,
+    "turnover_yr": 48.9
+   },
+   "out_of_sample": {
+    "cagr": -8.3,
+    "sharpe": -0.29,
+    "maxdd": -29.6,
+    "total": -23.9,
+    "turnover_yr": 46.6
+   }
+  }
+ }
+}

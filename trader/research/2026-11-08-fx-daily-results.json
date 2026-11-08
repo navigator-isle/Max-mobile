@@ -1,0 +1,118 @@
+{
+ "sma": {
+  "params": {
+   "n": 150
+  },
+  "in_sample": {
+   "cagr": 1.0,
+   "sharpe": 0.17,
+   "maxdd": -17.5,
+   "total": 19.0,
+   "turnover_yr": 19.1
+  },
+  "out_of_sample": {
+   "cagr": -1.6,
+   "sharpe": -0.29,
+   "maxdd": -25.1,
+   "total": -13.5,
+   "turnover_yr": 22.4
+  }
+ },
+ "ma_cross": {
+  "params": {
+   "f": 50,
+   "s": 100
+  },
+  "in_sample": {
+   "cagr": 1.6,
+   "sharpe": 0.26,
+   "maxdd": -15.8,
+   "total": 32.0,
+   "turnover_yr": 5.8
+  },
+  "out_of_sample": {
+   "cagr": -2.2,
+   "sharpe": -0.38,
+   "maxdd": -20.1,
+   "total": -17.6,
+   "turnover_yr": 5.8
+  }
+ },
+ "tsmom": {
+  "params": {
+   "L": 90
+  },
+  "in_sample": {
+   "cagr": 0.9,
+   "sharpe": 0.17,
+   "maxdd": -15.8,
+   "total": 18.3,
+   "turnover_yr": 22.8
+  },
+  "out_of_sample": {
+   "cagr": -2.0,
+   "sharpe": -0.35,
+   "maxdd": -19.7,
+   "total": -15.9,
+   "turnover_yr": 25.0
+  }
+ },
+ "donchian": {
+  "params": {
+   "entry": 20,
+   "exit": 10
+  },
+  "in_sample": {
+   "cagr": 0.1,
+   "sharpe": 0.05,
+   "maxdd": -23.3,
+   "total": 2.5,
+   "turnover_yr": 21.6
+  },
+  "out_of_sample": {
+   "cagr": -2.2,
+   "sharpe": -0.43,
+   "maxdd": -23.8,
+   "total": -17.4,
+   "turnover_yr": 23.5
+  }
+ },
+ "rsi2": {
+  "params": {
+   "lo": 10
+  },
+  "in_sample": {
+   "cagr": 0.3,
+   "sharpe": 0.08,
+   "maxdd": -11.9,
+   "total": 4.7,
+   "turnover_yr": 21.2
+  },
+  "out_of_sample": {
+   "cagr": 0.4,
+   "sharpe": 0.12,
+   "maxdd": -8.8,
+   "total": 3.1,
+   "turnover_yr": 21.8
+  }
+ },
+ "bollinger": {
+  "params": {
+   "k": 1.5
+  },
+  "in_sample": {
+   "cagr": 0.3,
+   "sharpe": 0.09,
+   "maxdd": -18.6,
+   "total": 5.7,
+   "turnover_yr": 10.8
+  },
+  "out_of_sample": {
+   "cagr": 0.0,
+   "sharpe": 0.02,
+   "maxdd": -10.4,
+   "total": 0.0,
+   "turnover_yr": 11.2
+  }
+ }
+}
