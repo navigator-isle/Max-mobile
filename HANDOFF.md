@@ -25,6 +25,7 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Passage Planner website → Cloudflare Pages: https://passage-planner-6pm.pages.dev (privacy: /privacy.html — update in Play Console)
 - Quick Draft Calculator → still on GitHub account draft-calculator (not suspended): draft-calculator.github.io/Draft-Calculator/ · spare copy zip ready for Pages project `quick-draft`
 - Hobby Isle → hobbyisle.com on Cloudflare Pages (may be linked to suspended repo navigator-isle/hobbyisle → live, but no new deploys; no code copy here)
+- Phone app features since 8 Nov: My songs (own music, no ads), music pauses for the mic, Deal Finder (🛒)
 - Officer checklist app → Netlify (check whether linked to a GitHub repo)
 
 **Not live yet (needs a laptop, or GitHub back)**
@@ -51,6 +52,11 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 **Notes format he likes (Obsidian)**
 - Bold headers, hyphen bullets, short maritime-specific key points, no filler
 - What is → History → Applies to → chapters/regulations with key points, resolutions & dates → Key Point → Sources (checked date)
+
+**Waiting for ONE bundled server update (his choice: do it together later)**
+- One-tap updater (small updater Worker + Cloudflare token he pastes himself) so future updates need no laptop/GitHub
+- New Worker version (serves app, code in weekly Gmail backup), brain improvements (needs his examples + /health screenshot)
+- Deal Finder as a full server agent (weekly email report, structured prices); app version already works via /api/research
 
 **Open next steps**
 1. Upload latest max-app.zip (new site addresses + project-list migration) to Pages project max-app
