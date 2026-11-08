@@ -31,6 +31,6 @@ const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }).ca
 ok(dl && dl.suggestedFilename() === "max-code-2026-11-08.zip" && codeAsked === 1, "tapping it saves max-code-DATE.zip", dl && dl.suggestedFilename());
 // old GitHub Pages copy shows where Max went
 const p2 = await ctx.newPage(); await p2.goto(OLD); await p2.waitForTimeout(800);
-ok(await p2.evaluate(() => !document.getElementById("movedNote").hidden && /max-ai-backend\.mjgaly-mg\.workers\.dev/.test(document.getElementById("movedNote").textContent)), "the old GitHub address shows 'Max now lives on Cloudflare' with the new link");
+ok(await p2.evaluate(() => !document.getElementById("movedNote").hidden && /max-app-axv\.pages\.dev/.test(document.getElementById("movedNote").textContent)), "the old GitHub address shows 'Max now lives on Cloudflare' with the new link");
 ok(!errs.length, "no page errors", errs.join(" | "));
 await b.close(); console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
