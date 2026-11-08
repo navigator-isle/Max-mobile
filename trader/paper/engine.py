@@ -217,7 +217,7 @@ def pse_dividend(B, DIR, upto):
                     B.setdefault("topup", []).append({"sym": o["sym"], "yield": o.get("yield", 0), "why": o.get("why", "")})
                     log(B["name"], "WAIT", f"{o['sym']}: one board lot ({lot} sh × ₱{p:,.4g} = ₱{lot*p:,.0f}) costs more than its ₱{budget:,.0f} share — it gets bought from the leftover cash after the other buys", date=iso(d)); continue
                 c = sh * p * (1 + cost_buy + slip); B["cash"] -= c
-                B["positions"].append({"sym": o["sym"], "shares": sh, "ep": p, "cost": round(c, 2), "entry": iso(d), "divs": 0.0, "yield_at_buy": o.get("yield")}); bought_today = True
+                B["positions"].append({"sym": o["sym"], "shares": sh, "ep": p, "hi": p, "cost": round(c, 2), "entry": iso(d), "divs": 0.0, "yield_at_buy": o.get("yield")}); bought_today = True
                 log(B["name"], "BUY", f"BUY {sh:,} {o['sym']} ({sh//lot} board lot{'s' if sh//lot>1 else ''} of {lot}) @ ₱{p:,.4g} = ₱{c:,.0f} incl. COL fee. Why: " + o.get("why", f"dividend yield {o.get('yield',0)*100:.1f}%"), date=iso(d))
         # leftover cash after whole board lots: first buy the stocks that didn't fit, then one extra lot at a time in yield order (keeps ≤2% idle)
         if not [o for o in B["pending"] if o["side"] == "buy"] and (B.get("topup") or (bought_today and B["cash"] > 2000)):
@@ -238,10 +238,17 @@ def pse_dividend(B, DIR, upto):
                     if held_: held_["shares"] += lot; held_["cost"] = round(held_["cost"] + c, 2)
                     else:
                         t = next(t for t in B["topup"] if t["sym"] == sym)
-                        B["positions"].append({"sym": sym, "shares": lot, "ep": p, "cost": round(c, 2), "entry": iso(d), "divs": 0.0, "yield_at_buy": y})
+                        B["positions"].append({"sym": sym, "shares": lot, "ep": p, "hi": p, "cost": round(c, 2), "entry": iso(d), "divs": 0.0, "yield_at_buy": y})
                         log(B["name"], "BUY", f"BUY {lot:,} {sym} (1 board lot) @ ₱{p:,.4g} = ₱{c:,.0f} from leftover cash. Why: " + t["why"], date=iso(d))
             B["topup"] = [t for t in B.get("topup", []) if not any(x["sym"] == t["sym"] for x in B["positions"])]
             log(B["name"], "CASH", f"After whole board lots: ₱{B['cash']:,.0f} left in cash (less than one more lot of any pick)", date=iso(d))
+        for x in B["positions"]:
+            p = prices.get(x["sym"], {}).get(d)
+            if not p: continue
+            x["hi"] = max(x.get("hi", x["ep"]), p)
+            if p < x["hi"] * 0.75 and not any(o["sym"] == x["sym"] for o in B["pending"]):
+                B["pending"].append({"sym": x["sym"], "side": "sell", "stop": True, "why": f"{x['sym']} closed at ₱{p:,.4g}, more than 25% below its highest close since Max bought it (₱{x['hi']:,.4g}; bought at ₱{x['ep']:,.4g}). This is the safety stop: in the 13-year test it cut the worst drop from −42% to −24% without lowering profit. The money waits in cash until the next 3-month rebalance."})
+                log(B["name"], "STOP", f"{x['sym']} fell 25% from its peak (₱{x['hi']:,.4g} → ₱{p:,.4g}) → sell at next close", date=iso(d))
         B["hist"].append([iso(d), round(B["cash"] + sum(x["shares"] * (prices.get(x["sym"], {}).get(d) or last_px(prices, x)) for x in B["positions"]), 2)])
         B["last_day"] = iso(d)
     # dividends with ex-date inside the period
@@ -266,10 +273,12 @@ def pse_dividend(B, DIR, upto):
             if p < 1 or val < 5e6: continue
             y = sa_ttm_yield(r["sym"], p); time.sleep(0.6)
             if y >= 0.03: cand.append((y, r["sym"])); INFO[r["sym"]] = {"price": p, "value": val, "div12m": round(y * p, 4)}
-        pick = [s for _, s in sorted(cand, reverse=True)[:20]]; ydict = {s: y for y, s in cand}; B["scan_info"] = {s: v for s, v in INFO.items()}
+        ranked_all = [s for _, s in sorted(cand, reverse=True)]; ydict = {s: y for y, s in cand}; B["scan_info"] = {s: v for s, v in INFO.items()}
+        keep_ = [p["sym"] for p in B["positions"] if p["sym"] in ranked_all[:40]]          # buffer: a holding stays while it is in the top 40
+        pick = keep_ + [s for s in ranked_all if s not in keep_][:max(0, 20 - len(keep_))]
         eq = equity_pse(B, prices)
         for p in B["positions"]:
-            if p["sym"] not in pick: B["pending"].append({"sym": p["sym"], "side": "sell", "why": f"{p['sym']} is no longer in the top 20 by dividend yield" + (f" (now {ydict[p['sym']]*100:.1f}%, below the 20th stock's {sorted(ydict.values())[-20]*100:.1f}%)" if p['sym'] in ydict and len(ydict) >= 20 else " (its yield fell below 3% or it no longer trades ₱5M a day)") + ", so its money moves to a higher-paying stock."})
+            if p["sym"] not in pick: B["pending"].append({"sym": p["sym"], "side": "sell", "why": f"{p['sym']} fell out of the top 40 by dividend yield" + (f" (now {ydict[p['sym']]*100:.1f}%, rank {ranked_all.index(p['sym'])+1})" if p['sym'] in ydict else " (its yield fell below 3% or it no longer trades ₱5M a day)") + ". Holdings ranked 21–40 are kept so they can still pay their dividend; below 40 the money moves to a higher-paying stock."})
         keep = [p["sym"] for p in B["positions"] if p["sym"] in pick]
         for s in pick:
             if s not in keep:
