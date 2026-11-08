@@ -1,126 +1,272 @@
 {
-  "kind": "Max paper trading ledger (run by Claude acting as Max's Trading agent)",
-  "strategy": "MAX-COMBINED-1 (crypto): equal thirds of Donchian 20/10 breakout, cross-sectional momentum (top 3 by 14-day return, weekly, only when BTC > SMA50) and SMA50 trend; universe BTC ETH BNB XRP ADA DOGE LINK LTC; spot, long-only, no leverage",
-  "account": {
-    "market": "crypto",
-    "ccy": "USDT",
-    "startPhp": 100000,
-    "opened": "2026-11-08",
-    "cash_pct": 100,
-    "positions": []
+ "kind": "Max paper trading ledger (run by Claude acting as Max's Trading agent)",
+ "strategy": "MAX-COMBINED-1 (crypto): equal thirds of Donchian 20/10 breakout, cross-sectional momentum (top 3 by 14-day return, weekly, only when BTC > SMA50) and SMA50 trend; universe BTC ETH BNB XRP ADA DOGE LINK LTC; spot, long-only, no leverage",
+ "account": {
+  "market": "crypto",
+  "ccy": "USDT",
+  "startPhp": 100000,
+  "opened": "2026-11-08",
+  "cash_pct": 100,
+  "positions": []
+ },
+ "events": [
+  {
+   "at": "2026-11-08T12:40:00+08:00",
+   "type": "open",
+   "text": "Paper account opened with ₱100,000 (pretend money). Data: BTC to 6 Nov 2026; other coins only to 15–18 Oct 2026 (stale), so they are held at 0 until fresh prices arrive."
   },
-  "events": [
-    {
-      "at": "2026-11-08T12:40:00+08:00",
-      "type": "open",
-      "text": "Paper account opened with ₱100,000 (pretend money). Data: BTC to 6 Nov 2026; other coins only to 15–18 Oct 2026 (stale), so they are held at 0 until fresh prices arrive."
-    },
-    {
-      "at": "2026-11-08T12:40:00+08:00",
-      "type": "signal",
-      "text": "BTC close 6 Nov $75,747: below SMA50 ($81,976) and SMA100 ($77,062), and closed under its 10-day low → all three sleeves say CASH. Paper position: 100% cash. No trade."
-    },
-    {
-      "at": "2026-11-08T13:30:00+08:00",
-      "type": "research",
-      "text": "Day-trading research done (3 markets). No solid profitable day-trading strategy after costs; 3 probation books added (paper only). MAX-COMBINED-1 stays the main crypto strategy."
-    },
-    {
-      "at": "2026-11-08T14:10:00+08:00",
-      "type": "research",
-      "text": "Swing research: 198 setups. Crypto 66/66 profitable on 2022+; MAX-SWING-1 +98% (drop −34%). PSE 4/66, forex & gold 28/66 — no reliable edge. MAX-SWING-1 added next to MAX-COMBINED-1; no open trades."
-    },
-    {
-      "at": "2026-11-08T15:00:00+08:00",
-      "type": "research",
-      "text": "MAX-MASTER-1 built from all strategy types (regular, swing, day, dividend, carry, copy/COT) across crypto, PSE, forex. Unseen 2022→Oct 2026: +33%, 6.1%/yr, worst drop −20%."
-    }
-  ],
-  "entry_triggers_btc": {
-    "donchian_buy_above": 84023.24,
-    "sma_sleeve_buy_above_sma50": 81976,
-    "xs_momentum_needs": "BTC above SMA50 and positive 14-day return",
-    "as_of": "2026-11-06"
+  {
+   "at": "2026-11-08T12:40:00+08:00",
+   "type": "signal",
+   "text": "BTC close 6 Nov $75,747: below SMA50 ($81,976) and SMA100 ($77,062), and closed under its 10-day low → all three sleeves say CASH. Paper position: 100% cash. No trade."
   },
-  "next": "When Max's paper trader is online again: import this ledger as the crypto account's starting state, load MAX-COMBINED-1 as a strategy book, and run it daily with fresh prices.",
-  "probation_books": [
-    {
-      "id": "btc-orb-2h",
-      "market": "crypto",
-      "rules": "Range = first 2 hours UTC; buy on break of range high only if yesterday's BTC close > SMA50; stop 0.5x range below entry; exit by 23:59 UTC",
-      "costs_tracked": [
-        "0.24% (Binance spot)",
-        "0.10% (low-fee)"
-      ],
-      "status": "filter OFF today (BTC below SMA50) — no trade"
-    },
-    {
-      "id": "audusd-asian-mr",
-      "market": "fx",
-      "rules": "00:00–06:00 UTC: if hourly close is >2 std from its 24h mean, fade it; exit at mean or after 6 hours",
-      "status": "waiting for live hourly FX prices"
-    },
-    {
-      "id": "pse-intraday-mom",
-      "market": "pse",
-      "rules": "Blue chip up >0.5% by 11:00 → buy, sell at close",
-      "status": "collect data only; costs ~0.9% make it unprofitable so far"
-    }
-  ],
-  "strategies": [
-    {
-      "id": "MAX-SWING-1",
-      "market": "crypto",
-      "rules": "Donchian-20 close breakout; trailing stop = highest close since entry − 2 or 3 × ATR(20); 4 equal parts (2×/3× ATR, with/without BTC>SMA200 filter); risk 0.5% per trade; max 8 positions; max 25% per position",
-      "status": "no open trade; BTC entry above $84,023 (as of 6 Nov 2026)"
-    },
-    {
-      "id": "MAX-COMBINED-1",
-      "market": "crypto",
-      "status": "100% cash"
-    }
-  ],
-  "master": {
-    "id": "MAX-MASTER-1",
-    "budget": {
-      "crypto": 0.5,
-      "forex": 0.25,
-      "pse": 0.25
-    },
-    "parts": {
-      "crypto": [
-        "trend top-20 SMA20",
-        "momentum rotation top-5 of top-20, 14d, BTC>SMA50",
-        "swing Donchian-20 + 2xATR trail",
-        "CME BTC/ETH leveraged-fund fade"
-      ],
-      "forex": [
-        "COT fade 10 currencies"
-      ],
-      "pse": [
-        "momentum rotation top-10 by 126d, PSEi>SMA200",
-        "swing Donchian-20 + 4xATR trail"
-      ]
-    },
-    "signals_2026_11_08": {
-      "crypto": "mostly cash (BTC below SMA50; COT fade OUT; alt data stale since 18 Oct)",
-      "forex": {
-        "LONG": [
-          "EUR",
-          "CHF",
-          "CAD",
-          "AUD",
-          "NZD",
-          "MXN"
-        ],
-        "SHORT": [
-          "JPY",
-          "GBP",
-          "BRL",
-          "ZAR"
-        ]
-      },
-      "pse": "collecting data (needs 126 trading days)"
-    }
+  {
+   "at": "2026-11-08T13:30:00+08:00",
+   "type": "research",
+   "text": "Day-trading research done (3 markets). No solid profitable day-trading strategy after costs; 3 probation books added (paper only). MAX-COMBINED-1 stays the main crypto strategy."
+  },
+  {
+   "at": "2026-11-08T14:10:00+08:00",
+   "type": "research",
+   "text": "Swing research: 198 setups. Crypto 66/66 profitable on 2022+; MAX-SWING-1 +98% (drop −34%). PSE 4/66, forex & gold 28/66 — no reliable edge. MAX-SWING-1 added next to MAX-COMBINED-1; no open trades."
+  },
+  {
+   "at": "2026-11-08T15:00:00+08:00",
+   "type": "research",
+   "text": "MAX-MASTER-1 built from all strategy types (regular, swing, day, dividend, carry, copy/COT) across crypto, PSE, forex. Unseen 2022→Oct 2026: +33%, 6.1%/yr, worst drop −20%."
+  },
+  {
+   "at": "2026-11-08T21:30:00+08:00",
+   "type": "research",
+   "text": "Full data now downloaded (PSE Edge all 284 stocks 2015–2026 + archive, 1,132 dividends; 665 Binance coins; 1,500 Hyperliquid traders). MAX-MASTER-2 built. PSE high-dividend paper book opened with ₱100,000 (20 × ₱5,000 at 6 Nov closes)."
   }
+ ],
+ "entry_triggers_btc": {
+  "donchian_buy_above": 84023.24,
+  "sma_sleeve_buy_above_sma50": 81976,
+  "xs_momentum_needs": "BTC above SMA50 and positive 14-day return",
+  "as_of": "2026-11-06"
+ },
+ "next": "When Max's paper trader is online again: import this ledger as the crypto account's starting state, load MAX-COMBINED-1 as a strategy book, and run it daily with fresh prices.",
+ "probation_books": [
+  {
+   "id": "btc-orb-2h",
+   "market": "crypto",
+   "rules": "Range = first 2 hours UTC; buy on break of range high only if yesterday's BTC close > SMA50; stop 0.5x range below entry; exit by 23:59 UTC",
+   "costs_tracked": [
+    "0.24% (Binance spot)",
+    "0.10% (low-fee)"
+   ],
+   "status": "filter OFF today (BTC below SMA50) — no trade"
+  },
+  {
+   "id": "audusd-asian-mr",
+   "market": "fx",
+   "rules": "00:00–06:00 UTC: if hourly close is >2 std from its 24h mean, fade it; exit at mean or after 6 hours",
+   "status": "waiting for live hourly FX prices"
+  },
+  {
+   "id": "pse-intraday-mom",
+   "market": "pse",
+   "rules": "Blue chip up >0.5% by 11:00 → buy, sell at close",
+   "status": "collect data only; costs ~0.9% make it unprofitable so far"
+  }
+ ],
+ "strategies": [
+  {
+   "id": "MAX-SWING-1",
+   "market": "crypto",
+   "rules": "Donchian-20 close breakout; trailing stop = highest close since entry − 2 or 3 × ATR(20); 4 equal parts (2×/3× ATR, with/without BTC>SMA200 filter); risk 0.5% per trade; max 8 positions; max 25% per position",
+   "status": "no open trade; BTC entry above $84,023 (as of 6 Nov 2026)"
+  },
+  {
+   "id": "MAX-COMBINED-1",
+   "market": "crypto",
+   "status": "100% cash"
+  }
+ ],
+ "master": {
+  "id": "MAX-MASTER-1",
+  "budget": {
+   "crypto": 0.5,
+   "forex": 0.25,
+   "pse": 0.25
+  },
+  "parts": {
+   "crypto": [
+    "trend top-20 SMA20",
+    "momentum rotation top-5 of top-20, 14d, BTC>SMA50",
+    "swing Donchian-20 + 2xATR trail",
+    "CME BTC/ETH leveraged-fund fade"
+   ],
+   "forex": [
+    "COT fade 10 currencies"
+   ],
+   "pse": [
+    "momentum rotation top-10 by 126d, PSEi>SMA200",
+    "swing Donchian-20 + 4xATR trail"
+   ]
+  },
+  "signals_2026_11_08": {
+   "crypto": "mostly cash (BTC below SMA50; COT fade OUT; alt data stale since 18 Oct)",
+   "forex": {
+    "LONG": [
+     "EUR",
+     "CHF",
+     "CAD",
+     "AUD",
+     "NZD",
+     "MXN"
+    ],
+    "SHORT": [
+     "JPY",
+     "GBP",
+     "BRL",
+     "ZAR"
+    ]
+   },
+   "pse": "collecting data (needs 126 trading days)"
+  }
+ },
+ "master2": {
+  "name": "MAX-MASTER-2",
+  "weights": {
+   "crypto swing breakout + 2×ATR trail (Binance top-20)": 0.3,
+   "PSE high-dividend top-20 (quarterly)": 0.3,
+   "forex COT fade (10 currencies)": 0.25,
+   "copy steady traders (paper only)": 0.15
+  },
+  "replaces": "MAX-MASTER-1 (crypto momentum rotation dropped: failed on full Binance coin list 2022–2026)",
+  "report": "2026-11-08-MAX-MASTER-2.md"
+ },
+ "pse_dividend_book": {
+  "opened": "2026-11-08",
+  "prices_as_of": "2026-11-06",
+  "pesos": 100000,
+  "cost_per_side_%": 0.545,
+  "rebalance": "every 3 months (next ~2027-02-08)",
+  "positions": [
+   {
+    "sym": "PLUS",
+    "php": 5000,
+    "price": 6.4,
+    "shares_paper": 777.02
+   },
+   {
+    "sym": "DMC",
+    "php": 5000,
+    "price": 6.65,
+    "shares_paper": 747.8
+   },
+   {
+    "sym": "SCC",
+    "php": 5000,
+    "price": 10.82,
+    "shares_paper": 459.6
+   },
+   {
+    "sym": "OGP",
+    "php": 5000,
+    "price": 33.6,
+    "shares_paper": 148.0
+   },
+   {
+    "sym": "MBT",
+    "php": 5000,
+    "price": 61.2,
+    "shares_paper": 81.26
+   },
+   {
+    "sym": "TEL",
+    "php": 5000,
+    "price": 1129.0,
+    "shares_paper": 4.4
+   },
+   {
+    "sym": "LTG",
+    "php": 5000,
+    "price": 15.42,
+    "shares_paper": 322.5
+   },
+   {
+    "sym": "GSMI",
+    "php": 5000,
+    "price": 209.8,
+    "shares_paper": 23.7
+   },
+   {
+    "sym": "WLCON",
+    "php": 5000,
+    "price": 5.24,
+    "shares_paper": 949.03
+   },
+   {
+    "sym": "CREIT",
+    "php": 5000,
+    "price": 2.71,
+    "shares_paper": 1835.02
+   },
+   {
+    "sym": "MREIT",
+    "php": 5000,
+    "price": 13.78,
+    "shares_paper": 360.88
+   },
+   {
+    "sym": "RCR",
+    "php": 5000,
+    "price": 6.15,
+    "shares_paper": 808.6
+   },
+   {
+    "sym": "URC",
+    "php": 5000,
+    "price": 61.65,
+    "shares_paper": 80.66
+   },
+   {
+    "sym": "AREIT",
+    "php": 5000,
+    "price": 36.0,
+    "shares_paper": 138.14
+   },
+   {
+    "sym": "MWC",
+    "php": 5000,
+    "price": 29.65,
+    "shares_paper": 167.72
+   },
+   {
+    "sym": "GLO",
+    "php": 5000,
+    "price": 1478.0,
+    "shares_paper": 3.36
+   },
+   {
+    "sym": "MYNLD",
+    "php": 5000,
+    "price": 16.88,
+    "shares_paper": 294.6
+   },
+   {
+    "sym": "ALI",
+    "php": 5000,
+    "price": 15.22,
+    "shares_paper": 326.73
+   },
+   {
+    "sym": "MER",
+    "php": 5000,
+    "price": 446.0,
+    "shares_paper": 11.15
+   },
+   {
+    "sym": "MONDE",
+    "php": 5000,
+    "price": 6.4,
+    "shares_paper": 777.02
+   }
+  ],
+  "rule": "Top 20 by dividends paid in the last 12 months ÷ price, yield ≥3%, ≥₱5M traded per day, price ≥₱1"
+ }
 }

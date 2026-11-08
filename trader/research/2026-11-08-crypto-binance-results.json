@@ -1,0 +1,64 @@
+{
+ "Momentum rotation top-20 (L14, top5, BTC>SMA50)": {
+  "2018-2021": {
+   "cagr": 146.7,
+   "sharpe": 1.63,
+   "maxdd": -52.3,
+   "total": 3612.8,
+   "turnover_yr": 27.6
+  },
+  "2022-Nov 2026 (unseen)": {
+   "cagr": -15.8,
+   "sharpe": 0.09,
+   "maxdd": -72.9,
+   "total": -56.7,
+   "turnover_yr": 33.2
+  }
+ },
+ "Swing breakout + 2\u00d7ATR trail (top-20)": {
+  "2018-2021": {
+   "cagr": 51.0,
+   "sharpe": 1.61,
+   "maxdd": -27.5,
+   "total": 420.1,
+   "turnover_yr": 0.0
+  },
+  "2022-Nov 2026 (unseen)": {
+   "cagr": 5.5,
+   "sharpe": 0.36,
+   "maxdd": -30.2,
+   "total": 29.9,
+   "turnover_yr": 0.0
+  }
+ },
+ "Benchmark: hold top-20 equally": {
+  "2018-2021": {
+   "cagr": 10.1,
+   "sharpe": 0.61,
+   "maxdd": -93.4,
+   "total": 46.8,
+   "turnover_yr": 8.5
+  },
+  "2022-Nov 2026 (unseen)": {
+   "cagr": -49.8,
+   "sharpe": -0.5,
+   "maxdd": -96.9,
+   "total": -96.5,
+   "turnover_yr": 14.2
+  }
+ },
+ "Benchmark: hold BTC": {
+  "2022-Nov 2026 (unseen)": {
+   "cagr": 10.7,
+   "sharpe": 0.45,
+   "maxdd": -66.9,
+   "total": 64.1,
+   "turnover_yr": 0.0
+  }
+ },
+ "_data": {
+  "coins": 665,
+  "from": "2017-08-17",
+  "to": "2026-11-08"
+ }
+}

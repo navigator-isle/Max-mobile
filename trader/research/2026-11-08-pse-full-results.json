@@ -1,0 +1,909 @@
+{
+ "Hold all liquid stocks equally (with dividends)": {
+  "family": "benchmark",
+  "params": null,
+  "2009-2020 (settings chosen)": {
+   "cagr": 3.0,
+   "sharpe": 0.28,
+   "maxdd": -57.8,
+   "total": 42.0,
+   "turnover_yr": 11.1
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": -0.4,
+   "sharpe": 0.04,
+   "maxdd": -28.0,
+   "total": -2.1,
+   "turnover_yr": 8.0
+  }
+ },
+ "Trend each stock (SMA)": {
+  "family": "regular / position",
+  "params": {
+   "n": 100
+  },
+  "2009-2020 (settings chosen)": {
+   "cagr": -1.6,
+   "sharpe": -0.32,
+   "maxdd": -42.3,
+   "total": -17.8,
+   "turnover_yr": 8.4
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": -5.5,
+   "sharpe": -1.07,
+   "maxdd": -29.1,
+   "total": -28.2,
+   "turnover_yr": 10.8
+  }
+ },
+ "Momentum rotation (monthly, market filter)": {
+  "family": "regular / rotation",
+  "params": {
+   "L": 63,
+   "top": 10,
+   "skip": 0
+  },
+  "2009-2020 (settings chosen)": {
+   "cagr": 9.6,
+   "sharpe": 0.66,
+   "maxdd": -33.8,
+   "total": 196.3,
+   "turnover_yr": 7.4
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": 3.4,
+   "sharpe": 0.28,
+   "maxdd": -26.8,
+   "total": 21.8,
+   "turnover_yr": 8.8
+  }
+ },
+ "Low-volatility rotation": {
+  "family": "regular / defensive",
+  "params": {
+   "top": 20
+  },
+  "2009-2020 (settings chosen)": {
+   "cagr": 2.7,
+   "sharpe": 0.34,
+   "maxdd": -34.9,
+   "total": 37.7,
+   "turnover_yr": 2.8
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": -2.3,
+   "sharpe": -0.18,
+   "maxdd": -22.4,
+   "total": -12.7,
+   "turnover_yr": 3.7
+  }
+ },
+ "High dividend yield top-10": {
+  "family": "dividend",
+  "params": {
+   "top": 10,
+   "filter": false
+  },
+  "2009-2020 (settings chosen)": {
+   "cagr": 0.0,
+   "sharpe": 0.01,
+   "maxdd": -7.6,
+   "total": 0.0,
+   "turnover_yr": 0.0
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": 8.5,
+   "sharpe": 0.75,
+   "maxdd": -16.8,
+   "total": 60.8,
+   "turnover_yr": 2.0
+  }
+ },
+ "High dividend yield top-10 + market filter": {
+  "family": "dividend",
+  "params": {
+   "top": 10,
+   "filter": true
+  },
+  "2009-2020 (settings chosen)": {
+   "cagr": 0.0,
+   "sharpe": 0,
+   "maxdd": 0.0,
+   "total": 0.0,
+   "turnover_yr": 0.0
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": 6.0,
+   "sharpe": 0.71,
+   "maxdd": -14.7,
+   "total": 40.6,
+   "turnover_yr": 2.1
+  }
+ },
+ "High dividend yield top-20": {
+  "family": "dividend",
+  "params": {
+   "top": 20,
+   "filter": false
+  },
+  "2009-2020 (settings chosen)": {
+   "cagr": 0.0,
+   "sharpe": 0.01,
+   "maxdd": -3.9,
+   "total": 0.1,
+   "turnover_yr": 0.0
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": 9.0,
+   "sharpe": 0.94,
+   "maxdd": -12.5,
+   "total": 65.8,
+   "turnover_yr": 1.6
+  }
+ },
+ "High dividend yield top-20 + market filter": {
+  "family": "dividend",
+  "params": {
+   "top": 20,
+   "filter": true
+  },
+  "2009-2020 (settings chosen)": {
+   "cagr": 0.0,
+   "sharpe": 0,
+   "maxdd": 0.0,
+   "total": 0.0,
+   "turnover_yr": 0.0
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": 3.9,
+   "sharpe": 0.56,
+   "maxdd": -12.5,
+   "total": 24.8,
+   "turnover_yr": 1.7
+  }
+ },
+ "Dividend capture (\u22125d/+3d, yield \u22651.5%)": {
+  "family": "dividend",
+  "params": null,
+  "2009-2020 (settings chosen)": {
+   "cagr": 0.0,
+   "sharpe": 0,
+   "maxdd": 0.0,
+   "total": 0.0,
+   "turnover_yr": 0.0
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": -10.2,
+   "sharpe": -1.12,
+   "maxdd": -48.0,
+   "total": -46.8,
+   "turnover_yr": 23.3
+  }
+ },
+ "Dividend capture (\u221210d/+5d, yield \u22652.0%)": {
+  "family": "dividend",
+  "params": null,
+  "2009-2020 (settings chosen)": {
+   "cagr": 0.0,
+   "sharpe": 0,
+   "maxdd": 0.0,
+   "total": 0.0,
+   "turnover_yr": 0.0
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": -5.3,
+   "sharpe": -0.47,
+   "maxdd": -32.1,
+   "total": -27.1,
+   "turnover_yr": 16.4
+  }
+ },
+ "Dividend capture (\u22123d/+1d, yield \u22652.0%)": {
+  "family": "dividend",
+  "params": null,
+  "2009-2020 (settings chosen)": {
+   "cagr": 0.0,
+   "sharpe": 0,
+   "maxdd": 0.0,
+   "total": 0.0,
+   "turnover_yr": 0.0
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": -10.7,
+   "sharpe": -2.0,
+   "maxdd": -49.1,
+   "total": -48.3,
+   "turnover_yr": 14.8
+  }
+ },
+ "RSI(2) pullback": {
+  "family": "swing / mean reversion",
+  "params": {
+   "lo": 5
+  },
+  "2009-2020 (settings chosen)": {
+   "cagr": -6.5,
+   "sharpe": -0.53,
+   "maxdd": -55.9,
+   "total": -55.2,
+   "turnover_yr": 30.7
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": -1.8,
+   "sharpe": -0.2,
+   "maxdd": -19.1,
+   "total": -10.1,
+   "turnover_yr": 21.6
+  }
+ },
+ "Swing breakout + ATR trailing stop": {
+  "family": "swing / trend",
+  "params": {
+   "entry": "donchian20",
+   "k_atr": 4,
+   "market_filter": false
+  },
+  "2009-2020 (settings chosen)": {
+   "cagr": 8.0,
+   "sharpe": 0.63,
+   "maxdd": -46.3,
+   "total": 150.2,
+   "turnover_yr": 0.0
+  },
+  "2021-Nov 2026 (unseen)": {
+   "cagr": 2.7,
+   "sharpe": 0.27,
+   "maxdd": -28.0,
+   "total": 16.7,
+   "turnover_yr": 0.0
+  },
+  "extra": {
+   "unseen_trades": 364,
+   "win_%": 34.6,
+   "avg_win_R": 2.3,
+   "avg_loss_R": -1.43,
+   "best_R": 67.2
+  }
+ },
+ "_swing_grid": {
+  "donchian20|k2|filterFalse": {
+   "cagr_%": -9.8,
+   "total_%": -70.7,
+   "max_drop_%": -77.5,
+   "sharpe": -0.63,
+   "mar": -0.13,
+   "trades": 1198,
+   "win_%": 29.7,
+   "avg_win_R": 3.04,
+   "avg_loss_R": -3.29,
+   "best_R": 123.9,
+   "expectancy_R": -1.412
+  },
+  "donchian20|k2|filterTrue": {
+   "cagr_%": -4.7,
+   "total_%": -43.9,
+   "max_drop_%": -62.8,
+   "sharpe": -0.3,
+   "mar": -0.08,
+   "trades": 911,
+   "win_%": 28.8,
+   "avg_win_R": 3.51,
+   "avg_loss_R": -6.82,
+   "best_R": 123.9,
+   "expectancy_R": -3.85
+  },
+  "donchian20|k3|filterFalse": {
+   "cagr_%": 4.5,
+   "total_%": 69.6,
+   "max_drop_%": -34.2,
+   "sharpe": 0.37,
+   "mar": 0.13,
+   "trades": 1072,
+   "win_%": 32.3,
+   "avg_win_R": 2.76,
+   "avg_loss_R": -2.69,
+   "best_R": 46.8,
+   "expectancy_R": -0.928
+  },
+  "donchian20|k3|filterTrue": {
+   "cagr_%": 3.8,
+   "total_%": 56.5,
+   "max_drop_%": -28.5,
+   "sharpe": 0.35,
+   "mar": 0.13,
+   "trades": 771,
+   "win_%": 31.6,
+   "avg_win_R": 2.88,
+   "avg_loss_R": -1.89,
+   "best_R": 46.7,
+   "expectancy_R": -0.379
+  },
+  "donchian20|k4|filterFalse": {
+   "cagr_%": 8.0,
+   "total_%": 150.2,
+   "max_drop_%": -46.3,
+   "sharpe": 0.63,
+   "mar": 0.17,
+   "trades": 840,
+   "win_%": 36.8,
+   "avg_win_R": 2.41,
+   "avg_loss_R": -1.22,
+   "best_R": 51.6,
+   "expectancy_R": 0.114
+  },
+  "donchian20|k4|filterTrue": {
+   "cagr_%": 5.5,
+   "total_%": 88.8,
+   "max_drop_%": -36.5,
+   "sharpe": 0.52,
+   "mar": 0.15,
+   "trades": 591,
+   "win_%": 35.0,
+   "avg_win_R": 2.51,
+   "avg_loss_R": -2.17,
+   "best_R": 31.3,
+   "expectancy_R": -0.53
+  },
+  "donchian55|k2|filterFalse": {
+   "cagr_%": -0.4,
+   "total_%": -4.2,
+   "max_drop_%": -49.9,
+   "sharpe": 0.06,
+   "mar": -0.01,
+   "trades": 1137,
+   "win_%": 34.9,
+   "avg_win_R": 2.63,
+   "avg_loss_R": -2.17,
+   "best_R": 26.2,
+   "expectancy_R": -0.498
+  },
+  "donchian55|k2|filterTrue": {
+   "cagr_%": 2.5,
+   "total_%": 34.9,
+   "max_drop_%": -31.5,
+   "sharpe": 0.25,
+   "mar": 0.08,
+   "trades": 840,
+   "win_%": 35.4,
+   "avg_win_R": 2.77,
+   "avg_loss_R": -5.64,
+   "best_R": 26.2,
+   "expectancy_R": -2.668
+  },
+  "donchian55|k3|filterFalse": {
+   "cagr_%": 7.7,
+   "total_%": 142.3,
+   "max_drop_%": -24.5,
+   "sharpe": 0.59,
+   "mar": 0.32,
+   "trades": 913,
+   "win_%": 36.0,
+   "avg_win_R": 2.78,
+   "avg_loss_R": -2.33,
+   "best_R": 36.4,
+   "expectancy_R": -0.489
+  },
+  "donchian55|k3|filterTrue": {
+   "cagr_%": 5.8,
+   "total_%": 96.3,
+   "max_drop_%": -24.3,
+   "sharpe": 0.53,
+   "mar": 0.24,
+   "trades": 683,
+   "win_%": 36.0,
+   "avg_win_R": 2.91,
+   "avg_loss_R": -2.43,
+   "best_R": 36.4,
+   "expectancy_R": -0.505
+  },
+  "donchian55|k4|filterFalse": {
+   "cagr_%": 5.8,
+   "total_%": 96.2,
+   "max_drop_%": -31.2,
+   "sharpe": 0.51,
+   "mar": 0.19,
+   "trades": 771,
+   "win_%": 38.0,
+   "avg_win_R": 2.17,
+   "avg_loss_R": -1.17,
+   "best_R": 25.9,
+   "expectancy_R": 0.098
+  },
+  "donchian55|k4|filterTrue": {
+   "cagr_%": 6.1,
+   "total_%": 102.3,
+   "max_drop_%": -22.1,
+   "sharpe": 0.6,
+   "mar": 0.28,
+   "trades": 565,
+   "win_%": 39.8,
+   "avg_win_R": 2.23,
+   "avg_loss_R": -1.22,
+   "best_R": 25.9,
+   "expectancy_R": 0.151
+  },
+  "52wk_high|k2|filterFalse": {
+   "cagr_%": -0.7,
+   "total_%": -7.7,
+   "max_drop_%": -34.5,
+   "sharpe": 0.01,
+   "mar": -0.02,
+   "trades": 668,
+   "win_%": 32.6,
+   "avg_win_R": 2.8,
+   "avg_loss_R": -2.25,
+   "best_R": 26.2,
+   "expectancy_R": -0.602
+  },
+  "52wk_high|k2|filterTrue": {
+   "cagr_%": -0.3,
+   "total_%": -3.7,
+   "max_drop_%": -36.4,
+   "sharpe": 0.03,
+   "mar": -0.01,
+   "trades": 551,
+   "win_%": 31.9,
+   "avg_win_R": 2.93,
+   "avg_loss_R": -2.24,
+   "best_R": 26.2,
+   "expectancy_R": -0.59
+  },
+  "52wk_high|k3|filterFalse": {
+   "cagr_%": 4.4,
+   "total_%": 66.2,
+   "max_drop_%": -24.4,
+   "sharpe": 0.41,
+   "mar": 0.18,
+   "trades": 546,
+   "win_%": 35.3,
+   "avg_win_R": 2.55,
+   "avg_loss_R": -1.86,
+   "best_R": 27.6,
+   "expectancy_R": -0.298
+  },
+  "52wk_high|k3|filterTrue": {
+   "cagr_%": 3.8,
+   "total_%": 55.0,
+   "max_drop_%": -25.4,
+   "sharpe": 0.39,
+   "mar": 0.15,
+   "trades": 457,
+   "win_%": 35.4,
+   "avg_win_R": 2.51,
+   "avg_loss_R": -1.73,
+   "best_R": 27.6,
+   "expectancy_R": -0.227
+  },
+  "52wk_high|k4|filterFalse": {
+   "cagr_%": 2.1,
+   "total_%": 27.7,
+   "max_drop_%": -25.6,
+   "sharpe": 0.25,
+   "mar": 0.08,
+   "trades": 483,
+   "win_%": 34.8,
+   "avg_win_R": 2.15,
+   "avg_loss_R": -1.2,
+   "best_R": 32.4,
+   "expectancy_R": -0.037
+  },
+  "52wk_high|k4|filterTrue": {
+   "cagr_%": 3.1,
+   "total_%": 43.9,
+   "max_drop_%": -21.0,
+   "sharpe": 0.37,
+   "mar": 0.15,
+   "trades": 404,
+   "win_%": 36.4,
+   "avg_win_R": 2.11,
+   "avg_loss_R": -2.21,
+   "best_R": 32.4,
+   "expectancy_R": -0.636
+  },
+  "ma20_reclaim|k2|filterFalse": {
+   "cagr_%": -18.3,
+   "total_%": -90.9,
+   "max_drop_%": -90.9,
+   "sharpe": -1.31,
+   "mar": -0.2,
+   "trades": 1227,
+   "win_%": 24.9,
+   "avg_win_R": 2.21,
+   "avg_loss_R": -2.89,
+   "best_R": 29.0,
+   "expectancy_R": -1.625
+  },
+  "ma20_reclaim|k2|filterTrue": {
+   "cagr_%": -11.6,
+   "total_%": -76.9,
+   "max_drop_%": -78.3,
+   "sharpe": -0.93,
+   "mar": -0.15,
+   "trades": 925,
+   "win_%": 25.6,
+   "avg_win_R": 2.38,
+   "avg_loss_R": -2.68,
+   "best_R": 29.0,
+   "expectancy_R": -1.381
+  },
+  "ma20_reclaim|k3|filterFalse": {
+   "cagr_%": -8.0,
+   "total_%": -62.7,
+   "max_drop_%": -73.0,
+   "sharpe": -0.62,
+   "mar": -0.11,
+   "trades": 918,
+   "win_%": 27.6,
+   "avg_win_R": 2.04,
+   "avg_loss_R": -1.9,
+   "best_R": 23.3,
+   "expectancy_R": -0.815
+  },
+  "ma20_reclaim|k3|filterTrue": {
+   "cagr_%": -2.9,
+   "total_%": -29.8,
+   "max_drop_%": -60.2,
+   "sharpe": -0.22,
+   "mar": -0.05,
+   "trades": 679,
+   "win_%": 28.3,
+   "avg_win_R": 2.22,
+   "avg_loss_R": -2.17,
+   "best_R": 27.6,
+   "expectancy_R": -0.929
+  },
+  "ma20_reclaim|k4|filterFalse": {
+   "cagr_%": -1.9,
+   "total_%": -20.0,
+   "max_drop_%": -45.0,
+   "sharpe": -0.11,
+   "mar": -0.04,
+   "trades": 768,
+   "win_%": 29.8,
+   "avg_win_R": 2.13,
+   "avg_loss_R": -1.12,
+   "best_R": 43.3,
+   "expectancy_R": -0.153
+  },
+  "ma20_reclaim|k4|filterTrue": {
+   "cagr_%": -1.3,
+   "total_%": -14.7,
+   "max_drop_%": -39.7,
+   "sharpe": -0.09,
+   "mar": -0.03,
+   "trades": 573,
+   "win_%": 30.7,
+   "avg_win_R": 1.93,
+   "avg_loss_R": -1.24,
+   "best_R": 31.8,
+   "expectancy_R": -0.265
+  },
+  "squeeze_breakout|k2|filterFalse": {
+   "cagr_%": -7.0,
+   "total_%": -57.7,
+   "max_drop_%": -73.9,
+   "sharpe": -0.34,
+   "mar": -0.09,
+   "trades": 997,
+   "win_%": 31.0,
+   "avg_win_R": 2.88,
+   "avg_loss_R": -2.84,
+   "best_R": 44.5,
+   "expectancy_R": -1.072
+  },
+  "squeeze_breakout|k2|filterTrue": {
+   "cagr_%": -7.1,
+   "total_%": -58.2,
+   "max_drop_%": -68.0,
+   "sharpe": -0.49,
+   "mar": -0.1,
+   "trades": 730,
+   "win_%": 28.9,
+   "avg_win_R": 3.13,
+   "avg_loss_R": -4.82,
+   "best_R": 27.0,
+   "expectancy_R": -2.523
+  },
+  "squeeze_breakout|k3|filterFalse": {
+   "cagr_%": -1.7,
+   "total_%": -18.8,
+   "max_drop_%": -60.1,
+   "sharpe": -0.06,
+   "mar": -0.03,
+   "trades": 771,
+   "win_%": 30.7,
+   "avg_win_R": 2.62,
+   "avg_loss_R": -2.12,
+   "best_R": 49.7,
+   "expectancy_R": -0.661
+  },
+  "squeeze_breakout|k3|filterTrue": {
+   "cagr_%": -0.4,
+   "total_%": -5.1,
+   "max_drop_%": -53.7,
+   "sharpe": 0.02,
+   "mar": -0.01,
+   "trades": 570,
+   "win_%": 28.4,
+   "avg_win_R": 3.27,
+   "avg_loss_R": -2.41,
+   "best_R": 49.7,
+   "expectancy_R": -0.794
+  },
+  "squeeze_breakout|k4|filterFalse": {
+   "cagr_%": 2.0,
+   "total_%": 26.6,
+   "max_drop_%": -43.1,
+   "sharpe": 0.22,
+   "mar": 0.05,
+   "trades": 689,
+   "win_%": 33.7,
+   "avg_win_R": 2.36,
+   "avg_loss_R": -1.55,
+   "best_R": 31.4,
+   "expectancy_R": -0.23
+  },
+  "squeeze_breakout|k4|filterTrue": {
+   "cagr_%": 2.6,
+   "total_%": 36.2,
+   "max_drop_%": -34.6,
+   "sharpe": 0.31,
+   "mar": 0.08,
+   "trades": 503,
+   "win_%": 31.8,
+   "avg_win_R": 2.8,
+   "avg_loss_R": -1.8,
+   "best_R": 31.4,
+   "expectancy_R": -0.34
+  },
+  "cross20/100|k2|filterFalse": {
+   "cagr_%": -9.8,
+   "total_%": -70.8,
+   "max_drop_%": -77.1,
+   "sharpe": -0.75,
+   "mar": -0.13,
+   "trades": 800,
+   "win_%": 30.4,
+   "avg_win_R": 2.25,
+   "avg_loss_R": -1.65,
+   "best_R": 28.2,
+   "expectancy_R": -0.463
+  },
+  "cross20/100|k2|filterTrue": {
+   "cagr_%": -4.7,
+   "total_%": -43.3,
+   "max_drop_%": -62.0,
+   "sharpe": -0.39,
+   "mar": -0.08,
+   "trades": 550,
+   "win_%": 32.5,
+   "avg_win_R": 2.34,
+   "avg_loss_R": -1.97,
+   "best_R": 28.2,
+   "expectancy_R": -0.567
+  },
+  "cross20/100|k3|filterFalse": {
+   "cagr_%": -4.6,
+   "total_%": -43.1,
+   "max_drop_%": -55.6,
+   "sharpe": -0.35,
+   "mar": -0.08,
+   "trades": 742,
+   "win_%": 33.6,
+   "avg_win_R": 2.0,
+   "avg_loss_R": -1.27,
+   "best_R": 22.1,
+   "expectancy_R": -0.17
+  },
+  "cross20/100|k3|filterTrue": {
+   "cagr_%": -3.0,
+   "total_%": -30.4,
+   "max_drop_%": -54.7,
+   "sharpe": -0.26,
+   "mar": -0.05,
+   "trades": 533,
+   "win_%": 32.6,
+   "avg_win_R": 2.15,
+   "avg_loss_R": -1.22,
+   "best_R": 22.1,
+   "expectancy_R": -0.118
+  },
+  "cross20/100|k4|filterFalse": {
+   "cagr_%": -0.0,
+   "total_%": -0.0,
+   "max_drop_%": -52.3,
+   "sharpe": 0.06,
+   "mar": -0.0,
+   "trades": 683,
+   "win_%": 33.1,
+   "avg_win_R": 1.98,
+   "avg_loss_R": -1.08,
+   "best_R": 38.3,
+   "expectancy_R": -0.067
+  },
+  "cross20/100|k4|filterTrue": {
+   "cagr_%": 2.5,
+   "total_%": 33.7,
+   "max_drop_%": -36.1,
+   "sharpe": 0.29,
+   "mar": 0.07,
+   "trades": 480,
+   "win_%": 34.6,
+   "avg_win_R": 2.15,
+   "avg_loss_R": -1.33,
+   "best_R": 38.3,
+   "expectancy_R": -0.128
+  },
+  "momentum_turn60|k2|filterFalse": {
+   "cagr_%": -10.0,
+   "total_%": -71.5,
+   "max_drop_%": -76.3,
+   "sharpe": -0.6,
+   "mar": -0.13,
+   "trades": 1028,
+   "win_%": 27.6,
+   "avg_win_R": 2.65,
+   "avg_loss_R": -2.12,
+   "best_R": 41.0,
+   "expectancy_R": -0.799
+  },
+  "momentum_turn60|k2|filterTrue": {
+   "cagr_%": -6.0,
+   "total_%": -52.3,
+   "max_drop_%": -65.3,
+   "sharpe": -0.41,
+   "mar": -0.09,
+   "trades": 742,
+   "win_%": 28.4,
+   "avg_win_R": 2.97,
+   "avg_loss_R": -2.15,
+   "best_R": 41.0,
+   "expectancy_R": -0.693
+  },
+  "momentum_turn60|k3|filterFalse": {
+   "cagr_%": -5.6,
+   "total_%": -49.4,
+   "max_drop_%": -63.8,
+   "sharpe": -0.36,
+   "mar": -0.09,
+   "trades": 950,
+   "win_%": 27.5,
+   "avg_win_R": 2.22,
+   "avg_loss_R": -1.66,
+   "best_R": 18.3,
+   "expectancy_R": -0.592
+  },
+  "momentum_turn60|k3|filterTrue": {
+   "cagr_%": -3.5,
+   "total_%": -34.8,
+   "max_drop_%": -57.4,
+   "sharpe": -0.24,
+   "mar": -0.06,
+   "trades": 676,
+   "win_%": 27.4,
+   "avg_win_R": 2.35,
+   "avg_loss_R": -1.49,
+   "best_R": 18.3,
+   "expectancy_R": -0.441
+  },
+  "momentum_turn60|k4|filterFalse": {
+   "cagr_%": 1.9,
+   "total_%": 25.8,
+   "max_drop_%": -50.7,
+   "sharpe": 0.21,
+   "mar": 0.04,
+   "trades": 800,
+   "win_%": 31.5,
+   "avg_win_R": 2.27,
+   "avg_loss_R": -1.05,
+   "best_R": 52.1,
+   "expectancy_R": -0.003
+  },
+  "momentum_turn60|k4|filterTrue": {
+   "cagr_%": -1.4,
+   "total_%": -15.7,
+   "max_drop_%": -43.7,
+   "sharpe": -0.08,
+   "mar": -0.03,
+   "trades": 584,
+   "win_%": 29.8,
+   "avg_win_R": 2.26,
+   "avg_loss_R": -1.33,
+   "best_R": 33.0,
+   "expectancy_R": -0.262
+  },
+  "rsi2_pullback|k2|filterFalse": {
+   "cagr_%": -13.1,
+   "total_%": -81.1,
+   "max_drop_%": -83.9,
+   "sharpe": -0.84,
+   "mar": -0.16,
+   "trades": 1217,
+   "win_%": 28.7,
+   "avg_win_R": 2.21,
+   "avg_loss_R": -4.07,
+   "best_R": 29.5,
+   "expectancy_R": -2.269
+  },
+  "rsi2_pullback|k2|filterTrue": {
+   "cagr_%": -9.4,
+   "total_%": -69.1,
+   "max_drop_%": -70.8,
+   "sharpe": -0.7,
+   "mar": -0.13,
+   "trades": 913,
+   "win_%": 29.9,
+   "avg_win_R": 2.07,
+   "avg_loss_R": -12.06,
+   "best_R": 18.5,
+   "expectancy_R": -7.832
+  },
+  "rsi2_pullback|k3|filterFalse": {
+   "cagr_%": -8.4,
+   "total_%": -64.7,
+   "max_drop_%": -77.9,
+   "sharpe": -0.63,
+   "mar": -0.11,
+   "trades": 957,
+   "win_%": 29.6,
+   "avg_win_R": 1.94,
+   "avg_loss_R": -1.41,
+   "best_R": 30.3,
+   "expectancy_R": -0.42
+  },
+  "rsi2_pullback|k3|filterTrue": {
+   "cagr_%": -7.8,
+   "total_%": -61.8,
+   "max_drop_%": -64.2,
+   "sharpe": -0.69,
+   "mar": -0.12,
+   "trades": 748,
+   "win_%": 30.2,
+   "avg_win_R": 1.66,
+   "avg_loss_R": -1.44,
+   "best_R": 24.9,
+   "expectancy_R": -0.503
+  },
+  "rsi2_pullback|k4|filterFalse": {
+   "cagr_%": -0.7,
+   "total_%": -8.4,
+   "max_drop_%": -44.5,
+   "sharpe": 0.01,
+   "mar": -0.02,
+   "trades": 752,
+   "win_%": 30.9,
+   "avg_win_R": 2.15,
+   "avg_loss_R": -1.07,
+   "best_R": 34.4,
+   "expectancy_R": -0.08
+  },
+  "rsi2_pullback|k4|filterTrue": {
+   "cagr_%": -1.1,
+   "total_%": -12.7,
+   "max_drop_%": -37.8,
+   "sharpe": -0.04,
+   "mar": -0.03,
+   "trades": 601,
+   "win_%": 30.1,
+   "avg_win_R": 2.24,
+   "avg_loss_R": -1.83,
+   "best_R": 34.4,
+   "expectancy_R": -0.602
+  }
+ },
+ "_data": {
+  "stocks": 363,
+  "days": 4347,
+  "from": "2009-01-05",
+  "to": "2026-11-06",
+  "splits_adjusted": 81,
+  "dividend_events": 1132,
+  "cost_per_side_%": 0.545
+ },
+ "_now": {
+  "date": "2026-11-06",
+  "market_above_200d": false,
+  "momentum_pick": []
+ }
+}

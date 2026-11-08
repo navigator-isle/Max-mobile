@@ -1,0 +1,97 @@
+{
+ "weights": {
+  "crypto swing (ATR trail)": 0.3,
+  "PSE high-dividend top-20": 0.3,
+  "forex copy big traders (COT fade)": 0.25,
+  "copy steady traders (Hyperliquid)": 0.15
+ },
+ "MAX-MASTER-2 (2022-Oct 2026)": {
+  "months": 58,
+  "total_%": 85.0,
+  "per_year_%": 13.6,
+  "max_drop_%": -7.2,
+  "win_months_%": 57,
+  "worst_month_%": -3.8,
+  "sharpe": 1.13
+ },
+ "without copy trading": {
+  "months": 58,
+  "total_%": 36.9,
+  "per_year_%": 6.7,
+  "max_drop_%": -6.7,
+  "win_months_%": 52,
+  "worst_month_%": -4.0,
+  "sharpe": 0.69
+ },
+ "parts": {
+  "crypto swing (ATR trail)": {
+   "months": 58,
+   "total_%": 29.4,
+   "per_year_%": 5.5,
+   "max_drop_%": -24.7,
+   "win_months_%": 24,
+   "worst_month_%": -17.6,
+   "sharpe": 0.32
+  },
+  "PSE high-dividend top-20": {
+   "months": 58,
+   "total_%": 59.8,
+   "per_year_%": 10.2,
+   "max_drop_%": -11.8,
+   "win_months_%": 62,
+   "worst_month_%": -7.3,
+   "sharpe": 1.06
+  },
+  "forex copy big traders (COT fade)": {
+   "months": 58,
+   "total_%": 5.0,
+   "per_year_%": 1.0,
+   "max_drop_%": -8.4,
+   "win_months_%": 52,
+   "worst_month_%": -3.8,
+   "sharpe": 0.27
+  },
+  "copy steady traders (Hyperliquid)": {
+   "months": 27,
+   "total_%": 609.4,
+   "per_year_%": 138.9,
+   "max_drop_%": -30.7,
+   "win_months_%": 63,
+   "worst_month_%": -18.4,
+   "sharpe": 1.66
+  }
+ },
+ "correlation": {
+  "crypto swing (ATR trail)": {
+   "crypto swing (ATR trail)": 1.0,
+   "PSE high-dividend top-20": -0.04,
+   "forex copy big traders (COT fade)": 0.01,
+   "copy steady traders (Hyperliquid)": 0.43
+  },
+  "PSE high-dividend top-20": {
+   "crypto swing (ATR trail)": -0.04,
+   "PSE high-dividend top-20": 1.0,
+   "forex copy big traders (COT fade)": -0.16,
+   "copy steady traders (Hyperliquid)": -0.29
+  },
+  "forex copy big traders (COT fade)": {
+   "crypto swing (ATR trail)": 0.01,
+   "PSE high-dividend top-20": -0.16,
+   "forex copy big traders (COT fade)": 1.0,
+   "copy steady traders (Hyperliquid)": 0.09
+  },
+  "copy steady traders (Hyperliquid)": {
+   "crypto swing (ATR trail)": 0.43,
+   "PSE high-dividend top-20": -0.29,
+   "forex copy big traders (COT fade)": 0.09,
+   "copy steady traders (Hyperliquid)": 1.0
+  }
+ },
+ "by_year_%": {
+  "2022": -5.1,
+  "2023": 19.7,
+  "2024": 32.6,
+  "2025": 12.1,
+  "2026": 9.7
+ }
+}
