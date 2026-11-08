@@ -1,14 +1,15 @@
-A  Dividend top-20, 3 months (current)                            8.0%/yr dd  -42.0 sh  0.63 | 14-19 4.3 20-26 11.3 | buys 295 stops 0
-J  A + trailing stop 25% below highest close                      8.3%/yr dd  -24.0 sh  0.73 | 14-19 4.6 20-26 11.6 | buys 410 stops 151
-J2 A + trailing stop 20%                                          6.7%/yr dd  -23.1 sh  0.63 | 14-19 2.6 20-26 10.4 | buys 480 stops 255
-J3 A + trailing stop 30%                                          8.0%/yr dd  -26.6 sh  0.69 | 14-19 4.6 20-26 11.2 | buys 379 stops 104
-DJ buffer top-40 + trailing stop 25%                              8.2%/yr dd  -24.0 sh  0.74 | 14-19 5.4 20-26 10.8 | buys 279 stops 168
-P2 Momentum top-10 when market up (2003–2026)                    14.8%/yr dd  -65.0 sh  0.70 | 14-19 17.4 20-26 8.4 | buys 831 stops 0
+A  Dividend top-20, 3 months (current)                            8.3%/yr dd  -41.6 sh  0.64 | 14-19 5.5 20-26 10.8 | buys 296 stops 0
+J  A + trailing stop 25% below highest close                      8.4%/yr dd  -24.1 sh  0.73 | 14-19 5.1 20-26 11.3 | buys 415 stops 153
+J2 A + trailing stop 20%                                          6.5%/yr dd  -21.9 sh  0.61 | 14-19 2.9 20-26 9.8 | buys 485 stops 258
+J3 A + trailing stop 30%                                          8.4%/yr dd  -26.3 sh  0.72 | 14-19 5.4 20-26 11.1 | buys 381 stops 104
+DJ buffer top-40 + trailing stop 25%                              8.4%/yr dd  -23.7 sh  0.75 | 14-19 5.7 20-26 10.8 | buys 276 stops 169
+P2 Momentum top-10 when market up (2003–2026)                    14.7%/yr dd  -65.0 sh  0.70 | 14-19 17.4 20-26 8.4 | buys 831 stops 0
 P4 P2 + trailing stop 20% (2003–2026)                            12.3%/yr dd  -59.6 sh  0.65 | 14-19 15.6 20-26 4.5 | buys 1017 stops 406
 P5 P2 + trailing stop 15% (2003–2026)                            12.8%/yr dd  -49.9 sh  0.70 | 14-19 15.7 20-26 5.7 | buys 1153 stops 651
-X  50% J dividend + 50% P2 momentum (2014–2026)                   8.0%/yr dd  -40.6 sh  0.61 | 14-19 5.0 20-26 10.7 | buys 0 stops 0
-X  50% DJ dividend + 50% P2 momentum (2014–2026)                  8.0%/yr dd  -41.7 sh  0.61 | 14-19 5.4 20-26 10.3 | buys 0 stops 0
-X  50% J dividend + 50% P4 momentum (2014–2026)                   7.4%/yr dd  -36.8 sh  0.62 | 14-19 6.2 20-26 8.5 | buys 0 stops 0
-X  50% DJ dividend + 50% P4 momentum (2014–2026)                  7.4%/yr dd  -38.0 sh  0.62 | 14-19 6.6 20-26 8.1 | buys 0 stops 0
-A  Dividend top-20, 3 months (current) {'2014': np.float64(32.4), '2015': np.float64(-10.8), '2016': np.float64(7.1), '2017': np.float64(6.4), '2018': np.float64(-6.9), '2019': np.float64(2.7), '2020': np.float64(19.5), '2021': np.float64(31.5), '2022': np.float64(0.4), '2023': np.float64(4.6), '2024': np.float64(18.1), '2025': np.float64(14.7), '2026': np.float64(-7.4)}
-DJ buffer top-40 + trailing stop 25% {'2014': np.float64(39.5), '2015': np.float64(-9.0), '2016': np.float64(4.1), '2017': np.float64(11.4), '2018': np.float64(-9.4), '2019': np.float64(2.6), '2020': np.float64(28.8), '2021': np.float64(30.3), '2022': np.float64(-2.1), '2023': np.float64(-1.1), '2024': np.float64(22.8), '2025': np.float64(14.2), '2026': np.float64(-11.8)}
+X  50% J dividend + 50% P2 momentum (2014–2026)                   8.0%/yr dd  -40.0 sh  0.61 | 14-19 5.2 20-26 10.6 | buys 0 stops 0
+X  50% DJ dividend + 50% P2 momentum (2014–2026)                  8.0%/yr dd  -40.6 sh  0.61 | 14-19 5.5 20-26 10.3 | buys 0 stops 0
+X  50% J dividend + 50% P4 momentum (2014–2026)                   7.4%/yr dd  -36.3 sh  0.62 | 14-19 6.4 20-26 8.3 | buys 0 stops 0
+X  50% DJ dividend + 50% P4 momentum (2014–2026)                  7.5%/yr dd  -36.8 sh  0.62 | 14-19 6.7 20-26 8.1 | buys 0 stops 0
+A  Dividend top-20, 3 months (current) {'2014': np.float64(32.4), '2015': np.float64(-10.5), '2016': np.float64(8.7), '2017': np.float64(6.1), '2018': np.float64(-5.3), '2019': np.float64(6.3), '2020': np.float64(18.6), '2021': np.float64(30.9), '2022': np.float64(0.9), '2023': np.float64(4.5), '2024': np.float64(14.6), '2025': np.float64(14.5), '2026': np.float64(-6.2)}
+DJ buffer top-40 + trailing stop 25% {'2014': np.float64(39.5), '2015': np.float64(-8.2), '2016': np.float64(5.8), '2017': np.float64(8.0), '2018': np.float64(-9.2), '2019': np.float64(4.8), '2020': np.float64(28.3), '2021': np.float64(30.1), '2022': np.float64(-1.7), '2023': np.float64(-3.1), '2024': np.float64(22.4), '2025': np.float64(14.1), '2026': np.float64(-9.3)}
+ALLDONE

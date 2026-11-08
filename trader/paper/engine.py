@@ -54,6 +54,38 @@ def pse_dividends(row):
             try: out.append((dt.datetime.strptime(td[3], "%b %d, %Y").date(), float(m.group(1).replace(",", ""))))
             except Exception: pass
     return out
+_EDGE_DIV = None
+def edge_div_list(DIR):
+    """All cash dividends on PSE Edge's 'Dividends and Rights' list (real peso amounts, about the last 15 months): {sym: [(ex_date, amount)]}"""
+    global _EDGE_DIV
+    if _EDGE_DIV is not None: return _EDGE_DIV
+    byname = {r["name"].lower().strip(" ."): r["sym"] for r in DIR}; out = {}
+    for p in range(1, 80):
+        h = http("https://edge.pse.com.ph/disclosureData/dividends_and_rights_info_list.ax", data=f"pageNum={p}&sortMode=date&dateSortType=DESC&cmpySortType=ASC".encode(), raw=True,
+                 headers={"Content-Type": "application/x-www-form-urlencoded"})
+        n = 0
+        for tr in re.findall(r"<tr>(.*?)</tr>", h, re.S):
+            td = [re.sub(r"<[^>]+>|\s+", " ", x).strip() for x in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
+            if len(td) < 7: continue
+            n += 1
+            if td[1].upper() != "COMMON" or td[2].lower() != "cash": continue
+            txt = td[3]; m = re.search(r"([\d]*\.?[\d]+)", txt.replace(",", "")); sym = byname.get(td[0].lower().strip(" ."))
+            try: exd = dt.datetime.strptime(td[4], "%b %d, %Y").date()
+            except Exception: continue
+            if not (m and sym): continue
+            amt = float(m.group(1)); cur = "USD" if ("$" in txt or "USD" in txt.upper() or txt.upper().startswith("US")) else ("CAD" if "CAD" in txt.upper() else "PHP")
+            if cur != "PHP":                       # dividends paid in dollars → pesos at that day's rate
+                try:
+                    fx = dict(yahoo("PHP=X" if cur == "USD" else "CADPHP=X", "2y")); k_ = max([d_ for d_ in fx if d_ <= exd] or [max(fx)]); amt *= fx[k_]
+                except Exception: continue
+            out.setdefault(sym, []).append((exd, amt))
+        if n == 0: break
+        time.sleep(0.3)
+    _EDGE_DIV = out; return out
+def ttm_yield(sym, price, DIR):
+    cut = dt.date.today() - dt.timedelta(days=365); today = dt.date.today()
+    ev = edge_div_list(DIR).get(sym, [])
+    return sum(a for d_, a in ev if cut < d_ <= today) / price
 def sa_ttm_yield(sym, price):
     try:
         h = http(f"https://stockanalysis.com/quote/pse/{sym}/dividend/", raw=True, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36"})
@@ -326,7 +358,7 @@ def pse_dividend(B, DIR, upto):
             if len(s) < 10: continue
             p = s[-1][1]; val = sum(v for _, _, v in s[-20:]) / len(s[-20:])
             if p < 1 or val < 5e6: continue
-            y = sa_ttm_yield(r["sym"], p); time.sleep(0.6)
+            y = ttm_yield(r["sym"], p, DIR)
             if y >= 0.03: cand.append((y, r["sym"])); INFO[r["sym"]] = {"price": p, "value": val, "div12m": round(y * p, 4)}
         ranked_all = [s for _, s in sorted(cand, reverse=True)]; ydict = {s: y for y, s in cand}; B["scan_info"] = {s: v for s, v in INFO.items()}
         keep_ = [p["sym"] for p in B["positions"] if p["sym"] in ranked_all[:40]]          # buffer: a holding stays while it is in the top 40

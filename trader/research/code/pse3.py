@@ -1,5 +1,5 @@
 # PSE long dataset: prices 2002 → Nov 2026 (archive json 2002–Mar 2021 incl. delisted + PSE Edge 2015–2026), traded value,
-# splits back-adjusted, cash dividends 2013–2026 (PSE Quarterly Dividend Reports 2013–Apr 2022 + stockanalysis Dec 2021 →).
+# splits back-adjusted, cash dividends 2013–2026 (PSE Quarterly Dividend Reports 4Q2013–3Q2025 + PSE Edge dividend list Oct 2025 →, real peso amounts).
 import pandas as pd, numpy as np, json, glob, os
 from pse2 import edge, adjust_splits, S
 def archive_full():
@@ -37,12 +37,8 @@ def load():
         a=amt if adjusted else amt*fac.iat[j,P.columns.get_loc(sym)]
         D.iat[j,D.columns.get_loc(sym)]+=a
         if not special: Dreg.iat[j,D.columns.get_loc(sym)]+=a
-    for e in json.load(open(f'{S}/qd/dividends_2013_2022.json')):
-        if e['ex']<'2021-12-01': add(e['sym'],e['ex'],e['amt'],e['special'],False)
-    for fn in glob.glob(f'{S}/dl/div/*.json'):
-        t=os.path.basename(fn)[:-5]
-        for d,a in (json.load(open(fn)).get('chart') or []):
-            if d>='2021-12-01': add(t,d,a,False,True)
+    for e in json.load(open(f'{S}/qd/dividends_2013_2026.json')):      # real peso amounts: PSE Quarterly Dividend Reports 2013–Sep 2025 + PSE Edge Oct 2025 →
+        add(e['sym'],e['ex'],e['amt'],e['special'],False)
     pd.to_pickle((P,V,D,Dreg,log),f); return P,V,D,Dreg,log
 if __name__=='__main__':
     P,V,D,Dr,log=load(); print(P.shape,P.index.min(),P.index.max(),'splits',len(log))
