@@ -26,7 +26,7 @@
 <div class="pt">
   <header>
     <h1>Max Paper Trading</h1>
-    <p class="lede">MAX-MASTER-2 with pretend money: ₱100,000 per strategy, real prices, real fees. Updated every Sunday. Not financial advice.</p>
+    <p class="lede">MAX-MASTER-3 with pretend money: ₱100,000 per strategy, real prices, real fees. Updated every Sunday. Not financial advice.</p>
   </header>
 
   <div class="tiles">
@@ -38,7 +38,7 @@
 
   <section class="card" id="strategies">
     <h2>Strategies</h2>
-    <p class="note">Main = part of MAX-MASTER-2. Watch = rejected in testing, run live to confirm it fails. Judge after about 12 weeks.</p>
+    <p class="note">Main = part of MAX-MASTER-3 (40% PSE dividend, 30% crypto, 30% gold). Watch = rejected in testing, run live to confirm it fails. Judge after about 12 weeks.</p>
     <div class="scroll">
       <table data-source="books" data-row-key="key">
         <thead><tr><th data-field="name">Strategy</th><th data-field="status">Role</th><th class="num" data-field="week_%">Week</th><th class="num" data-field="since_start_%">Since start</th><th class="num" data-field="value_php">Value ₱</th><th class="num" data-field="open">Open</th><th class="num" data-field="closed_trades">Closed</th><th class="num" data-field="wins">Wins</th></tr></thead>
@@ -84,7 +84,9 @@
       <li><b>Forex fade big traders</b>: every CFTC report, for 10 currencies vs USD, go against the leveraged funds: if they raised their net position above the 13-week average, go short; if they cut it, go long. Equal size, no leverage.</li>
       <li><b>Copy steady traders</b>: each month copy the 10 Hyperliquid traders with the best 6-month consistency (at least 4 of 6 green months, last 90 days positive, account at least $100k). 0.5% a month taken off for copy delay.</li>
       <li><b>Watch only</b>: crypto momentum rotation (top 5 by 14-day return when BTC is above its 50-day average) and copy hot traders (top 10 by last 30 days). Both lost money in testing.</li>
-      <li><b>MAX-MASTER-2</b>: 21% crypto swing, 9% Bitcoin trend, 30% PSE dividend, 25% forex, 15% copy steady. Backtest 2022 to Oct 2026: +85% (13.6%/yr), worst drop −7.2%.</li>
+      <li><b>Gold trend</b>: hold gold only while it closes above its 200-day average, sized so its swings stay near 12% a year; otherwise cash. 30% of the total.</li>
+      <li><b>Forex and copy trading</b>: watch only. In the 26-year test (2000–2026) no forex or copy-big-traders strategy kept an edge; Hyperliquid copy records exist only since 2023.</li>
+      <li><b>MAX-MASTER-3</b>: 40% PSE dividend, 21% crypto swing, 9% Bitcoin trend, 30% gold trend. Backtest 2014 to Oct 2026: 17.5%/yr, worst drop −11.9%.</li>
     </ul>
   </details>
 </div>

@@ -1,4 +1,4 @@
-# MAX-MASTER-2 weekly paper-trading engine (pretend money only — never places real orders).
+# MAX-MASTER-3 weekly paper-trading engine (pretend money only — never places real orders).
 # Usage: python3 engine.py state.json pse_dir.json out_dir   → updates state.json, writes out_dir/report.md + out_dir/dashboard.json
 # Rules: signal on a day's close → trade at the NEXT day's close; real fees + slippage on every trade; nothing is back-filled with invented prices.
 import json, sys, time, math, os, datetime as dt, urllib.request, urllib.parse, re, statistics as stx
@@ -189,6 +189,31 @@ def btc_trend(B, U, upto):
                 why = (f"Bitcoin closed ${p:,.0f}, {'ABOVE' if p > sma else 'BELOW'} its 100-day average (${sma:,.0f}). " +
                        (f"Uptrend → hold Bitcoin. Its recent swings are {vol*100:.0f}% a year, so Max holds {w*100:.0f}% (target 40% swings) to limit losses." if w > 0 else
                         "Downtrend → Max sells and waits in cash; in 2011–2026 this avoided most of Bitcoin's big crashes (−92% worst drop for buy & hold vs −35% with this rule)."))
+                B["pending"] = [{"w": round(w, 3), "why": why}]; log(B["name"], "SIGNAL", why, date=iso(d))
+        B["hist"].append([iso(d), round(B["cash"] + q * p, 2)]); B["last_day"] = iso(d)
+def gold_trend(B, upto):
+    """Hold gold only while it closes above its 200-day average; size = 12% yearly volatility ÷ gold's recent volatility (max 100%).
+       Re-size only when the target moves by 10 points or more. Decided at close, traded next close, 0.05%/side. Tested 2000–2026."""
+    cost = 0.0005; s = [(d, p) for d, p in yahoo("GC=F", "2y")]; px = dict(s); dates = [d for d, _ in s]
+    last = D(B.get("last_day", iso(upto - dt.timedelta(days=1)))); q = B.get("qty", 0.0)
+    for d in [x for x in dates if last < x <= upto]:
+        p = px[d]
+        if B["pending"]:
+            o = B["pending"].pop(0); eq = B["cash"] + q * p; delta = o["w"] * eq - q * p
+            if delta > 0: buy = min(delta, B["cash"]) / (1 + cost); q += buy / p; B["cash"] -= buy * (1 + cost)
+            else: q -= -delta / p; B["cash"] += -delta * (1 - cost)
+            B["qty"] = q; side = "BUY" if delta > 0 else "SELL"
+            B["positions"] = [{"sym": "GOLD", "qty": q, "entry": iso(d), "ep": p, "stop": 0}] if q * p > 1 else []
+            B["trades"].append({"sym": "GOLD", "date": iso(d), "side": side, "px": p, "usd": round(abs(delta), 2), "pnl": 0})
+            log(B["name"], side, f"{side} ${abs(delta):,.2f} of gold @ ${p:,.1f}/oz → now {o['w']*100:.0f}% of this book in gold. Why: {o['why']}", date=iso(d))
+        hist = [x for dd, x in s if dd <= d]
+        if len(hist) >= 201:
+            sma = sum(hist[-200:]) / 200; r = [hist[i] / hist[i - 1] - 1 for i in range(-30, 0)]; vol = stx.pstdev(r) * math.sqrt(252)
+            w = min(1.0, 0.12 / vol) if p > sma else 0.0; eq = B["cash"] + q * p; cw = q * p / eq if eq else 0
+            if abs(w - cw) >= 0.10 or (w == 0 and cw > 0.001):
+                why = (f"Gold closed ${p:,.1f}, {'ABOVE' if p > sma else 'BELOW'} its 200-day average (${sma:,.1f}). " +
+                       (f"Uptrend → hold gold. Its recent swings are {vol*100:.0f}% a year, so Max holds {w*100:.0f}% (target 12%) to keep losses small." if w > 0 else
+                        "Downtrend → sell and wait in cash. In 2000–2026 this cut gold's worst drop from −44% to −34%."))
                 B["pending"] = [{"w": round(w, 3), "why": why}]; log(B["name"], "SIGNAL", why, date=iso(d))
         B["hist"].append([iso(d), round(B["cash"] + q * p, 2)]); B["last_day"] = iso(d)
 def crypto_momentum(B, U, upto):
@@ -412,6 +437,12 @@ def main(state_f, dir_f, out):
             nb = new_book("Bitcoin trend (above 100-day avg, volatility-sized)", "USDT", S["books"]["crypto_swing"]["start"]); nb.update(status="main", weight=0.09, opened=iso(dt.date.today()), last_day=iso(upto - dt.timedelta(days=1))); S["books"]["btc_trend"] = nb
             S["books"]["crypto_swing"]["weight"] = 0.21; log("MAX-MASTER-2", "CHANGE", "Crypto part is now 70% swing (21% of total) + 30% Bitcoin trend (9% of total), after the 2011–2026 test")
         step("btc_trend", lambda: btc_trend(S["books"]["btc_trend"], U, upto))
+    if "gold_trend" not in S["books"]:
+        nb = new_book("Gold trend (above 200-day avg, volatility-sized)", "USDT", S["books"]["crypto_swing"]["start"]); nb.update(status="main", weight=0.30, opened=iso(dt.date.today()), last_day=iso(upto - dt.timedelta(days=1))); S["books"]["gold_trend"] = nb
+        S["books"]["pse_dividend"]["weight"] = 0.40
+        for k in ("fx_cot", "copy_steady"): S["books"][k]["weight"] = 0; S["books"][k]["status"] = "watch"; S["books"][k]["name"] += " (watch only — no edge over 26 years)" if k == "fx_cot" else " (watch only — only 3 years of records)"
+        log("MAX-MASTER-3", "CHANGE", "New plan after the 26-year forex/copy test: 40% PSE dividend, 30% crypto (21% swing + 9% Bitcoin trend), 30% gold trend. Forex and copy trading continue as watch-only books.")
+    step("gold_trend", lambda: gold_trend(S["books"]["gold_trend"], upto))
     step("pse_dividend", lambda: pse_dividend(S["books"]["pse_dividend"], DIR, dt.date.today()))
     step("fx_cot", lambda: fx_cot(S["books"]["fx_cot"], upto))
     step("copy_steady", lambda: copy_book(S["books"]["copy_steady"], dt.date.today(), "steady"))
@@ -441,7 +472,7 @@ def main(state_f, dir_f, out):
     json.dump(S, open(state_f, "w"), indent=1)
     json.dump({"summary": S["summary"], "books": {k: {kk: v for kk, v in B.items() if kk not in ("div_keys",)} for k, B in S["books"].items()}, "events": S["events"][-300:]}, open(f"{out}/dashboard.json", "w"), indent=1)
     # dashboard row files
-    json.dump({"rows": [dict(r, value_php=round(r["value"] * (usd if r["ccy"] == "USDT" else 1), 0)) for r in rows] + [{"key": "master2", "name": "MAX-MASTER-2 combined (30/30/25/15)", "status": "main", "weight": 1, "ccy": "PHP", "value": None, "value_php": None,
+    json.dump({"rows": [dict(r, value_php=round(r["value"] * (usd if r["ccy"] == "USDT" else 1), 0)) for r in rows] + [{"key": "master2", "name": "MAX-MASTER-3 combined (40 PSE / 30 crypto / 30 gold)", "status": "main", "weight": 1, "ccy": "PHP", "value": None, "value_php": None,
                "week_%": round(comboW, 2), "since_start_%": round(combo, 2), "open": None, "closed_trades": None, "wins": None}]}, open(f"{out}/books.json", "w"), indent=1)
     eqrows = []
     for k, B in S["books"].items():
@@ -463,7 +494,7 @@ def main(state_f, dir_f, out):
     json.dump({"rows": pos}, open(f"{out}/positions.json", "w"), indent=1)
     # report
     L = [f"**Max paper trading — week {weeks} ({iso(dt.date.today())})**", "Pretend money only. No real orders. Not financial advice.", "",
-         f"**MAX-MASTER-2 combined:** this week {comboW:+.2f}% · since start {combo:+.2f}% (weights 30/30/25/15)",
+         f"**MAX-MASTER-3 combined (40% PSE dividend, 30% crypto, 30% gold):** this week {comboW:+.2f}% · since start {combo:+.2f}% ",
          f"- Benchmarks since start: Bitcoin {S['summary']['bench']['btc_%']:+.2f}% · PSEi ETF (AETF) {S['summary']['bench']['psei_etf_%']:+.2f}%", ""]
     L.append("**Strategies**")
     for r in rows:
