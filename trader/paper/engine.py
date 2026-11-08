@@ -201,6 +201,7 @@ def pse_dividend(B, DIR, upto):
         time.sleep(0.4)
     days = sorted({d for s in prices.values() for d in s if since < d <= upto})
     for d in days:
+        bought_today = False
         for o in [o for o in B["pending"] if True]:
             p = prices.get(o["sym"], {}).get(d)
             if p is None: continue
@@ -212,10 +213,35 @@ def pse_dividend(B, DIR, upto):
                 log(B["name"], "SELL", f"SELL {pos['shares']:,} {o['sym']} @ ₱{p:,.4g} (bought ₱{pos['ep']:,.4g} on {pos['entry']}) → {'+' if pnl>=0 else ''}₱{pnl:,.0f} incl. ₱{pos.get('divs',0):,.0f} dividends. Why: " + o.get("why", "quarterly rebalance"), date=iso(d))
             else:
                 lot = board_lot(p); budget = min(o["php"], B["cash"]); sh = int(budget / (p * (1 + cost_buy + slip)) // lot * lot)
-                if sh <= 0: log(B["name"], "SKIP", f"{o['sym']}: ₱{budget:,.0f} buys less than one board lot ({lot} sh @ ₱{p:,.4g})", date=iso(d)); continue
+                if sh <= 0:
+                    B.setdefault("topup", []).append({"sym": o["sym"], "yield": o.get("yield", 0), "why": o.get("why", "")})
+                    log(B["name"], "WAIT", f"{o['sym']}: one board lot ({lot} sh × ₱{p:,.4g} = ₱{lot*p:,.0f}) costs more than its ₱{budget:,.0f} share — it gets bought from the leftover cash after the other buys", date=iso(d)); continue
                 c = sh * p * (1 + cost_buy + slip); B["cash"] -= c
-                B["positions"].append({"sym": o["sym"], "shares": sh, "ep": p, "cost": round(c, 2), "entry": iso(d), "divs": 0.0, "yield_at_buy": o.get("yield")})
-                log(B["name"], "BUY", f"BUY {sh:,} {o['sym']} ({sh//lot} board lots of {lot}) @ ₱{p:,.4g} = ₱{c:,.0f} incl. COL fee. Why: " + o.get("why", f"dividend yield {o.get('yield',0)*100:.1f}%"), date=iso(d))
+                B["positions"].append({"sym": o["sym"], "shares": sh, "ep": p, "cost": round(c, 2), "entry": iso(d), "divs": 0.0, "yield_at_buy": o.get("yield")}); bought_today = True
+                log(B["name"], "BUY", f"BUY {sh:,} {o['sym']} ({sh//lot} board lot{'s' if sh//lot>1 else ''} of {lot}) @ ₱{p:,.4g} = ₱{c:,.0f} incl. COL fee. Why: " + o.get("why", f"dividend yield {o.get('yield',0)*100:.1f}%"), date=iso(d))
+        # leftover cash after whole board lots: first buy the stocks that didn't fit, then one extra lot at a time in yield order (keeps ≤2% idle)
+        if not [o for o in B["pending"] if o["side"] == "buy"] and (B.get("topup") or (bought_today and B["cash"] > 2000)):
+            for t in list(B.get("topup", [])):
+                if t["sym"] not in prices:
+                    try: prices[t["sym"]] = {dd: pp for dd, pp, _ in pse_prices(rows[t["sym"]], d - dt.timedelta(days=10))}
+                    except Exception: continue
+            ranked = sorted(({x["sym"]: x.get("yield_at_buy") or 0 for x in B["positions"]} | {t["sym"]: t["yield"] for t in B.get("topup", [])}).items(), key=lambda kv: -kv[1])
+            for first in (True, False):
+                for sym, y in ranked:
+                    p = prices.get(sym, {}).get(d)
+                    if not p: continue
+                    held_ = next((x for x in B["positions"] if x["sym"] == sym), None)
+                    if first != (held_ is None): continue
+                    lot = board_lot(p); c = lot * p * (1 + cost_buy + slip)
+                    if c > B["cash"]: continue
+                    B["cash"] -= c
+                    if held_: held_["shares"] += lot; held_["cost"] = round(held_["cost"] + c, 2)
+                    else:
+                        t = next(t for t in B["topup"] if t["sym"] == sym)
+                        B["positions"].append({"sym": sym, "shares": lot, "ep": p, "cost": round(c, 2), "entry": iso(d), "divs": 0.0, "yield_at_buy": y})
+                        log(B["name"], "BUY", f"BUY {lot:,} {sym} (1 board lot) @ ₱{p:,.4g} = ₱{c:,.0f} from leftover cash. Why: " + t["why"], date=iso(d))
+            B["topup"] = [t for t in B.get("topup", []) if not any(x["sym"] == t["sym"] for x in B["positions"])]
+            log(B["name"], "CASH", f"After whole board lots: ₱{B['cash']:,.0f} left in cash (less than one more lot of any pick)", date=iso(d))
         B["hist"].append([iso(d), round(B["cash"] + sum(x["shares"] * (prices.get(x["sym"], {}).get(d) or last_px(prices, x)) for x in B["positions"]), 2)])
         B["last_day"] = iso(d)
     # dividends with ex-date inside the period
