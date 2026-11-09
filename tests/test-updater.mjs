@@ -1,0 +1,40 @@
+// The one-tap updater: refuses wrong passcode and bad fingerprints, uploads the new code keeping database/secrets, rolls back on request.
+import crypto from "node:crypto";
+const CODE = "export default { fetch(){ return new Response('hi') } }";
+const SHA = crypto.createHash("sha256").update(CODE).digest("hex");
+let calls = [], manifest = { version: "max-worker-NEW", file: "worker.js", sha256: SHA, bytes: CODE.length, built: "2026-11-09T00:00:00Z", compatibility_date: "2026-10-23", vars: [["MAX_SEED_NOTES", "on"]], notes: ["Keyboard on home"] };
+globalThis.fetch = async (u, init = {}) => {
+  u = String(u); calls.push({ u, init });
+  const J = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "Content-Type": "application/json" } });
+  if (u.startsWith("https://max-app-axv.pages.dev/_update/manifest.json")) return J(manifest);
+  if (u.startsWith("https://max-app-axv.pages.dev/_update/worker.js")) return new Response(CODE);
+  if (u === "https://api.cloudflare.com/client/v4/accounts") return J({ success: true, result: [{ id: "acc123" }] });
+  if (u.endsWith("/workers/scripts/max-ai-backend/deployments") && (!init.method || init.method === "GET")) return J({ success: true, result: { deployments: [{ versions: [{ version_id: "11111111-2222-3333-4444-555555555555", percentage: 100 }] }] } });
+  if (u.endsWith("/workers/scripts/max-ai-backend/deployments") && init.method === "POST") return J({ success: true, result: {} });
+  if (u.endsWith("/workers/scripts/max-ai-backend") && init.method === "PUT") return J({ success: true, result: { id: "max-ai-backend" } });
+  return J({ success: false, errors: [{ message: "unexpected " + u }] }, 404);
+};
+const { default: up } = await import(process.argv[2]);
+const env = { CF_API_TOKEN: "tok", UPDATE_PASS: "1234" };
+let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
+const req = (p, opt = {}) => up.fetch(new Request("https://max-updater.x.workers.dev" + p, { headers: { Origin: "https://max-app-axv.pages.dev", "X-Update-Pass": "1234", ...(opt.headers || {}) }, ...opt }), env);
+let r = await up.fetch(new Request("https://max-updater.x.workers.dev/health"), env), d = await r.json();
+ok(d.ready === true, "health: ready once both secrets exist");
+r = await up.fetch(new Request("https://u/health"), {}); d = await r.json(); ok(d.ready === false, "health: says not ready without secrets");
+r = await req("/check", { headers: { "X-Update-Pass": "wrong" } }); ok(r.status === 401, "wrong passcode is refused");
+r = await req("/check"); d = await r.json(); ok(d.available === "max-worker-NEW" && d.notes[0] === "Keyboard on home" && r.headers.get("Access-Control-Allow-Origin") === "https://max-app-axv.pages.dev", "check: shows the version waiting on Pages, only Max's app may call it", JSON.stringify(d));
+calls = []; r = await req("/deploy", { method: "POST", body: "{}" }); d = await r.json();
+const put = calls.find(c => c.init.method === "PUT");
+let meta = null, file = null;
+if (put) { const fd = put.init.body; meta = JSON.parse(await fd.get("metadata").text()); file = await fd.get("worker.js").text(); }
+ok(r.status === 200 && d.installed === "max-worker-NEW" && d.previous === "11111111-2222-3333-4444-555555555555", "deploy: installs and remembers the previous version", JSON.stringify(d));
+ok(meta && meta.main_module === "worker.js" && meta.keep_bindings.includes("d1") && meta.keep_bindings.includes("secret_text") && meta.keep_bindings.includes("ai") && meta.bindings[0].name === "MAX_SEED_NOTES" && file === CODE, "upload keeps database, AI and secrets; sends exactly the checked code", JSON.stringify(meta));
+ok(put && put.init.headers.Authorization === "Bearer tok" && /accounts\/acc123\/workers\/scripts\/max-ai-backend$/.test(put.u), "uses his token on his own account and only touches max-ai-backend");
+manifest = { ...manifest, sha256: "0".repeat(64) }; calls = [];
+r = await req("/deploy", { method: "POST", body: "{}" }); d = await r.json();
+ok(r.status === 409 && !calls.some(c => c.init.method === "PUT"), "a file that doesn't match its fingerprint is NOT installed", JSON.stringify(d));
+calls = []; r = await req("/rollback", { method: "POST", body: JSON.stringify({ version_id: "11111111-2222-3333-4444-555555555555" }) }); d = await r.json();
+const rb = calls.find(c => c.init.method === "POST" && c.u.endsWith("/deployments"));
+ok(r.status === 200 && rb && JSON.parse(rb.init.body).versions[0].percentage === 100, "rollback puts the previous version back at 100%");
+r = await req("/rollback", { method: "POST", body: JSON.stringify({ version_id: "x" }) }); ok(r.status === 400, "rollback needs a real version id");
+console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

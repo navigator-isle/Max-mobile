@@ -1,4 +1,4 @@
-// Max's agents: 11 agents, each with a detailed weekly report (one email per agent), daily notes fact-check,
+// Max's agents: 12 agents, each with a detailed weekly report (one email per agent), daily notes fact-check,
 // weekly strategy ideas for the paper trader, investments with week-on-week changes, business ideas never repeated.
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
@@ -71,7 +71,7 @@ sqlite.exec(`INSERT INTO max_notes (id,title,category,tags,body,analysis,created
  ('n4','SOLAS drills','Maritime › Job by Rank › Third Officer','[]','<p>Duplicate title on purpose for the librarian to find here.</p>',NULL,${now},${now},0)`);
 
 r = await call("/api/agents", { session });
-ok(r.status === 200 && r.data.agents.length === 11 && r.data.agents.every(a => a.workers.length && /Sunday/.test(a.reportDay)), "11 agents, each with its sub-workers and a Sunday report slot", JSON.stringify(r.data?.agents?.map(a => a.id)));
+ok(r.status === 200 && r.data.agents.length === 12 && r.data.agents.some(a => a.id === "shopping") && r.data.agents.every(a => a.workers.length && /Sunday/.test(a.reportDay)), "12 agents (incl. Shopping), each with its sub-workers and a Sunday report slot", JSON.stringify(r.data?.agents?.map(a => a.id)));
 ok(r.data.budget.notes > r.data.budget.trading && r.data.budget.trading > r.data.budget.web, "brain budget: notes first, trading second, a small share for the rest", JSON.stringify(r.data.budget));
 r = await call("/api/agents");
 ok(r.status === 401, "agents and reports are private");

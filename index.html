@@ -643,6 +643,14 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button id="saveWorkerUrl" class="home-mic primary">Save</button><button id="testWorkerUrl" class="home-mic">Test connection</button></div>
     <p id="connectionResult" style="white-space:pre-wrap;color:#bcecff;line-height:1.5"></p>
+    <div id="updateSection" style="border-top:1px solid #294861;margin-top:12px;padding-top:10px">
+      <strong>Update Max's server</strong>
+      <p class="notes-tip">After you upload a new max-app.zip to Cloudflare Pages, tap Check, then Install. Max's database, notes, memory and secrets stay. If the new version doesn't start, Max goes back to the old one by himself.</p>
+      <label for="updaterUrl" style="display:block;margin:8px 0 6px">Updater address</label>
+      <input id="updaterUrl" placeholder="https://max-updater.your-name.workers.dev" style="width:100%;box-sizing:border-box;background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:10px;padding:10px;font:inherit">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="updCheck" class="home-mic">Check for update</button><button id="updInstall" class="home-mic primary" disabled>Install update</button></div>
+      <p id="updResult" class="notes-tip" style="white-space:pre-wrap"></p>
+    </div>
     <div id="memorySection" hidden style="border-top:1px solid #294861;margin-top:10px;padding-top:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong>Max's long-term memory</strong><button id="memRefresh" class="home-mic" style="padding:6px 12px">Refresh</button></div>
       <p class="notes-tip">Tip: say “Max, remember that …” and it is saved here. Avoid passwords or bank details.</p>
@@ -1010,6 +1018,37 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   catch(e){return 'Could not get the code backup: '+(e.message||e)}
  }
  $('codeBackupBtn').onclick=async()=>{const t=await downloadCode();status(t)};
+
+ // ---------- one-tap server update (max-updater Worker; no laptop, no GitHub) ----------
+ const UPD_KEY='max_updater_url';
+ const updaterBase=()=>{let u='';try{u=localStorage.getItem(UPD_KEY)||''}catch{}if(u)return u.trim().replace(/\/+$/,'');const w=window.maxWorker();return /max-ai-backend\./.test(w)?w.replace('max-ai-backend.','max-updater.'):''};
+ const liveVersion=async()=>{try{const {data}=await fetchJson(window.maxWorker()+'/health?t='+Date.now(),{method:'GET'},10000);return data&&data.version||''}catch{return ''}};
+ async function updCall(path,body){const r=await fetch(updaterBase()+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Update-Pass':window.maxPass()},body:body?JSON.stringify(body):undefined});let d={};try{d=await r.json()}catch{}if(!r.ok)throw new Error(d.error||('updater said '+r.status));return d}
+ let updAvail=null;
+ async function updCheck(){
+  const out=$('updResult');$('updInstall').disabled=true;
+  if(!updaterBase()){out.textContent='Add the updater address first (see the steps in UPDATE-STEPS).';return}
+  if(!window.maxPass()){out.textContent='Enter Max passcode above first — the updater uses the same passcode.';return}
+  out.textContent='Checking…';
+  try{const [live,m]=await Promise.all([liveVersion(),updCall('/check')]);updAvail=m;
+   const newer=m.available&&m.available!==live;$('updInstall').disabled=!newer;
+   out.textContent='Running now: '+(live||'no answer')+'\nAvailable: '+m.available+' ('+Math.round((m.size||0)/1024)+' KB, built '+String(m.built||'').slice(0,16).replace('T',' ')+')'+(m.notes&&m.notes.length?'\nWhat’s new:\n• '+m.notes.join('\n• '):'')+(newer?'\nTap Install update.':'\nMax is already up to date.');
+  }catch(e){out.textContent='Could not check: '+(e.message||e)}
+ }
+ async function updInstall(){
+  const out=$('updResult');$('updInstall').disabled=true;$('updCheck').disabled=true;
+  try{
+   out.textContent='Installing… (about 30 seconds — keep this screen open)';
+   const d=await updCall('/deploy',{});
+   let now='';for(let i=0;i<10;i++){await new Promise(r=>setTimeout(r,3000));now=await liveVersion();if(now===d.installed)break}
+   if(now===d.installed){out.textContent='✅ Max’s server is now '+now+'.'+(d.notes&&d.notes.length?'\n• '+d.notes.join('\n• '):'');try{speak('Update installed. I am now running the new version.')}catch{}return}
+   if(d.previous){out.textContent='The new version did not start properly ('+(now||'no answer')+'). Going back to the previous version…';await updCall('/rollback',{version_id:d.previous});await new Promise(r=>setTimeout(r,4000));out.textContent='The new version did not start, so Max was put back to the previous version ('+(await liveVersion()||'checking')+'). Nothing is lost. Send this message to Claude.'}
+   else out.textContent='The new version did not start ('+(now||'no answer')+'). Open Cloudflare → Workers → max-ai-backend → Deployments → Rollback.';
+  }catch(e){out.textContent='Update failed, nothing was changed: '+(e.message||e)}
+  finally{$('updCheck').disabled=false}
+ }
+ $('updCheck').onclick=updCheck;$('updInstall').onclick=updInstall;
+ $('updaterUrl').onchange=()=>{try{const v=$('updaterUrl').value.trim();v?localStorage.setItem(UPD_KEY,v):localStorage.removeItem(UPD_KEY)}catch{}};
  $('backupInput').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const t=await restoreBackup(f);status(t);try{speak(t)}catch{}};
 
  // ---------- long-term memory list (in ⚙ settings) ----------
@@ -1048,7 +1087,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- connection settings ----------
  function openConnection(){
   closeMenu();
-  $('workerUrl').value=workerBase();$('maxPassInput').value=window.maxPass();
+  $('workerUrl').value=workerBase();$('maxPassInput').value=window.maxPass();$('updaterUrl').value=updaterBase();
   $('connectionResult').textContent=cloud.state==='offline'&&cloud.detail?('Last check failed: '+cloud.detail):'';
   $('connectionModal').hidden=false;$('connectionModal').classList.add('open');renderMemory();renderLearned();renderProjectEditor();
  }
@@ -1103,10 +1142,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(name==='projects'){renderProjects();loadStats(false).then(()=>{if(screen==='projects')renderProjects()})}
   window.scrollTo(0,0);
  }
- function setKeyboard(on){
+ // The typing box stays on the home screen (he can type any time); "hide keyboard" hides it and Max remembers.
+ const KB_KEY='max_keyboard';
+ function setKeyboard(on,remember=true,goHome=true){
   keyboardOn=!!on;$('typeRow').hidden=!keyboardOn;
-  if(keyboardOn&&screen!=='home'&&!wideScreen.matches)setSection('home');
+  if(remember){try{localStorage.setItem(KB_KEY,keyboardOn?'on':'off')}catch{}}
+  if(goHome&&keyboardOn&&screen!=='home'&&!wideScreen.matches)setSection('home');
  }
+ try{setKeyboard(localStorage.getItem(KB_KEY)!=='off',false,false)}catch{setKeyboard(true,false,false)}
  const screenName=()=>screen==='home'&&keyboardOn?'keyboard':screen;
  $('miniHome').onclick=()=>setSection('home');
 
@@ -4395,13 +4438,21 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const {r,data}=res;if(!r.ok)return 'The price search failed: '+(data.error||('HTTP '+r.status));
   const dr=data.draft||{},points=(dr.points||[]).map(String),key=dealKey(q);
   const v=dealVerdict(key,points);
+  // Option 1 method: open each store's own product page and read the price of the exact version (not the search snippet)
+  status('🛒 Reading the price on each store’s own page…');
+  const links=[...new Set([...(dr.sources||[]).map(x=>x.url),...points.join(' ').match(/https:\/\/[^\s)\]>"']+/g)||[]].filter(Boolean))].slice(0,8);
+  let checks=[];if(links.length){try{const c=await postJson('/api/deal/check',{product:q,urls:links},60000);if(c.r.ok)checks=c.data.results||[]}catch{}}
+  const okc=checks.filter(c=>c.confirmed&&c.price).sort((a,b)=>a.price-b.price);
+  const low=okc.length?okc[0].price:v.low;
   const all=dealsAll();const it=all.items[key]||{q,history:[],watch:false};
-  it.q=q;it.history=[{at:Date.now(),low:v.low,points:points.slice(0,8),sources:(dr.sources||[]).filter(x=>x.url).slice(0,6)},...it.history].slice(0,20);
+  it.q=q;it.history=[{at:Date.now(),low,confirmed:!!okc.length,checks:checks.slice(0,8),points:points.slice(0,8),sources:(dr.sources||[]).filter(x=>x.url).slice(0,6)},...it.history].slice(0,20);
   all.items[key]=it;jset(DEALS,all);scheduleSync();
   showDeal(key);
   const best=points.find(x=>/best value|best pick|best buy/i.test(x))||points[0]||'';
+  const hm=t=>new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(okc.length){const c=okc[0];return 'Confirmed on the store’s own page: ₱'+c.price.toLocaleString()+' at '+c.store+(c.variant?' for '+c.variant:'')+(c.available===false?' (but it shows out of stock)':'')+', read at '+hm(c.readAt)+'.'+(okc.length>1?' '+(okc.length-1)+' more store'+(okc.length>2?'s':'')+' confirmed — see the list.':'')+(v.trend?' '+v.trend:'')+' Prices change fast; the link is on screen.'}
   return (dr.searched?'':'I couldn’t search live prices just now, so this is from what I already know — check the links. ')+
-   (best?best.replace(/^(?:best value(?: pick)?|best pick)\s*[:\-–]\s*/i,'Best value: '):'Here’s what I found.')+(v.trend?' '+v.trend:'')+' Prices change fast — tap the store link to confirm before buying.';
+   (best?best.replace(/^(?:best value(?: pick)?|best pick)\s*[:\-–]\s*/i,'Best value: '):'Here’s what I found.')+(v.trend?' '+v.trend:'')+' I could not confirm these prices on the store pages, so treat them as estimates — tap the store link to confirm before buying.';
  }
  function showDeal(key){
   const it=dealsAll().items[key];if(!it)return showDeals();
@@ -4409,6 +4460,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const cards=[{badge:'DEAL FINDER',badgeClass:'badge-res',title:'🛒 '+it.q,meta:'checked '+whenText(localDate(new Date(h.at||Date.now()))),
    lines:[...(h.points||[]).map(t=>({text:t,cls:/best value|best pick|best buy/i.test(t)?'ok':/inflated|fake|not (a )?real|suspicious/i.test(t)?'miss':''})),...(h.low?['Lowest legit price found: ₱'+h.low.toLocaleString()]:[])],
    buttons:[['🔄 Check again',()=>findDeal({product:it.q}).then(t=>{setSub('',t);speak(t)})],[it.watch?'🔕 Stop watching':'👀 Watch this price',()=>{const t=dealWatch({product:it.q,on:!it.watch});setSub('',t);showDeal(key)}],['🛒 All my deals',()=>showDeals()]]}];
+  if(h.checks&&h.checks.length){const hm=t=>new Date(t).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+   cards.unshift({badge:'STORE PAGES',badgeClass:'badge-res',title:'Prices read from each store’s own page',lines:[...h.checks.filter(c=>c.confirmed&&c.price).sort((a,b)=>a.price-b.price).map(c=>({text:'✓ '+c.store+' — ₱'+c.price.toLocaleString()+(c.was?' (was ₱'+c.was.toLocaleString()+')':'')+(c.variant?' · '+c.variant:'')+(c.available===false?' · OUT OF STOCK':'')+' · read '+hm(c.readAt),cls:'ok'})),...h.checks.filter(c=>!c.confirmed).map(c=>({text:'⚠ '+c.store+(c.price?' — ₱'+c.price.toLocaleString():'')+' — not confirmed: '+c.note,cls:'miss'}))],
+    buttons:h.checks.slice(0,6).map(c=>['↗ '+c.store.slice(0,24),()=>window.open(c.url,'_blank','noopener')])})}
   if(h.sources&&h.sources.length)cards.push({badge:'SOURCES',title:'Where the prices came from',lines:['Tap to open and confirm the price before buying:'],buttons:h.sources.map(x=>['↗ '+String(x.title).slice(0,28),()=>window.open(x.url,'_blank','noopener')])});
   if(older.length)cards.push({badge:'PRICE HISTORY',title:'Earlier checks',lines:older.map(x=>whenText(localDate(new Date(x.at)))+': lowest ₱'+x.low.toLocaleString())});
   cards.push({badge:'RULES',title:'How I pick',lines:['Only legit sellers: brand official stores, authorized resellers and department stores, LazMall, Shopee Mall, TikTok Shop Mall, Zalora. Unofficial sellers are skipped.','A real discount = lower than the brand’s CURRENT official price — not the store’s “was” price (those are often inflated). My price history also shows fake markups over time.','“Official store” on Lazada/Shopee may be run by a reseller, not the brand itself — check it’s authorized.','I never buy anything — you decide.']});
@@ -4608,7 +4662,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const say=s=>aiReply||s;
   switch(a.type){
    case 'show_keyboard':setSection('home');setKeyboard(true);return say('Keyboard’s up. Type, or just keep talking.');
-   case 'hide_keyboard':setKeyboard(false);return say('Keyboard’s away.');
+   case 'hide_keyboard':setKeyboard(false);return say('Keyboard’s away. Say “show keyboard” to bring it back.');
    case 'open_menu':openMenu();return 'Here’s the menu.';
    case 'open_settings':openConnection();return say('Here are the settings.');
    case 'go_home':closeConnection();closeMenu();setSection('home');return say('I’m here.');

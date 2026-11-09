@@ -52,7 +52,7 @@ const prompt = sent ? sent.contents.at(-1).parts[0].text : "";
 ok(/Samsung A56 256GB/.test(prompt) && /LazMall/.test(prompt) && /Shopee Mall/.test(prompt) && /TikTok Shop/.test(prompt) && /Zalora/.test(prompt) && /authorized resellers/.test(prompt) && /CURRENT official price/.test(prompt) && sent.tools?.[0]?.google_search, "searches ALL legit PH sellers (official, authorized resellers, LazMall, Shopee Mall, TikTok Shop, Zalora) against the brand's current price", prompt.slice(0, 300));
 ok(/Best value: LazMall Samsung Official Store at ₱13,999/.test(await spoken()) && /confirm before buying/.test(await spoken()), "says the best value and reminds him to confirm", await spoken());
 ok(/🛒 Samsung A56 256GB/.test(await shown()) && /inflated discount/.test(await shown()) && /Lowest legit price found: ₱13,999/.test(await shown()), "the screen lists each store, flags the fake discount", (await shown()).slice(0, 400));
-await p.locator("#dispBody button", { hasText: "lazada.com.ph" }).click();
+await p.locator("#dispBody button", { hasText: "lazada.com.ph" }).first().click();
 ok((await p.evaluate(() => window.__opened)).includes("https://www.lazada.com.ph/products/samsung-a56"), "store links open so he can check and buy himself");
 // price goes up next time → Max says so
 price = 15499;

@@ -1,4 +1,4 @@
-**HANDOFF — Max and Mark's projects (updated 8 Nov 2026)**
+**HANDOFF — Max and Mark's projects (updated 9 Nov 2026)**
 Read this first in any new chat or session. Short on purpose; details are in SETUP.md and DEPLOY.md.
 
 **Who**
@@ -28,13 +28,19 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Phone app features since 8 Nov: My songs (own music, no ads), music pauses for the mic, Deal Finder (🛒)
 - Officer checklist app → Netlify (check whether linked to a GitHub repo)
 
-**Not live yet (needs a laptop, or GitHub back)**
+**Updates without laptop or GitHub (from 9 Nov 2026)**
+- One-tap updater: Worker `max-updater` (updater.js; secrets CF_API_TOKEN + UPDATE_PASS that Mark adds himself) installs `_update/worker.js` from max-app-axv.pages.dev after a SHA-256 check; the app (⚙ → Update Max's server) checks /health and calls /rollback if the new version fails
+- Release = `node build.mjs` → max-app.zip (app + _update) → Mark uploads it to Pages project max-app → taps Install
+- Phone steps: UPDATE-STEPS.md · Bundle max-worker-2026-11-17a: Shopping agent (#12), store-page prices for Deal Finder, 24 Trading seed notes + 24 chat memories, always-on typing box, Trading agent → dashboard
+
+**Older plan (laptop deploy, kept for reference)**
 - Worker version max-worker-2026-11-16a+: serves app itself, weekly Gmail backup also attaches all code (max-code zip), /api/backup/code, new site addresses for Guard
 - Deploy: `node build.mjs` then `npx wrangler deploy` (deploy.bat / deploy.sh; first time `wrangler login` in his browser)
 - Phone-only updates: rebuild site → zip site/ without _src → he uploads to Pages project max-app ("Create deployment")
 
 **Paused**
-- Paper trader (GitHub Actions + trader-data branch) — paused until GitHub returns (his choice); history only on GitHub
+- Paper trading now: Claude's Sunday scheduled run + dashboard https://claude.ai/artifact/25fnUcKASedJmKSZBRbW9H (MAX-MASTER-3; engine and state in its database `paper/`); email to his Gmail
+- Old GitHub Actions paper trader retired
 - Passage Planner Android auto-builds / Play upload (GitHub Actions)
 - Max's GitHub features (project code updates, build checks, trading ideas write)
 - 4+ local commits not pushed (GitHub refuses) — push when account is restored
@@ -53,7 +59,7 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Bold headers, hyphen bullets, short maritime-specific key points, no filler
 - What is → History → Applies to → chapters/regulations with key points, resolutions & dates → Key Point → Sources (checked date)
 
-**Waiting for ONE bundled server update (his choice: do it together later)**
+**Bundled update (built 9 Nov 2026, waiting for Mark to install with the steps in UPDATE-STEPS.md)**
 - One-tap updater (small updater Worker + Cloudflare token he pastes himself) so future updates need no laptop/GitHub
 - New Worker version (serves app, code in weekly Gmail backup), brain improvements (needs his examples + /health screenshot)
 - Deal Finder as a full server agent (weekly email report, structured prices); app version already works via /api/research

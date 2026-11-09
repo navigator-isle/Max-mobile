@@ -32,6 +32,10 @@ run "Agents & weekly reports" tests/test-worker20.mjs "$TMP/worker.mjs"
 run "Notes added for Mark" tests/test-worker21.mjs "$TMP/worker.mjs"
 node build.mjs >/dev/null
 run "Max without GitHub (app on Cloudflare, code backups)" tests/test-worker22.mjs "$TMP/worker.mjs" "$PWD/site"
+run "One-tap updater (Worker)" tests/test-updater.mjs "$PWD/updater.js"
+run "Deal Finder: prices from store pages" tests/test-worker23.mjs "$TMP/worker.mjs"
+run "Shopping agent (weekly)" tests/test-worker24.mjs "$TMP/worker.mjs"
+run "Trading notes & chat memories into Max" tests/test-worker25.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
@@ -69,4 +73,7 @@ run "Phone: long core notes (SOLAS, MARPOL, STCW, MLC)" tests/e2e32.mjs "$PWD/in
 run "Phone: app on Cloudflare, code backup button" tests/e2e33.mjs "$PWD/index.html"
 run "Phone: My songs (no ads) and music that pauses for the mic" tests/e2e34.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: Deal Finder (best legit price)" tests/e2e35.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: trading notes import (771 notes)" tests/e2e36.mjs "$PWD/index.html" "$PWD/trader/notes"
+run "Phone: one-tap server update" tests/e2e37.mjs "$PWD/index.html"
+run "Phone: typing box always on home" tests/e2e38.mjs "$PWD/index.html"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

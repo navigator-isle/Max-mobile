@@ -57,7 +57,7 @@ const say = async t => { const n = await p.evaluate(() => window.__spoken.length
 const lastSpoken = () => p.evaluate(() => window.__spoken.at(-1));
 
 // 1. default: just the circle
-ok(await vis("#maxOrb") && !(await vis("#typeRow")) && !(await vis("#miniMax")) && !(await vis("#homeTalk")), "default screen: only the circle (no keyboard, no buttons)");
+ok(await vis("#maxOrb") && await vis("#typeRow") && !(await vis("#miniMax")) && !(await vis("#homeTalk")), "default screen: the circle and the typing box (always on, his choice 9 Nov 2026), no other buttons");
 const px = async () => p.evaluate(() => { const c = document.getElementById("orbCanvas"); return c.toDataURL().length + ":" + c.getContext("2d").getImageData(c.width / 2 + Math.round(c.width * 0.41), c.height / 2, 1, 1).data.join(","); });
 const f1 = await px(); await p.waitForTimeout(400); const f2 = await px();
 ok(f1 !== f2, "circle is animated (dots move)");

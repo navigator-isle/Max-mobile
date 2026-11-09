@@ -71,7 +71,7 @@ ok(await L.evaluate(() => getComputedStyle(document.getElementById("projList")).
 await L.keyboard.press("Control+k");
 ok(await L.evaluate(() => document.activeElement.id === "typeInput" && document.getElementById("projectsScreen").classList.contains("active")), "Ctrl+K types to Max without leaving the screen");
 const P = phone.p;
-ok(await P.evaluate(() => getComputedStyle(document.getElementById("homeScreen")).display) !== "none" && await P.evaluate(() => getComputedStyle(document.getElementById("typeRow")).display) === "none", "phone layout unchanged (no laptop typing bar)");
+ok(await P.evaluate(() => getComputedStyle(document.getElementById("homeScreen")).display) !== "none" && await P.evaluate(() => getComputedStyle(document.getElementById("typeRow")).display) !== "none", "phone layout: home screen with the always-on typing box");
 ok(phone.p.errs.length === 0 && laptop.p.errs.length === 0, "no script errors", [...phone.p.errs, ...laptop.p.errs].join(" | "));
 await b.close(); sW.close(); sP.close();
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
