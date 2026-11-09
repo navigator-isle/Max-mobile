@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18a";
+const WORKER_VERSION = "max-worker-2026-11-18b";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -3009,16 +3009,28 @@ async function sitemapInfo(origin) {
   return {pages: urls.length, newest: lastmods[lastmods.length - 1] || null, changed30d: lastmods.filter(d => d >= cut).length, sample: urls.filter(u => !/\/(tag|category|page|about|contact|privacy|disclosure|terms)\/?/i.test(u) && new URL(u).pathname.split("/").filter(Boolean).length >= 2).sort(() => Math.random() - 0.5).slice(0, 6)};
 }
 const AFF_RE = /amazon\.|amzn\.to|shopee|lazada|aliexpress|ebay\.|involve\.asia|invol\.co|tiktok\.com\/.*shop|accesstrade|shope\.ee|s\.lazada/i;
-async function affiliateInfo(urls) {
-  const out = {pagesChecked: 0, links: 0, stores: {}, amazonWithoutTag: 0, disclosurePages: 0};
+async function affiliateInfo(urls) {     // shop links, incl. the site's own /go/… redirect links (Hobby Isle sends every Amazon button through /go/)
+  const out = {pagesChecked: 0, links: 0, redirectLinks: 0, stores: {}, amazonWithoutTag: 0, disclosurePages: 0, checkedRedirects: [], tag: null};
+  const goSeen = new Set();
   for (const u of urls.slice(0, 3)) {
     try { const {r} = await timedFetch(u, {}, 12000); if (!r.ok) continue; const html = await r.text(); out.pagesChecked++;
-      const links = [...html.matchAll(/href=["']([^"']+)["']/gi)].map(m => m[1]).filter(l => AFF_RE.test(l)); out.links += links.length;
+      const hrefs = [...html.matchAll(/href=["']([^"']+)["']/gi)].map(m => m[1]);
+      const links = hrefs.filter(l => AFF_RE.test(l)), go = hrefs.filter(l => /^\/go\/[\w-]+/.test(l) || /^https?:\/\/[^/]+\/go\/[\w-]+/.test(l) && l.includes(new URL(u).host));
+      out.links += links.length + go.length; out.redirectLinks += go.length; go.forEach(g => goSeen.add(new URL(g, u).href));
       for (const l of links) { const s = (l.match(/amazon|amzn|shopee|shope|lazada|aliexpress|ebay|involve|invol|tiktok|accesstrade/i) || ["other"])[0].toLowerCase().replace("amzn", "amazon").replace("shope", "shopee").replace("invol", "involve"); out.stores[s] = (out.stores[s] || 0) + 1;
         if (/amazon\./i.test(l) && !/[?&]tag=/.test(l)) out.amazonWithoutTag++; }
       if (/affiliate|associate|commission|we may earn/i.test(html)) out.disclosurePages++;
     } catch {}
   }
+  for (const g of [...goSeen].slice(0, 4)) {       // follow a few /go/ links one step: where do they lead, and is the affiliate tag there?
+    try { const r = await fetch(g, {redirect: "manual", headers: {"User-Agent": UA}}), loc = r.headers.get("location") || "";
+      const store = (loc.match(/amazon|shopee|lazada|aliexpress|ebay/i) || [r.status >= 300 && r.status < 400 ? "other" : "broken"])[0].toLowerCase();
+      out.stores[store] = (out.stores[store] || 0) + 1; const tag = (loc.match(/[?&]tag=([\w-]+)/) || [])[1] || null; if (tag) out.tag = tag;
+      if (store === "amazon" && !tag) out.amazonWithoutTag++;
+      out.checkedRedirects.push({link: new URL(g).pathname, status: r.status, to: loc.replace(/^https?:\/\/(www\.)?/, "").slice(0, 60), ok: r.status >= 300 && r.status < 400 && !!loc});
+    } catch (e) { out.checkedRedirects.push({link: new URL(g).pathname, ok: false, error: cleanText(String(e.message), 60)}); }
+  }
+  out.brokenRedirects = out.checkedRedirects.filter(x => !x.ok).length;
   return out;
 }
 async function siteStatus(env, s) {
