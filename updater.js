@@ -10,7 +10,7 @@
 const APP = "https://max-app-axv.pages.dev";              // Mark's own Pages site (the only place code is taken from)
 const SCRIPT = "max-ai-backend";                           // the Worker it updates
 const API = "https://api.cloudflare.com/client/v4";
-const UPDATER_VERSION = "max-updater-2026-11-09a";
+const UPDATER_VERSION = "max-updater-2026-11-09b";
 
 const json = (o, s = 200, origin = "") => new Response(JSON.stringify(o), { status: s, headers: {
   "Content-Type": "application/json", "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "Content-Type, X-Update-Pass",
@@ -39,7 +39,8 @@ async function manifest() {
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), origin = req.headers.get("Origin") || "", allow = origin === APP ? APP : "";
-    if (req.method === "OPTIONS") return json({}, 204, allow);
+    if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": allow, "Access-Control-Allow-Headers": "Content-Type, X-Update-Pass",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Max-Age": "600", "Vary": "Origin" } });   // the browser's permission check (no body allowed)
     if (url.pathname === "/" || url.pathname === "/health") return json({ ok: true, updater: UPDATER_VERSION, ready: !!(env.CF_API_TOKEN && env.UPDATE_PASS) }, 200, allow);
     if (!env.CF_API_TOKEN || !env.UPDATE_PASS) return json({ error: "The updater isn't set up yet: add the secrets CF_API_TOKEN and UPDATE_PASS in Cloudflare." }, 503, allow);
     if (!same(req.headers.get("X-Update-Pass"), env.UPDATE_PASS)) return json({ error: "Wrong passcode." }, 401, allow);
