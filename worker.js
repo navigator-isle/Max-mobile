@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-17h";
+const WORKER_VERSION = "max-worker-2026-11-17i";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -1621,11 +1621,14 @@ const GUARD_SITES = [
   {name: "Quick Draft Calculator", url: "https://draft-calculator.github.io/Draft-Calculator/"},
   {name: "Hobby Isle", url: "https://hobbyisle.com/", site: true}];
 const b64lines = s => { const b = new TextEncoder().encode(s); let o = ""; for (let i = 0; i < b.length; i += 32768) o += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(o).replace(/.{76}/g, "$&\r\n"); };
+// Sites that moved off GitHub Pages after the GitHub suspension (7 Nov 2026): old saved addresses are checked at the new ones.
+const MOVED = [[/^https:\/\/navigator-isle\.github\.io\/Max-mobile\/?/i, "https://max-app-axv.pages.dev/"], [/^https:\/\/navigator-isle\.github\.io\/?$/i, "https://passage-planner-6pm.pages.dev/"], [/^https:\/\/navigator-isle\.github\.io\/(passage|privacy)/i, "https://passage-planner-6pm.pages.dev/"]];
+const movedUrl = u => { for (const [re, to] of MOVED) if (re.test(String(u || ""))) return to; return u; };
 async function guardSites(env) {
   let list = GUARD_SITES;
   try { const row = env.MAX_MEMORY ? await env.MAX_MEMORY.prepare("SELECT value FROM max_settings WHERE key = 'max_projects'").first() : null;
     const mine = row ? JSON.parse(row.value) : null;
-    if (Array.isArray(mine) && mine.length) list = mine.filter(p => p && /^https:\/\//.test(p.url || "") && !/claude\.ai\//.test(p.url)).map(p => ({name: cleanText(String(p.name || ""), 60), url: p.url, site: !!p.site})).slice(0, 12);
+    if (Array.isArray(mine) && mine.length) list = mine.filter(p => p && /^https:\/\//.test(p.url || "") && !/claude\.ai\//.test(p.url)).map(p => ({name: cleanText(String(p.name || ""), 60), url: movedUrl(p.url), site: !!p.site})).slice(0, 12);
   } catch {}
   return list;
 }
@@ -2828,7 +2831,7 @@ async function paperFromGmail(env) {
   const row = await googleRow(env, true).catch(() => null);
   if (!row || !hasGmail(row)) return {error: "Gmail not connected"};
   const me = emailOf(row.email || env.MAX_OWNER_EMAIL || "");
-  const list = await gapi(env, GMAIL + "/messages?" + new URLSearchParams({q: 'subject:"Max paper trading" newer_than:45d' + (me ? " from:" + me : ""), maxResults: "6"}));
+  const list = await gapi(env, GMAIL + "/messages?" + new URLSearchParams({q: 'subject:"Max paper trading" newer_than:45d' + (me ? " from:" + me : ""), maxResults: "6", includeSpamTrash: "true"}));
   for (const m of list.messages || []) {
     const msg = await gapi(env, GMAIL + "/messages/" + m.id + "?format=full");
     if (me && emailOf(hdr(msg, "From")) !== me) continue;                       // only Mark's own report counts
