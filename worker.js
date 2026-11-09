@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18c";
+const WORKER_VERSION = "max-worker-2026-11-18d";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -314,16 +314,16 @@ async function seedTradingNotesV2(env, maxParts = 4) {
   return "loading " + (i - 1) + "/" + m.parts.length;
 }
 // What Mark told Claude while Claude stood in for Max (8–9 Nov 2026), saved once into Max's long-term memory.
-const SEED_MEMORIES = [{"id": "mem-claude-2026-11-01", "text": "Mark's GitHub account navigator-isle was suspended on 7 Nov 2026; appeal at support.github.com/contact/reinstatement. Max, Passage Planner and backups must not depend on GitHub."}, {"id": "mem-claude-2026-11-02", "text": "Max's phone app now lives on Cloudflare Pages at https://max-app-axv.pages.dev (uploaded as max-app.zip from his phone)."}, {"id": "mem-claude-2026-11-03", "text": "Passage Planner website is on Cloudflare Pages at https://passage-planner-6pm.pages.dev (privacy page /privacy.html for Play Console). Quick Draft is still on the draft-calculator GitHub account."}, {"id": "mem-claude-2026-11-04", "text": "Max's server updates now go through the one-tap updater: upload the new max-app.zip to Cloudflare Pages, then Settings → Update Max's server → Check → Install. Max rolls back by himself if the new version fails."}, {"id": "mem-claude-2026-11-05", "text": "Mark works from his Samsung phone in Chrome and can't do manual dev work; prefers doing things from the phone, not the laptop."}, {"id": "mem-claude-2026-11-06", "text": "Mark wants Max like J.A.R.V.I.S.: his secretary, second brain and second in command, managing all his projects."}, {"id": "mem-claude-2026-11-07", "text": "Ground rules: never expose the Gemini key or any secret; never ask for passwords; risky actions need Mark's yes; don't touch Hobby Isle's DNS or website settings; don't claim something works until tested."}, {"id": "mem-claude-2026-11-08", "text": "Backups go to Mark's Gmail and his private Google Drive (Mark-Backup-Kit-2026-11-08.zip includes the Passage Planner Play upload key — keep it private), never to a public repo."}, {"id": "mem-claude-2026-11-09", "text": "Deal Finder rule (Mark's choice, 8 Nov 2026): check ALL legit Philippine sellers (brand official stores, authorized resellers like Abenson, SM, Power Mac Center, Beyond the Box, LazMall, Shopee Mall, TikTok Shop Mall, Zalora); read the price on the store's own page for the exact version; compare with the brand's current official price, not the store's 'was' price; give the link and the time read; flag anything not confirmed."}, {"id": "mem-claude-2026-11-10", "text": "Mark caught a wrong iPad Air M4 price (₱44,990 shown, ₱54,990 live at Beyond the Box): always confirm prices live for the exact variant."}, {"id": "mem-claude-2026-11-11", "text": "Mark wants trading to become his main income; all trading is PAPER only (pretend money) until a strategy is proven; Max never places real trades and gives no buy/sell advice."}, {"id": "mem-claude-2026-11-12", "text": "Current trading plan MAX-MASTER-3 (9 Nov 2026): 40% PSE high-dividend top-20 (3-month rebalance, keep while in top-40, 25% trailing stop), 21% crypto swing (20-day breakout, 2×ATR trailing stop, only when Bitcoin is above its 50-day average), 9% Bitcoin trend (above 100-day average), 30% gold trend (above 200-day average). Backtest 2014–Oct 2026: about 17.6% a year, worst drop about −11.6%."}, {"id": "mem-claude-2026-11-13", "text": "Forex and copy trading showed no lasting edge in 26 years of tests; they run only as watch-only paper books. Copying 'hot' traders lost 45–97%."}, {"id": "mem-claude-2026-11-14", "text": "Paper trading runs every Sunday on the Max Paper Trading dashboard (https://claude.ai/artifact/25fnUcKASedJmKSZBRbW9H); Claude emails Mark the weekly report at 17:57 Manila with every trade explained."}, {"id": "mem-claude-2026-11-15", "text": "Mark wants every buy and sell explained in full in the weekly trading report: the signal, market check, numbers, stop, risk, and the result."}, {"id": "mem-claude-2026-11-16", "text": "Mark wants Max to trade only when there is a real chance of winning (hold cash otherwise), fewer but better trades, and more trades when good opportunities appear; he accepts few big wins and many small losses with trailing stops."}, {"id": "mem-claude-2026-11-17", "text": "Real fees (Nov 2026): COL Financial buy 0.295%, sell 0.395% (stock sales tax 0.1% since 1 Jul 2025); Binance spot 0.10% (0.075% with BNB); Invo/Hyperliquid taker 0.0768%."}, {"id": "mem-claude-2026-11-18", "text": "All trading research data is in Max's notes under Trading (PSE, Crypto, Forex, Copy trading, events 2003–2026); 372 PSE stock notes and 373 coin notes come from 4 zip files Mark imports."}, {"id": "mem-claude-2026-11-19", "text": "Mark's notes style: Obsidian markdown, bold headers, hyphen bullets, short maritime-specific points, no filler; convention notes go What is → History → Applies to → chapters/regulations → Key Point → Sources."}, {"id": "mem-claude-2026-11-20", "text": "Core maritime notes in Max: SOLAS 1974, MARPOL 73/78, STCW 1978 (Maritime › IMO › Conventions) and MLC 2006 (Maritime › ILO › Conventions), regulation by regulation with checked sources."}, {"id": "mem-claude-2026-11-21", "text": "Mark wants Max to play his own phone music (no ads), and music should pause while he talks instead of fighting the microphone."}, {"id": "mem-claude-2026-11-22", "text": "The typing box now stays on Max's home screen so Mark can type any time; 'hide keyboard' hides it and Max remembers."}, {"id": "mem-claude-2026-11-23", "text": "Mark is not a native English speaker: read his messages charitably and answer in simple English."}, {"id": "mem-claude-2026-11-24", "text": "Until Max could be updated, Claude acted as Max in Mark's chats (8–9 Nov 2026); everything from those chats is now in these memories and the Trading notes."}, {"id": "mem-claude-2026-11-26", "text": "Mark's priorities for Max (9 Nov 2026): 1) trading — paper trading he can copy: journal, an email for every buy and sell with the reason, how to copy and the possible outcome, and the ₱100,000 total; 2) investments — current rates and a clear guideline of what to invest in; 3) notes — trading and investment data kept up to date with history (Investments has sub-folders like Trading); 4) websites — status, analytics, affiliate, SEO, content, security, errors; 5) apps — the same. Max runs all of this himself every day; Claude checks it weekly as backup."}];
+const SEED_MEMORIES = [{"id": "mem-claude-2026-11-01", "text": "Mark's GitHub account navigator-isle was suspended on 7 Nov 2026; appeal at support.github.com/contact/reinstatement. Max, Passage Planner and backups must not depend on GitHub."}, {"id": "mem-claude-2026-11-02", "text": "Max's phone app now lives on Cloudflare Pages at https://max-app-axv.pages.dev (uploaded as max-app.zip from his phone)."}, {"id": "mem-claude-2026-11-03", "text": "Passage Planner website is on Cloudflare Pages at https://passage-planner-6pm.pages.dev (privacy page /privacy.html for Play Console). Quick Draft is still on the draft-calculator GitHub account."}, {"id": "mem-claude-2026-11-04", "text": "Max's server updates now go through the one-tap updater: upload the new max-app.zip to Cloudflare Pages, then Settings → Update Max's server → Check → Install. Max rolls back by himself if the new version fails."}, {"id": "mem-claude-2026-11-05", "text": "Mark works from his Samsung phone in Chrome and can't do manual dev work; prefers doing things from the phone, not the laptop."}, {"id": "mem-claude-2026-11-06", "text": "Mark wants Max like J.A.R.V.I.S.: his secretary, second brain and second in command, managing all his projects."}, {"id": "mem-claude-2026-11-07", "text": "Ground rules: never expose the Gemini key or any secret; never ask for passwords; risky actions need Mark's yes; don't touch Hobby Isle's DNS or website settings; don't claim something works until tested."}, {"id": "mem-claude-2026-11-08", "text": "Backups go to Mark's Gmail and his private Google Drive (Mark-Backup-Kit-2026-11-08.zip includes the Passage Planner Play upload key — keep it private), never to a public repo."}, {"id": "mem-claude-2026-11-09", "text": "Deal Finder rule (Mark's choice, 8 Nov 2026): check ALL legit Philippine sellers (brand official stores, authorized resellers like Abenson, SM, Power Mac Center, Beyond the Box, LazMall, Shopee Mall, TikTok Shop Mall, Zalora); read the price on the store's own page for the exact version; compare with the brand's current official price, not the store's 'was' price; give the link and the time read; flag anything not confirmed."}, {"id": "mem-claude-2026-11-10", "text": "Mark caught a wrong iPad Air M4 price (₱44,990 shown, ₱54,990 live at Beyond the Box): always confirm prices live for the exact variant."}, {"id": "mem-claude-2026-11-11", "text": "Mark wants trading to become his main income; all trading is PAPER only (pretend money) until a strategy is proven; Max never places real trades and gives no buy/sell advice."}, {"id": "mem-claude-2026-11-12", "text": "Current trading plan MAX-MASTER-3 (9 Nov 2026): 40% PSE high-dividend top-20 (3-month rebalance, keep while in top-40, 25% trailing stop), 21% crypto swing (20-day breakout, 2×ATR trailing stop, only when Bitcoin is above its 50-day average), 9% Bitcoin trend (above 100-day average), 30% gold trend (above 200-day average). Backtest 2014–Oct 2026: about 17.6% a year, worst drop about −11.6%."}, {"id": "mem-claude-2026-11-13", "text": "Forex and copy trading showed no lasting edge in 26 years of tests; they run only as watch-only paper books. Copying 'hot' traders lost 45–97%."}, {"id": "mem-claude-2026-11-14", "text": "Paper trading (since 10 Nov 2026) runs on Max's own server every day, even when Mark's phone is off: crypto and gold (PAXG) every morning, PSE every weekday evening. Plan MAX-MASTER-3 with ₱100,000 pretend money: 40% PSE dividend top-10 (re-check every 3 months, 25% safety stop), 21% crypto swing, 9% Bitcoin trend, 30% gold trend. Every buy and sell is emailed to Mark with the reason, how to copy, the sell plan (stop-loss) and possible outcome. The journal is in the Paper trading tile. Pretend money only, never advice."}, {"id": "mem-claude-2026-11-15", "text": "Mark wants every buy and sell explained in full in the weekly trading report: the signal, market check, numbers, stop, risk, and the result."}, {"id": "mem-claude-2026-11-16", "text": "Mark wants Max to trade only when there is a real chance of winning (hold cash otherwise), fewer but better trades, and more trades when good opportunities appear; he accepts few big wins and many small losses with trailing stops."}, {"id": "mem-claude-2026-11-17", "text": "Real fees (Nov 2026): COL Financial buy 0.295%, sell 0.395% (stock sales tax 0.1% since 1 Jul 2025); Binance spot 0.10% (0.075% with BNB); Invo/Hyperliquid taker 0.0768%."}, {"id": "mem-claude-2026-11-18", "text": "All trading research data is in Max's notes under Trading (PSE, Crypto, Forex, Copy trading, events 2003–2026); 372 PSE stock notes and 373 coin notes come from 4 zip files Mark imports."}, {"id": "mem-claude-2026-11-19", "text": "Mark's notes style: Obsidian markdown, bold headers, hyphen bullets, short maritime-specific points, no filler; convention notes go What is → History → Applies to → chapters/regulations → Key Point → Sources."}, {"id": "mem-claude-2026-11-20", "text": "Core maritime notes in Max: SOLAS 1974, MARPOL 73/78, STCW 1978 (Maritime › IMO › Conventions) and MLC 2006 (Maritime › ILO › Conventions), regulation by regulation with checked sources."}, {"id": "mem-claude-2026-11-21", "text": "Mark wants Max to play his own phone music (no ads), and music should pause while he talks instead of fighting the microphone."}, {"id": "mem-claude-2026-11-22", "text": "The typing box now stays on Max's home screen so Mark can type any time; 'hide keyboard' hides it and Max remembers."}, {"id": "mem-claude-2026-11-23", "text": "Mark is not a native English speaker: read his messages charitably and answer in simple English."}, {"id": "mem-claude-2026-11-24", "text": "Until Max could be updated, Claude acted as Max in Mark's chats (8–9 Nov 2026); everything from those chats is now in these memories and the Trading notes."}, {"id": "mem-claude-2026-11-26", "text": "Mark's priorities for Max (9 Nov 2026): 1) trading — paper trading he can copy: journal, an email for every buy and sell with the reason, how to copy and the possible outcome, and the ₱100,000 total; 2) investments — current rates and a clear guideline of what to invest in; 3) notes — trading and investment data kept up to date with history (Investments has sub-folders like Trading); 4) websites — status, analytics, affiliate, SEO, content, security, errors; 5) apps — the same. Max runs all of this himself every day; Claude checks it weekly as backup."}, {"id": "mem-claude-2026-11-27", "text": "Emails (Mark asked for few emails, 10 Nov 2026): Max sends ONE weekly summary on Sunday 6:45 pm (trading, investments, websites, apps, security). Other emails only when Max paper-trades, when a top investment rate or promo changes, or when the Guard finds a new problem. Weekly reports are still written for Websites, Apps, Security, Trading and Investments and can be opened in the app; Notes, Researcher, Business, Music, Schedule, Email and Shopping reports are made only when Mark asks."}];
 async function seedMemories(env) {
   const db = env.MAX_MEMORY; if (!db || env.MAX_SEED_NOTES !== "on") return;
-  if (await srvSetting(env, "max_srv_seed_memories_2026_11_10")) return;
+  if (await srvSetting(env, "max_srv_seed_memories_2026_11_11")) return;
   const now = Date.now(), st = SEED_MEMORIES.map(m => upsertMemoryStmt(db, {...m, source: "Claude (chats 8–9 Nov 2026)", createdAt: now, updatedAt: now})).filter(Boolean);
   for (let i = 0; i < st.length; i += 50) await db.batch(st.slice(i, i + 50));
-  await srvSetting(env, "max_srv_seed_memories_2026_11_10", String(now));
+  await srvSetting(env, "max_srv_seed_memories_2026_11_11", String(now));
   await logAct(env, {dept: "notes", kind: "memory", text: `Saved ${st.length} things Mark told Claude (8–9 Nov 2026) into long-term memory`, source: "Claude"});
 }
-const SEED_SIGNATURE = SEED_NOTES.map(n => n.id + ":" + (n.v || 1)).join(",") + "|mem20261110|" + TN2;
+const SEED_SIGNATURE = SEED_NOTES.map(n => n.id + ":" + (n.v || 1)).join(",") + "|mem20261111|" + TN2;
 async function seedNotes(env) {
   const db = env.MAX_MEMORY; if (!db || env.MAX_SEED_NOTES !== "on") return;
   const sig = String(SEED_SIGNATURE.length) + ":" + [...SEED_SIGNATURE].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -1745,7 +1745,7 @@ async function guardDaily(env, when) {
   await srvSetting(env, "max_srv_guard_day", day);
   const weekly = d.getUTCDay() === 6; // Saturday 22:45 UTC = Sunday morning in Manila
   const report = await guardRun(env, {backup: weekly, source: "schedule"});
-  const sent = await guardEmail(env, report, weekly).catch(e => "email failed: " + e.message);
+  const sent = await guardEmail(env, report, false).catch(e => "email failed: " + e.message);   // "all clear" goes in the Sunday summary
   return report.problems.length + " problems, " + sent;
 }
 async function guardRoutes(request, env, url, origin) {
@@ -1810,6 +1810,10 @@ const AGENT_LIST = [
   {id: "email", name: "Email", icon: "✉️", day: 0, hour: 9, workers: ["Inbox manager — read, reply, organize (trash is recoverable for 30 days)", "Mailing-list manager (when you set one up)"]},
   {id: "shopping", name: "Shopping (Deal Finder)", icon: "🛒", day: 0, hour: 10, workers: ["Price checker — reads each legit store's own product page for the exact version", "Price watcher — your watched products every week", "Discount judge — compares with the brand's current official price, never the store's 'was' price"]}];
 const AGENT = Object.fromEntries(AGENT_LIST.map(a => [a.id, a]));
+// 10 Nov 2026 — Mark: "few emails". Only these five still write a weekly report by themselves, and none sends its own email:
+// everything goes into ONE Sunday summary (6:45 pm Manila). The other agents report only when he asks.
+const WEEKLY_AUTO = ["web", "apps", "security", "trading", "investments"];
+const SUMMARY_SLOT = {day: 0, hour: 10};
 // Background brain use per day: notes first, trading second, a small share for the rest.
 const BUDGET = {notes: 40, trading: 20, investments: 34, research: 8, web: 4, apps: 3, security: 3, business: 3, music: 2, schedule: 2, email: 2, shopping: 3};
 async function budgetOk(env, id, n = 1) {
@@ -2195,7 +2199,8 @@ async function agentsCron(env, when) {
   if (hour === 21 && day !== 6) await once("notescheck", () => notesDailyCheck(env, 4));
   if (hour === 1) await once("investguide", async () => "guide: " + ((await refreshGuide(env)).updated.join(",") || "no change"));   // 9 am Manila, every day
   if (hour === 20 && day === 6) await once("tradeideas", () => tradingIdeasJob(env));
-  for (const a of AGENT_LIST) if (a.day === day && a.hour === hour) await once("report_" + a.id, async () => (await runAgentReport(env, a.id, {source: "schedule"})).emailed);
+  for (const a of AGENT_LIST) if (WEEKLY_AUTO.includes(a.id) && a.day === day && a.hour === hour) await once("report_" + a.id, async () => (await runAgentReport(env, a.id, {source: "schedule", email: false})).emailed);
+  if (day === SUMMARY_SLOT.day && hour === SUMMARY_SLOT.hour) await once("sundaysummary", () => sundaySummary(env));
   return out.join("; ") || "nothing due";
 }
 // "Now": every agent's report once, straight away, instead of waiting for Sunday (asked 6 Nov 2026, 9:34 am Manila).
@@ -2521,8 +2526,20 @@ function paperNew() {
     books[k] = {key: k, cash: start, start, startPhp, positions: [], pending: [], trades: [], hist: [], qty: 0}; }
   return {v: 2, opened: pD(Date.now()), usdphp: fx, fxSet: false, books, journal: [], jid: 0, emailed: 0, step: {}, errors: [], bench: {}};
 }
-async function paperLoad(env) { const s = await setting(env, "max_paper", null); return s && s.v === 2 && s.books ? s : paperNew(); }
-async function paperSave(env, S) { await srvSetting(env, "max_paper", JSON.stringify(S)); }
+// A database hiccup must never look like "no account yet": that would save an empty account over the real one. So a failed read throws.
+async function paperLoad(env) {
+  if (!env.MAX_MEMORY) return paperNew();
+  const v = await srvSetting(env, "max_paper");
+  if (v == null) return paperNew();
+  let s = null; try { s = JSON.parse(v); } catch {}
+  if (s && s.v === 2 && s.books) return s;
+  throw new Error("the paper account data can't be read (a copy from yesterday is kept as max_paper_backup)");
+}
+async function paperSave(env, S) {
+  const today = pD(Date.now());
+  if (S.backupDay !== today && S.jid > 0) { const old = await srvSetting(env, "max_paper").catch(() => null); if (old) await srvSetting(env, "max_paper_backup", old).catch(() => {}); S.backupDay = today; }   // one copy a day
+  await srvSetting(env, "max_paper", JSON.stringify(S));
+}
 const fxOf = (S, B) => B.key === "pse_dividend" ? 1 : S.usdphp;
 
 // ---- crypto swing: 20-day breakout among the 20 most-traded coins, only when Bitcoin is above its 50-day average; stop 2× average daily move, trailing ----
@@ -2619,24 +2636,48 @@ function trendBook(S, key, s, upto, live, now, cfg) {
   if (B.pending.length && B.pending[0].on === pAdd(upto, 1) && live[cfg.sym]) exec(B.pending.shift(), live[cfg.sym], now);
   B.value = +(B.cash + (B.qty || 0) * (live[cfg.sym] || closes[closes.length - 1] || 0)).toFixed(2);
 }
+// Daily candles from one of three public sources (10 Nov 2026: Binance refused Max's server, so OKX and Coinbase are the spares).
+// Returns closed days [[date, close, traded value $]] and the live price (today's unfinished candle).
+async function cryptoCandles(ctx, src, sym, limit) {
+  const today = pD(Date.now()); let rows;
+  if (src === "binance") rows = (await (await pFetch(ctx, `https://data-api.binance.vision/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=${limit + 1}`)).json()).map(r => [pD(r[0]), +r[4], +r[7]]);
+  else if (src === "okx") { const d = await (await pFetch(ctx, `https://www.okx.com/api/v5/market/candles?instId=${sym}-USDT&bar=1Dutc&limit=${Math.min(300, limit + 1)}`)).json();
+    if (d.code !== "0" || !Array.isArray(d.data)) throw new Error("okx: " + cleanText(String(d.msg || "no data"), 60)); rows = d.data.map(r => [pD(+r[0]), +r[4], +r[7]]).reverse(); }
+  else { const d = await (await pFetch(ctx, `https://api.exchange.coinbase.com/products/${sym}-USD/candles?granularity=86400`)).json();
+    if (!Array.isArray(d)) throw new Error("coinbase: " + cleanText(String(d.message || "no data"), 60)); rows = d.slice(0, limit + 1).map(r => [pD(r[0] * 1000), +r[4], +r[5] * +r[4]]).reverse(); }
+  rows = rows.filter(r => r[1] > 0);
+  const last = rows[rows.length - 1];
+  return {closed: rows.filter(r => r[0] < today), live: last ? last[1] : null};
+}
+const CRYPTO_SOURCES = ["binance", "okx", "coinbase"];
 async function paperCryptoStep(S, ctx, now) {
-  const tick = await bnTickers(ctx, [...CRYPTO_POOL, "PAXG"]);
-  const live = Object.fromEntries(Object.entries(tick).map(([k, v]) => [k, v.last]));
-  const pool = CRYPTO_POOL.filter(c => tick[c]).sort((a, b) => tick[b].qv - tick[a].qv).slice(0, 26);
+  let src = null, btc = null; const tried = [];
+  for (const s of CRYPTO_SOURCES.filter(x => !(ctx.skip || []).includes(x))) {
+    try { const k = await cryptoCandles(ctx, s, "BTC", 160); if (k.closed.length >= 101) { src = s; btc = k; break; } tried.push(s + ": too little data"); }
+    catch (e) { if (/budget/.test(e.message)) throw e; tried.push(s + ": " + cleanText(String(e.message), 60)); }
+  }
+  if (!src) throw new Error("no crypto price source answered — " + tried.join("; "));
+  S.cryptoSrc = src; S.cryptoTried = tried;
+  let pool = CRYPTO_POOL.slice(0, 26), tick = {};
+  if (src === "binance") { try { tick = await bnTickers(ctx, [...CRYPTO_POOL, "PAXG"]); pool = CRYPTO_POOL.filter(c => tick[c]).sort((a, b) => tick[b].qv - tick[a].qv).slice(0, 26); } catch (e) { if (/budget/.test(e.message)) throw e; } }
   if (!pool.includes("BTC")) pool.push("BTC");
   try { const f = await usdPhp(ctx); if (f.php > 30 && f.php < 120) S.usdphp = f.php; } catch {}
   if (!S.fxSet) {           // first real run: size the dollar books with today's rate
     for (const k of ["crypto_swing", "btc_trend", "gold_trend"]) { const B = S.books[k]; if (!B.trades.length && !B.positions.length) { B.start = B.startPhp / S.usdphp; B.cash = B.start; } }
     S.fxSet = true; S.usdphp0 = S.usdphp;
   }
-  const U = {};
-  for (const c of pool) U[c] = await bnKlines(ctx, c, c === "BTC" ? 160 : 60);
-  const gold = await bnKlines(ctx, "PAXG", 240), upto = pAdd(pD(Date.now()), -1);
+  const U = {BTC: btc.closed}, live = {BTC: btc.live};
+  for (const c of pool) { if (c === "BTC") continue;
+    try { const k = await cryptoCandles(ctx, src, c, 60); if (k.closed.length >= 21) { U[c] = k.closed; live[c] = k.live; } }
+    catch (e) { if (/budget/.test(e.message)) throw e; if (S.books.crypto_swing.positions.some(p => p.sym === c)) throw new Error("no price for " + c + ", which Max holds (" + cleanText(String(e.message), 50) + ")"); }   // a coin this source doesn't list is skipped
+  }
+  const g = await cryptoCandles(ctx, src, "PAXG", 240), gold = g.closed, upto = pAdd(pD(Date.now()), -1); live.PAXG = g.live;
+  for (const [k, v] of Object.entries(tick)) if (v.last > 0) live[k] = v.last;
   cryptoSwing(S, U, upto, live, now);
   trendBook(S, "btc_trend", U.BTC, upto, live, now, {sym: "BTC", sma: 100, target: 0.40, calm: "In 2011–2026 this rule avoided most of Bitcoin's big crashes (worst drop −35% instead of −92%)."});
   trendBook(S, "gold_trend", gold, upto, live, now, {sym: "PAXG", sma: 200, target: 0.12, calm: "In 2000–2026 this cut gold's worst drop from −44% to −34%."});
   S.bench.btc = live.BTC; S.bench.btc0 = S.bench.btc0 || live.BTC; S.bench.gold = live.PAXG; S.bench.gold0 = S.bench.gold0 || live.PAXG;
-  return `crypto: ${pool.length} coins, ${ctx.n} requests`;
+  return `crypto: ${Object.keys(U).length} coins from ${src}, ${ctx.n} requests`;
 }
 // ---- PSE dividend top-10: highest cash-dividend yield of the last 12 months (≥3%, ≥₱5M traded a day, price ≥₱1); re-check every 3 months; 25% safety stop ----
 async function pseStep(env, S, ctx, today) {
@@ -2809,20 +2850,39 @@ async function paperEmails(env, S, today, dow) {
     const r = await paperSendEmail(env, subject, paperEmailText(S, fresh)); out.push(r);
     if (r === "emailed" || r === "emails off" || fresh[0].at < Date.now() - 3 * 864e5) S.emailed = Math.max(...fresh.map(e => e.id));   // Gmail down: try again next hour (up to 3 days)
   }
-  if (dow === 0 && S.step.weekly !== today) {
-    const T = paperTotals(S), wk = S.journal.filter(e => e.at > Date.now() - 7 * 864e5 && EMAIL_KINDS.has(e.kind));
-    const r = await paperSendEmail(env, `Max paper trading — weekly update: ${peso(T.total)} (${sgn(T.pct)})`, paperEmailText(S, wk, true)); out.push("weekly " + r);
-    if (r === "emailed" || r === "emails off") S.step.weekly = today;
-  }
   return out.join(", ");
 }
+// ---- ONE Sunday email instead of twelve (10 Nov 2026): trading, investments, websites, apps, security — a few lines each ----
+async function sundaySummary(env) {
+  const S = await paperLoad(env), T = paperTotals(S), wk = S.journal.filter(e => e.at > Date.now() - 7 * 864e5), tr = wk.filter(e => e.kind === "BUY" || e.kind === "SELL"), dv = wk.filter(e => e.kind === "DIVIDEND");
+  const open = Object.values(S.books).reduce((n, B) => n + B.positions.length, 0), L = [];
+  const fresh = async id => { const r = await lastReport(env, id).catch(() => null); return r && Date.now() - r.at < 36 * 3600e3 ? r : null; };
+  L.push("Max weekly summary — one email for everything. Details are in the Max app.", "",
+    "1) TRADING (paper — pretend money, not advice)", `Total ${peso(T.total)} (${sgn(T.pct)} since ${S.opened})`, T.parts.map(p => `${p.name.split(" (")[0]} ${peso(p.php)} (${sgn(p.pct)})`).join(" · "),
+    tr.length ? `This week: ${tr.length} trade${tr.length > 1 ? "s" : ""}` : "This week: no trades — no setup met the rules.", ...tr.slice(-8).map(e => "- " + e.d + " " + e.text.slice(0, 150)),
+    ...(dv.length ? ["Dividends: " + peso(dv.reduce((s, e) => s + (e.php || 0), 0)) + " from " + dv.map(e => e.sym).join(", ")] : []), `Open positions: ${open}. Sell levels and the journal: Paper trading tile.`, "");
+  try { const g = await investGuide(env); L.push("2) INVESTMENTS (best rates now, checked " + (g.checked || "–") + ")", ...invGuideLines(g).slice(0, 3).map(x => "- " + x)); const pr = (g.cats || []).find(c => c.key === "promos")?.items?.[0]; if (pr) L.push(`- Promo: ${pr.name} — ${pr.rate}${pr.ends ? " until " + pr.ends : ""}`); }
+  catch { L.push("2) INVESTMENTS", "- Could not be read this week."); }
+  L.push("");
+  const rep = await setting(env, "max_srv_status_report", {sites: [], apps: []}), sum = statusSummary(rep);
+  L.push("3) WEBSITES", ...((rep.sites || []).length ? rep.sites.map(s => `- ${s.name}: ${s.up ? "up" + (s.ms ? " " + s.ms + " ms" : "") : "DOWN"}${s.affiliate?.links ? " · " + s.affiliate.links + " shop links" + (s.affiliate.brokenRedirects ? " (" + s.affiliate.brokenRedirects + " broken)" : " ok") : ""}${s.content?.changed30d != null ? " · " + s.content.changed30d + " pages new/updated in 30 days" : ""}${(sum.sites.find(x => x.name === s.name)?.problems || []).length ? " · needs: " + sum.sites.find(x => x.name === s.name).problems.join(", ") : " · no problems"}`) : ["- No check yet."]), "");
+  L.push("4) APPS", ...((rep.apps || []).length ? rep.apps.map(a => `- ${a.name}: ${a.up === false ? "DOWN" : "up"}${a.version ? " · " + a.version : ""}${a.play?.reviews?.count ? " · " + a.play.reviews.average + "★ (" + a.play.reviews.count + " recent reviews)" : ""}${a.play?.error ? " · Play: " + a.play.error.slice(0, 60) : ""}`) : ["- No check yet."]), "");
+  const guard = await setting(env, "max_srv_guard_report", null), bad = (S.errors || []).filter(e => e.at > Date.now() - 7 * 864e5);
+  L.push("5) SECURITY AND MAX'S HEALTH", guard ? (guard.problems?.length ? "- Guard: " + guard.problems.length + " thing(s) to look at: " + guard.problems.slice(0, 4).join("; ") : "- Guard: all clear.") : "- Guard: no check yet.",
+    bad.length ? `- ${bad.length} background step(s) failed this week (Max retried): ${bad[bad.length - 1].job} — ${bad[bad.length - 1].error}` : "- All of Max's daily jobs ran.");
+  for (const id of WEEKLY_AUTO) { const r = await fresh(id); if (r && r.status && r.status[0] && (id === "security" || id === "web")) L.push(`- ${AGENT[id].name}: ${cleanText(String(r.status[0]), 220)}`); }
+  L.push("", "Other emails you get: only when Max buys or sells (paper), when a top rate or promo changes, and when something breaks. Say “Max, show the trading report” (or websites, apps, investments, security) for a full report.");
+  const problems = (guard?.problems?.length || 0) + sum.sites.filter(s => !s.ok).length;
+  return paperSendEmail(env, `Max weekly summary: ${peso(T.total)} (${sgn(T.pct)}) · ${problems ? problems + " thing(s) to look at" : "all clear"}`, L.join("\n"), "max_srv_summary_email");
+}
 // ---- the hourly background step: one job per hour, in the order Mark asked for (9 Nov 2026): trading → investments → notes → websites → apps ----
-const BUSY = (day, hour) => hour === 1 || hour === 21 || hour === 22 || (day === 6 && hour === 20) || AGENT_LIST.some(a => a.day === day && a.hour === hour);
+const BUSY = (day, hour) => hour === 1 || hour === 21 || hour === 22 || (day === 6 && hour === 20) || AGENT_LIST.some(a => WEEKLY_AUTO.includes(a.id) && a.day === day && a.hour === hour);
 async function backgroundStep(env, when) {
   if (!env.MAX_MEMORY) return "no database";
   const t = new Date(when || Date.now()), h = t.getUTCHours(), dow = t.getUTCDay(), today = pD(t), now = today;
   if (BUSY(dow, h)) return "quiet hour (other jobs run now)";
-  let S = await paperLoad(env); const ctx = {n: 0, max: 38}, out = [];
+  let S; try { S = await paperLoad(env); } catch (e) { return "paper account not readable right now — nothing changed (" + cleanText(String(e.message), 80) + ")"; }
+  const ctx = {n: 0, max: 38}, out = [];
   const fails = j => (S.errors || []).filter(e => e.job === j && pD(e.at) === today).length;   // after 3 failures a job waits until tomorrow, so the others still run
   let job = S.step.crypto !== today && fails("crypto") < 3 ? "crypto" : h >= 9 && h <= 15 && dow >= 1 && dow <= 5 && S.step.pse !== today && fails("pse") < 3 ? "pse" : null;
   const scan = job ? null : await setting(env, "max_paper_scan", null);
@@ -2836,10 +2896,11 @@ async function backgroundStep(env, when) {
     S.lastStep = {at: Date.now(), job, ok: true};
   } catch (e) {
     const msg = cleanText(String(e.message || e), 160);
-    S = await paperLoad(env); S.errors = [...(S.errors || []), {at: Date.now(), job, error: msg}].slice(-20); S.lastStep = {at: Date.now(), job, ok: false, error: msg};
+    try { S = await paperLoad(env); } catch { return job + " failed: " + msg + " — and the account could not be re-read, so nothing was saved"; }
+    S.errors = [...(S.errors || []), {at: Date.now(), job, error: msg}].slice(-20); S.lastStep = {at: Date.now(), job, ok: false, error: msg};
     out.push(job + " failed: " + msg);
   }
-  if (job === "crypto" || job === "pse" || job === "scan" || dow === 0) { try { const m = await paperEmails(env, S, today, dow); if (m) out.push(m); } catch (e) { out.push("email failed: " + cleanText(String(e.message), 100)); } }
+  if (job === "crypto" || job === "pse" || job === "scan") { try { const m = await paperEmails(env, S, today, dow); if (m) out.push(m); } catch (e) { out.push("email failed: " + cleanText(String(e.message), 100)); } }
   await paperSave(env, S);
   return out.join("; ") || "nothing to do";
 }
@@ -2850,7 +2911,8 @@ async function paperView(env) {
     const live = {crypto: {}, pse: {}}, errors = [];
     const cs = [...new Set([...S.books.crypto_swing.positions.map(p => p.sym), (S.books.btc_trend.qty || 0) > 0 ? "BTC" : null, (S.books.gold_trend.qty || 0) > 0 ? "PAXG" : null].filter(Boolean))];
     if (cs.length) { try { const r = await fetch("https://data-api.binance.vision/api/v3/ticker/price?symbols=" + encodeURIComponent(JSON.stringify(cs.map(s => s + "USDT"))), {headers: {"User-Agent": UA}}); const d = await r.json();
-      for (const x of Array.isArray(d) ? d : []) live.crypto[x.symbol.replace(/USDT$/, "")] = +x.price; } catch (e) { errors.push("Binance: " + e.message); } }
+      for (const x of Array.isArray(d) ? d : []) live.crypto[x.symbol.replace(/USDT$/, "")] = +x.price; } catch (e) { errors.push("Binance: " + e.message); }
+      for (const s of cs.filter(s => !(live.crypto[s] > 0)).slice(0, 10)) { try { const d = await (await fetch(`https://www.okx.com/api/v5/market/ticker?instId=${s}-USDT`, {headers: {"User-Agent": UA}})).json(); const p = +d?.data?.[0]?.last; if (p > 0) live.crypto[s] = p; } catch {} } }
     for (const p of S.books.pse_dividend.positions.slice(0, 20)) { try { live.pse[p.sym] = (await pseQuote(p.sym)).price; } catch (e) { errors.push(p.sym + ": " + e.message); } }
     const T = paperTotals(S, live), fx = S.usdphp;
     const books = Object.entries(PBOOK).map(([k, cfg]) => { const B = S.books[k], part = T.parts.find(p => p.key === k);
@@ -2894,7 +2956,7 @@ function changeLine(rows, cur, money) {      // rows: [[date, close]] oldest →
   const pc = (a, b) => a && b ? sgn((b / a - 1) * 100) : "–", y0 = rows.filter(x => x[0] < last[0].slice(0, 4) + "-01-01").pop();
   const yr = rows.slice(-366), hi = yr.reduce((m, x) => x[1] > m[1] ? x : m, yr[0]), lo = yr.reduce((m, x) => x[1] < m[1] ? x : m, yr[0]);
   return [`Last ${money(last[1])} (${last[0]})`, `1 week ${pc(back(7), last[1])} · 1 month ${pc(back(30), last[1])} · ${last[0].slice(0, 4)} so far ${pc(y0 && y0[1], last[1])} · 1 year ${pc(back(365), last[1])}`,
-    `52-week high ${money(hi[1])} (${hi[0]}) · low ${money(lo[1])} (${lo[0]}) · now ${sgn((last[1] / hi[1] - 1) * 100)} from the high`];
+    `${rows.length >= 360 ? "52-week" : rows.length + "-day"} high ${money(hi[1])} (${hi[0]}) · low ${money(lo[1])} (${lo[0]}) · now ${sgn((last[1] / hi[1] - 1) * 100)} from the high`];
 }
 async function notesLiveStep(env, ctx) {
   const db = env.MAX_MEMORY, st = await setting(env, "max_srv_notes_live", {cursor: 0, fx: ""}), out = {updated: 0, checked: 0};
@@ -2924,9 +2986,9 @@ async function notesLiveStep(env, ctx) {
     try {
       if (n.category === "Trading › Crypto › Coins") {
         if (!/Binance: trading now/.test(n.body)) continue;
-        const k = await bnKlines(ctx, String(n.title).trim(), 400); if (k.length < 10) continue;
+        const src = (await paperLoad(env)).cryptoSrc || "binance", k = (await cryptoCandles(ctx, src, String(n.title).trim(), src === "binance" ? 400 : 299)).closed; if (k.length < 10) continue;
         const r = k.map(x => [x[0], x[1]]), m = v => "$" + g6(v), avgVal = mean(k.slice(-30).map(x => x[2]));
-        if (await setLiveBox(env, n.id, liveBox("Latest data", [...changeLine(r, "", m), `Binance traded value: about $${(avgVal / 1e6).toFixed(1)}M a day (last 30 days)`]))) out.updated++;
+        if (await setLiveBox(env, n.id, liveBox("Latest data", [...changeLine(r, "", m), `Traded value on ${src === "okx" ? "OKX" : src === "coinbase" ? "Coinbase" : "Binance"}: about $${(avgVal / 1e6).toFixed(1)}M a day (last 30 days)`]))) out.updated++;
       } else if (n.category === "Trading › PSE › Stocks") {
         const sym = String(n.title).trim(); if (!PSE_DIR[sym]) continue;
         const b = await pseDaily(ctx, sym, 400); if (b.length < 10) continue;
@@ -3342,7 +3404,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines};
+export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -3376,6 +3438,7 @@ export default {
         app: env.ASSETS ? "served by this Worker" : "not attached (GitHub Pages only)",
         codeBackup: await (async () => { const c = await codeBackup(env); return c ? c.files + " files, built " + c.built : "not attached"; })(),
         paperTrading: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const S = await paperLoad(env); return S.lastStep ? "running — last step " + new Date(S.lastStep.at).toISOString().slice(0, 16) + "Z (" + S.lastStep.job + (S.lastStep.ok ? ", ok" : ", failed: " + S.lastStep.error) + "), crypto checked " + (S.step.crypto || "never") + ", PSE checked " + (S.step.pse || "never") + ", " + S.jid + " journal entries" : "starting (first step at the next hourly check)"; } catch { return "unknown"; } })(),
+        paperErrors: await (async () => { try { if (!env.MAX_MEMORY) return []; const S = await paperLoad(env); return (S.errors || []).slice(-4).map(e => new Date(e.at).toISOString().slice(0, 16) + "Z " + e.job + ": " + e.error).concat(S.cryptoSrc ? ["crypto prices from " + S.cryptoSrc + ((S.cryptoTried || []).length ? " (" + S.cryptoTried.join("; ") + ")" : "")] : []); } catch { return []; } })(),
         statusReport: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const r = await setting(env, "max_srv_status_report", null); return r && r.at ? "websites " + (r.sites || []).length + ", apps " + (r.apps || []).length + ", checked " + new Date(r.at).toISOString().slice(0, 16) + "Z" : "first check on its way"; } catch { return "unknown"; } })(),
         notesData: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const r = await setting(env, "max_srv_notes_live", null), i = await srvSetting(env, "max_srv_inv_notes"); return (r ? "trading data notes cursor " + r.cursor + (r.fx ? ", forex " + r.fx : "") : "not started") + "; investment notes " + (i || "not built yet"); } catch { return "unknown"; } })(),
         tradingNotes: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const v = await srvSetting(env, "max_srv_tn2"); return v ? v.replace(TN2, "layout 9 Nov 2026") : "not loaded yet"; } catch { return "unknown"; } })(),

@@ -22,6 +22,8 @@ globalThis.fetch = async (u, init = {}) => {
   if (url.includes("binance.vision/api/v3/ticker/24hr")) { const syms = JSON.parse(decodeURIComponent(url.split("symbols=")[1])); return Response.json(syms.filter(s => M.coins[s.replace("USDT", "")]).map(s => ({symbol: s, lastPrice: String(M.live[s.replace("USDT", "")]), quoteVolume: String(M.coins[s.replace("USDT", "")][0][2])}))); }
   if (url.includes("binance.vision/api/v3/ticker/price")) { const syms = JSON.parse(decodeURIComponent(url.split("symbols=")[1])); return Response.json(syms.map(s => ({symbol: s, price: String(M.live[s.replace("USDT", "")] || 1)}))); }
   if (url.includes("binance.vision/api/v3/klines")) { const sym = url.match(/symbol=(\w+)USDT/)[1], lim = +url.match(/limit=(\d+)/)[1]; const k = (M.coins[sym] || []).slice(-lim); return Response.json(k.map(([t, c, v]) => [t, c, c, c, String(c), 0, t + 864e5 - 1, String(v)])); }
+  if (url.includes("okx.com/api/v5/market/candles")) { M.okx = (M.okx || 0) + 1; const sym = url.match(/instId=(\w+)-USDT/)[1], lim = +url.match(/limit=(\d+)/)[1]; const k = (M.coins[sym] || []).slice(-lim); if (!k.length) return Response.json({code: "51001", msg: "Instrument ID doesn't exist", data: []});
+    return Response.json({code: "0", data: [...k.map(([t, c, v]) => [String(Math.floor(t / 864e5) * 864e5), "1", "1", "1", String(c), "0", "0", String(v), "1"]), [String(Math.floor(Date.now() / 864e5) * 864e5), "1", "1", "1", String(M.live[sym]), "0", "0", "1", "0"]].reverse()}); }
   if (url.includes("frankfurter")) return Response.json({rates: {PHP: 58, CAD: 1.4}});
   if (url.includes("DisclosureCht")) { const b = JSON.parse(init.body); const sym = Object.keys(M.pse).find(s => M.pse[s].c === b.cmpy_id); const rows = sym ? M.pse[sym].bars : [];
     return Response.json({chartData: rows.map(r => ({CHART_DATE: new Date(r.d + "T00:00:00Z").toLocaleDateString("en-US", {month: "short", day: "2-digit", year: "numeric", timeZone: "UTC"}) + " 00:00:00", OPEN: r.o, CLOSE: r.c, VALUE: r.v}))}); }
@@ -34,7 +36,7 @@ const at = (h, dAgo = 0) => { const t = new Date(Date.now() - dAgo * 864e5); t.s
 // a weekday hour that is free of other jobs
 let mon = new Date(); while (mon.getUTCDay() !== 2) mon = new Date(mon - 864e5); // a Tuesday on or before today
 // ---------- 1) crypto day ----------
-let r = await T.backgroundStep(env, Date.now());
+let r = await T.backgroundStep(env, at(17));
 let S = await T.paperLoad(env);
 ok(/crypto/.test(r) && S.step.crypto === new Date().toISOString().slice(0, 10), "the first hourly step of the day is the crypto check", r);
 ok(S.usdphp === 58 && Math.round(S.books.btc_trend.start * 58) === 9000 && Math.round(S.books.crypto_swing.start * 58) === 21000, "₱100,000 is split 40/21/9/30 and the dollar books are sized with today's rate", JSON.stringify([S.usdphp, S.books.btc_trend.start]));
@@ -55,7 +57,7 @@ ok(!/crypto/.test(r) && S.journal.filter(e => e.kind === "BUY" && e.sym === "ETH
 M.coins.ETH[M.coins.ETH.length - 1][1] = 2500; M.live.ETH = 2490; M.coins.BTC[M.coins.BTC.length - 1][1] = 30000; M.live.BTC = 30100;
 for (const B of Object.values(S.books)) if (B.last_day) B.last_day = day(2);
 S.step.crypto = day(1); await env.MAX_MEMORY.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").bind(JSON.stringify(S)).run();
-r = await T.backgroundStep(env, Date.now()); S = await T.paperLoad(env);
+r = await T.backgroundStep(env, at(17)); S = await T.paperLoad(env);
 const ethSell = S.journal.find(e => e.kind === "SELL" && e.sym === "ETH");
 ok(ethSell && ethSell.px === 2490 && ethSell.pnlPhp < 0 && /stop/.test(ethSell.why) && /sell your ETH now/.test(ethSell.copy), "a close below the trailing stop → SELL at the live price, loss shown in pesos", JSON.stringify(ethSell));
 ok(S.journal.some(e => e.kind === "SELL" && e.sym === "BTC" && /BELOW its 100-day average/.test(e.why)) && !(S.books.btc_trend.qty > 1e-9), "Bitcoin below its 100-day average → Max sells it all and waits in cash");
@@ -100,14 +102,30 @@ S.step.pse = nd; S.step.crypto = d2; await env.MAX_MEMORY.prepare("UPDATE max_se
 r = await T.backgroundStep(env, Date.parse(d2 + "T10:45:00Z")); S = await T.paperLoad(env);
 ok(S.journal.some(e => e.kind === "ORDER" && e.sym === "AAA" && e.side === "sell" && /safety stop/.test(e.why)), "a close 25% below the highest close → safety-stop SELL order for the next opening");
 // ---------- 4) failures: a step that can't reach the data keeps the old state and retries; after 3 tries it waits for tomorrow ----------
-M.fail = /binance/; S.step.crypto = day(1); await env.MAX_MEMORY.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").bind(JSON.stringify(S)).run();
+M.fail = /binance|okx|coinbase/; S.step.crypto = day(1); await env.MAX_MEMORY.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").bind(JSON.stringify(S)).run();
 const jBefore = S.jid;
-for (let k = 0; k < 3; k++) r = await T.backgroundStep(env, Date.now());
+for (let k = 0; k < 3; k++) r = await T.backgroundStep(env, at(17));
 S = await T.paperLoad(env);
-ok(S.errors.filter(e => e.job === "crypto").length >= 3 && S.jid === jBefore && S.lastStep.ok === false, "a failed step is logged, nothing half-done is saved", JSON.stringify(S.lastStep));
-r = await T.backgroundStep(env, Date.now());
+ok(S.errors.filter(e => e.job === "crypto").length >= 3 && S.jid === jBefore && S.lastStep.ok === false && /no crypto price source answered — binance: .*okx: .*coinbase: /.test(S.lastStep.error), "all three price sources down → the step is logged as failed (with each source's error), nothing half-done is saved", JSON.stringify(S.lastStep));
+r = await T.backgroundStep(env, at(17));
 ok(!/crypto/.test(r), "after 3 failures the crypto check waits until tomorrow so the other jobs still run", r);
+// Binance refuses Max's server → the same step works from OKX (what happened on the live server on 9 Nov 2026)
+M.fail = /binance/; S = await T.paperLoad(env); S.errors = []; S.step.crypto = day(1); await env.MAX_MEMORY.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").bind(JSON.stringify(S)).run();
+M.okx = 0; r = await T.backgroundStep(env, at(17)); S = await T.paperLoad(env);
+ok(/from okx/.test(r) && S.step.crypto === new Date().toISOString().slice(0, 10) && S.cryptoSrc === "okx" && M.okx > 5 && S.lastStep.ok, "Binance down → the crypto check uses OKX instead (Coinbase is the third spare)", r);
+const hh = await (await w.fetch(new Request("https://x/health"), env)).json();
+ok(Array.isArray(hh.paperErrors) && hh.paperErrors.some(x => /crypto prices from okx \(binance: /.test(x)), "the status page says which price source is used and why", JSON.stringify(hh.paperErrors));
 M.fail = null;
+// ---------- fewer emails: five weekly reports, none emailed by itself; ONE Sunday summary ----------
+ok(T.WEEKLY_AUTO.join() === "web,apps,security,trading,investments", "only 5 agents still write a weekly report by themselves (music, business, shopping… only when asked)");
+const sum = await T.sundaySummary(env);
+ok(/not emailed|emailed/.test(sum), "the Sunday summary is built without errors", sum);
+// a database hiccup while reading the account must never wipe it
+{ const realPrep = env.MAX_MEMORY.prepare.bind(env.MAX_MEMORY); const before = (await env.MAX_MEMORY.prepare("SELECT value FROM max_settings WHERE key = 'max_paper'").first()).value;
+  env.MAX_MEMORY.prepare = sql => { if (/SELECT value FROM max_settings/.test(sql)) throw new Error("D1_ERROR: database busy"); return realPrep(sql); };
+  const rr = await T.backgroundStep(env, at(18)); env.MAX_MEMORY.prepare = realPrep;
+  const after = (await env.MAX_MEMORY.prepare("SELECT value FROM max_settings WHERE key = 'max_paper'").first()).value;
+  ok(/not readable right now — nothing changed/.test(rr) && after === before && JSON.parse(after).jid > 5, "a database read error does NOT replace the paper account with an empty one", rr); }
 // quiet hours
 ok(/quiet/.test(await T.backgroundStep(env, at(22))) && /quiet/.test(await T.backgroundStep(env, at(1))), "the step stays out of the hours used by the guard and the investment check");
 // ---------- 5) the home screen and the email text ----------

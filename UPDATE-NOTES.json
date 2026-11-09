@@ -1,4 +1,7 @@
 [
+ "FEWER EMAILS: one “Max weekly summary” every Sunday 6:45 pm (trading, investments, websites, apps, security) instead of 12 separate reports. Other emails only when Max paper-trades, a top rate or promo changes, or something breaks",
+ "Weekly reports still written for Websites, Apps, Security, Trading, Investments (open them in the app). Notes, Researcher, Business, Music, Schedule, Email and Shopping reports only when you ask",
+ "Fix: the crypto and gold check now has two spare price sources (OKX, Coinbase) when Binance refuses Max's server",
  "Your priorities are set: 1 trading, 2 investments, 3 notes, 4 websites, 5 apps. Max does them every day by himself; Claude checks them every Sunday as backup",
  "Paper trading now runs on Max's own server every day, even when your phone is off: crypto and gold every morning, PSE every weekday evening (₱100,000: 40% PSE dividend top-10, 21% crypto swing, 9% Bitcoin trend, 30% gold via PAXG)",
  "Every BUY now comes with a SELL PLAN: the stop-loss price, how the stop moves up, and when Max plans to sell (in the email and the Journal). Each email also lists today's sell level for every open position",

@@ -127,7 +127,13 @@ ok(ghPut && ghPut.branch === "trader-data" && ghPut.sha === "abc123" && ideas.cr
 sent = [];
 await w.scheduled({ scheduledTime: Date.parse("2026-11-08T04:45:00Z") }, env, { waitUntil: p => p }); await new Promise(res => setTimeout(res, 500));
 const subj = sent.map(m => Buffer.from((m.match(/Subject: =\?UTF-8\?B\?([^?]+)\?=/) || [])[1] || "", "base64").toString());
-ok(subj.length === 1 && /Max Trading — weekly report/.test(subj[0]), "Sunday 12:45 pm Manila → the Trading report goes out by itself", JSON.stringify(subj));
+ok(subj.length === 0, "Sunday 12:45 pm Manila → the Trading report is written by itself but NOT emailed (few emails: one Sunday summary)", JSON.stringify(subj));
+sent = []; await w.scheduled({ scheduledTime: Date.parse("2026-11-08T07:45:00Z") }, env, { waitUntil: p => p }); await new Promise(res => setTimeout(res, 300));
+ok(sent.length === 0, "the Music agent no longer reports by itself on Sunday (only when asked)", String(sent.length));
+sent = []; await w.scheduled({ scheduledTime: Date.parse("2026-11-08T10:45:00Z") }, env, { waitUntil: p => p }); await new Promise(res => setTimeout(res, 500));
+const sub2 = sent.map(m => Buffer.from((m.match(/Subject: =\?UTF-8\?B\?([^?]+)\?=/) || [])[1] || "", "base64").toString());
+const body2 = sent[0] ? Buffer.from(sent[0].split("\r\n\r\n").slice(1).join("").replace(/\r\n/g, ""), "base64").toString() : "";
+ok(sub2.length === 1 && /^Max weekly summary: ₱/.test(sub2[0]) && /1\) TRADING/.test(body2) && /2\) INVESTMENTS/.test(body2) && /3\) WEBSITES/.test(body2) && /4\) APPS/.test(body2) && /5\) SECURITY/.test(body2), "Sunday 6:45 pm Manila → ONE summary email: trading, investments, websites, apps, security", JSON.stringify(sub2) + body2.slice(0, 200));
 sent = []; await w.scheduled({ scheduledTime: Date.parse("2026-11-08T04:45:30Z") }, env, { waitUntil: p => p }); await new Promise(res => setTimeout(res, 300));
 ok(sent.length === 0, "…only once");
 // brain out → still a report, with the plain facts

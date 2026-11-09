@@ -4871,7 +4871,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(x.kind==='chat')return 'Answered: “'+String(x.text||'').slice(0,90)+'”'+(x.detail?' ('+x.detail+')':'');
   return String(x.text||x.kind||'');
  }
- // ---------- Max's agents: weekly reports (one email per agent every Sunday), shown on the phone too ----------
+ // ---------- Max's agents: weekly reports (since 10 Nov 2026: one Sunday summary email for all), shown on the phone too ----------
  const AGENTS_UI={notes:['🗂','Notes & Attachments'],research:['🔎','Researcher'],web:['🌐','Websites'],apps:['📱','Apps'],security:['🛡','Security'],trading:['📈','Trading'],investments:['💰','Investments'],business:['🏪','Business'],music:['🎵','Music'],schedule:['📅','Schedule'],email:['✉️','Email']};
  const AGENT_ALIASES=[[/\b(notes?|librarian|attachments?|fact[- ]?check\w*)\b/,'notes'],[/\bresearch(er)?\b/,'research'],[/\b(web ?sites?|sites?|hobby isle|seo)\b/,'web'],[/\b(apps?|play store|passage planner)\b/,'apps'],[/\b(security|threats?|attacks?)\b/,'security'],
   [/\b(trading|trades?|paper|stocks?|crypto|forex|strateg(y|ies))\b/,'trading'],[/\b(invest\w*|mp2|savings|uitf|vul|bonds?|dividends?)\b/,'investments'],[/\b(business(es)?|negosyo)\b/,'business'],[/\b(music|songs?)\b/,'music'],[/\b(schedule|calendar|tasks?|reminders?)\b/,'schedule'],[/\b(e-?mails?|inbox|gmail)\b/,'email']];

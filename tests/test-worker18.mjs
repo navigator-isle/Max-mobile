@@ -77,7 +77,7 @@ ok(backupMail && /Content-Disposition: attachment; filename="max-backup-\d{4}-\d
 const att = backupMail ? JSON.parse(Buffer.from(backupMail.split("Content-Transfer-Encoding: base64\r\n\r\n")[1].split("\r\n--")[0].replace(/\r\n/g, ""), "base64").toString()) : {};
 ok(att.kind === "Max backup" && att.notes.some(n => n.title === "Ballast log") && att.memories.some(m => /Pacific Star/.test(m.text)), "the backup holds his notes and memory", JSON.stringify(att).slice(0, 200));
 ok(!JSON.stringify(att).includes("SECRET123") && !att.settings.some(s => /srv_/.test(s.key)), "no secrets or server keys in the backup");
-ok(summary && /Backup: 1 notes and 1 memories/.test(summary), "…plus the weekly summary email", (summary || "").slice(0, 300));
+ok(!summary || !/all clear this week/.test(summary), "…and no separate ‘all clear’ email any more (it is part of the one Sunday summary)", (summary || "").slice(0, 200));
 // asking from the phone
 r = await call("/api/guard", { session });
 ok(r.status === 200 && r.data.report && r.data.lastBackup && r.data.lastBackup.ok && r.data.lastBackup.notes === 1, "the phone can read the last report and the last backup");
