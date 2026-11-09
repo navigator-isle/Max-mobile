@@ -55,6 +55,13 @@ def pse_dividends(row):
             except Exception: pass
     return out
 _EDGE_DIV = None
+_ECB = {}
+def ecb_php(cur):
+    """Daily ECB reference rates (Frankfurter) for 1 USD/CAD in pesos — Yahoo's CAD/PHP history came back empty."""
+    if cur not in _ECB:
+        d = json.loads(http(f"https://api.frankfurter.dev/v1/{(dt.date.today() - dt.timedelta(days=760)).isoformat()}..?base={cur}&symbols=PHP", raw=True))
+        _ECB[cur] = {dt.date.fromisoformat(k): v["PHP"] for k, v in d["rates"].items()}
+    return _ECB[cur]
 def edge_div_list(DIR):
     """All cash dividends on PSE Edge's 'Dividends and Rights' list (real peso amounts, about the last 15 months): {sym: [(ex_date, amount)]}"""
     global _EDGE_DIV
@@ -69,14 +76,20 @@ def edge_div_list(DIR):
             if len(td) < 7: continue
             n += 1
             if td[1].upper() != "COMMON" or td[2].lower() != "cash": continue
-            txt = td[3]; m = re.search(r"([\d]*\.?[\d]+)", txt.replace(",", "")); sym = byname.get(td[0].lower().strip(" ."))
+            txt = td[3].replace(",", ""); sym = byname.get(td[0].lower().strip(" ."))
+            # number after a currency sign first ("Thirteen and 51/100 centavos (Php0.1351)" → 0.1351); skip percentages; words ("Thirty Centavos" → 0.30)
+            m = re.search(r"(?:php|p|₱|\$|usd|us\$|cad)\s*([\d]*\.?[\d]+)", txt, re.I) or (None if "%" in txt or "/100" in txt else re.search(r"([\d]*\.?[\d]+)", txt))
+            if not m:
+                W = {"one":1,"two":2,"three":3,"four":4,"five":5,"six":6,"seven":7,"eight":8,"nine":9,"ten":10,"eleven":11,"twelve":12,"thirteen":13,"fourteen":14,"fifteen":15,"sixteen":16,"seventeen":17,"eighteen":18,"nineteen":19,"twenty":20,"thirty":30,"forty":40,"fifty":50,"sixty":60,"seventy":70,"eighty":80,"ninety":90}
+                wm = re.fullmatch(r"\s*((?:[a-z]+[\s-]*)+)centavos?\s*(per share)?\s*", txt.lower()); ws = re.findall(r"[a-z]+", wm.group(1)) if wm else []
+                if ws and all(w in W for w in ws): m = re.match(r"(.*)", f"{sum(W[w] for w in ws) / 100:g}")
             try: exd = dt.datetime.strptime(td[4], "%b %d, %Y").date()
             except Exception: continue
             if not (m and sym): continue
-            amt = float(m.group(1)); cur = "USD" if ("$" in txt or "USD" in txt.upper() or txt.upper().startswith("US")) else ("CAD" if "CAD" in txt.upper() else "PHP")
+            amt = float(m.group(1)); cur = "CAD" if ("CAD" in txt.upper() or "C$" in txt.upper()) else ("USD" if ("$" in txt or "USD" in txt.upper() or txt.upper().startswith("US")) else "PHP")
             if cur != "PHP":                       # dividends paid in dollars → pesos at that day's rate
                 try:
-                    fx = dict(yahoo("PHP=X" if cur == "USD" else "CADPHP=X", "2y")); k_ = max([d_ for d_ in fx if d_ <= exd] or [max(fx)]); amt *= fx[k_]
+                    fx = ecb_php(cur); k_ = max([d_ for d_ in fx if d_ <= exd] or [max(fx)]); amt *= fx[k_]
                 except Exception: continue
             out.setdefault(sym, []).append((exd, amt))
         if n == 0: break

@@ -856,9 +856,29 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    tags:Array.isArray(n.tags)?n.tags.map(String):[],body:typeof n.body==='string'?n.body:'',analysis:n.analysis&&typeof n.analysis==='object'?n.analysis:null,
    createdAt:Number(n.createdAt)||t,updatedAt:t,deleted:!!n.deleted};
  }
- const loadAll=()=>{try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v.map(normNote).filter(Boolean):[]}catch{return []}};
+ // Notes live in the phone's small quick storage while they fit; when they grow big (thousands of trading notes)
+ // they move to the phone's large storage (IndexedDB) automatically, so saving never fails.
+ const NOTES_IDB='max_notes_db',NOTES_FLAG='max_notes_in_idb',LS_MAX=2e6;let noteCache=null,notePending=null;
+ const notesIdb=()=>new Promise((res,rej)=>{try{const r=indexedDB.open(NOTES_IDB,1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});
+ const idbSet=v=>notesIdb().then(db=>new Promise((res,rej)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,'notes');t.oncomplete=()=>res(true);t.onerror=()=>rej(t.error)}));
+ const idbGet=()=>notesIdb().then(db=>new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get('notes');q.onsuccess=()=>res(q.result||'[]');q.onerror=()=>rej(q.error)}));
+ let notesInIdb=false;try{notesInIdb=localStorage.getItem(NOTES_FLAG)==='1'}catch{}
+ function rawLoad(){if(notesInIdb)return noteCache||notePending||[];try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}catch{return []}}   // quick storage is read fresh each time, as before
+ function rawSave(items){
+  if(notesInIdb&&!noteCache){notePending=items;return}            // still loading from large storage: merged when it arrives
+  const s=JSON.stringify(items);
+  if(!notesInIdb){try{if(s.length<LS_MAX){localStorage.setItem(KEY,s);return}}catch(e){}}
+  noteCache=items;
+  notesInIdb=true;try{localStorage.setItem(NOTES_FLAG,'1')}catch{}
+  idbSet(s).then(()=>{try{localStorage.removeItem(KEY)}catch{}}).catch(e=>{console.warn('Max: could not save notes',e);try{toast('Phone storage is full — notes are safe in the cloud database.')}catch{}});
+ }
+ const notesReady=!notesInIdb?Promise.resolve():idbGet().then(str=>{let v=[];try{v=JSON.parse(str)}catch{}if(!Array.isArray(v))v=[];
+   const m=new Map(v.map(n=>[n&&n.id,n]));(notePending||[]).forEach(n=>{const o=n&&m.get(n.id);if(n&&(!o||(Number(n.updatedAt)||0)>=(Number(o.updatedAt)||0)))m.set(n.id,n)});
+   const had=!!notePending;notePending=null;noteCache=[...m.values()];if(had)rawSave(noteCache);try{if(typeof screen!=='undefined'&&screen==='notes')renderList()}catch{}}).catch(e=>{console.warn('Max notes storage',e);noteCache=notePending||[];notePending=null});
+ window.maxNotesReady=()=>notesReady;
+ const loadAll=()=>rawLoad().map(normNote).filter(Boolean);
  const getNotes=()=>loadAll().filter(n=>!n.deleted);
- const putNotes=items=>{localStorage.setItem(KEY,JSON.stringify(items));scheduleSync();try{scheduleIndex()}catch{}};
+ const putNotes=items=>{rawSave(items);scheduleSync();try{scheduleIndex()}catch{}};
  const escHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const plain=html=>{const d=document.createElement('div');d.innerHTML=html||'';return (d.innerText||d.textContent||'').replace(/\s+/g,' ').trim()};
  const newId=()=>'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
@@ -870,7 +890,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(Array.isArray(old)&&old.length){
    const all=loadAll(),ids=new Set(all.map(n=>n.id));
    old.forEach(o=>{if(!o||ids.has(o.id))return;const n=normNote({...o,body:escHtml(o.body||'').replace(/\n/g,'<br>')});if(n)all.push(n)});
-   localStorage.setItem(KEY,JSON.stringify(all));
+   rawSave(all);
   }
   localStorage.setItem('max_notes_migrated_v1','1');
  }
@@ -971,17 +991,25 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- notes cloud sync ----------
  let syncTimer=null,syncing=false;
  function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNotes().catch(()=>{}),1500)}
+ window.maxSyncNow=()=>syncNotes();
  async function syncNotes(){
   if(!cloud.memory||syncing)return false;
   syncing=true;
   try{
+   await notesReady;
    const settings=collectSettings();
-   const {r,data}=await fetchJson(workerBase()+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes:loadAll(),settings})},20000);
+   // Only what changed since the last sync goes up and comes back (saves data at sea); a full sync once a day keeps everything in line.
+   const lsN=k=>Number(localStorage.getItem(k)||0),since=lsN('max_sync_since'),delta=since>0&&Date.now()-lsN('max_sync_full')<864e5,lastOk=lsN('max_last_sync');
+   let seen={};try{seen=JSON.parse(localStorage.getItem('max_sync_seen')||'{}')}catch{}
+   const all=loadAll(),up=delta?all.filter(n=>n.updatedAt>lastOk-600000&&seen[n.id]!==n.updatedAt):all;   // notes that just came from the server don't go back up
+   const {r,data}=await fetchJson(workerBase()+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes:up,settings,since:delta?since:0})},delta?20000:60000);
    if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
    const merged=new Map(loadAll().map(n=>[n.id,n]));
    (data.notes||[]).map(normNote).filter(Boolean).forEach(s=>{const l=merged.get(s.id);if(!l||s.updatedAt>l.updatedAt)merged.set(s.id,s)});
-   localStorage.setItem(KEY,JSON.stringify([...merged.values()]));
+   rawSave([...merged.values()]);
+   try{const sn=data.full===false?seen:{};(data.notes||[]).forEach(x=>{if(x&&x.id)sn[x.id]=Number(x.updatedAt)||0});up.forEach(x=>{sn[x.id]=x.updatedAt});localStorage.setItem('max_sync_seen',JSON.stringify(sn))}catch{}   // what the server already has
    localStorage.setItem('max_last_sync',String(Date.now()));
+   if(Number(data.serverTime)>0)localStorage.setItem('max_sync_since',String(data.serverTime));if(data.full!==false)localStorage.setItem('max_sync_full',String(Date.now()));
    if(Array.isArray(data.settings))applySettings(data.settings);
    if(screen==='notes')renderList();
    return true;
@@ -996,7 +1024,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!b||b.kind!=='Max backup'||!Array.isArray(b.notes))return 'That file isn’t a Max backup.';
   const before=loadAll().length,merged=new Map(loadAll().map(n=>[n.id,n]));let added=0,updated=0;
   b.notes.map(normNote).filter(Boolean).forEach(s=>{const l=merged.get(s.id);if(!l){added++;merged.set(s.id,s)}else if(s.updatedAt>l.updatedAt){updated++;merged.set(s.id,s)}});
-  localStorage.setItem(KEY,JSON.stringify([...merged.values()]));
+  rawSave([...merged.values()]);
   const settings=(Array.isArray(b.settings)?b.settings:[]).filter(x=>x&&SYNC_KEYS.includes(x.key)&&typeof x.value==='string').map(x=>({key:x.key,value:x.value,updated:Number(x.updated_at||x.updated)||0}));
   if(settings.length)applySettings(settings);
   let cloudMsg='';
@@ -1855,11 +1883,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- Max reads your notes: the most relevant ones go with every question ----------
  const NOTE_STOP=new Set('the a an and or but to of in on at for with is are was were be it this that what how why when where who which my me i you your can could would should do does did please max about from have has had will just tell know said say note notes read show open find ano paano bakit saan kailan sino ang ng mga sa na ba po ko mo yung iyong'.split(' '));
  const qWords=q=>[...new Set(norm(q).split(' ').filter(w=>w.length>2&&!NOTE_STOP.has(w)))];
+ const plainCache=new Map(),plainOf=n=>{const k=n.id+':'+n.updatedAt;let v=plainCache.get(k);if(v===undefined){v=(plain(n.body)+' '+(n.analysis?.summary||'')).toLowerCase();plainCache.set(k,v);if(plainCache.size>4000)plainCache.delete(plainCache.keys().next().value)}return v};
  function rankNotes(q,k){
   const ws=qWords(q);if(!ws.length)return [];
   const hit=(hay,w)=>hay.includes(w)||(w.length>4&&hay.includes(w.slice(0,-1)))||(w.length>5&&hay.includes(w.slice(0,-2)));
   return getNotes().map(n=>{
-   const t=(n.title||'').toLowerCase(),tg=(n.tags||[]).join(' ').toLowerCase(),c=(n.category||'').toLowerCase(),b=(plain(n.body)+' '+(n.analysis?.summary||'')).toLowerCase();
+   const t=(n.title||'').toLowerCase(),tg=(n.tags||[]).join(' ').toLowerCase(),c=(n.category||'').toLowerCase(),b=plainOf(n);
    let s=0;ws.forEach(w=>{if(hit(t,w))s+=3;if(hit(tg,w))s+=2;if(hit(c,w))s+=1;if(hit(b,w))s+=1});
    if(s>0&&(n.tags||[]).some(x=>String(x).toLowerCase()==='core'))s+=1;
    return {n,s};
@@ -3962,7 +3991,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function indexNotes(){
   if(vecBusy||!workerBase()||navigator.onLine===false)return;vecBusy=true;
   try{
-   const V=vecLoad(),notes=getNotes(),ids=new Set(notes.map(n=>n.id));
+   // the ~1,000 trading data notes (one per stock, coin, dividend list, trader) are found by name, so they are not embedded (saves AI quota and phone storage)
+   const V=vecLoad(),notes=getNotes().filter(n=>!(String(n.id).startsWith('tn2-')&&/ › (Stocks|Coins|Dividend|Traders|Currency)$/.test(n.category||''))),ids=new Set(notes.map(n=>n.id));
    for(const id of Object.keys(V.items))if(!ids.has(id))delete V.items[id];
    let todo=notes.filter(n=>V.items[n.id]?.h!==noteHash(n)).slice(0,200);
    for(let i=0;i<todo.length;i+=25){

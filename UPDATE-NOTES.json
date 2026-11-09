@@ -1,5 +1,6 @@
-["NEW: price on any past date — ask “how much was LTC on November 5 2025” or “magkano ang SM noong 25 December 2025”; exact open/high/low/close from Binance, PSE Edge, ECB or Yahoo, with the peso value at that day's rate",
- "If the market was closed that day, Max says so and gives the last trading day before it",
- "Trading notes organized: Start here, My plan, Paper trading, Words used; each market folder starts with its plan, then one clean ranking, then data",
- "Old unorganized trading notes and their zip copies are removed automatically (stock and coin notes stay)",
- "New Reference folder: fees and market events grouped by year"]
+["NEW trading notes layout: Trading › PSE › Strategy / Stocks / Dividend, Crypto › Strategy / Coins, Forex › Strategy / Currency, Copy trading › Strategy / Platform / Traders (1,102 notes, loaded by the server itself — no zip import)",
+ "Every PSE dividend since 2013 in its own note per stock, a dividend calendar, every strategy version year by year, 12 copy-trading platforms, 76 trader notes",
+ "Fixed dividend amounts read wrongly from PSE Edge (EMI ₱0.1351, not ₱51; amounts in words; Canadian dollars)",
+ "Old trading notes (earlier layouts and zip copies) are removed automatically; your own notes are not touched",
+ "Notes move to the phone's large storage when they get big, and sync now sends only what changed (much less data at sea)",
+ "Price on any past date: “how much was LTC on November 5 2025”"]

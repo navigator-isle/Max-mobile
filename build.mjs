@@ -54,6 +54,18 @@ fs.writeFileSync(path.join(SITE, '_update', 'manifest.json'), JSON.stringify({ v
   bytes: W.length, built, compatibility_date: compat, vars: [['MAX_SEED_NOTES', 'on']], notes }, null, 1));
 // max-app.zip = what Mark uploads to Cloudflare Pages from his phone (the app + _update; never _src)
 fs.copyFileSync(path.join(ROOT, 'updater.js'), path.join(SITE, '_update', 'updater.txt'));   // open in Chrome → Select all → Copy (first-time setup)
-const pagesFiles = [...APP, '_update/worker.js', '_update/manifest.json', '_update/updater.txt'];
+// Trading notes (layout of 9 Nov 2026): too big for the server code, so they ride along in parts; the server loads and checks them itself.
+const notesSrc = path.join(ROOT, 'trader', 'notes', 'trading-notes-v2.json'), noteFiles = [];
+if (fs.existsSync(notesSrc)) {
+  const all = JSON.parse(fs.readFileSync(notesSrc, 'utf8')), TN = (/const TN2 = "([^"]+)"/.exec(W.toString()) || [])[1], parts = [];
+  fs.mkdirSync(path.join(SITE, '_update', 'notes'), { recursive: true });
+  let cur = [], size = 0; const flush = () => { if (!cur.length) return; const f = `part-${String(parts.length + 1).padStart(2, '0')}.json`, buf = Buffer.from(JSON.stringify(cur));
+    fs.writeFileSync(path.join(SITE, '_update', 'notes', f), buf); parts.push({ file: f, count: cur.length, bytes: buf.length, sha256: crypto.createHash('sha256').update(buf).digest('hex') }); noteFiles.push('_update/notes/' + f); cur = []; size = 0; };
+  for (const n of all) { const b = JSON.stringify(n).length; if (size + b > 150000) flush(); cur.push(n); size += b; }
+  flush();
+  fs.writeFileSync(path.join(SITE, '_update', 'notes', 'manifest.json'), JSON.stringify({ version: TN, count: all.length, parts, built }, null, 1)); noteFiles.push('_update/notes/manifest.json');
+  console.log(`trading notes ${TN}: ${all.length} notes in ${parts.length} parts`);
+}
+const pagesFiles = [...APP, '_update/worker.js', '_update/manifest.json', '_update/updater.txt', ...noteFiles];
 fs.writeFileSync(path.join(ROOT, 'max-app.zip'), zip(pagesFiles.map(f => [f, fs.readFileSync(path.join(SITE, f))]), ''));
 console.log(`max-app.zip ready for Cloudflare Pages: app + server update ${ver} (${Math.round(W.length / 1024)} KB)`);

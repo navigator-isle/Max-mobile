@@ -35,7 +35,7 @@ run "Max without GitHub (app on Cloudflare, code backups)" tests/test-worker22.m
 run "One-tap updater (Worker)" tests/test-updater.mjs "$PWD/updater.js"
 run "Deal Finder: prices from store pages" tests/test-worker23.mjs "$TMP/worker.mjs"
 run "Shopping agent (weekly)" tests/test-worker24.mjs "$TMP/worker.mjs"
-run "Trading notes & chat memories into Max" tests/test-worker25.mjs "$TMP/worker.mjs"
+run "Trading notes v2: load in parts, retire old, delta sync" tests/test-worker25.mjs "$TMP/worker.mjs"
 run "Price on a past date" tests/test-worker26.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
@@ -78,4 +78,5 @@ run "Phone: trading notes import (771 notes)" tests/e2e36.mjs "$PWD/index.html" 
 run "Phone: one-tap server update" tests/e2e37.mjs "$PWD/index.html"
 run "Phone: typing box always on home" tests/e2e38.mjs "$PWD/index.html"
 run "Phone: price on a past date" tests/e2e39.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: 1,100 trading notes, large storage, sync only changes" tests/e2e40.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }
