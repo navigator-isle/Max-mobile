@@ -40,6 +40,7 @@ ok(/crypto/.test(r) && S.step.crypto === new Date().toISOString().slice(0, 10), 
 ok(S.usdphp === 58 && Math.round(S.books.btc_trend.start * 58) === 9000 && Math.round(S.books.crypto_swing.start * 58) === 21000, "₱100,000 is split 40/21/9/30 and the dollar books are sized with today's rate", JSON.stringify([S.usdphp, S.books.btc_trend.start]));
 const buys = S.journal.filter(e => e.kind === "BUY");
 const eth = buys.find(e => e.sym === "ETH");
+ok(eth && /^Stop-loss \$[\d,.]+ \(−[\d.]+% from the buy\)\. The stop only moves UP/.test(eth.sellPlan) && /No fixed target/.test(eth.sellPlan), "every BUY has a sell plan: stop-loss price, how it trails, no fixed target", eth && eth.sellPlan);
 ok(eth && eth.px === 4010 && /breakout/.test(eth.why) && /buy about ₱/.test(eth.copy) && /stop/.test(eth.outcome), "a 20-day breakout (ETH) is bought at the LIVE price, with why / how to copy / possible outcome", JSON.stringify(eth));
 const pos = S.books.crypto_swing.positions.find(p => p.sym === "ETH");
 ok(pos && pos.qty * pos.risk <= S.books.crypto_swing.start * 0.0051 && pos.qty * pos.ep <= S.books.crypto_swing.start * 0.2501, "position size: about 0.5% of the money at risk to the stop, at most 25% in one coin", JSON.stringify(pos));
@@ -89,6 +90,7 @@ S.step.pse = eveDay; S.step.crypto = nd; await env.MAX_MEMORY.prepare("UPDATE ma
 r = await T.backgroundStep(env, next.getTime());
 S = await T.paperLoad(env);
 const aaa = S.books.pse_dividend.positions.find(p => p.sym === "AAA"), aBuy = S.journal.find(e => e.kind === "BUY" && e.sym === "AAA");
+ok(aBuy && /Stop-loss: sell if AAA closes below ₱7\.65/.test(aBuy.sellPlan) && /3-month re-check/.test(aBuy.sellPlan), "PSE buy: sell plan with the stop-loss price (₱7.65 = 25% below ₱10.20) and the re-check rule", aBuy && aBuy.sellPlan);
 ok(aaa && aaa.ep === 10.2 && aaa.shares % 100 === 0 && aBuy.fee >= 22, "PSE buy at the next opening price, whole board lots, COL fees (min ₱20 + VAT)", JSON.stringify([aaa, aBuy && aBuy.fee]));
 ok(S.books.pse_dividend.cash < 2000 + 40000 * 0 + 21000 && S.books.pse_dividend.cash >= 0, "leftover cash is put to work with extra board lots (little cash left idle)", String(S.books.pse_dividend.cash));
 // a 25% drop → safety-stop order for the next opening; dividends are credited on the ex-date
@@ -113,7 +115,7 @@ const res = await w.fetch(new Request("https://x/api/home/paper", {headers: {"X-
 ok(res.status === 200 && P.v === 2 && P.books.length === 4 && Number.isFinite(P.totalPhp) && P.journal.length && P.journal[0].id > P.journal[P.journal.length - 1].id, "the paper tile gets the ₱ total, 4 parts and the journal (newest first)", JSON.stringify(Object.keys(P)));
 ok(P.tested.plan.includes("17.6%") && P.planYears["2018"] === -7.7, "possible outcome: the tested results come with the data");
 const txt = T.paperEmailText(S, S.journal.slice(-3));
-ok(/^Max paper trading — pretend money only/.test(txt) && /TOTAL: ₱/.test(txt) && /To copy:/.test(txt) && /OPEN POSITIONS/.test(txt), "trade email: total, every trade with why / how to copy / possible outcome, open positions");
+ok(/^Max paper trading — pretend money only/.test(txt) && /TOTAL: ₱/.test(txt) && /To copy:/.test(txt) && /OPEN POSITIONS \(today's sell levels\)/.test(txt) && /stop-loss ₱/.test(txt), "trade email: total, every trade with why / how to copy / possible outcome, open positions");
 // ---------- 6) live boxes in notes ----------
 const body = "<p><b>LTC</b></p><ul><li>old history</li></ul><p>Mark's own line</p>";
 const b1 = T.withLiveBox(body, '<div data-live="1"><p>A</p><ul><li>1</li></ul></div>'), b2 = T.withLiveBox(b1, '<div data-live="1"><p>B</p><ul><li>2</li></ul></div>');

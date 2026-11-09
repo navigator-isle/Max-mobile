@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18b";
+const WORKER_VERSION = "max-worker-2026-11-18c";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -2546,6 +2546,7 @@ function cryptoSwing(S, U, upto, live, now) {
       pj(S, {book: "crypto_swing", kind: "BUY", sym: o.sym, d: when, qty: q, px: p, ccy: "USDT", php: Math.round(q * p * fx), stop,
         text: `BUY ${g6(q)} ${o.sym} @ $${g6(p)} = ${usd(q * p)} (${(q * p / eq * 100).toFixed(1)}% of the crypto swing money)`, why: o.why,
         copy: `On Binance or Coins.ph, buy about ${peso(q * p * fx)} of ${o.sym} now (price about $${g6(p)}). Max emails you when to sell — sell then too.`,
+        sellPlan: `Stop-loss $${g6(stop)} (−${(2 * a / p * 100).toFixed(1)}% from the buy). The stop only moves UP: each day it becomes the highest close minus $${g6(2 * a)} (2× the average daily move). Max sells at the first daily close below it. No fixed target — winners are allowed to run. Example: if ${o.sym} rises to $${g6(p + 4 * a)} (+${(4 * a / p * 100).toFixed(1)}%), the stop will be at least $${g6(p + 2 * a)}, so about +${(2 * a / p * 100).toFixed(1)}% is locked in.`,
         outcome: `If the stop ($${g6(stop)}) is hit: about −${peso(q * 2 * a * fx)} (−${(2 * a / p * 100).toFixed(1)}% of this trade, 0.5% of this money). If the rise continues, the stop follows the price up and locks in profit. Tested: ${PTESTED.crypto_swing}.`});
     } else {
       const pos = B.positions.find(x => x.sym === o.sym); if (!pos) return;
@@ -2597,6 +2598,7 @@ function trendBook(S, key, s, upto, live, now, cfg) {
     pj(S, {book: key, kind: side, sym: cfg.sym, d: when, qty: Math.abs(delta) / p, px: p, ccy: "USDT", php: Math.round(Math.abs(delta) * fx), pnl: pnl === null ? undefined : +pnl.toFixed(2), pnlPhp: pnl === null ? undefined : Math.round(pnl * fx),
       text: `${side} ${usd(Math.abs(delta))} (${peso(Math.abs(delta) * fx)}) of ${name} @ $${g6(p)} → now ${Math.round(o.w * 100)}% of this money is in ${cfg.sym}` + (pnl !== null ? ` · result ${pnl >= 0 ? "+" : "−"}${peso(Math.abs(pnl * fx))}` : ""), why: o.why,
       copy: side === "BUY" ? `On Binance or Coins.ph, buy about ${peso(Math.abs(delta) * fx)} of ${cfg.sym} now.` : `If you copied, sell about ${peso(Math.abs(delta) * fx)} of your ${cfg.sym} now${o.w === 0 ? " (all of it)" : ""}.`,
+      sellPlan: side === "BUY" ? `Sell when ${name} closes below its ${cfg.sma}-day average — now $${g6(o.sma)} (${((1 - o.sma / p) * 100).toFixed(1)}% below the price); the average moves every day and Max tells you the new level in each email. He may also add or trim a little when the price swings change. No fixed target.` : undefined,
       outcome: side === "BUY" ? `No fixed stop: Max sells when ${name} closes below its ${cfg.sma}-day average (now $${g6(o.sma)}, ${((1 - o.sma / p) * 100).toFixed(1)}% below the price). Tested: ${PTESTED[key]}.` : undefined});
   };
   const last = B.last_day || pAdd(upto, -1), closes = s.map(r => r[1]), days = s.map(r => r[0]);
@@ -2659,6 +2661,7 @@ async function pseStep(env, S, ctx, today) {
     pj(S, {book: "pse_dividend", kind: "BUY", sym, d, qty: sh, px: p, ccy: "PHP", php: Math.round(cost), fee: Math.round(cost - sh * p),
       text: `BUY ${sh.toLocaleString("en-US")} ${sym} (${sh / lot} board lot${sh / lot > 1 ? "s" : ""} of ${lot}) @ ₱${g6(p)} at the opening = ${peso(cost)} incl. fees${extra ? " — " + extra : ""}`, why,
       copy: `If you copy: buy ${sh.toLocaleString("en-US")} shares of ${sym} (about ${peso(cost)}). Max emails you when to sell.`,
+      sellPlan: `Stop-loss: sell if ${sym} closes below ₱${g6(p * 0.75)} (25% below the buy); the stop rises with the highest close and always stays 25% below it. Planned sell: at the 3-month re-check (${B.next_rebalance || "every 3 months"}) only if ${sym} drops out of the top 20 dividend payers. No fixed target — keep collecting dividends while it qualifies.`,
       outcome: `Safety stop: Max sells if ${sym} closes 25% below its highest close → worst case about −${peso(cost * 0.25)} on this stock. Dividends come on top${y ? ` (${(y * 100).toFixed(1)}% a year ≈ ${peso(cost * y * 0.9)} after 10% tax)` : ""}. Tested: ${PTESTED.pse_dividend}.`});
     return sh;
   };
@@ -2749,6 +2752,7 @@ async function pseScanStep(env, S, ctx, today) {
         const i = sc.info[s], lot = boardLot(i.p), why = `${s} paid ₱${g6(i.div12)} per share in cash dividends in the last 12 months; at ₱${g6(i.p)} that is a ${(i.y * 100).toFixed(1)}% yield (rank ${ranked.indexOf(s) + 1} of ${ranked.length} PSE stocks that pass the rules: yield ≥3%, ≥₱5M traded a day, price ≥₱1). Traded ${peso(i.val)} a day on average.`;
         B.pending.push({sym: s, side: "buy", php: eq / n, yield: i.y, after: today, why});
         pj(S, {book: "pse_dividend", kind: "ORDER", sym: s, d: today, side: "buy", php: Math.round(eq / n), text: `BUY about ${peso(eq / n)} of ${s} at the next opening (1 board lot = ${lot} shares ≈ ${peso(lot * i.p)})`, why,
+          sellPlan: `Stop-loss about ₱${g6(i.p * 0.75)} (25% below today's price; set exactly from your buy price). Planned sell only at a 3-month re-check if it drops out of the top 20 dividend payers (next: ${pAdd(today, 91)}).`,
           copy: `If you copy: put a buy order for ${s} at the opening of the next trading day (about ${peso(eq / n)}, in whole board lots of ${lot}).`});
       }
       B.next_rebalance = pAdd(today, 91); B.picks = pick.map(s => ({sym: s, yieldPct: +(sc.info[s].y * 100).toFixed(1)}));
@@ -2778,11 +2782,13 @@ function paperEmailText(S, entries, weekly) {
     `TOTAL: ${peso(T.total)} (${sgn(T.pct)} since ${S.opened}, started with ${peso(PAPER_START)})`, T.parts.map(p => `${p.name.split(" (")[0]} ${peso(p.php)} (${sgn(p.pct)})`).join(" · "), ""];
   const BOOKN = k => PBOOK[k]?.name.split(" (")[0] || k;
   if (entries.length) { L.push(weekly ? "THIS WEEK" : "NEW"); entries.forEach((e, i) => { L.push(`${i + 1}) ${e.kind} ${e.sym || ""} — ${BOOKN(e.book)} — ${e.d || ""}`.replace(/\s+—\s+—/, " —")); L.push("   " + e.text);
-    if (e.why) L.push("   Why: " + e.why); if (e.copy) L.push("   To copy: " + e.copy); if (e.outcome) L.push("   Possible outcome: " + e.outcome); L.push(""); }); }
+    if (e.why) L.push("   Why: " + e.why); if (e.copy) L.push("   To copy: " + e.copy); if (e.sellPlan) L.push("   Sell plan: " + e.sellPlan); if (e.outcome) L.push("   Possible outcome: " + e.outcome); L.push(""); }); }
   else L.push(weekly ? "No trades this week — no setup met the rules. Waiting is part of the plan." : "");
   const open = [];
-  for (const k of Object.keys(PBOOK)) for (const x of S.books[k].positions) open.push(`- ${x.sym} (${BOOKN(k)}): ${x.shares ? x.shares.toLocaleString("en-US") + " sh @ ₱" + g6(x.ep) : g6(x.qty) + " @ $" + g6(x.ep)}${x.stop ? " · stop $" + g6(x.stop) : ""} since ${x.entry}`);
-  L.push("OPEN POSITIONS", ...(open.length ? open : ["- none yet (all cash)"]), "", "Possible outcome of the whole plan: " + PTESTED.plan + ". Past results are not a promise.", "",
+  for (const k of Object.keys(PBOOK)) for (const x of S.books[k].positions) { const mk = S.books[k].market;
+    const stop = x.shares ? ` · stop-loss ₱${g6((x.hi || x.ep) * 0.75)}` : x.stop ? ` · stop-loss $${g6(x.stop)}` : mk && mk.sma ? ` · sell below $${g6(mk.sma)} (${k === "btc_trend" ? 100 : 200}-day average)` : "";
+    open.push(`- ${x.sym} (${BOOKN(k)}): ${x.shares ? x.shares.toLocaleString("en-US") + " sh @ ₱" + g6(x.ep) : g6(x.qty) + " @ $" + g6(x.ep)}${stop} since ${x.entry}`); }
+  L.push("OPEN POSITIONS (today's sell levels)", ...(open.length ? open : ["- none yet (all cash)"]), "", "Possible outcome of the whole plan: " + PTESTED.plan + ". Past results are not a promise.", "",
     "Open Max → tap the Paper trading tile → Journal for every trade. Say “Max, turn off trading emails” to stop these.");
   return L.join("\n");
 }
