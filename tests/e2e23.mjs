@@ -64,9 +64,11 @@ const answer = async () => (await p.locator("#homeAnswer").isVisible()) ? p.loca
 let g = gem.length;
 await say("how's my paper trading");
 const a = await answer();
-ok(gem.length === g && /^Paper trading: MAX-MASTER-3 is/.test(a) && await p.locator("#dashPaper").getAttribute("open") !== null, "“how's my paper trading” → instant summary and the home paper-trading panel opens (old GitHub trader retired)", a);
+ok(gem.length === g && /^Paper trading: your ₱100,000 is now/.test(a) && await p.locator("#dashFull").isVisible(), "“how's my paper trading” → instant summary and the full paper-trading view (old GitHub trader retired)", a);
+await p.click("#dashFullClose");
 await say("show my crypto paper trading");
-ok(/^Paper trading:/.test(await answer()), "asking for one market also opens the panel", await answer());
+ok(/^Paper trading:/.test(await answer()), "asking for one market also opens the view", await answer());
+await p.click("#dashFullClose");
 await say("turn off trading emails");
 ok(/Trading emails are off/.test(await answer()), "“turn off trading emails”");
 EVENTS.push({ id: EVENTS.at(-1).id + 1, at: new Date().toISOString(), day: "2026-11-03", market: "pse", type: "fill", text: "Bought 1,000 TEST at 10.02." });
