@@ -2006,7 +2006,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/^(play|put on) (some )?music$|^(music|music please|patugtog)$/))return {type:'play_music',details:{query:'popular hits mix'}};
   {const dm=raw.match(/^\s*(?:(?:hey|ok|okay)\s+)?(?:max[, ]+)?(?:please\s+|can you\s+|could you\s+)?(?:find|search|look for|check|compare|get|hanapin(?: mo)?|i-?check)(?: me)?\s+(?:the\s+)?(?:best|cheapest|lowest|pinakamurang|sulit(?:est)?|real)\s+(?:price|deal|value|prices|deals|presyo)?\s*(?:for|of|on|ng|sa)?\s+(.{2,80}?)[.!?]*$/i)
    ||raw.match(/^\s*(?:max[, ]+)?(?:(?:best|cheapest|lowest) (?:price|deal)s? (?:for|of|on)|price check(?: on| for)?|compare prices?(?: for| of)?|magkano(?: ang)?|sulit ba(?: ang)?)\s+(.{2,80}?)[.!?]*$/i);
-   if(dm&&!/\b(stock|shares?|crypto|bitcoin|forex|psei?)\b/i.test(dm[1]))return {type:'deal_find',details:{product:dm[1].trim()}}}
+   if(dm&&!/\b(stock|shares?|crypto|bitcoin|forex|psei?)\b/i.test(dm[1])&&!textDate(raw)&&!symbolsIn(dm[1]).some(x=>x.kind==='crypto'||watchlist().some(w=>w.symbol===x.symbol)))return {type:'deal_find',details:{product:dm[1].trim()}}}
   {const wm=raw.match(/^\s*(?:max[, ]+)?(?:watch|track|monitor|bantayan)\s+(?:the\s+)?(?:price|prices|presyo)\s+(?:of|for|ng)\s+(.{2,80}?)[.!?]*$/i);if(wm)return {type:'deal_watch',details:{product:wm[1].trim(),on:true}}}
   if(has(/^(?:show |open )?(?:my )?(?:deals?|deal finder|deal checks|shopping|price watch(?:es)?|price checks)$/))return {type:'deal_list'};
   if(has(/^(?:(?:show|open|manage)\s+)?(?:my )?(?:own )?(?:songs|music library|song library|offline music)$|^(?:add|import|upload|copy)\s+(?:my\s+|some\s+|more\s+)?(?:songs|music|mp3s?)(?:\s+(?:from|on)\s+(?:my\s+)?phone)?$/))return {type:'my_songs'};
@@ -2125,6 +2125,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(price alerts?|my alerts)\b/)&&!has(/\b(set|add|create)\b/))return {type:'list_alerts'};
   if(has(/\b(show|display|use|set|change)\b.*\b(prices?|currenc(y|ies))\b.*\b(in|to)\b/)&&Object.keys(CUR_WORDS).some(w=>n.includes(w)))return {type:'set_currencies',query:raw};
   if(/\d/.test(n)&&has(/\b(to|in|into|sa)\b/)&&new RegExp('\\d\\s*(k|thousand|million|m)?\\s*('+Object.keys(CUR_WORDS).concat(Object.keys(CRYPTO_WORDS)).join('|')+')\\b').test(n.replace(/,/g,''))&&!has(/\b(remind|alarm|meeting|log|sale|sales|earned)\b/))return {type:'convert_currency',query:raw};
+  {const when=textDate(raw),past=when||has(/\b(ago|yesterday|kahapon|noong|nung|back in|last (week|month|year|christmas|new year)|on (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*)\b/)||/\b(19|20)\d\d\b/.test(n);
+   if(past&&has(/\b(price|prices|presyo|how much|worth|value|magkano|close|closed|closing|open|high|low|rate)\b/)&&!has(/\b(alert|notify|chart|graph|remind)\b/)){const sy=symbolsIn(raw);if(when&&sy.length)return {type:'price_on_date',details:{symbol:sy[0].symbol,kind:sy[0].kind,date:when}};if(sy.length||has(/\b(gold|silver|oil|dollar|peso)\b/))return null}}
   {const sy=symbolsIn(raw).filter(x=>x.kind==='crypto'||watchlist().some(w=>w.symbol===x.symbol));
    if(sy.length&&has(/\b(chart|graph|trend)\b/))return {type:'market_chart',details:{symbol:sy[0].symbol,kind:sy[0].kind,days:has(/\byear\b|12 months/)?365:has(/\b(3|three) months\b/)?90:has(/\bweek\b|7 days/)?7:30}};
    if(sy.length&&has(/\b(price|prices|presyo|how much|worth|value|trading|doing|magkano|quote|up or down|today)\b/)&&!has(/\b(alert|tell me if|let me know|notify|buy|sell|should i)\b/))return {type:'market_quote',details:{symbols:sy.map(x=>x.symbol)}};}
@@ -3172,6 +3174,32 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function alertsDue(){
   const list=jget(ALERT_KEY,[]).filter(a=>!a.fired);if(!list.length)return [];
   try{return checkAlerts(await getQuotes([...new Map(list.map(a=>[a.symbol,{symbol:a.symbol,kind:a.kind}])).values()]))}catch{return []}
+ }
+ function textDate(raw){const t=String(raw||'').toLowerCase().replace(/(\d)(st|nd|rd|th)\b/g,'$1').replace(/,/g,' ');const M={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12},p=n=>String(n).padStart(2,'0'),ok=(y,m,d)=>{const x=new Date(Date.UTC(y,m-1,d));return x.getUTCDate()===d&&x.getUTCMonth()===m-1?y+'-'+p(m)+'-'+p(d):''};
+  let m=t.match(/\b((?:19|20)\d\d)-(\d{1,2})-(\d{1,2})\b/);if(m)return ok(+m[1],+m[2],+m[3]);
+  const mon='(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?';
+  m=t.match(new RegExp('\\b'+mon+'\\s+(\\d{1,2})\\s+((?:19|20)\\d\\d)\\b'));if(m)return ok(+m[3],M[m[1]],+m[2]);
+  m=t.match(new RegExp('\\b(\\d{1,2})\\s+(?:of\\s+)?'+mon+'\\s+((?:19|20)\\d\\d)\\b'));if(m)return ok(+m[3],M[m[2]],+m[1]);
+  m=t.match(/\b(\d{1,2})\/(\d{1,2})\/((?:19|20)\d\d)\b/);if(m)return ok(+m[3],+m[1],+m[2]);
+  if(/\b(yesterday|kahapon)\b/.test(t)){const d=new Date(Date.now()-864e5);return ok(d.getFullYear(),d.getMonth()+1,d.getDate())}
+  return '';}
+ function pastDate(x){x=String(x||'').trim();if(/^\d{4}-\d\d-\d\d$/.test(x))return x;const t=Date.parse(x.replace(/(\d)(st|nd|rd|th)\b/g,'$1'));if(!Number.isFinite(t))return '';const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+ const longDay=iso=>new Date(iso+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+ async function priceOnDate(d,raw){
+  let sym=String(d?.symbol||(d?.symbols||[])[0]||'').trim();if(!sym){const f=symbolsIn(raw||'')[0];if(f){sym=f.symbol;d={...d,kind:d?.kind||f.kind}}}
+  const date=pastDate(d?.date||d?.on||'');
+  if(!sym)return 'Which stock, coin or currency? For example “price of LTC on 5 November 2025”.';
+  if(!date)return 'Which date? For example “5 November 2025”.';
+  setSection('display');$('dispTitle').textContent='Looking up '+sym.toUpperCase()+' on '+longDay(date)+'…';$('dispSub').textContent='';$('dispBody').replaceChildren();
+  let r,data;try{({r,data}=await postJson('/api/market/history',{symbol:sym,kind:d?.kind||'',date,currencies:currencies()},40000))}catch(e){$('dispSub').textContent='Offline';return 'I need the internet to look up past prices.'}
+  if(r.status===404)return 'Past prices need the newest Max server. Tap ⚙ → Update Max’s server.';
+  if(!r.ok||data.error){$('dispTitle').textContent='Price on '+longDay(date);$('dispSub').textContent=data.error||'';return 'I couldn’t get that price. '+(data.error||'')}
+  const p=data,nm=(p.name||p.symbol).replace(/\b\w/g,c=>c.toUpperCase()),cur=p.currency;
+  const dayNote=p.sameDay?'':'No trading on '+longDay(p.asked)+', so this is the last trading day before it: '+longDay(p.day)+'.';
+  showDisplay(nm+' on '+longDay(p.day),'Exact price from '+p.source+' · prices only, not advice',[{badge:(p.kind==='pse'?'PSE · ':p.kind==='crypto'?'CRYPTO · ':p.kind==='fx'?'FX · ':'')+p.symbol,badgeClass:'badge-res',title:'Close '+fmtM(cur,p.close)+(p.php?' ≈ '+fmtM('PHP',p.php.close):''),
+   lines:[dayNote&&{text:dayNote,cls:'miss'},Number.isFinite(p.open)&&p.open!==null?'Open '+fmtM(cur,p.open)+' · High '+fmtM(cur,p.high)+' · Low '+fmtM(cur,p.low):'',p.php?'Peso value at that day’s rate: 1 '+cur+' = ₱'+(+p.php.rate).toFixed(3)+' (ECB, '+p.php.rateDay+')':'',p.note||'','Source: '+p.source].filter(Boolean),
+   buttons:[['Price today',()=>marketQuote({symbols:[p.symbol.replace(/=F$/,'')],kind:p.kind==='yahoo'?undefined:p.kind},'').then(t=>{setSub('',t);speak(t)})]]}]);
+  return (dayNote?dayNote+' ':'')+nm+' closed at '+spokenM(cur,p.close)+' on '+longDay(p.day)+(Number.isFinite(p.high)&&p.high!==null?' (high '+spokenM(cur,p.high)+', low '+spokenM(cur,p.low)+')':'')+(p.php&&cur!=='PHP'?', about '+spokenM('PHP',p.php.close):'')+'. Source: '+p.source+(p.kind==='crypto'?', UTC day':'')+'.';
  }
  async function convertCurrency(d,raw){
   let amount=Number(d?.amount),from=String(d?.from||'').toUpperCase(),to=(d?.to?[].concat(d.to):[]).map(x=>String(x).toUpperCase());
@@ -4703,6 +4731,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'market_quote':return await marketQuote(a.details||{},raw);
    case 'show_watchlist':return await showWatchlist(true);
    case 'market_chart':return await marketChart(a.details||{symbol:a.query});
+   case 'price_on_date':return await priceOnDate(a.details||{},raw);
    case 'watchlist_add':return watchAdd(a.details||{symbol:a.query});
    case 'watchlist_remove':return watchRemove(a.details||{symbol:a.query});
    case 'price_alert':return priceAlert(a.details||{});
