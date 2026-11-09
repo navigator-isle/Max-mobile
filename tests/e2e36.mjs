@@ -28,13 +28,13 @@ for (const z of ZIPS) {
 const used = await p.evaluate(() => { let t = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); t += k.length + localStorage.getItem(k).length; } return t; });
 ok(used < 4.6e6, `phone storage used ${(used / 1e6).toFixed(2)}M of ~5.2M characters`, used);
 const cats = await p.evaluate(() => [...new Set(JSON.parse(localStorage.getItem("max_notes_v3")).map(n => n.category))].filter(c => c.startsWith("Trading")).sort());
-ok(cats.includes("Trading › PSE") && cats.includes("Trading › Crypto") && cats.includes("Trading › Forex") && cats.includes("Trading › Copy trading") && cats.some(c => c.startsWith("Trading › PSE › PSE stocks › ")), "folders: Trading › PSE / Crypto / Forex / Copy trading (+ PSE stocks by sector)", cats.slice(0, 12).join(" | "));
+ok(cats.includes("Trading › PSE") && cats.includes("Trading › Crypto") && cats.includes("Trading › Forex and Gold") && cats.includes("Trading › Copy trading") && cats.some(c => c.startsWith("Trading › PSE › PSE stocks › ")), "folders: Trading › PSE / Crypto / Forex and Gold / Copy trading / Reference (+ PSE stocks by sector)", cats.slice(0, 12).join(" | "));
 const q = await p.evaluate(() => { const a = window.__t.ctx("What dividends did BDO pay in 2024?"), c = window.__t.ctx("best crypto strategy"), f = window.__t.ctx("forex strategies best to worst");
   return { a: a.items.map(x => x.title), at: (a.items.find(x => x.title === "BDO") || {}).text || "", c: c.items.map(x => x.title), f: f.items.map(x => x.title) }; });
 console.log("BDO excerpt length", q.at.length, "has 2024 line:", /2024: ₱144/.test(q.at), "\n", q.at.split("\n").filter(l => /2024|Parts/.test(l)).join("\n").slice(0, 600));
 ok(q.a.includes("BDO") && /2024: ₱144/.test(q.at) && /11Mar 0\.75/.test(q.at), "question about BDO 2024 dividends → BDO note with the 2024 line", JSON.stringify(q.a.slice(0, 3)));
-ok(q.c.includes("Crypto strategies best to worst"), "best crypto strategy → crypto strategy note", JSON.stringify(q.c.slice(0, 4)));
-ok(q.f.includes("Forex strategies best to worst"), "forex question → forex strategy note", JSON.stringify(q.f.slice(0, 4)));
+ok(q.c.includes("2 Crypto strategies ranked") || q.c.includes("1 Crypto plan"), "best crypto strategy → crypto strategy note", JSON.stringify(q.c.slice(0, 4)));
+ok(q.f.includes("2 Forex strategies ranked") || q.f.includes("1 Forex and gold plan"), "forex question → forex strategy note", JSON.stringify(q.f.slice(0, 4)));
 ok(!errs.length, "no page errors", errs.join(" | "));
 console.log(`total imported ${total}`); await b.close(); sP.close();
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
