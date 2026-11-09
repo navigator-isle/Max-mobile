@@ -40,7 +40,7 @@ const st = await p.evaluate(async () => { await window.maxNotesReady(); const db
   const raw = await new Promise(r => { const q = db.transaction("kv").objectStore("kv").get("notes"); q.onsuccess = () => r(q.result || "[]"); });
   const a = JSON.parse(raw); return { n: a.filter(x => !x.deleted).length, tn2: a.filter(x => !x.deleted && String(x.id).startsWith("tn2-")).length, flag: localStorage.getItem("max_notes_in_idb"), ls: localStorage.getItem("max_notes_v3"),
     mine: !!a.find(x => x.id === "mine1" && !x.deleted), zip: a.find(x => x.id === "zipold"), chars: raw.length }; });
-ok(st.tn2 === 1102, "all 1,102 new trading notes are on the phone", String(st.tn2));
+ok(st.tn2 === JSON.parse(fs.readFileSync(path.join(NOTES, "manifest.json"))).count, "all the new trading and investment notes are on the phone", String(st.tn2));
 ok(st.flag === "1" && st.ls === null && st.chars > 2e6, "too big for quick storage → moved to the phone's large storage by itself (" + Math.round(st.chars / 1e6 * 10) / 10 + "M characters)", JSON.stringify({ flag: st.flag, ls: st.ls && st.ls.length }));
 ok(st.mine, "his own notes are still there"); ok(st.zip && st.zip.deleted && st.zip.body === "", "the old zip-imported trading note is gone (marked deleted, body emptied)");
 const first = syncs[0], later = syncs.at(-1);

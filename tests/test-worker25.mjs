@@ -35,10 +35,11 @@ const all = d.notes, L = all.filter(n => !n.deleted), T = (c, t) => L.find(n => 
 ok(L.filter(n => n.id.startsWith("tn2-")).length === man.count, `all ${man.count} new notes are in after a few syncs`, String(L.filter(n => n.id.startsWith("tn2-")).length));
 const cats = new Set(L.filter(n => n.id.startsWith("tn2-")).map(n => n.category));
 ok(["Trading", "Trading › PSE › Strategy", "Trading › PSE › Stocks", "Trading › PSE › Dividend", "Trading › Crypto › Strategy", "Trading › Crypto › Coins", "Trading › Forex › Strategy", "Trading › Forex › Currency",
-  "Trading › Copy trading › Strategy", "Trading › Copy trading › Platform", "Trading › Copy trading › Traders"].every(c => cats.has(c)) && cats.size === 11, "exactly the folders Mark asked for", [...cats].join(" | "));
+  "Trading › Copy trading › Strategy", "Trading › Copy trading › Platform", "Trading › Copy trading › Traders", "Investments"].every(c => cats.has(c)) && cats.size === 12, "exactly the folders Mark asked for (+ Investments)", [...cats].join(" | "));
 ok(T("Trading › PSE › Stocks", "BDO") && T("Trading › PSE › Dividend", "BDO dividends") && /58 payments/.test(T("Trading › PSE › Dividend", "BDO dividends").body), "PSE › Stocks › BDO and PSE › Dividend › BDO dividends (58 payments)");
 ok(/₱0\.1351/.test(T("Trading › PSE › Dividend", "EMI dividends")?.body || "") && !/₱51 /.test(T("Trading › PSE › Dividend", "EMI dividends")?.body || ""), "EMI Jan 2026 dividend is ₱0.1351 (the ₱51 misreading is fixed)");
 ok(T("Trading › Crypto › Coins", "LTC") && /2025: \$76\.85/.test(T("Trading › Crypto › Coins", "LTC").body), "Crypto › Coins › LTC with every year");
+ok(/Plan A — Safe/.test(T("Investments", "1 My investment plan (₱100,000, Nov 2026)")?.body || "") && /Letting big winners run/.test(T("Trading › PSE › Strategy", "Letting big winners run (multi-baggers)")?.body || ""), "Investments › my ₱100,000 plan, and the big-winners note");
 ok(T("Trading › Copy trading › Platform", "eToro CopyTrader") && /\$200/.test(T("Trading › Copy trading › Platform", "eToro CopyTrader").body), "Copy trading › Platform › eToro (minimum $200…)");
 ok(L.filter(n => n.category === "Trading › Copy trading › Traders").length >= 50, "Copy trading › Traders: table + one note per notable trader");
 ok(d.memories.find(m => m.id === "mem-claude-2026-11-18" && /no zip import needed/.test(m.text)) && d.memories.find(m => m.id === "mem-claude-2026-11-25"), "Max's memory knows the new layout and the past-price lookup");

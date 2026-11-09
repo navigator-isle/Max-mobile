@@ -111,7 +111,7 @@ ok(/Pretend money only/.test(Buffer.from(sent[0].split("Content-Transfer-Encodin
 mp2Rate = "7.10%"; r = await run("investments");
 const mp2 = r.data.report.tables.find(t => t.title === "Pag-IBIG MP2");
 ok(mp2 && mp2.rows[0][1] === "7.10%" && mp2.rows[0][2] === "was 7.03%", "investments: each rate with what changed since last week", JSON.stringify(mp2));
-ok(r.data.report.tables.length === 6 && prompts.filter(t => /Research the latest information on/.test(t)).length >= 12, "investments: MP2, high-yield savings, UITF, VUL, bonds and dividend stocks are each researched", r.data.report.tables.map(t => t.title).join(", "));
+ok(r.data.report.tables.length === 10 && prompts.filter(t => /Research the latest information on/.test(t)).length >= 20 && prompts.some(t => /Plan A\/B\/C/.test(t) && /Metrobank Online Time Deposit/.test(t)), "investments: MP2, savings, time deposits, promos, government savings, UITF, VUL, bonds, dividend stocks and warnings are each researched, and his ₱100,000 plan is checked", r.data.report.tables.map(t => t.title).join(", "));
 // business: never repeated
 r = await run("business");
 const biz = r.data.report.tables[0];

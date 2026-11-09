@@ -56,7 +56,7 @@ move('Trading/Reference/Market events by year 2003-2026.md', T, '6 Market events
 
 # ============================================================ PSE › Strategy
 pl1 = J('2026-11-09-pse-long-results.json'); pl2 = J('2026-11-09-pse-long-results-2.json'); pf = J('2026-11-08-pse-full-results.json')
-move('Trading/PSE/1 PSE plan.md', f'{P} › Strategy')
+move('Trading/PSE/1 PSE plan.md', f'{P} › Strategy', edit=lambda b: b.replace('- Dividends are added on the ex-date after 10% tax', '- Big winners are never cut back to equal size: a stock that doubles keeps all its shares (see Letting big winners run)\n- Dividends are added on the ex-date after 10% tax'))
 move('Trading/PSE/2 PSE strategies ranked.md', f'{P} › Strategy')
 def variant(name, v, how=''):
     out = [f'**{name}**' + (f' — {how}' if how else '')]
@@ -93,6 +93,25 @@ note(f'{P} › Strategy', 'Momentum (all versions)', ['pse', 'strategy', 'moment
 - Earned the most over 24 years but almost all of it in 2003–2013; drops of 50–65%; weak since 2020
 
 ''' + '\n\n'.join(variant(k.split(None, 1)[1], v, MOM_HOW[code(k)]) for k, v in mv))
+bg = {**J('2026-11-09-pse-bagger-results.json'), **J('2026-11-09-pse-bagger-results-2.json')}; sd = bg.pop('_sold_then_doubled')
+note(f'{P} › Strategy', 'Letting big winners run (multi-baggers)', ['pse', 'strategy', 'baggers'], f"""**Letting big winners run — "baggers" (2014 → Nov 2026)**
+- Mark's question (9 Nov 2026): make sure stocks that double or triple are not sold too early
+- Problem found: a stock that rises gets a LOWER dividend yield (same dividend ÷ higher price), so it can fall out of the top 40 and be sold at the 3-month re-check; and resizing every holding back to equal pesos cuts winners down
+- Of {sd['sells']} sells by the chosen plan, {sd['later_doubled_within_3y']} stocks doubled later within 3 years (most were stop-loss sells while they were falling)
+
+**Rule Max now uses (paper trading already works this way)**
+- Never cut a winner back to equal size at the re-check — it keeps all its shares and keeps growing; new picks only use free cash
+- A winner is still sold only by the 25% trailing stop or when it falls out of the top 40
+- Tested: """ + f"{bg['NT  no trimming of winners']['per_year_%']}% a year vs {bg['DJ chosen: top-40 buffer + 25% trailing stop (re-weights to equal)']['per_year_%']}% when cutting winners back; worst drop {bg['NT  no trimming of winners']['worst_drop_%']}% (same); better in BOTH halves (2014–2019 and 2020–2026)" + """
+
+**Also tested, NOT used (results jump around when the settings change a little = luck, not a real edge)**
+- Keep any stock up 30%, 50% or 100% whatever its rank; wider 30–40% stop once a stock doubles
+- Best of these: keep doubled stocks + 35% stop = """ + f"{bg['NT+KW100+BT35@100 keep only doubled stocks']['per_year_%']}% a year but worst drop {bg['NT+KW100+BT35@100 keep only doubled stocks']['worst_drop_%']}%; a close neighbour (35% stop once up 50%) made only {bg['NT+BT35@50 no trim + 35% stop once up 50%']['per_year_%']}%" + """
+
+""" + '\n\n'.join(variant(k, v) for k, v in bg.items()) + """
+
+**Stocks the chosen plan sold that later doubled (first 25)**
+""" + '\n'.join(f"- {a} sold {b} at ₱{c:g} → later {x}× higher within 3 years" for a, b, c, x in sd['examples']))
 mix = [(k, v) for k, v in {**pl1, **pl2}.items() if code(k) in ('Q', 'X')]
 note(f'{P} › Strategy', 'Dividend + momentum mixes', ['pse', 'strategy'], '''**Half dividend, half momentum (2014 → Nov 2026)**
 - Mixing smooths the ride a little but does not beat the chosen dividend version after its drop
@@ -180,7 +199,7 @@ for sym, ev in sorted(byS.items()):
 - PSE Quarterly Dividend Reports 4Q2013 → 3Q2025 (documents.pse.com.ph) · PSE Edge dividends list (Oct 2025 → 2026)''')
 
 # ============================================================ Crypto
-move('Trading/Crypto/1 Crypto plan.md', f'{C} › Strategy')
+move('Trading/Crypto/1 Crypto plan.md', f'{C} › Strategy', edit=lambda b: b.replace('at most 8 coins', 'at most 8 coins\n- No profit target: a winning coin is held until the trailing stop is hit, so a coin that runs 3× or 5× is kept the whole way up'))
 move('Trading/Crypto/2 Crypto strategies ranked.md', f'{C} › Strategy')
 cl = J('2026-11-09-crypto-long-results.json'); cc = J('2026-11-09-crypto-combos.json'); qf = J('2026-11-09-quality-filter-test.json')
 dca = cl['BTC'].pop('DCA ₱1 every month since Jan 2011 (no selling)', None)
@@ -336,6 +355,9 @@ for x in pick.values():
 **Source**
 - api.hyperliquid.xyz (portfolio history and leaderboard)''')
 
+# ============================================================ Investments (the ₱100,000 plan, 9 Nov 2026)
+sys.path.insert(0, '/home/claude/max-mobile/trader/invest'); import invest_notes
+for title, (tags, body) in invest_notes.NOTES.items(): note('Investments', title, tags, body)
 # ============================================================ write vault, bundle, zip
 import shutil; shutil.rmtree(OUT, ignore_errors=True)
 for (cat, title), t in NOTES.items():

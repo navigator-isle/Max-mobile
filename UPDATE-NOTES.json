@@ -1,6 +1,10 @@
-["NEW trading notes layout: Trading › PSE › Strategy / Stocks / Dividend, Crypto › Strategy / Coins, Forex › Strategy / Currency, Copy trading › Strategy / Platform / Traders (1,102 notes, loaded by the server itself — no zip import)",
+[
+ "NEW Investments notes: your ₱100,000 plan (Nov 2026), every option compared and scored, promos (Maya 15%, GCash), warnings — the investment agent now checks the plan every week and says what to move",
+ "PSE paper trading lets big winners run: a stock that doubles keeps all its shares (tested: 8.8% a year vs 8.4%)",
+ "NEW trading notes layout: Trading › PSE › Strategy / Stocks / Dividend, Crypto › Strategy / Coins, Forex › Strategy / Currency, Copy trading › Strategy / Platform / Traders (1,102 notes, loaded by the server itself — no zip import)",
  "Every PSE dividend since 2013 in its own note per stock, a dividend calendar, every strategy version year by year, 12 copy-trading platforms, 76 trader notes",
  "Fixed dividend amounts read wrongly from PSE Edge (EMI ₱0.1351, not ₱51; amounts in words; Canadian dollars)",
  "Old trading notes (earlier layouts and zip copies) are removed automatically; your own notes are not touched",
  "Notes move to the phone's large storage when they get big, and sync now sends only what changed (much less data at sea)",
- "Price on any past date: “how much was LTC on November 5 2025”"]
+ "Price on any past date: “how much was LTC on November 5 2025”"
+]
