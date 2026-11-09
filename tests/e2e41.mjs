@@ -1,0 +1,72 @@
+// Phone: home panels — live paper trading and the investment guide, folded on the home screen. — “how much was LTC on November 5 2025” gets the exact number from the source, on screen and spoken.
+if (!process.env.SHOT_DIR) process.env.SHOT_DIR = (await import("node:os")).tmpdir();
+import http from "node:http"; import fs from "node:fs"; import path from "node:path"; import { createRequire } from "node:module";
+const require = createRequire(process.env.PW_REQUIRE || import.meta.url); const { chromium, devices } = require("playwright");
+const [, , pagePath, workerPath] = process.argv;
+let cfCalls = 0; const seen = [], days = [];
+let brainAsked = [];
+globalThis.fetch = async (u, o = {}) => { const url = String(u);
+  if (url.includes("generativelanguage")) { const q = JSON.parse(o.body).contents.at(-1).parts[0].text; brainAsked.push(q);
+    const action = /where should i put my money/i.test(q) ? { type: "home_dash", details: { name: "guide" } } : null;
+    return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ reply: action ? "Here." : "Answer to: " + q, action }) }] } }] })); }
+  return new Response("{}", { status: 404 }); };
+const worker = (await import(workerPath)).default;
+const ORIGIN = "http://127.0.0.1:8074", WK = "http://127.0.0.1:8873";
+let env = { GEMINI_API_KEY: "k", ALLOWED_ORIGIN: ORIGIN, MAX_PASSCODE: "pw" };
+const sW = http.createServer(async (req, res) => { const c = []; for await (const x of req) c.push(x);
+  const r = await worker.fetch(new Request(WK + req.url, { method: req.method, headers: req.headers, body: ["GET", "HEAD", "OPTIONS"].includes(req.method) ? undefined : Buffer.concat(c) }), env);
+  res.writeHead(r.status, Object.fromEntries(r.headers)); res.end(Buffer.from(await r.arrayBuffer())); }).listen(8873);
+const dir = path.dirname(pagePath);
+const sP = http.createServer((q, r) => { const f = q.url.split("?")[0].endsWith("sw.js") ? "sw.js" : "index.html"; r.writeHead(200, { "Content-Type": f === "sw.js" ? "text/javascript" : "text/html" }); r.end(fs.readFileSync(path.join(dir, f))); }).listen(8074);
+let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
+const b = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), args: ["--no-sandbox"] });
+const mock = () => { window.__spoken = []; window.__q = []; window.__opened = [];
+  class R { start() { if (this.continuous) return; const t = window.__q.shift(); setTimeout(() => { if (t) this.onresult && this.onresult({ results: [[{ transcript: t }]] }); else this.onerror && this.onerror({ error: "no-speech" }); this.onend && this.onend(); }, 60); } stop() {} abort() {} }
+  window.webkitSpeechRecognition = R; window.SpeechRecognition = R;
+  Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { speak(u) { window.__spoken.push(u.text); u.onstart && u.onstart(); setTimeout(() => u.onend && u.onend(), 15); }, cancel() {}, getVoices() { return []; } } });
+  window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+  window.open = (u) => { window.__opened.push(u); return {}; }; };
+const ctx = await b.newContext({ ...devices["Pixel 7"] });
+await ctx.addInitScript(([s, m]) => { if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); } (new Function("return " + m)())(); },
+  [{ jarvis_api_base_v2: WK, max_pass: "pw", max_notes_migrated_v1: "1" }, mock.toString()]);
+const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message));
+await p.goto(ORIGIN + "/"); await p.waitForTimeout(1200);
+const vis = s => p.locator(s).isVisible();
+const say = async t => { const n = await p.evaluate(() => window.__spoken.length); await p.evaluate(x => window.__q.push(x), t);
+  await p.waitForTimeout(150); await p.click((await vis("#maxOrb")) ? "#maxOrb" : "#miniOrb");
+  await p.waitForFunction(n => window.__spoken.length > n && !document.getElementById("maxOrb").classList.contains("speaking"), n, { timeout: 15000 }).catch(() => {});
+  await p.waitForTimeout(200); await p.evaluate(() => document.getElementById("homeStop").click()); };
+const answer = async () => (await vis("#homeAnswer")) ? p.locator("#homeAnswer").textContent() : p.locator("#miniSay").textContent();
+
+
+ok(await p.locator("#homeDash").isVisible() && !(await p.locator("#dashPaper").getAttribute("open")) && !(await p.locator("#dashGuide").getAttribute("open")), "home screen shows the two panels, folded");
+await p.waitForTimeout(800);
+ok(/MAX-MASTER-3 \+?0\.00%/.test(await p.locator("#dashPaperSum").textContent()) && /MP2 7\.12%/.test(await p.locator("#dashGuideSum").textContent()), "folded panels still show a one-line summary", (await p.locator("#dashPaperSum").textContent()) + " | " + (await p.locator("#dashGuideSum").textContent()));
+await p.click("#dashGuide > summary"); await p.waitForTimeout(600);
+let g = await p.locator("#dashGuideBody").textContent();
+ok(/₱30,000 Emergency money/.test(g) && /OwnBank/.test(g) && /Pag-IBIG MP2/.test(g) && /First year: about ₱/.test(g), "tap the guide → money plan: 30% emergency money in easy-withdraw savings, the rest by the standard rules", g.slice(0, 300));
+ok(await p.locator("#dashGuideBody details[data-cat]").count() === 6, "6 categories, each folded with its top list");
+await p.click('#dashGuideBody details[data-cat="promos"] > summary'); await p.waitForTimeout(200);
+ok(/ends 2026-11-30/.test(await p.locator('#dashGuideBody details[data-cat="promos"]').textContent()), "promos show the end date");
+await p.screenshot({ path: process.env.SHOT_DIR + "/home-guide.png", fullPage: true });
+await say("my monthly expenses are 25,000");
+let a = await answer();
+ok(/Saved: monthly expenses ₱25,000\. Your emergency money of ₱30,000 covers 1\.2 months — less than the 6 months/.test(a), "“my monthly expenses are 25,000” → saved; warns 30% covers only 1.2 months", a);
+ok(/covers 1\.2 months/.test(await p.locator("#dashGuideBody").textContent()), "the plan on the home screen updates");
+await p.locator('#dashGuideBody .dash-plan details > summary').click(); await p.selectOption('#dashGuideBody select[data-mp="risk"]', "safe");
+await p.waitForTimeout(200);
+ok(!/PSE dividend stocks \/ REITs/.test(await p.locator("#dashGuideBody .dash-plan").textContent()), "choosing “Safe” takes stocks out of the plan");
+await p.click("#dashGuide > summary");
+await say("show my paper trading");
+a = await answer(); await p.waitForTimeout(600);
+ok(/Paper trading: MAX-MASTER-3 is \+?0\.00% since 2026-11-08/.test(a) && await p.locator("#dashPaper").getAttribute("open") !== null, "“show my paper trading” → opens the paper panel and says the result", a);
+const pp = await p.locator("#dashPaperBody").textContent();
+ok(/20 orders waiting for the next run/.test(pp) && /opens at the next Sunday run/.test(pp) && /Full dashboard/.test(pp), "paper panel: books, waiting orders, link to the full dashboard", pp.slice(0, 300));
+await p.screenshot({ path: process.env.SHOT_DIR + "/home-paper.png", fullPage: true });
+await p.reload(); await p.waitForTimeout(1500);
+ok(await p.locator("#dashPaper").getAttribute("open") !== null && await p.locator("#dashGuide").getAttribute("open") === null, "remembers which panel was open");
+await say("where should I put my money");
+ok(await p.locator("#dashGuide").getAttribute("open") !== null, "the brain can open the guide too (“where should I put my money”)");
+ok(errs.length === 0, "no script errors", errs.join(" | "));
+await ctx.close(); await b.close(); sW.close(); sP.close();
+console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

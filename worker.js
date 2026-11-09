@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-17e";
+const WORKER_VERSION = "max-worker-2026-11-17g";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -264,7 +264,7 @@ const SEED_NOTES = [{"id": "note-solas-1974", "v": 4, "title": "SOLAS 1974", "ca
 // SHA-256 fingerprint, and adds them over a few requests. The old trading notes (all earlier layouts, incl. copies he imported
 // from the zips) are retired: marked deleted with an empty body so they disappear on the phone too. His own notes are never touched.
 const APP_SITE = "https://max-app-axv.pages.dev";
-const TN2 = "tn2-2026-11-09b";   // b: + letting big winners run, + Investments (₱100,000 plan)
+const TN2 = "tn2-2026-11-09c";   // b: + letting big winners run, + Investments (₱100,000 plan)
 const RETIRE_V2 = {"Trading":["00 Trading overview MAX-MASTER-3","1 Start here","2 My plan MAX-MASTER-3","3 Paper trading","4 Words used","AUD vs USD 2000-2026","BRL vs USD 2000-2026","Binance coins list A-L","Binance coins list M-Z","Bitcoin monthly closes 2010-2026","CAD vs USD 2000-2026","CHF vs USD 2000-2026","Copy trading platforms","Copy trading strategies best to worst","Crypto strategies best to worst","EUR vs USD 2000-2026","Forex strategies best to worst","GBP vs USD 2000-2026","Gold 2000-2026","JPY vs USD 2000-2026","MXN vs USD 2000-2026","Market events 2003-2026 (PH and global)","NZD vs USD 2000-2026","PHP peso vs USD 2003-2026","PSE dividend history summary","PSE dividend yields now (all paying stocks)","PSE market by year 2002-2026","PSE strategies best to worst","Trading fees 2026","ZAR vs USD 2000-2026"],"Trading › Copy trading":["00 Trading overview MAX-MASTER-3","1 Copy trading verdict","2 Copy strategies ranked","3 Platforms","AUD vs USD 2000-2026","BRL vs USD 2000-2026","Binance coins list A-L","Binance coins list M-Z","Bitcoin monthly closes 2010-2026","CAD vs USD 2000-2026","CHF vs USD 2000-2026","Copy trading platforms","Copy trading strategies best to worst","Crypto strategies best to worst","EUR vs USD 2000-2026","Forex strategies best to worst","GBP vs USD 2000-2026","Gold 2000-2026","JPY vs USD 2000-2026","MXN vs USD 2000-2026","Market events 2003-2026 (PH and global)","NZD vs USD 2000-2026","PHP peso vs USD 2003-2026","PSE dividend history summary","PSE dividend yields now (all paying stocks)","PSE market by year 2002-2026","PSE strategies best to worst","Trading fees 2026","ZAR vs USD 2000-2026"],"Trading › Crypto":["00 Trading overview MAX-MASTER-3","1 Crypto plan","2 Crypto strategies ranked","3 Bitcoin monthly prices 2010-2026","4 Binance coins A-L","5 Binance coins M-Z","AUD vs USD 2000-2026","BRL vs USD 2000-2026","Binance coins list A-L","Binance coins list M-Z","Bitcoin monthly closes 2010-2026","CAD vs USD 2000-2026","CHF vs USD 2000-2026","Copy trading platforms","Copy trading strategies best to worst","Crypto strategies best to worst","EUR vs USD 2000-2026","Forex strategies best to worst","GBP vs USD 2000-2026","Gold 2000-2026","JPY vs USD 2000-2026","MXN vs USD 2000-2026","Market events 2003-2026 (PH and global)","NZD vs USD 2000-2026","PHP peso vs USD 2003-2026","PSE dividend history summary","PSE dividend yields now (all paying stocks)","PSE market by year 2002-2026","PSE strategies best to worst","Trading fees 2026","ZAR vs USD 2000-2026"],"Trading › Crypto › Crypto coins":["1000SATS","1INCH","1MBABYDOGE","2Z","AAVE","ACE","ACT","ADA","AERO","AE_ETH","AGIX","AI","AION_ETH","AIXBT","ALGO","ALICE","ALLO","ALPACA","ALPHA","ALPINE","ALT","ANC","ANT","APE","APT","ARB","ARK","ARKM","ARPA","ASTER","AT","ATOM","AUCTION","AVAX","AVAXC","AVAXP","AVAXX","AVNT","AXS","BABY","BAL","BAND","BANK","BARD","BAT","BB","BCC","BCH","BCHABC","BCHSV","BEAR","BEL","BERA","BETA","BIO","BLZ","BNB","BNB_ETH","BNX","BOME","BOND","BONK","BREV","BSV","BSW","BTC","BTG","BTM_ETH","BTT","BUIDL_ETH","BULL","C98","CAKE","CATI","CELR","CFX","CHIP","CHZ","COCOS","COMP","COS","CRO","CRV","CRVUSD_ETH","CTSI","CVC","CYBER","DAR","DASH","DCR","DENT","DEXE","DGB","DOCK","DOGE","DOGS","DOT","DRGN","DUSK","DYDX","DYM","EDU","EGLD","EIGEN","ELF","ENA","ENJ","EOS","EOS_ETH","ERA","ERD","ETC","ETH","ETHFI","EURC_ETH","FDUSD_ETH","FET","FF","FIL","FLOKI","FLOW","FLOW_NATIVE","FOGO","FRAX_ETH","FRONT","FTM","FTT","FUN","GAL","GALA","GAS","GENIUS","GIGGLE","GMT","GNO","GNT","GRAM","GRIN","GRT","GUN","GUSD","HBAR","HBTC","HEDG","HFT","HIFI","HIVE","HMSTR","HOOK","HOT","HT","HUMA","HUSD","ICP","ICX","ICX_ETH","ID","INIT","INJ","IO","IOST","IOTA","IOTX","JASMY","JTO","JUP","KAITO","KAVA","KITE","KNC","LAYER","LDO","LEND","LEO_EOS","LEO_ETH","LEVER","LINA","LINEA","LINK","LISTA","LIT","LOOM","LPT","LQTY","LRC","LRC_ETH","LTC","LUNA","LUNC","LUSD_ETH","MAGIC","MAID","MANA","MANTA","MARSCOIN","MASK","MATIC","MATIC_ETH","MAV","MBOX","MEGA","MEME","MET","MIRA","MKR","MMT","MOVE","NAS_ETH","NEAR","NEIRO","NEO","NEWT","NIGHT","NOT","NPXS","NULS","NXM","NXPC","OG","OM","OMG","ONDO","ONE","ONG","ONT","OP","OPEN","OPG","OPN","ORDI","PAY","PENGU","PEOPLE","PEPE","PERL","PERP","PIXEL","PNUT","POLY","POL_ETH","POWR","PPT","PROVE","PUMP","PYUSD_ETH","QASH","QNT","QTUM","QTUM_ETH","RAD","RARE","RE","REN","RENBTC","REP","REV_ETH","RLUSD","RNDR","ROBO","ROSE","RUNE","RVN","S","SAGA","SAHARA","SAI","SAND","SDAI_ETH","SEI","SENT","SFP","SHIB","SHIB_ETH","SIGN","SLP","SNDKB","SNT","SNX","SOL","SOMI","SPCXB","SPK","SRM","STG","STMX","STO","STRK","STX","SUI","SUN","SUSDE_ETH","SUSHI","SWRV","SXP","TAO","TFUEL","THE","THETA","TIA","TLM","TNSR","TOMO","TON","TRB","TROY","TRUMP","TRX","TRX_ETH","TST","TURBO","TUSD_ETH","TUSD_TRX","TUT","TWT","U","UMA","UNFI","UNI","USDC_AVAXC","USDC_ETH","USDC_TRX","USDD_ETH","USDE_ETH","USDK","USDM_ETH","USDT_AVAXC","USDT_ETH","USDT_OMNI","USDT_TRX","UST","USTC","USUAL","VET","VET_ETH","VIRTUAL","VOXEL","VTC","W","WAL","WAVES","WCT","WETH","WIF","WIN","WLD","WLFI","WNXM","WRX","WTC","XAI","XAUT","XEM","XLM","XMR","XPL","XRP","XRPDOWN","XRPUP","XTZ","XVG","YFI","YFII","YGG","ZAMA","ZBT","ZEC","ZEN","ZIL","ZIL_ETH","ZK","ZKC","ZRO","ZRX"],"Trading › Forex":["00 Trading overview MAX-MASTER-3","AUD vs USD 2000-2026","BRL vs USD 2000-2026","Binance coins list A-L","Binance coins list M-Z","Bitcoin monthly closes 2010-2026","CAD vs USD 2000-2026","CHF vs USD 2000-2026","Copy trading platforms","Copy trading strategies best to worst","Crypto strategies best to worst","EUR vs USD 2000-2026","Forex strategies best to worst","GBP vs USD 2000-2026","Gold 2000-2026","JPY vs USD 2000-2026","MXN vs USD 2000-2026","Market events 2003-2026 (PH and global)","NZD vs USD 2000-2026","PHP peso vs USD 2003-2026","PSE dividend history summary","PSE dividend yields now (all paying stocks)","PSE market by year 2002-2026","PSE strategies best to worst","Trading fees 2026","ZAR vs USD 2000-2026"],"Trading › Forex and Gold":["1 Forex and gold plan","2 Forex strategies ranked","3 Gold by year 2000-2026"],"Trading › Forex and Gold › Currencies":["AUD vs US dollar","BRL vs US dollar","CAD vs US dollar","CHF vs US dollar","EUR vs US dollar","GBP vs US dollar","JPY vs US dollar","MXN vs US dollar","NZD vs US dollar","PHP peso vs US dollar","ZAR vs US dollar"],"Trading › Forex › Currencies":["00 Trading overview MAX-MASTER-3","AUD vs USD 2000-2026","BRL vs USD 2000-2026","Binance coins list A-L","Binance coins list M-Z","Bitcoin monthly closes 2010-2026","CAD vs USD 2000-2026","CHF vs USD 2000-2026","Copy trading platforms","Copy trading strategies best to worst","Crypto strategies best to worst","EUR vs USD 2000-2026","Forex strategies best to worst","GBP vs USD 2000-2026","Gold 2000-2026","JPY vs USD 2000-2026","MXN vs USD 2000-2026","Market events 2003-2026 (PH and global)","NZD vs USD 2000-2026","PHP peso vs USD 2003-2026","PSE dividend history summary","PSE dividend yields now (all paying stocks)","PSE market by year 2002-2026","PSE strategies best to worst","Trading fees 2026","ZAR vs USD 2000-2026"],"Trading › PSE":["00 Trading overview MAX-MASTER-3","1 PSE plan","2 PSE strategies ranked","3 Dividend yields now","4 PSEi by year 2002-2026","5 Dividend history","AUD vs USD 2000-2026","BRL vs USD 2000-2026","Binance coins list A-L","Binance coins list M-Z","Bitcoin monthly closes 2010-2026","CAD vs USD 2000-2026","CHF vs USD 2000-2026","Copy trading platforms","Copy trading strategies best to worst","Crypto strategies best to worst","EUR vs USD 2000-2026","Forex strategies best to worst","GBP vs USD 2000-2026","Gold 2000-2026","JPY vs USD 2000-2026","MXN vs USD 2000-2026","Market events 2003-2026 (PH and global)","NZD vs USD 2000-2026","PHP peso vs USD 2003-2026","PSE dividend history summary","PSE dividend yields now (all paying stocks)","PSE market by year 2002-2026","PSE strategies best to worst","Trading fees 2026","ZAR vs USD 2000-2026"],"Trading › PSE › PSE stocks › Delisted or not listed now":["2GO","8990P","ACEX","ACPA","ACPB1","ALCPB","ALL","ALLS","APB2R","ATI","ATNB","BCB","BLFI","CAB","CHI","CHIB","CIP","COAL","CPV","CPVB","DAVIN","DDPR","DMPA1","DMPA2","DNA","EAGLE","EIBA","EIBB","EMP","EVER","FBP","FBP2","FGENG","FIN","FINA","FJPB","FMETF","FPHPC","GLOPP","GTPPA","GTPPB","HDG","HLCM","HOLD","HOUSE","HVN","IND","INDU","IRC","KPH","KPHB","LAND","LCB","LIHC","LR","LRP","LRW","M-O","MAB","MAHB","MINI","MPI","MWP","OPMB","PCP","PIP","PLC","PNX3A","PNX3B","PNX4","PRF2A","PRF2B","PRF3A","PRF3B","PRO","PROP","SERV","SFIP","SMC2A","SMC2B","SMC2C","SMC2D","SMC2E","SMC2F","SMC2G","SMC2H","SMC2I","SMCP1","SSP","SVC","TECB2","UNI","VUL"],"Trading › PSE › PSE stocks › ETF":["AETF"],"Trading › PSE › PSE stocks › Financials":["AUB","BDO","BKR","BNCOM","BPI","CBC","COL","CSB","DHI","EW","FAF","FERRO","FFI","I","LMG","MBT","MED","MFC","NRCP","PBB","PBC","PNB","PSB","PSE","PTC","RCB","SECB","SLF","UBP","V"],"Trading › PSE › PSE stocks › Holding Firms":["AAA","ABA","ABG","AC","AEV","AGI","ANS","APO","BH","COSCO","DMC","FDC","FJP","FPI","GTCAP","HI","JGS","LODE","LPZ","LTG","MHC","PA","PRIM","REG","SGI","SM","SMC","SPM","TFHI","ZHI"],"Trading › PSE › PSE stocks › Industrial":["ACEN","ACR","ALTER","ANI","AP","ASLAG","ATN","AXLM","BALAI","BMM","BSC","CA","CAT","CHP","CIC","CNPF","CREC","CROWN","DELM","DNL","EEI","EMI","EURO","FB","FCG","FGEN","FOOD","FPH","FRUIT","GREEN","GSMI","IMI","ION","JFC","JOH","KEEPR","LFM","MACAY","MAXS","MER","MG","MONDE","MVC","MWC","MWIDE","MYNLD","PCOR","PERC","PHN","PIZZA","PMPC","PNC","PNX","PPC","RCI","REDC","RFM","ROX","SCC","SFI","SGP","SHLPH","SPC","SPNEC","SRDC","STN","T","TECH","TOP","URC","VITA","VMC","VVT"],"Trading › PSE › PSE stocks › Mining and Oil":["AB","APX","AR","AT","BC","CPM","DIZ","ECVC","ENEX","FNI","GEO","LC","MA","MARC","NI","NIKL","OGP","OPM","ORE","OV","PX","PXP","TUBIG","UPM"],"Trading › PSE › PSE stocks › Property":["ALCO","ALHI","ALI","ALLHC","APVI","ARA","AREIT","BRN","CDC","CEI","CLI","CPG","CREIT","CYBR","DD","DDMPR","DMW","EGRN","ELI","FILRT","FLI","GERI","INFRA","JAS","KEP","MEG","MRC","MREIT","OM","PHA","PHES","PRC","PREIT","PRMX","RCR","RLC","RLT","ROCK","SHNG","SLI","SMPH","SOC","STR","SUN","TFC","UNH","VLC","VLL","VREIT","WIN"],"Trading › PSE › PSE stocks › Services":["ABS","ABSP","ACE","ALLDY","APC","APL","BCOR","BEL","BHI","BLOOM","C","CEB","CEU","CNVRG","DFNN","DITO","DWC","ECP","EG","FEU","GLO","GMA7","GMAP","GPH","HOME","ICT","IMP","IPM","IPO","IS","LBC","LOTO","LSC","MAC","MAH","MB","MBC","MEDIC","MJC","MJIC","MRSGI","NOW","PAL","PAX","PGOLD","PHC","PHR","PLUS","PORT","PTT","RRHI","SBS","SEVN","SSI","STI","TBGI","TEL","TUGS","UPSON","WEB","WLCON","WPI"],"Trading › PSE › PSE stocks › Small, Medium & Emerging Board":["CTS","HTI","IDC","KPPI","LPC","MFIN","MM","X","XG"],"Trading › PSE › PSE stocks › Small, Medium &amp; Emerging Board":["CTS","HTI","IDC","KPPI","LPC","MFIN","MM","X","XG"],"Trading › PSE › PSE stocks › Small, Medium &amp;amp; Emerging Board":["CTS","HTI","IDC","KPPI","LPC","MFIN","MM","X","XG"],"Trading › Reference":["Fees 2026","Market events by year 2003-2026"]};
 async function retireOldTradingNotes(db, only) {
   let gone = 0; const now = Date.now();
@@ -590,7 +590,7 @@ async function deptContext(env, id) {
   } catch { return "\nTRADING DESK DATA: could not be loaded right now, so do not quote any paper-trading numbers."; }
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["agent_report","hear_fix","listen_lang","show_hearing","guard_report","guard_run","backup_now","play_music","music_control","activity","learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","price_on_date","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["agent_report","hear_fix","listen_lang","show_hearing","guard_report","guard_run","backup_now","play_music","music_control","activity","learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","price_on_date","home_dash","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
@@ -1821,7 +1821,7 @@ const AGENT_LIST = [
   {id: "shopping", name: "Shopping (Deal Finder)", icon: "🛒", day: 0, hour: 10, workers: ["Price checker — reads each legit store's own product page for the exact version", "Price watcher — your watched products every week", "Discount judge — compares with the brand's current official price, never the store's 'was' price"]}];
 const AGENT = Object.fromEntries(AGENT_LIST.map(a => [a.id, a]));
 // Background brain use per day: notes first, trading second, a small share for the rest.
-const BUDGET = {notes: 40, trading: 20, investments: 24, research: 8, web: 4, apps: 3, security: 3, business: 3, music: 2, schedule: 2, email: 2, shopping: 3};
+const BUDGET = {notes: 40, trading: 20, investments: 34, research: 8, web: 4, apps: 3, security: 3, business: 3, music: 2, schedule: 2, email: 2, shopping: 3};
 async function budgetOk(env, id, n = 1) {
   if (!env.MAX_MEMORY) return true;
   const day = new Date().toISOString().slice(0, 10);
@@ -2213,6 +2213,7 @@ async function agentsCron(env, when) {
   const d = new Date(when || Date.now()), day = d.getUTCDay(), hour = d.getUTCHours(), out = [];
   const once = async (key, fn) => { const k = "max_srv_once_" + key, stamp = d.toISOString().slice(0, 13); if ((await srvSetting(env, k)) === stamp) return; await srvSetting(env, k, stamp); out.push(key + ": " + await fn().catch(e => "failed " + e.message)); };
   if (hour === 21 && day !== 6) await once("notescheck", () => notesDailyCheck(env, 4));
+  if (hour === 1) await once("investguide", async () => "guide: " + ((await refreshGuide(env)).updated.join(",") || "no change"));   // 9 am Manila, every day
   if (hour === 20 && day === 6) await once("tradeideas", () => tradingIdeasJob(env));
   for (const a of AGENT_LIST) if (a.day === day && a.hour === hour) await once("report_" + a.id, async () => (await runAgentReport(env, a.id, {source: "schedule"})).emailed);
   return out.join("; ") || "nothing due";
@@ -2220,7 +2221,7 @@ async function agentsCron(env, when) {
 // "Now": every agent's report once, straight away, instead of waiting for Sunday (asked 6 Nov 2026, 9:34 am Manila).
 const CATCHUP = {from: Date.parse("2026-11-06T01:30:00Z"), until: Date.parse("2026-11-06T09:00:00Z"), order: ["business", "investments", "trading", "notes", "research", "web", "apps", "security", "music", "schedule", "email"]};
 // Rough outside requests per report, so one run stays under Cloudflare's 50-request limit.
-const REPORT_COST = {business: 3, investments: 9, trading: 3, notes: 7, research: 5, music: 2, schedule: 5, email: 16, security: 8, web: 25, apps: 32};
+const REPORT_COST = {business: 3, investments: 13, trading: 3, notes: 7, research: 5, music: 2, schedule: 5, email: 16, security: 8, web: 25, apps: 32};
 async function agentsCatchup(env, max = 1, when) {
   const t = Number(when); // real triggers always carry their time
   if (!t || !env.MAX_MEMORY || t < CATCHUP.from || t > CATCHUP.until || Date.now() > CATCHUP.until) return "";
@@ -2425,6 +2426,518 @@ async function priceOnDate(env, sym, kind, date) {
   const y = await yahooDay(YAHOO[k] || sym, t), FUT = {"GC=F": "Gold", "SI=F": "Silver", "CL=F": "WTI crude oil", "BZ=F": "Brent crude oil"};
   if (FUT[YAHOO[k]]) y.name = FUT[YAHOO[k]] + " (futures)";
   return out({symbol: YAHOO[k] || String(sym).toUpperCase(), kind: "yahoo", ...y, note: /=F$/.test(YAHOO[k] || "") ? "futures price per " + (/GC|SI/.test(YAHOO[k]) ? "troy ounce" : "barrel") : "", source: "Yahoo Finance daily price"});
+}
+// ---------- Home screen panels: live paper trading + investment guide (asked 9 Nov 2026) ----------
+// Paper trading runs every Sunday in the cloud (Claude) and emails Mark a report that ends with a data block
+// "MAX-PAPER-DATA-BEGIN <base64 JSON> MAX-PAPER-DATA-END". Max reads the newest one from his Gmail (from himself only),
+// then values the open positions with live prices (Binance, PSE Edge, Yahoo) every 5 minutes. Until the first email: the seed.
+const PAPER_SEED = {
+ "v": 1,
+ "asOf": "2026-11-08",
+ "opened": "2026-11-08",
+ "weeks": 1,
+ "usdphp": 63.029998779296875,
+ "plan": {
+  "pse_dividend": 0.4,
+  "crypto_swing": 0.21,
+  "btc_trend": 0.09,
+  "gold_trend": 0.3
+ },
+ "combinedSince": 0.0,
+ "bench": {
+  "btc_%": 0,
+  "psei_etf_%": 0,
+  "usdphp": 63.029998779296875
+ },
+ "events": [
+  "2026-11-08 PSE high-dividend top-20: SCAN — Quarterly scan of all PSE stocks for dividend yield (takes a while)",
+  "2026-11-08 PSE high-dividend top-20: REBALANCE — New top-20 by dividend yield: PLUS 13.0%, OGP 12.5%, MONDE 10.3%, MREIT 9.5%, GSMI 9.3%, RCR 9.2%, MBT 8.2%, TEL 8.1%, LTG 8.1%, WLCON 7.6%, CREIT 7.5%, URC 7.1",
+  "2026-11-03 Forex: fade big traders (CFTC): REBALANCE — CFTC report 2026-11-03: LONG EUR, SHORT JPY, SHORT GBP, LONG CHF, LONG CAD, LONG AUD, LONG NZD, LONG MXN, SHORT BRL, SHORT ZAR | now LONG EUR, CHF, CAD, AUD, NZ",
+  "2026-11-08 Copy steady traders (Hyperliquid): PICK — Copying 10 traders: 0x0b8aa3… (green 6/6), 0x68bd85… (green 6/6), 0x185611… (green 5/6), 0xd7b820… (green 6/6), 0x880ac4… (green 6/6), 0x51651b… (green 6/6), 0x",
+  "2026-11-08 Copy hot traders (rejected — watch only): PICK — Copying 10 traders: 0xd4c1f7… (last 30d +217%), 0x27c9fa… (last 30d +217%), 0xc30c7e… (last 30d +167%), 0xc05b53… (last 30d +114%), 0xe31501… (last 30d +86%), 0"
+ ],
+ "books": [
+  {
+   "key": "copy_hot",
+   "name": "Copy hot traders (rejected — watch only)",
+   "status": "watch",
+   "weight": 0,
+   "ccy": "PHP",
+   "start": 100000,
+   "cash": 100000,
+   "value": 94221.54,
+   "since": -5.78,
+   "positions": [
+    {
+     "sym": "trader 0xd4c1f7…",
+     "kind": "copy",
+     "chg": -0.09
+    },
+    {
+     "sym": "trader 0x27c9fa…",
+     "kind": "copy",
+     "chg": -4.38
+    },
+    {
+     "sym": "trader 0xc30c7e…",
+     "kind": "copy",
+     "chg": -9.47
+    },
+    {
+     "sym": "trader 0xc05b53…",
+     "kind": "copy",
+     "chg": 0.49
+    },
+    {
+     "sym": "trader 0xe31501…",
+     "kind": "copy",
+     "chg": -0.01
+    },
+    {
+     "sym": "trader 0x51f638…",
+     "kind": "copy",
+     "chg": -0.56
+    },
+    {
+     "sym": "trader 0xfc2713…",
+     "kind": "copy",
+     "chg": 0.65
+    },
+    {
+     "sym": "trader 0xe86b05…",
+     "kind": "copy",
+     "chg": -0.58
+    },
+    {
+     "sym": "trader 0x66f889…",
+     "kind": "copy",
+     "chg": -5.99
+    },
+    {
+     "sym": "trader 0x3440f2…",
+     "kind": "copy",
+     "chg": -37.84
+    }
+   ],
+   "pending": [],
+   "trades": [],
+   "closed": 0,
+   "wins": 0,
+   "nextRebalance": null
+  },
+  {
+   "key": "copy_steady",
+   "name": "Copy steady traders (Hyperliquid)",
+   "status": "main",
+   "weight": 0,
+   "ccy": "PHP",
+   "start": 100000,
+   "cash": 100000,
+   "value": 100002.68,
+   "since": 0.0,
+   "positions": [
+    {
+     "sym": "trader 0x0b8aa3…",
+     "kind": "copy",
+     "chg": 0.03
+    },
+    {
+     "sym": "trader 0x68bd85…",
+     "kind": "copy",
+     "chg": 0
+    },
+    {
+     "sym": "trader 0x185611…",
+     "kind": "copy",
+     "chg": 0
+    },
+    {
+     "sym": "trader 0xd7b820…",
+     "kind": "copy",
+     "chg": 0
+    },
+    {
+     "sym": "trader 0x880ac4…",
+     "kind": "copy",
+     "chg": 0
+    },
+    {
+     "sym": "trader 0x51651b…",
+     "kind": "copy",
+     "chg": 0
+    },
+    {
+     "sym": "trader 0x3895d1…",
+     "kind": "copy",
+     "chg": 0
+    },
+    {
+     "sym": "trader 0xe31501…",
+     "kind": "copy",
+     "chg": 0
+    },
+    {
+     "sym": "trader 0x459748…",
+     "kind": "copy",
+     "chg": 0
+    },
+    {
+     "sym": "trader 0x668cec…",
+     "kind": "copy",
+     "chg": 0
+    }
+   ],
+   "pending": [],
+   "trades": [],
+   "closed": 0,
+   "wins": 0,
+   "nextRebalance": null
+  },
+  {
+   "key": "crypto_momentum",
+   "name": "Crypto momentum rotation (rejected — watch only)",
+   "status": "watch",
+   "weight": 0,
+   "ccy": "USDT",
+   "start": 1586.55,
+   "cash": 1586.55,
+   "value": 1586.55,
+   "since": 0.0,
+   "positions": [],
+   "pending": [],
+   "trades": [],
+   "closed": 0,
+   "wins": 0,
+   "nextRebalance": null
+  },
+  {
+   "key": "crypto_swing",
+   "name": "Crypto swing breakout + 2×ATR trail",
+   "status": "main",
+   "weight": 0.21,
+   "ccy": "USDT",
+   "start": 1586.55,
+   "cash": 1586.55,
+   "value": 1586.55,
+   "since": 0.0,
+   "positions": [],
+   "pending": [],
+   "trades": [],
+   "closed": 0,
+   "wins": 0,
+   "nextRebalance": null
+  },
+  {
+   "key": "fx_cot",
+   "name": "Forex: fade big traders (CFTC)",
+   "status": "main",
+   "weight": 0,
+   "ccy": "PHP",
+   "start": 100000,
+   "cash": 100000,
+   "value": 100000,
+   "since": 0.0,
+   "positions": [],
+   "pending": [],
+   "trades": [],
+   "closed": 0,
+   "wins": 0,
+   "nextRebalance": null
+  },
+  {
+   "key": "pse_dividend",
+   "name": "PSE high-dividend top-20",
+   "status": "main",
+   "weight": 0.4,
+   "ccy": "PHP",
+   "start": 100000,
+   "cash": 100000,
+   "value": 100000,
+   "since": 0.0,
+   "positions": [],
+   "pending": [
+    {
+     "sym": "PLUS",
+     "side": "buy",
+     "amount": 5000,
+     "why": "PLUS paid ₱0.83 per share in cash dividends in the last 12 months; at ₱6.4 that is a 13.0% yield, rank 1 of all PSE stocks. It trades about "
+    },
+    {
+     "sym": "OGP",
+     "side": "buy",
+     "amount": 5000,
+     "why": "OGP paid ₱4.192 per share in cash dividends in the last 12 months; at ₱33.6 that is a 12.5% yield, rank 2 of all PSE stocks. It trades about"
+    },
+    {
+     "sym": "MONDE",
+     "side": "buy",
+     "amount": 5000,
+     "why": "MONDE paid ₱0.66 per share in cash dividends in the last 12 months; at ₱6.4 that is a 10.3% yield, rank 3 of all PSE stocks. It trades about"
+    },
+    {
+     "sym": "MREIT",
+     "side": "buy",
+     "amount": 5000,
+     "why": "MREIT paid ₱1.303 per share in cash dividends in the last 12 months; at ₱13.78 that is a 9.5% yield, rank 4 of all PSE stocks. It trades abo"
+    },
+    {
+     "sym": "GSMI",
+     "side": "buy",
+     "amount": 5000,
+     "why": "GSMI paid ₱19.5 per share in cash dividends in the last 12 months; at ₱209.8 that is a 9.3% yield, rank 5 of all PSE stocks. It trades about"
+    },
+    {
+     "sym": "RCR",
+     "side": "buy",
+     "amount": 5000,
+     "why": "RCR paid ₱0.5644 per share in cash dividends in the last 12 months; at ₱6.15 that is a 9.2% yield, rank 6 of all PSE stocks. It trades about"
+    },
+    {
+     "sym": "MBT",
+     "side": "buy",
+     "amount": 5000,
+     "why": "MBT paid ₱5 per share in cash dividends in the last 12 months; at ₱61.2 that is a 8.2% yield, rank 7 of all PSE stocks. It trades about ₱208"
+    },
+    {
+     "sym": "TEL",
+     "side": "buy",
+     "amount": 5000,
+     "why": "TEL paid ₱92 per share in cash dividends in the last 12 months; at ₱1,129 that is a 8.1% yield, rank 8 of all PSE stocks. It trades about ₱1"
+    },
+    {
+     "sym": "LTG",
+     "side": "buy",
+     "amount": 5000,
+     "why": "LTG paid ₱1.25 per share in cash dividends in the last 12 months; at ₱15.42 that is a 8.1% yield, rank 9 of all PSE stocks. It trades about "
+    },
+    {
+     "sym": "WLCON",
+     "side": "buy",
+     "amount": 5000,
+     "why": "WLCON paid ₱0.4 per share in cash dividends in the last 12 months; at ₱5.24 that is a 7.6% yield, rank 10 of all PSE stocks. It trades about"
+    },
+    {
+     "sym": "CREIT",
+     "side": "buy",
+     "amount": 5000,
+     "why": "CREIT paid ₱0.203 per share in cash dividends in the last 12 months; at ₱2.71 that is a 7.5% yield, rank 11 of all PSE stocks. It trades abo"
+    },
+    {
+     "sym": "URC",
+     "side": "buy",
+     "amount": 5000,
+     "why": "URC paid ₱4.4 per share in cash dividends in the last 12 months; at ₱61.65 that is a 7.1% yield, rank 12 of all PSE stocks. It trades about "
+    },
+    {
+     "sym": "SECB",
+     "side": "buy",
+     "amount": 5000,
+     "why": "SECB paid ₱4.5 per share in cash dividends in the last 12 months; at ₱63.45 that is a 7.1% yield, rank 13 of all PSE stocks. It trades about"
+    },
+    {
+     "sym": "AREIT",
+     "side": "buy",
+     "amount": 5000,
+     "why": "AREIT paid ₱2.49 per share in cash dividends in the last 12 months; at ₱36 that is a 6.9% yield, rank 14 of all PSE stocks. It trades about "
+    },
+    {
+     "sym": "MWC",
+     "side": "buy",
+     "amount": 5000,
+     "why": "MWC paid ₱2.026 per share in cash dividends in the last 12 months; at ₱29.65 that is a 6.8% yield, rank 15 of all PSE stocks. It trades abou"
+    },
+    {
+     "sym": "GLO",
+     "side": "buy",
+     "amount": 5000,
+     "why": "GLO paid ₱100 per share in cash dividends in the last 12 months; at ₱1,478 that is a 6.8% yield, rank 16 of all PSE stocks. It trades about "
+    },
+    {
+     "sym": "MYNLD",
+     "side": "buy",
+     "amount": 5000,
+     "why": "MYNLD paid ₱1.14 per share in cash dividends in the last 12 months; at ₱16.88 that is a 6.8% yield, rank 17 of all PSE stocks. It trades abo"
+    },
+    {
+     "sym": "ALI",
+     "side": "buy",
+     "amount": 5000,
+     "why": "ALI paid ₱0.9971 per share in cash dividends in the last 12 months; at ₱15.22 that is a 6.6% yield, rank 18 of all PSE stocks. It trades abo"
+    },
+    {
+     "sym": "MER",
+     "side": "buy",
+     "amount": 5000,
+     "why": "MER paid ₱28.43 per share in cash dividends in the last 12 months; at ₱446 that is a 6.4% yield, rank 19 of all PSE stocks. It trades about "
+    },
+    {
+     "sym": "RLC",
+     "side": "buy",
+     "amount": 5000,
+     "why": "RLC paid ₱1 per share in cash dividends in the last 12 months; at ₱16.18 that is a 6.2% yield, rank 20 of all PSE stocks. It trades about ₱3"
+    }
+   ],
+   "trades": [],
+   "closed": 0,
+   "wins": 0,
+   "nextRebalance": "2027-02-07"
+  },
+  {
+   "key": "btc_trend",
+   "name": "Bitcoin trend (above 100-day avg)",
+   "status": "main",
+   "weight": 0.09,
+   "ccy": "USDT",
+   "start": null,
+   "cash": null,
+   "value": null,
+   "since": 0,
+   "positions": [],
+   "pending": [],
+   "trades": [],
+   "closed": 0,
+   "wins": 0,
+   "note": "opens at the next Sunday run"
+  },
+  {
+   "key": "gold_trend",
+   "name": "Gold trend (above 200-day avg)",
+   "status": "main",
+   "weight": 0.3,
+   "ccy": "USDT",
+   "start": null,
+   "cash": null,
+   "value": null,
+   "since": 0,
+   "positions": [],
+   "pending": [],
+   "trades": [],
+   "closed": 0,
+   "wins": 0,
+   "note": "opens at the next Sunday run"
+  }
+ ]
+};
+const paperOk = j => j && j.v === 1 && Array.isArray(j.books) && j.books.length < 40 && j.books.every(b => b && typeof b.key === "string" && Array.isArray(b.positions || []));
+function paperBlock(text) {
+  const m = String(text || "").match(/MAX-PAPER-DATA-BEGIN\s*([A-Za-z0-9+/=\s]{20,})\s*MAX-PAPER-DATA-END/);
+  if (!m) return null;
+  try { const bin = atob(m[1].replace(/\s+/g, "")); const j = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)))); return paperOk(j) ? j : null; } catch { return null; }
+}
+async function paperFromGmail(env) {
+  const row = await googleRow(env, true).catch(() => null);
+  if (!row || !hasGmail(row)) return {error: "Gmail not connected"};
+  const me = emailOf(row.email || env.MAX_OWNER_EMAIL || "");
+  const list = await gapi(env, GMAIL + "/messages?" + new URLSearchParams({q: 'subject:"Max paper trading" newer_than:45d' + (me ? " from:" + me : ""), maxResults: "6"}));
+  for (const m of list.messages || []) {
+    const msg = await gapi(env, GMAIL + "/messages/" + m.id + "?format=full");
+    if (me && emailOf(hdr(msg, "From")) !== me) continue;                       // only Mark's own report counts
+    let raw = ""; const walk = p => { if (!p) return; if (/^text\//.test(p.mimeType || "") && p.body?.data) raw += "\n" + unb64url(p.body.data).replace(/<[^>]+>/g, " "); (p.parts || []).forEach(walk); };
+    walk(msg.payload);
+    const j = paperBlock(raw); if (j) return {data: j, msgId: m.id, date: hdr(msg, "Date")};
+  }
+  return {error: "no report with a data block yet"};
+}
+async function paperSnapshot(env) {
+  const saved = await setting(env, "max_paper_snapshot", null);
+  let snap = saved && paperOk(saved.data) ? saved : {data: PAPER_SEED, from: "seed", checkedAt: 0};
+  if (Date.now() - (snap.checkedAt || 0) > 6 * 3600e3) {        // look for a newer Sunday email at most every 6 hours
+    const g = await paperFromGmail(env).catch(e => ({error: String(e.message || e)}));
+    if (g.data && String(g.data.asOf || "") >= String(snap.data.asOf || "")) snap = {data: g.data, from: "email", msgId: g.msgId, emailDate: g.date, checkedAt: Date.now()};
+    else snap = {...snap, checkedAt: Date.now(), lastError: g.error || null};
+    await srvSetting(env, "max_paper_snapshot", JSON.stringify(snap)).catch(() => {});
+  }
+  return snap;
+}
+async function livePrices(syms) {
+  const out = {crypto: {}, pse: {}, gold: null, errors: []};
+  const cs = [...new Set(syms.crypto)].filter(s => /^[A-Z0-9]{2,12}$/.test(s));
+  if (cs.length) {
+    try {
+      const r = await fetch("https://data-api.binance.vision/api/v3/ticker/price?symbols=" + encodeURIComponent(JSON.stringify(cs.map(s => s + "USDT"))), {headers: {"User-Agent": UA}});
+      const d = await r.json(); for (const x of Array.isArray(d) ? d : []) out.crypto[x.symbol.replace(/USDT$/, "")] = Number(x.price);
+    } catch (e) { out.errors.push("Binance: " + e.message); }
+  }
+  for (const s of [...new Set(syms.pse)].slice(0, 30)) { try { out.pse[s] = (await pseQuote(s)).price; } catch (e) { out.errors.push(s + ": " + e.message); } }
+  if (syms.gold) { try { const d = await getJson("https://query1.finance.yahoo.com/v8/finance/chart/GC%3DF?interval=1d&range=5d"); out.gold = Number(d?.chart?.result?.[0]?.meta?.regularMarketPrice) || null; } catch (e) { out.errors.push("gold: " + e.message); } }
+  return out;
+}
+async function paperLive(env) {
+  const snap = await paperSnapshot(env), S = snap.data;
+  return cached("paperlive:" + (snap.msgId || "seed") + (S.asOf || ""), 5 * 60e3, async () => {
+    const syms = {crypto: [], pse: [], gold: false};
+    for (const b of S.books) for (const p of b.positions || []) { if (p.kind === "crypto") syms.crypto.push(p.sym); else if (p.kind === "pse") syms.pse.push(p.sym); else if (p.kind === "gold") syms.gold = true; }
+    const px = await livePrices(syms), books = [];
+    for (const b of S.books) {
+      let val = b.cash ?? null, livePos = [];
+      for (const p of b.positions || []) {
+        const last = p.kind === "crypto" ? px.crypto[p.sym] : p.kind === "pse" ? px.pse[p.sym] : p.kind === "gold" ? px.gold : null;
+        const now = Number.isFinite(last) && last > 0 ? last : null, qty = Number(p.qty) || 0;
+        if (val !== null && qty) val += qty * (now ?? p.ep);
+        livePos.push({...p, last: now, chgPct: now && p.ep ? +((now / p.ep - 1) * 100).toFixed(2) : (p.chg ?? null), valueNow: qty && (now ?? p.ep) ? +(qty * (now ?? p.ep)).toFixed(2) : null});
+      }
+      if (!(b.positions || []).length || b.positions.some(p => p.kind === "copy")) val = b.value;   // copy books: weekly value only
+      const since = val !== null && b.start ? +((val / b.start - 1) * 100).toFixed(2) : b.since ?? 0;
+      books.push({...b, positions: livePos, valueNow: val !== null ? +val.toFixed(2) : null, sinceNow: since});
+    }
+    const plan = S.plan || {}, combined = +Object.entries(plan).reduce((s, [k, w]) => s + w * (books.find(b => b.key === k)?.sinceNow || 0), 0).toFixed(2);
+    return {asOf: S.asOf, weeks: S.weeks, opened: S.opened, from: snap.from, emailDate: snap.emailDate || null, pricedAt: new Date().toISOString(), combinedSince: combined, combinedAtReport: S.combinedSince,
+      usdphp: S.usdphp, plan, books, events: S.events || [], priceErrors: px.errors.slice(0, 5), dashboard: "https://claude.ai/artifact/25fnUcKASedJmKSZBRbW9H"};
+  });
+}
+// Investment guide: top 10 per category, refreshed by the investment agent every day (and on "Update now").
+const GUIDE_SEED = {"checked": "2026-11-09", "by": "Claude (research 4–9 Nov 2026)", "market": {"inflation": "7.8% (Oct 2026)", "bsp": "5.50% (hiked 22 Oct 2026)", "pdic": "₱1,000,000 per depositor per bank", "tax": "20% on deposit interest and bond coupons (CMEPA, Jul 2025); MP2 and SSS Pension Booster tax-free; PSE dividends 10%"}, "cats": [{"key": "savings", "title": "Savings accounts — easy to withdraw (for emergency money)", "items": [{"name": "OwnBank “Own It”", "rate": "up to 3.80%", "rateNum": 3.8, "tax": "20%", "withdraw": "any day", "safety": "PDIC · rural bank (Rural Bank of Cavite City)", "conditions": "Basic account max ₱50,000 until upgraded; digital only", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "Tonik Group Stash", "rate": "3.75%", "rateNum": 3.75, "tax": "20%", "withdraw": "any day", "safety": "PDIC · BSP digital bank", "conditions": "Owner + at least 2 other savers; Solo Stash 3.25%", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "UNO #UNOready", "rate": "3.50% (₱5k to ₱5M)", "rateNum": 3.5, "tax": "20%", "withdraw": "any day", "safety": "PDIC · BSP digital bank", "conditions": "3.00% below ₱5,000; also in GCash GSave", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "MariBank", "rate": "3.25% (3.75% above ₱1M)", "rateNum": 3.25, "tax": "20%", "withdraw": "any day", "safety": "PDIC · rural bank (Sea group)", "conditions": "No maintaining balance", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "NetBank PesoSAVERS", "rate": "3.25%", "rateNum": 3.25, "tax": "20%", "withdraw": "any day", "safety": "PDIC · rural bank", "conditions": "₱69 end-of-day balance to earn", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "Tonik Solo Stash", "rate": "3.25%", "rateNum": 3.25, "tax": "20%", "withdraw": "any day", "safety": "PDIC · BSP digital bank", "conditions": "No cap, no conditions", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "GoTyme GoalSave", "rate": "3.00%", "rateNum": 3.0, "tax": "20%", "withdraw": "any day", "safety": "PDIC · BSP digital bank", "conditions": "Up to 5 GoalSaves; main account earns nothing", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "Maya Savings (base)", "rate": "3.00%", "rateNum": 3.0, "tax": "20%", "withdraw": "any day", "safety": "PDIC · BSP digital bank", "conditions": "Boosts 5–15% with monthly missions (see Promos)", "url": "https://www.mayabank.ph/highinterestsavings/"}, {"name": "CIMB UpSave / GCash GSave", "rate": "2.30% base", "rateNum": 2.3, "tax": "20%", "withdraw": "any day", "safety": "PDIC · commercial bank", "conditions": "Promo up to ~4.15% on new money to 31 Dec 2026", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}], "checked": "2026-11-09"}, {"key": "timedeposits", "title": "Time deposits (1–12 months)", "items": [{"name": "Metrobank Online Time Deposit", "rate": "up to 6% (180–364 days)", "rateNum": 6.0, "tax": "20%", "withdraw": "end of term", "safety": "PDIC · big commercial bank", "conditions": "₱10,000 minimum; rate depends on amount and term — check in app", "url": "https://www.metrobank.com.ph/personal/services/digital/online-time-deposit"}, {"name": "OwnBank time deposit (360 days)", "rate": "up to 5.2% (Aug 2025 notice)", "rateNum": 5.2, "tax": "20%", "withdraw": "end of term", "safety": "PDIC · rural bank", "conditions": "Rate not re-verified — check in app", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "UNO #UNOboost", "rate": "up to 5.0–5.5%", "rateNum": 5.0, "tax": "20%", "withdraw": "end of term", "safety": "PDIC · BSP digital bank", "conditions": "UNO pages disagree on the top rate", "url": "https://pesohub.ph/blog/digital-bank-interest-rates-philippines/"}, {"name": "Tonik Time Deposit (6 months)", "rate": "up to 5.00%", "rateNum": 5.0, "tax": "20%", "withdraw": "end of term", "safety": "PDIC · BSP digital bank", "conditions": "Needs ₱10,000 average balance every month; ₱5k–₱100k per deposit; base 3.5–4.0%", "url": "https://pesohub.ph/blog/digital-bank-interest-rates-philippines/"}, {"name": "NetBank time deposit (12 months)", "rate": "about 5%", "rateNum": 5.0, "tax": "20%", "withdraw": "end of term", "safety": "PDIC · rural bank", "conditions": "6 months about 4.5%", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "Tonik Time Deposit (9–24 months)", "rate": "up to 4.50%", "rateNum": 4.5, "tax": "20%", "withdraw": "end of term", "safety": "PDIC · BSP digital bank", "conditions": "Same ₱10,000 average-balance rule", "url": "https://pesohub.ph/blog/digital-bank-interest-rates-philippines/"}, {"name": "Maya Time Deposit Plus", "rate": "3.5% guaranteed; up to 5.5–6% if target met", "rateNum": 3.5, "tax": "20%", "withdraw": "end of term", "safety": "PDIC · BSP digital bank", "conditions": "Higher rate only if you reach your target and finish the term", "url": "https://pesohub.ph/blog/digital-bank-interest-rates-philippines/"}, {"name": "BDO / BPI regular time deposit", "rate": "0.125–0.75%", "rateNum": 0.5, "tax": "20%", "withdraw": "end of term", "safety": "PDIC · big banks", "conditions": "Very low rates", "url": "https://pesohub.ph/blog/digital-bank-interest-rates-philippines/"}], "checked": "2026-11-09"}, {"key": "promos", "title": "Promos running now", "items": [{"name": "Maya Savings — new users", "rate": "15% for one month", "rateNum": 15.0, "tax": "20%", "withdraw": "any day", "safety": "PDIC", "conditions": "Sign up + upgrade + deposit ≥ ₱1,000 in the same month; first ₱100k only; about ₱800 extra after tax", "ends": "2026-11-30", "url": "https://www.mayabank.ph/highinterestsavings/"}, {"name": "Maya Savings — existing users", "rate": "5–12% (13–15% select users)", "rateNum": 10.0, "tax": "20%", "withdraw": "any day", "safety": "PDIC", "conditions": "10% needs ₱25,000 spent that month, 12% needs ₱35,000; first ₱100k only", "ends": "2026-11-30", "url": "https://www.mayabank.ph/highinterestsavings/"}, {"name": "Maya Personal Goals", "rate": "4–8% by ₱20k slice (≈5.6% on ₱100k)", "rateNum": 5.6, "tax": "20%", "withdraw": "check goal terms", "safety": "PDIC", "conditions": "Goals opened Oct–Dec 2026; nothing above ₱100k per goal", "ends": "2026-12-31", "url": "https://pesohub.ph/blog/digital-bank-interest-rates-philippines/"}, {"name": "CIMB Earn More (also GCash GSave)", "rate": "up to ~4.15%", "rateNum": 4.15, "tax": "20%", "withdraw": "any day", "safety": "PDIC", "conditions": "Bonus only on up to ₱100k of new balance growth", "ends": "2026-12-31", "url": "https://pesohub.ph/rates/savings-rates/best-digital-bank-rates-philippines/"}, {"name": "GCash GFunds cashback", "rate": "₱20–₱30 once", "rateNum": 0, "tax": "fund", "withdraw": "1–3 days", "safety": "not PDIC", "conditions": "First buy of a set fund, hold 30 days; short windows", "ends": "watch for next window", "url": "https://gcash.com/promos/gfunds-iponalo-june-2026"}], "checked": "2026-11-09"}, {"key": "government", "title": "Government-backed (MP2, SSS, bonds)", "items": [{"name": "Pag-IBIG MP2", "rate": "7.12% (2025)", "rateNum": 7.12, "tax": "free", "withdraw": "after 5 years (early = half the dividends)", "safety": "Government", "conditions": "₱500 minimum; choose compounded or yearly payout", "url": "https://mb.com.ph/2026/02/27/pag-ibig-fund-declares-record-p6434-b-dividends-for-2025"}, {"name": "Retail Treasury Bond (last: RTB 32)", "rate": "6.875% (closed 7 Oct 2026)", "rateNum": 6.875, "tax": "20%", "withdraw": "sell any time at market price", "safety": "Republic of the Philippines", "conditions": "₱5,000 minimum; GCash GBonds or banks; wait for the next issue", "url": "https://context.ph/2026/09/29/treasury-sets-6-875-coupon-for-new-retail-bonds/"}, {"name": "Pag-IBIG regular savings", "rate": "6.62% (2025)", "rateNum": 6.62, "tax": "free", "withdraw": "only at membership maturity / retirement", "safety": "Government", "conditions": "Your mandatory contributions", "url": "https://mb.com.ph/2026/02/27/pag-ibig-fund-declares-record-p6434-b-dividends-for-2025"}, {"name": "SSS MySSS Pension Booster", "rate": "6.83% (2025), 6.2% Jan–May 2026", "rateNum": 6.5, "tax": "free", "withdraw": "for retirement — check rules", "safety": "Government agency", "conditions": "₱500 minimum; 1% fee waived 2025–2028", "url": "https://www.sss.gov.ph/news-and-updates/sss-pension-booster-delivers-6-2-return-for-members-amid-economic-challenges/"}, {"name": "Treasury bills (1 year)", "rate": "about 5.9%", "rateNum": 5.9, "tax": "20%", "withdraw": "at maturity", "safety": "Republic of the Philippines", "conditions": "Through banks or brokers", "url": "https://www.bworldonline.com/?p=750181"}], "checked": "2026-11-09"}, {"key": "funds", "title": "Funds (UITF, GFunds)", "items": [{"name": "ATRAM Global Technology Feeder (GFunds)", "rate": "+25.5% last 12 months", "rateNum": 25.5, "tax": "fund", "withdraw": "1–5 days", "safety": "not protected — can fall", "conditions": "1.15% yearly fee; big swings", "url": "https://uitf.com.ph/home/daily_navpu.php?bank_id=31"}, {"name": "ATRAM Global Health Care Feeder (GFunds)", "rate": "+21.9% last 12 months", "rateNum": 21.9, "tax": "fund", "withdraw": "1–5 days", "safety": "not protected — can fall", "conditions": "1.20% yearly fee", "url": "https://uitf.com.ph/home/daily_navpu.php?bank_id=31"}, {"name": "ATRAM Global Infra Equity Feeder (GFunds)", "rate": "+21.2% last 12 months", "rateNum": 21.2, "tax": "fund", "withdraw": "1–5 days", "safety": "not protected — can fall", "conditions": "1.20% yearly fee", "url": "https://uitf.com.ph/home/daily_navpu.php?bank_id=31"}, {"name": "ATRAM Global Equity Opportunity Feeder (GFunds)", "rate": "+10.8% last 12 months", "rateNum": 10.8, "tax": "fund", "withdraw": "1–5 days", "safety": "not protected — can fall", "conditions": "1.20% yearly fee", "url": "https://uitf.com.ph/home/daily_navpu.php?bank_id=31"}, {"name": "ATRAM Peso Money Market (GFunds)", "rate": "+2.8% last 12 months", "rateNum": 2.8, "tax": "fund", "withdraw": "1–3 days", "safety": "not PDIC · low risk", "conditions": "0.50% yearly fee; pays less than digital banks", "url": "https://uitf.com.ph/home/daily_navpu.php?bank_id=31"}, {"name": "ATRAM Short Term Peso Bond", "rate": "+2.8% last 12 months", "rateNum": 2.8, "tax": "fund", "withdraw": "1–3 days", "safety": "not protected", "conditions": "Bond funds lose value while rates rise", "url": "https://uitf.com.ph/home/daily_navpu.php?bank_id=31"}, {"name": "PSE index trackers (ATRAM / BPI)", "rate": "+1.4 to +2.8% last 12 months", "rateNum": 2.0, "tax": "fund", "withdraw": "1–3 days", "safety": "not protected — can fall", "conditions": "1–1.5% yearly fee; PSE down in 2026", "url": "https://uitf.com.ph/home/daily_navpu.php?bank_id=31"}], "checked": "2026-11-09"}, {"key": "dividends", "title": "PSE dividend stocks & REITs", "items": [{"name": "Max's PSE dividend strategy (paper)", "rate": "8.8% a year average 2014–2026 (test)", "rateNum": 8.8, "tax": "10%", "withdraw": "sell any trading day", "safety": "not protected — fell 23.5% at worst", "conditions": "Still in paper trading — see the Paper trading panel", "url": ""}, {"name": "DDMP REIT (DDMPR)", "rate": "6.92% yield (₱1.04)", "rateNum": 6.92, "tax": "10%", "withdraw": "sell any trading day", "safety": "not protected — price moves", "conditions": "Needs a stock broker", "url": "https://dividends.ph/reit-dividend-stocks"}, {"name": "AREIT", "rate": "6.89% yield (₱36.00)", "rateNum": 6.89, "tax": "10%", "withdraw": "sell any trading day", "safety": "not protected — price moves", "conditions": "Ayala Land REIT", "url": "https://dividends.ph/reit-dividend-stocks"}, {"name": "Filinvest REIT (FILRT)", "rate": "6.10% yield (₱2.90)", "rateNum": 6.1, "tax": "10%", "withdraw": "sell any trading day", "safety": "not protected — price moves", "conditions": "", "url": "https://dividends.ph/reit-dividend-stocks"}, {"name": "Citicore Energy REIT (CREIT)", "rate": "5.68% yield (₱2.71)", "rateNum": 5.68, "tax": "10%", "withdraw": "sell any trading day", "safety": "not protected — price moves", "conditions": "Solar farms", "url": "https://dividends.ph/reit-dividend-stocks"}, {"name": "MREIT", "rate": "5.54% yield (₱13.78)", "rateNum": 5.54, "tax": "10%", "withdraw": "sell any trading day", "safety": "not protected — price moves", "conditions": "Megaworld REIT", "url": "https://dividends.ph/reit-dividend-stocks"}, {"name": "RL Commercial REIT (RCR)", "rate": "5.34% yield (₱6.15)", "rateNum": 5.34, "tax": "10%", "withdraw": "sell any trading day", "safety": "not protected — price moves", "conditions": "Robinsons Land REIT", "url": "https://dividends.ph/reit-dividend-stocks"}], "checked": "2026-11-09"}]};
+const GUIDE_ASK = {
+  savings: "Philippine savings accounts you can withdraw from any day (digital banks, rural banks, big banks, GCash GSave, Maya): the 10 with the highest CURRENT base interest rate that need no spending missions",
+  timedeposits: "Philippine time deposits of 1 to 12 months (digital banks and big banks' online time deposits such as Metrobank, BPI, BDO, Security Bank, RCBC, Landbank, Tonik, UNO, Maya, NetBank, OwnBank): the 10 best CURRENT rates",
+  promos: "Savings and investment PROMOS running right now in the Philippines (Maya Savings boosts and Personal Goals, GCash GSave/GFunds/GInvest/GBonds promos and raffles, CIMB, Tonik, UNO, GoTyme, OwnBank, MariBank, bank time-deposit promos): the 10 most valuable, with their real conditions, caps and END DATE",
+  government: "Government-backed savings in the Philippines open to an OFW seafarer: Pag-IBIG MP2 (latest declared rate), SSS MySSS Pension Booster, current or upcoming Retail Treasury Bonds, Premyo bonds, T-bills, retail dollar bonds — the 10 best with rate, term and how to buy",
+  funds: "Philippine UITFs and mutual funds available to retail investors including on GCash GFunds and bank apps: the 10 with the best last-12-month return, with their yearly fee and risk",
+  dividends: "Philippine Stock Exchange REITs and regular dividend stocks: the 10 highest CURRENT dividend yields among liquid, regularly paying companies, with price and last dividend"};
+const GUIDE_TAX = {"20%": 0.8, "free": 1, "10%": 0.9, "fund": 1};
+async function investGuide(env) {
+  const g = await setting(env, "max_invest_guide", null);
+  if (!g || !Array.isArray(g.cats)) return GUIDE_SEED;
+  return {...GUIDE_SEED, ...g, cats: GUIDE_SEED.cats.map(c => g.cats.find(x => x.key === c.key) || c)};
+}
+async function refreshGuide(env, opts = {}) {
+  const cur = await investGuide(env), out = {...cur, cats: [...cur.cats]}, done = [];
+  for (const c of out.cats) {
+    if (opts.only && !opts.only.includes(c.key)) continue;
+    const prev = c.items.map(i => `${i.name}: ${i.rate}`).join("; ");
+    const r = await agentAsk(env, "investments", `${GUIDE_ASK[c.key]}.\nToday is ${new Date().toISOString().slice(0, 10)}. Search the web for CURRENT figures from official or reputable Philippine sources (bank and government websites, BSP, PDIC, Bureau of the Treasury, PSE, reputable news). Only legitimate, BSP/SEC/government-registered products; skip anything flagged by the SEC. Last check said: ${prev.slice(0, 1500)}.\nReply ONLY with JSON: {"items": [{"name": "product (institution)", "rate": "rate as stated, short", "rateNum": number (gross % per year, or last-12-month % for funds), "tax": "20%"|"free"|"10%"|"fund", "withdraw": "when the money can be taken out", "safety": "PDIC / government / not protected …", "conditions": "real catches in under 20 words", "ends": "YYYY-MM-DD or empty", "url": "the page the figure came from"}]} with up to 10 items, best first.`, {search: true, temp: 0.1});
+    const items = (Array.isArray(r.data?.items) ? r.data.items : []).map(x => ({name: cleanText(String(x.name || ""), 90), rate: cleanText(String(x.rate || ""), 70), rateNum: Number(x.rateNum), tax: GUIDE_TAX[x.tax] ? x.tax : "20%",
+      withdraw: cleanText(String(x.withdraw || ""), 70), safety: cleanText(String(x.safety || ""), 80), conditions: cleanText(String(x.conditions || ""), 160), ends: /^\d{4}-\d\d-\d\d$/.test(String(x.ends || "")) ? x.ends : "", url: /^https:\/\//.test(String(x.url || "")) ? String(x.url).slice(0, 300) : ""}))
+      .filter(x => x.name && x.rate && Number.isFinite(x.rateNum) && x.rateNum >= 0 && x.rateNum < 60).slice(0, 10);
+    if (items.length >= 3) {            // a thin or failed answer keeps the last good list
+      for (const it of items) { const old = c.items.find(o => o.name.toLowerCase() === it.name.toLowerCase()); it.change = !old ? "new" : old.rateNum !== it.rateNum ? (it.rateNum > old.rateNum ? "up from " : "down from ") + old.rate : ""; }
+      if (c.key !== "promos") items.sort((a, b) => b.rateNum - a.rateNum);
+      out.cats[out.cats.indexOf(c)] = {...c, items, checked: new Date().toISOString().slice(0, 10), sources: (r.sources || []).slice(0, 6)}; done.push(c.key);
+    }
+  }
+  out.checked = new Date().toISOString().slice(0, 10); out.by = "Max's investment agent";
+  if (done.length) await srvSetting(env, "max_invest_guide", JSON.stringify({checked: out.checked, by: out.by, market: out.market, cats: out.cats}));
+  return {guide: out, updated: done};
+}
+async function homeRoutes(request, env, url, origin) {
+  try {
+    if (url.pathname === "/api/home/paper" && request.method === "GET") {
+      if (!env.MAX_MEMORY) return json({...PAPER_SEED, from: "seed", books: PAPER_SEED.books.map(b => ({...b, valueNow: b.value, sinceNow: b.since}))}, 200, origin, env);
+      return json(await paperLive(env), 200, origin, env);
+    }
+    if (url.pathname === "/api/home/guide" && request.method === "GET") {
+      const g = env.MAX_MEMORY ? await investGuide(env) : GUIDE_SEED;
+      return json({...g, cats: g.cats.map(c => ({...c, items: c.items.map(i => c.key === "promos" ? i : ({...i, netPer100k: Math.round(100000 * i.rateNum / 100 * (GUIDE_TAX[i.tax] || 0.8))}))}))}, 200, origin, env);   // promos last weeks, not a year
+    }
+    if (url.pathname === "/api/home/guide/refresh" && request.method === "POST") {
+      if (!env.MAX_MEMORY) return json({error: "Needs Max's database."}, 503, origin, env);
+      const last = Number(await srvSetting(env, "max_srv_guide_refresh_at")) || 0;
+      if (Date.now() - last < 3600e3) return json({error: "Updated less than an hour ago — try again later.", next: new Date(last + 3600e3).toISOString()}, 429, origin, env);
+      await srvSetting(env, "max_srv_guide_refresh_at", String(Date.now()));
+      const r = await refreshGuide(env); return json({updated: r.updated}, 200, origin, env);
+    }
+    return json({error: "Not found."}, 404, origin, env);
+  } catch (e) { return json({error: String(e.message || e).slice(0, 200)}, 502, origin, env); }
 }
 async function marketRoutes(request, env, url, origin) {
   let body = {}; if (request.method === "POST") { try { body = await request.json(); } catch { return json({error: "Invalid JSON body."}, 400, origin, env); } }
@@ -2701,6 +3214,7 @@ export default {
     if (url.pathname.startsWith("/api/calendar") || url.pathname === "/api/tasks") return calendarRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/gmail/")) return gmailRoutes(request, env, url, origin);
     if (url.pathname.startsWith("/api/market/")) return marketRoutes(request, env, url, origin);
+    if (url.pathname.startsWith("/api/home/")) return homeRoutes(request, env, url, origin);
     if (url.pathname === "/api/weather") return weatherRoutes(request, env, url, origin);
     if (url.pathname === "/api/activity" && ["GET", "POST"].includes(request.method)) return activityRoutes(request, env, url, origin);
     if (url.pathname === "/api/music" && request.method === "GET") return musicRoutes(request, env, url, origin);
@@ -2849,7 +3363,7 @@ export default {
             "edit_event (change, move or rename an existing calendar event, or change its reminders; details = {find: words from its title, on: \"YYYY-MM-DD\" if he said which day, then only what changes: title, start, durationMinutes, location, reminders: [minutes before, e.g. 60, 10]}) · delete_event (cancel/remove an event; details = {find, on}) · alarms: an alarm is add_event with title starting \"⏰ \", reminderMinutes 0, durationMinutes 5 · several reminders: add_event with reminders: [60, 10] · " +
             "add_task (a to-do without a set time; details = {title, due: \"YYYY-MM-DD\" or empty, notes}) · list_schedule (he asks what is on his calendar; details = {range: \"today\"|\"tomorrow\"|\"week\"}) · " :
             "(Google Calendar is NOT connected yet: if he asks for reminders or calendar, set action add_event/add_task anyway so the app can tell him how to connect.) add_event · add_task · list_schedule · ") +
-          "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}) · LEARNING: learn_this (he wants you to learn / study / summarize the file, link or note he is looking at into a detailed note; query = what) · make_skill (turn a note, file or link into a skill you follow; details = {name: the skill or note name}) · improve_skill (he corrects how you did a skill; details = {name: skill name, instruction: the correction}) · walk_through (he wants step-by-step guidance through a procedure or skill, one step at a time; details = {name}) · check_conflicts (find notes that contradict each other or look outdated) · WEBSITE TEAM (for his sites like Hobby Isle): site_audit (check a site's security, SEO, pictures and broken links; details = {project}) · seo_ideas (SEO / keyword / content ideas; details = {project, topic if he gave one}) · content_draft (write a blog post, review, guide, comparison or social post; details = {project, topic, name: \"blog\"|\"review\"|\"comparison\"|\"guide\"|\"social\"}) — drafts only, he decides what gets published · PAPER TRADING (pretend money only — you never place real trades): trading_status (how his paper trading is doing, positions, orders for the next open, which strategies are winning; details = {project: \"pse\" or \"crypto\" if he named one}) · trading_emails (turn the trading update emails on/off; details = {on: \"on\"|\"off\"}) · VOICE: hands_free (he wants you to always listen for \"Hey Max\" / stop doing that; details = {on: \"on\"|\"off\"}) · barge_setting (allow or stop interrupting you by voice; details = {on: \"on\"|\"off\"}) · WEATHER & SEA: weather (forecast, wind, waves, swell for a place; details = {location: the place, or empty for his saved place, on: \"today\"|\"tomorrow\"|\"week\"}) · set_weather_place (his default weather place; details = {location}) · set_personality (he wants you to talk differently; details = {name: \"butler\"|\"concise\"|\"witty\"|\"formal\"}) · usage (how much AI was used today / which brain answered) · whatsapp_draft (he wants to send a WhatsApp message; details = {to: the person or phone number, text: the finished message written in his voice and language}; the app opens WhatsApp with it filled in and HE taps send — never say it was sent) · play_build (build a NEW VERSION of the Android app from the latest website and upload it to his Play closed test; details = {project, notes: what's new if he said}; the app asks him first; never production) · build_status (is the app build finished / how did it go; details = {project}). The app always shows the new text and asks him before publishing. · MUSIC (the app plays it right away): play_music (he wants music played — a song, artist, album, genre or mood; query = exactly what to play, e.g. \"Ben&Ben Maybe the Night\", \"OPM love songs\", \"lofi\"; details = {mode: \"radio\" if he asked for a radio station or wants it to keep playing with the screen off, otherwise \"video\"}) · music_control (details = {op: \"pause\"|\"resume\"|\"stop\"|\"next\"|\"louder\"|\"softer\"|\"what\" (what is playing)}) · HIS AGENTS (each sends a detailed weekly report by email on Sunday): agent_report (he wants an agent's report — show the last one, or run a fresh one now when he says now/new/send; details = {agent: \"notes\"|\"research\"|\"web\"|\"apps\"|\"security\"|\"trading\"|\"investments\"|\"business\"|\"music\"|\"schedule\"|\"email\", send: true to run a new one now and email it}) · HOW YOU HEAR HIM: hear_fix (he teaches you a word you keep mishearing, e.g. \"when you hear hobby aisle I mean Hobby Isle\"; details = {heard, meant}) · listen_lang (listen in Filipino or English; details = {lang: \"fil-PH\"|\"en-PH\"}) · show_hearing (the words he taught you / how you understand him) · GUARD: guard_report (is everything OK / security or status report / anything broken) · guard_run (check everything now) · backup_now (back up his notes and memory now — emailed to himself) · ACTIVITY: activity (he asks what you or his desks did, which brain answered, what failed, or for the activity log; details = {dept: \"apps\"|\"web\"|\"trading\"|\"notes\"|\"schedule\"|\"training\"|\"music\" if he named one, range: \"today\"|\"week\"}) · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · price_on_date (the price of a stock, coin, currency, gold or index ON A PAST DATE, e.g. \"LTC on 5 November 2025\", \"SM price last Christmas\"; details = {symbol, kind: \"pse\"|\"crypto\"|\"fx\" or empty for gold/oil/PSEi/indices, date: \"YYYY-MM-DD\"}; the app gets the exact number from the source — never answer a past price from memory or from the yearly numbers in his notes) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
+          "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}) · LEARNING: learn_this (he wants you to learn / study / summarize the file, link or note he is looking at into a detailed note; query = what) · make_skill (turn a note, file or link into a skill you follow; details = {name: the skill or note name}) · improve_skill (he corrects how you did a skill; details = {name: skill name, instruction: the correction}) · walk_through (he wants step-by-step guidance through a procedure or skill, one step at a time; details = {name}) · check_conflicts (find notes that contradict each other or look outdated) · WEBSITE TEAM (for his sites like Hobby Isle): site_audit (check a site's security, SEO, pictures and broken links; details = {project}) · seo_ideas (SEO / keyword / content ideas; details = {project, topic if he gave one}) · content_draft (write a blog post, review, guide, comparison or social post; details = {project, topic, name: \"blog\"|\"review\"|\"comparison\"|\"guide\"|\"social\"}) — drafts only, he decides what gets published · PAPER TRADING (pretend money only — you never place real trades): trading_status (how his paper trading is doing, positions, orders for the next open, which strategies are winning; details = {project: \"pse\" or \"crypto\" if he named one}) · trading_emails (turn the trading update emails on/off; details = {on: \"on\"|\"off\"}) · VOICE: hands_free (he wants you to always listen for \"Hey Max\" / stop doing that; details = {on: \"on\"|\"off\"}) · barge_setting (allow or stop interrupting you by voice; details = {on: \"on\"|\"off\"}) · WEATHER & SEA: weather (forecast, wind, waves, swell for a place; details = {location: the place, or empty for his saved place, on: \"today\"|\"tomorrow\"|\"week\"}) · set_weather_place (his default weather place; details = {location}) · set_personality (he wants you to talk differently; details = {name: \"butler\"|\"concise\"|\"witty\"|\"formal\"}) · usage (how much AI was used today / which brain answered) · whatsapp_draft (he wants to send a WhatsApp message; details = {to: the person or phone number, text: the finished message written in his voice and language}; the app opens WhatsApp with it filled in and HE taps send — never say it was sent) · play_build (build a NEW VERSION of the Android app from the latest website and upload it to his Play closed test; details = {project, notes: what's new if he said}; the app asks him first; never production) · build_status (is the app build finished / how did it go; details = {project}). The app always shows the new text and asks him before publishing. · MUSIC (the app plays it right away): play_music (he wants music played — a song, artist, album, genre or mood; query = exactly what to play, e.g. \"Ben&Ben Maybe the Night\", \"OPM love songs\", \"lofi\"; details = {mode: \"radio\" if he asked for a radio station or wants it to keep playing with the screen off, otherwise \"video\"}) · music_control (details = {op: \"pause\"|\"resume\"|\"stop\"|\"next\"|\"louder\"|\"softer\"|\"what\" (what is playing)}) · HIS AGENTS (each sends a detailed weekly report by email on Sunday): agent_report (he wants an agent's report — show the last one, or run a fresh one now when he says now/new/send; details = {agent: \"notes\"|\"research\"|\"web\"|\"apps\"|\"security\"|\"trading\"|\"investments\"|\"business\"|\"music\"|\"schedule\"|\"email\", send: true to run a new one now and email it}) · HOW YOU HEAR HIM: hear_fix (he teaches you a word you keep mishearing, e.g. \"when you hear hobby aisle I mean Hobby Isle\"; details = {heard, meant}) · listen_lang (listen in Filipino or English; details = {lang: \"fil-PH\"|\"en-PH\"}) · show_hearing (the words he taught you / how you understand him) · GUARD: guard_report (is everything OK / security or status report / anything broken) · guard_run (check everything now) · backup_now (back up his notes and memory now — emailed to himself) · ACTIVITY: activity (he asks what you or his desks did, which brain answered, what failed, or for the activity log; details = {dept: \"apps\"|\"web\"|\"trading\"|\"notes\"|\"schedule\"|\"training\"|\"music\" if he named one, range: \"today\"|\"week\"}) · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · home_dash (show his home-screen panels: details = {name: \"paper\" for paper trading results/positions, \"guide\" for the investment guide, money plan, top-10 savings, time deposits, promos, MP2 and dividend stocks}) · price_on_date (the price of a stock, coin, currency, gold or index ON A PAST DATE, e.g. \"LTC on 5 November 2025\", \"SM price last Christmas\"; details = {symbol, kind: \"pse\"|\"crypto\"|\"fx\" or empty for gold/oil/PSEi/indices, date: \"YYYY-MM-DD\"}; the app gets the exact number from the source — never answer a past price from memory or from the yearly numbers in his notes) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
           "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +

@@ -11,6 +11,13 @@ NOTES['1 My investment plan (₱100,000, Nov 2026)'] = (['investments', 'plan', 
 - Inflation 7.8% (October 2026); BSP rate 5.50% after a 0.50 hike in October, more possible in December
 - Almost every safe option earns less than inflation; MP2 comes closest → keep fixed deposits short (6 months)
 
+**Mark's choice (9 Nov 2026): 30% emergency money, easy to withdraw**
+- ₱30,000 emergency money split in 2 banks (OwnBank 3.80% + UNO 3.50%) → about ₱876 a year; any-day withdrawal
+- The other ₱70,000 by the standard rules — Balanced (default): ₱14,000 6-month time deposit (Metrobank up to 6%) → ₱672 · ₱35,000 Pag-IBIG MP2 → ₱2,492 · ₱21,000 PSE REITs / dividend stocks → about ₱1,308 → total about ₱5,350 (5.3%)
+- Safe: ₱21,000 time deposit + ₱49,000 MP2 → about ₱5,370 · Growth: ₱7,000 time deposit + ₱28,000 MP2 + ₱35,000 dividend stocks → about ₱5,390 plus/minus stock prices
+- Standard rules used: emergency money first = 6–12 months of expenses for seafarers (no pay between contracts; 3–6 months for land jobs); save at least 20% of income; money not needed for 5+ years → MP2 and stocks; stocks at most "100 minus your age" % of long-term money; stocks only after Max's paper test proves itself
+- The home screen "Investment guide" panel recalculates this with today's best rates; tell Max your monthly expenses, income and age to check the emergency money
+
 **Plan A — Safe (every peso protected): about ₱5,800 in year 1**
 - First month: all ₱100,000 in Maya Savings new-user 15% promo (sign up + upgrade + deposit by 30 Nov 2026) → about +₱800
 - ₱30,000 OwnBank savings 3.80% (emergency money, any day; upgrade account — basic stops at ₱50,000) → ₱912

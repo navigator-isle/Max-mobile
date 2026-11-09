@@ -398,6 +398,24 @@ figure.note-media details{font-size:.72rem;color:#9a9cb3;padding:0 8px 6px}figur
 figure.note-media .media-x{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:50%;width:26px;height:26px;font-size:.8rem;cursor:pointer}
 figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb3;text-align:center}
 .media-viewer{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center}.media-viewer img{max-width:100vw;max-height:100vh;object-fit:contain}
+
+#homeScreen{overflow-y:auto;justify-content:safe center!important}
+.home-dash{width:100%;max-width:640px;display:flex;flex-direction:column;gap:8px;text-align:left;padding:0 6px}
+.dash-card{background:#0b1928dd;border:1px solid #1d3a52;border-radius:14px;overflow:hidden}
+.dash-card>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;min-height:44px}
+.dash-card>summary::-webkit-details-marker{display:none}
+.dash-card>summary::after{content:"▾";color:#8fa8c0;transition:transform .2s}.dash-card[open]>summary::after{transform:rotate(180deg)}
+.dash-title{font-weight:600;color:#e8f3ff;white-space:nowrap}.dash-sum{color:#8fa8c0;font-size:.82rem;text-align:right;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-body{padding:4px 14px 14px;display:flex;flex-direction:column;gap:8px;color:#c8d9e9;font-size:.9rem}
+.dash-big{display:flex;justify-content:space-between;align-items:baseline;font-size:1rem}.dash-big b{font-size:1.3rem}
+.dash-book,.dash-plan{border-top:1px solid #16314a;padding-top:8px}.dash-book-head{display:flex;justify-content:space-between;gap:8px;font-weight:600;color:#e8f3ff}
+.dash-list{margin:4px 0 0;padding-left:18px;font-size:.84rem}.dash-list li{margin:2px 0}
+.dash-rank{margin:6px 0 0;padding-left:22px}.dash-rank li{margin:0 0 8px}
+.dash-sub>summary{cursor:pointer;color:#9fc6e6;font-size:.86rem;padding:4px 0}
+.dash-actions{display:flex;gap:8px;flex-wrap:wrap}.dash-actions a{text-decoration:none}
+.dash-form{display:grid;grid-template-columns:1fr 1fr;gap:6px}.dash-form label{display:flex;flex-direction:column;font-size:.78rem;color:#8fa8c0;gap:2px}
+.dash-form input,.dash-form select{background:#071421;color:#e8f3ff;border:1px solid #24465d;border-radius:8px;padding:6px 8px;font-size:.9rem;min-width:0}
+.home-dash a{color:#7cc4ff}.home-dash .up{color:#4fd1a5}.home-dash .down{color:#ff8a8a}.badge-mini{font-size:.7rem;background:#13304a;color:#9fc6e6;border-radius:6px;padding:1px 5px}
 </style></head>
 <body>
 <div id="movedNote" hidden style="background:#3a2a05;color:#ffe9a8;padding:8px 12px;font:13px system-ui;text-align:center">Max now lives on Cloudflare: <a style="color:#ffd76a" href="https://max-app-axv.pages.dev/">max-app-axv.pages.dev</a> — open it and add it to your home screen.</div>
@@ -473,6 +491,10 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
       <button id="typeSend" class="send-btn" aria-label="Send">➤</button>
     </div>
     <div class="kbd-hint">Enter to send · Ctrl+K to type · Ctrl+Space to talk · Esc to stop</div>
+    <section id="homeDash" class="home-dash" hidden>
+      <details id="dashPaper" class="dash-card"><summary><span class="dash-title">📈 Paper trading</span><span id="dashPaperSum" class="dash-sum">…</span></summary><div id="dashPaperBody" class="dash-body"><div class="muted small">Loading…</div></div></details>
+      <details id="dashGuide" class="dash-card"><summary><span class="dash-title">💰 Investment guide</span><span id="dashGuideSum" class="dash-sum">…</span></summary><div id="dashGuideBody" class="dash-body"><div class="muted small">Loading…</div></div></details>
+    </section>
     <div hidden><button id="homeTalk">Talk</button><button id="homeStop">Stop</button></div>
   </main>
 
@@ -951,7 +973,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- phone ↔ laptop sync of everything else (watchlist, routines progress, projects, settings) ----------
  // Notes, sales, routines and skills already sync as notes. These lists sync too; the newest change wins.
  // Not synced on purpose: passcode/sign-in, hands-free (each device decides), caches, the offline outbox.
- const SYNC_KEYS=['max_deals','max_music','max_hear_fixes','max_listen_lang','max_folders','max_watchlist','max_price_alerts','max_currencies','max_routine_state','max_watch','max_crew_inbox','max_projects','max_learned_phrases','max_weather_place','max_personality','max_barge','max_pp_speed','max_last_brief'];
+ const SYNC_KEYS=['max_deals','max_music','max_hear_fixes','max_listen_lang','max_folders','max_watchlist','max_price_alerts','max_currencies','max_routine_state','max_watch','max_crew_inbox','max_projects','max_learned_phrases','max_weather_place','max_personality','max_barge','max_pp_speed','max_last_brief','max_money_profile'];
  const SYNC_META='max_sync_meta';
  const strHash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h+':'+t.length};
  function syncMeta(){try{return JSON.parse(localStorage.getItem(SYNC_META)||'null')}catch{return null}}
@@ -2154,6 +2176,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(price alerts?|my alerts)\b/)&&!has(/\b(set|add|create)\b/))return {type:'list_alerts'};
   if(has(/\b(show|display|use|set|change)\b.*\b(prices?|currenc(y|ies))\b.*\b(in|to)\b/)&&Object.keys(CUR_WORDS).some(w=>n.includes(w)))return {type:'set_currencies',query:raw};
   if(/\d/.test(n)&&has(/\b(to|in|into|sa)\b/)&&new RegExp('\\d\\s*(k|thousand|million|m)?\\s*('+Object.keys(CUR_WORDS).concat(Object.keys(CRYPTO_WORDS)).join('|')+')\\b').test(n.replace(/,/g,''))&&!has(/\b(remind|alarm|meeting|log|sale|sales|earned)\b/))return {type:'convert_currency',query:raw};
+  if(has(/\b(paper trad\w*|trading dashboard|my trades)\b/)&&has(/\b(show|open|how|dashboard|status|check|kumusta|update)\b/)&&!has(/\b(email|turn|on|off|explain)\b/))return {type:'home_dash',details:{name:'paper'}};
+  if(has(/\b(investment guide|investment plan|money plan|where (should|to) (i )?(save|invest|put)|best (savings|time deposit|investment)s?|top (10|ten) (savings|time deposits?|investments?|promos?))\b/))return {type:'home_dash',details:{name:'guide'}};
+  if(has(/\b(expenses?|gastos|income|salary|sweldo|sahod)\b/)&&/\d/.test(raw)&&has(/\b(my|ang|i)\b/)&&!has(/\b(log|sale|earned|remind)\b/)){const t=setMoneyFromText(raw);if(t)return {type:'say_text',query:t}}
   {const when=textDate(raw),past=when||has(/\b(ago|yesterday|kahapon|noong|nung|back in|last (week|month|year|christmas|new year)|on (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*)\b/)||/\b(19|20)\d\d\b/.test(n);
    if(past&&has(/\b(price|prices|presyo|how much|worth|value|magkano|close|closed|closing|open|high|low|rate)\b/)&&!has(/\b(alert|notify|chart|graph|remind)\b/)){const sy=symbolsIn(raw);if(when&&sy.length)return {type:'price_on_date',details:{symbol:sy[0].symbol,kind:sy[0].kind,date:when}};if(sy.length||has(/\b(gold|silver|oil|dollar|peso)\b/))return null}}
   {const sy=symbolsIn(raw).filter(x=>x.kind==='crypto'||watchlist().some(w=>w.symbol===x.symbol));
@@ -3564,6 +3589,101 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
  const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
  const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}if(SYNC_KEYS.includes(k))scheduleSync()};
+ // ---------- Home dashboard: live paper trading + investment guide, folded until he taps (asked 9 Nov 2026) ----------
+ const DASH_KEY='max_dash_open',MONEY_KEY='max_money_profile';
+ const dashE=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const dashPct=v=>v===null||v===undefined||!Number.isFinite(+v)?'—':(v>0?'+':'')+(+v).toFixed(2)+'%';
+ const dashPeso=v=>'₱'+Math.round(+v||0).toLocaleString('en-US');
+ const dashCls=v=>v>0?'up':v<0?'down':'';
+ let dashPaperData=null,dashGuideData=null,dashPaperAt=0,dashGuideAt=0;
+ function moneyProfile(){return {amount:100000,emergencyPct:30,expenses:0,income:0,age:0,risk:'balanced',...jget(MONEY_KEY,{})}}
+ async function loadPaper(force){
+  if(!force&&dashPaperData&&Date.now()-dashPaperAt<5*60e3)return dashPaperData;
+  const {r,data}=await fetchJson(workerBase()+'/api/home/paper',{method:'GET'},30000);
+  if(r.status===404)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
+  if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  dashPaperData=data;dashPaperAt=Date.now();try{localStorage.setItem('max_cache_paper',JSON.stringify(data))}catch{}return data;
+ }
+ async function loadGuide(force){
+  if(!force&&dashGuideData&&Date.now()-dashGuideAt<30*60e3)return dashGuideData;
+  const {r,data}=await fetchJson(workerBase()+'/api/home/guide',{method:'GET'},30000);
+  if(r.status===404)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
+  if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  dashGuideData=data;dashGuideAt=Date.now();try{localStorage.setItem('max_cache_guide',JSON.stringify(data))}catch{}return data;
+ }
+ function paperHtml(d){
+  const main=d.books.filter(b=>b.weight>0),watch=d.books.filter(b=>!(b.weight>0));
+  const pos=b=>(b.positions||[]).length?'<ul class="dash-list">'+b.positions.map(p=>'<li><b>'+dashE(p.sym)+'</b> '+(p.kind==='copy'?'<span class="'+dashCls(p.chgPct)+'">'+dashPct(p.chgPct)+'</span>':(p.qty?(+p.qty).toLocaleString('en-US',{maximumFractionDigits:6})+' @ '+dashE(p.ep)+' → '+(p.last?dashE(+p.last.toPrecision(7)):'…')+' <span class="'+dashCls(p.chgPct)+'">'+dashPct(p.chgPct)+'</span>':'')+(p.stop?' · stop '+dashE(+(+p.stop).toPrecision(6)):''))+'</li>').join('')+'</ul>':'';
+  const pend=b=>(b.pending||[]).length?'<details class="dash-sub"><summary>'+b.pending.length+' order'+(b.pending.length>1?'s':'')+' waiting for the next run</summary><ul class="dash-list">'+b.pending.map(o=>'<li><b>'+dashE(o.side.toUpperCase()+' '+o.sym)+'</b>'+(o.amount?' '+dashPeso(o.amount):'')+' — '+dashE(o.why)+'</li>').join('')+'</ul></details>':'';
+  const row=b=>'<div class="dash-book"><div class="dash-book-head"><span>'+dashE(b.name)+(b.weight?' <span class="muted">'+Math.round(b.weight*100)+'%</span>':'')+'</span><span class="'+dashCls(b.sinceNow)+'">'+dashPct(b.sinceNow)+'</span></div>'+
+   '<div class="muted small">'+(b.note?dashE(b.note):(b.valueNow!==null&&b.valueNow!==undefined?(b.ccy==='PHP'?dashPeso(b.valueNow):'$'+(+b.valueNow).toLocaleString('en-US',{maximumFractionDigits:2}))+' now':'')+' · '+(b.positions||[]).length+' open · '+(b.closed||0)+' closed ('+(b.wins||0)+' wins)'+(b.nextRebalance?' · next re-check '+dashE(b.nextRebalance):''))+'</div>'+pos(b)+pend(b)+'</div>';
+  return '<div class="dash-big"><span>MAX-MASTER-3 since '+dashE(d.opened||'start')+'</span><b class="'+dashCls(d.combinedSince)+'">'+dashPct(d.combinedSince)+'</b></div>'+
+   '<div class="muted small">'+(d.pricedAt?'Prices live at '+new Date(d.pricedAt).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'Prices from the report')+' · trades from the '+(d.from==='email'?'Sunday report of '+dashE(d.asOf):'first setup ('+dashE(d.asOf)+'; trades start at the next Sunday run)')+'</div>'+
+   main.map(row).join('')+(watch.length?'<details class="dash-sub"><summary>Watch-only books ('+watch.length+')</summary>'+watch.map(row).join('')+'</details>':'')+
+   ((d.events||[]).length?'<details class="dash-sub"><summary>Latest actions</summary><ul class="dash-list">'+d.events.slice(-8).reverse().map(e=>'<li>'+dashE(e)+'</li>').join('')+'</ul></details>':'')+
+   '<div class="dash-actions"><button class="small-btn" data-dash="paper-refresh">Refresh prices</button><a class="small-btn" href="'+dashE(d.dashboard)+'" target="_blank" rel="noopener">Full dashboard</a></div><div class="muted small">Paper trading only — pretend money, not advice.</div>';
+ }
+ function bestOf(g,key,f){const c=(g.cats||[]).find(x=>x.key===key);const it=(c?.items||[]).filter(f||(()=>true));return it[0]||null}
+ function moneyPlan(g){
+  const P=moneyProfile(),amt=Math.max(0,+P.amount||0),em=Math.round(amt*(+P.emergencyPct||0)/100),rest=amt-em;
+  const split={safe:{td:.3,mp2:.7,stk:0},balanced:{td:.2,mp2:.5,stk:.3},growth:{td:.1,mp2:.4,stk:.5}}[P.risk]||{td:.2,mp2:.5,stk:.3};
+  let stk=split.stk;if(+P.age>0)stk=Math.min(stk,Math.max(0,(100-P.age)/100));         // "100 minus age" rule caps stocks
+  const sav1=bestOf(g,'savings',i=>!/group/i.test(i.name)),sav2=bestOf(g,'savings',i=>sav1&&i.name!==sav1.name&&!/group/i.test(i.name)),td=bestOf(g,'timedeposits'),mp2=bestOf(g,'government',i=>/mp2/i.test(i.name))||{name:'Pag-IBIG MP2',rateNum:7.12,tax:'free'},dv=bestOf(g,'dividends',i=>/reit/i.test(i.name));
+  const tdAmt=Math.round(rest*split.td),stkAmt=Math.round(rest*stk),mp2Amt=rest-tdAmt-stkAmt;
+  const net=(x,i)=>i?x*i.rateNum/100*({'20%':.8,'free':1,'10%':.9,'fund':1}[i.tax]||.8):0;
+  const lines=[[ 'Emergency money (any-day withdrawal) — split in 2 banks',em,sav1&&sav2?sav1.name+' + '+sav2.name:sav1?.name,net(em/2,sav1)+net(em/2,sav2||sav1)],
+   ['Short time deposit (6 months)',tdAmt,td?.name,net(tdAmt,td)],['Pag-IBIG MP2 (5 years, tax-free)',mp2Amt,mp2.name,net(mp2Amt,mp2)],['PSE dividend stocks / REITs',stkAmt,dv?dv.name+' and others':'REITs',net(stkAmt,dv)]].filter(l=>l[1]>0);
+  const total=lines.reduce((s,l)=>s+l[3],0),months=+P.expenses>0?em/P.expenses:null;
+  return '<div class="dash-plan"><div class="dash-book-head"><span>Your money plan</span><span class="muted small">'+dashE({safe:'Safe',balanced:'Balanced',growth:'Growth'}[P.risk]||'Balanced')+'</span></div>'+
+   '<ul class="dash-list">'+lines.map(l=>'<li><b>'+dashPeso(l[1])+'</b> '+dashE(l[0])+(l[2]&&!l[0].includes(l[2])?' — '+dashE(l[2]):'')+' · about '+dashPeso(l[3])+' a year</li>').join('')+'</ul>'+
+   '<div class="small">First year: about <b>'+dashPeso(total)+'</b> after tax on '+dashPeso(amt)+' ('+(amt?(total/amt*100).toFixed(1):0)+'%).</div>'+
+   (months!==null?'<div class="small '+(months<6?'down':'')+'">Emergency money covers '+months.toFixed(1)+' months of expenses'+(months<6?' — the usual rule for seafarers is 6–12 months (no pay between contracts), so build it up first.':' — meets the 6-month minimum.')+'</div>':'<div class="small muted">Tell Max your monthly expenses (“my monthly expenses are 25,000”) to check if the emergency money is enough (rule: 6–12 months for seafarers).</div>')+
+   '<details class="dash-sub"><summary>Change the plan</summary><div class="dash-form">'+
+   '<label>Amount ₱<input data-mp="amount" type="number" inputmode="numeric" value="'+amt+'"></label><label>Emergency %<input data-mp="emergencyPct" type="number" inputmode="numeric" value="'+(+P.emergencyPct||0)+'"></label>'+
+   '<label>Monthly expenses ₱<input data-mp="expenses" type="number" inputmode="numeric" value="'+(+P.expenses||'')+'"></label><label>Monthly income ₱<input data-mp="income" type="number" inputmode="numeric" value="'+(+P.income||'')+'"></label><label>Age<input data-mp="age" type="number" inputmode="numeric" value="'+(+P.age||'')+'"></label>'+
+   '<label>Style<select data-mp="risk"><option value="safe"'+(P.risk==='safe'?' selected':'')+'>Safe</option><option value="balanced"'+(P.risk==='balanced'?' selected':'')+'>Balanced</option><option value="growth"'+(P.risk==='growth'?' selected':'')+'>Growth</option></select></label></div>'+
+   '<div class="muted small">Rules used: emergency money first (6–12 months of expenses for seafarers); save at least 20% of income; money for 5+ years → MP2 and stocks; stocks at most “100 minus your age” % of long-term money; stocks only after Max’s paper test proves itself. Examples, not licensed advice.</div></details>'+
+   (+P.income>0?'<div class="small">Saving '+dashPeso(Math.max(0,P.income-(+P.expenses||0)))+' a month = '+Math.round(Math.max(0,P.income-(+P.expenses||0))/P.income*100)+'% of income (common rule: at least 20%).</div>':'')+'</div>';
+ }
+ function guideHtml(g){
+  const m=g.market||{};
+  return moneyPlan(g)+'<div class="muted small">Inflation '+dashE(m.inflation||'')+' · BSP rate '+dashE(m.bsp||'')+' · PDIC '+dashE(m.pdic||'')+'</div>'+
+   (g.cats||[]).map(c=>'<details class="dash-sub" data-cat="'+dashE(c.key)+'"><summary>'+dashE(c.title)+' <span class="muted small">top '+c.items.length+' · checked '+dashE(c.checked||g.checked||'')+'</span></summary><ol class="dash-rank">'+
+    c.items.map(i=>'<li><div><b>'+dashE(i.name)+'</b> — <span class="up">'+dashE(i.rate)+'</span>'+(i.change?' <span class="badge-mini">'+dashE(i.change)+'</span>':'')+'</div><div class="muted small">'+(i.netPer100k?'≈ '+dashPeso(i.netPer100k)+'/yr on ₱100k after tax · ':'')+dashE(i.withdraw||'')+' · '+dashE(i.safety||'')+(i.ends?' · <b>ends '+dashE(i.ends)+'</b>':'')+'</div>'+(i.conditions?'<div class="small">'+dashE(i.conditions)+'</div>':'')+(i.url?'<a class="small" href="'+dashE(i.url)+'" target="_blank" rel="noopener">source</a>':'')+'</li>').join('')+'</ol></details>').join('')+
+   '<div class="dash-actions"><button class="small-btn" data-dash="guide-refresh">Update now</button></div><div class="muted small">Checked by '+dashE(g.by||'Max')+' on '+dashE(g.checked||'')+' · Max updates it every morning. Rates change often — confirm in the bank’s app before moving money. Not licensed financial advice.</div>';
+ }
+ function dashSummaryPaper(d){return 'MAX-MASTER-3 '+dashPct(d.combinedSince)+' · '+(d.books||[]).reduce((s,b)=>s+(b.weight>0?(b.positions||[]).length:0),0)+' open'}
+ function dashSummaryGuide(g){const s=bestOf(g,'savings',i=>!/group/i.test(i.name)),t=bestOf(g,'timedeposits'),m=bestOf(g,'government',i=>/mp2/i.test(i.name));return [m&&'MP2 '+m.rate.replace(/\s*\(.*/,''),t&&'TD '+t.rate.replace(/^up to /,'').replace(/\s*\(.*/,''),s&&'Savings '+s.rate.replace(/^up to /,'').replace(/\s*\(.*/,'')].filter(Boolean).join(' · ')}
+ async function renderDash(which,force){
+  const box=$('homeDash');if(!box||!workerBase())return;box.hidden=false;
+  if(!which||which==='paper'){const s=$('dashPaperSum'),b=$('dashPaperBody');
+   try{const d=await loadPaper(force);s.textContent=dashSummaryPaper(d);if($('dashPaper').open)b.innerHTML=paperHtml(d)}
+   catch(e){const c=jget('max_cache_paper',null);if(c){s.textContent=dashSummaryPaper(c)+' (saved)';if($('dashPaper').open)b.innerHTML='<div class="muted small">Offline — saved copy.</div>'+paperHtml(c)}else{s.textContent='not available';b.innerHTML='<div class="muted small">'+dashE(e.message)+'</div>'}}}
+  if(!which||which==='guide'){const s=$('dashGuideSum'),b=$('dashGuideBody');
+   try{const g=await loadGuide(force);s.textContent=dashSummaryGuide(g);if($('dashGuide').open)b.innerHTML=guideHtml(g)}
+   catch(e){const c=jget('max_cache_guide',null);if(c){s.textContent=dashSummaryGuide(c)+' (saved)';if($('dashGuide').open)b.innerHTML='<div class="muted small">Offline — saved copy.</div>'+guideHtml(c)}else{s.textContent='not available';b.innerHTML='<div class="muted small">'+dashE(e.message)+'</div>'}}}
+ }
+ function initDash(){
+  const open=jget(DASH_KEY,{});
+  [['dashPaper','paper'],['dashGuide','guide']].forEach(([id,k])=>{const d=$(id);if(!d)return;d.open=!!open[k];d.addEventListener('toggle',()=>{const o=jget(DASH_KEY,{});o[k]=d.open;jset(DASH_KEY,o);if(d.open)renderDash(k)})});
+  $('homeDash').addEventListener('click',async e=>{const t=e.target.closest('[data-dash]');if(!t)return;e.preventDefault();
+   if(t.dataset.dash==='paper-refresh'){t.disabled=true;t.textContent='Refreshing…';await renderDash('paper',true)}
+   if(t.dataset.dash==='guide-refresh'){t.disabled=true;t.textContent='Max is checking the latest rates and promos…';try{const {r,data}=await postJson('/api/home/guide/refresh',{},180000);toast(r.ok?(data.updated?.length?'Updated: '+data.updated.join(', '):'Checked — no changes found'):(data.error||'Could not update'))}catch(err){toast(err.message)}await renderDash('guide',true)}});
+  $('homeDash').addEventListener('change',e=>{const k=e.target?.dataset?.mp;if(!k)return;const P=moneyProfile();P[k]=k==='risk'?e.target.value:Math.max(0,+e.target.value||0);jset(MONEY_KEY,P);if(dashGuideData)$('dashGuideBody').innerHTML=guideHtml(dashGuideData)});
+  renderDash();setInterval(()=>{if(document.visibilityState==='visible'&&screen==='home'&&$('dashPaper')?.open)renderDash('paper')},5*60e3);
+ }
+ window.maxRenderDash=renderDash;
+ function openDash(which){closeConnection();closeMenu();setSection('home');const d=$(which==='paper'?'dashPaper':'dashGuide');if(d){d.open=true;renderDash(which);setTimeout(()=>d.scrollIntoView({behavior:'smooth',block:'start'}),300)}
+  if(which==='paper'){const p=dashPaperData;return p?'Paper trading: MAX-MASTER-3 is '+dashPct(p.combinedSince)+' since '+(p.opened||'the start')+'. It’s on your home screen.':'Your paper trading is on the home screen.'}
+  const g=dashGuideData;return g?'Investment guide: '+dashSummaryGuide(g)+'. Your money plan and the top 10 in each category are on the home screen.':'Your investment guide is on the home screen.'}
+ function setMoneyFromText(raw){const t=String(raw||'').toLowerCase().replace(/,/g,'');const P=moneyProfile();let hit=[];
+  const num=re=>{const m=t.match(re);return m?+m[1]*(/k\b/.test(m[2]||'')?1000:1):null};
+  const ex=num(/(?:expenses?|gastos)[^\d₱]{0,25}₱?\s*(\d+(?:\.\d+)?)\s*(k\b)?/),inc=num(/(?:income|salary|sahod|sweldo)[^\d₱]{0,25}₱?\s*(\d+(?:\.\d+)?)\s*(k\b)?/),age=num(/(?:i am|i'm|age)\D{0,6}(\d{2})\s*(years?)?/);
+  if(ex){P.expenses=ex;hit.push('monthly expenses '+dashPeso(ex))}if(inc){P.income=inc;hit.push('monthly income '+dashPeso(inc))}if(age&&age>17&&age<90){P.age=age;hit.push('age '+age)}
+  if(!hit.length)return null;jset(MONEY_KEY,P);if(dashGuideData)$('dashGuideBody').innerHTML=guideHtml(dashGuideData);
+  const em=Math.round(P.amount*P.emergencyPct/100),mo=P.expenses?em/P.expenses:null;
+  return 'Saved: '+hit.join(', ')+'.'+(mo!==null?' Your emergency money of '+dashPeso(em)+' covers '+mo.toFixed(1)+' months'+(mo<6?' — less than the 6 months seafarers usually keep, so build it up first.':'.'):'')+' The plan on your home screen is updated.'}
+
  const todayKey=()=>localDate(new Date());
  const daysUntil=d=>Math.round((new Date(d+'T12:00:00')-new Date(localDate(new Date())+'T12:00:00'))/864e5);
  const whenText=d=>{const k=daysUntil(d);return k===0?'today':k===1?'tomorrow':k===-1?'yesterday':k<0?(-k)+' days ago':k<=14?'in '+k+' days':fullDate(d)};
@@ -4762,6 +4882,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'show_watchlist':return await showWatchlist(true);
    case 'market_chart':return await marketChart(a.details||{symbol:a.query});
    case 'price_on_date':return await priceOnDate(a.details||{},raw);
+   case 'home_dash':return openDash((a.details||{}).name==='paper'?'paper':'guide');
+   case 'say_text':return a.query||'';
    case 'watchlist_add':return watchAdd(a.details||{symbol:a.query});
    case 'watchlist_remove':return watchRemove(a.details||{symbol:a.query});
    case 'price_alert':return priceAlert(a.details||{});
@@ -4790,7 +4912,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'backup_now':return await guardScreen('backup');
    case 'import_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Import Obsidian vault” and pick your vault zip. To make the zip: in My Files, long-press your vault folder and choose Compress.';
    case 'export_vault':setSection('notes');$('vaultMore').hidden=false;return 'Tap “Export vault” to download all your notes as an Obsidian vault.';
-   case 'trading_status':return await tradingStatus(a.details||{});
+   case 'trading_status':return openDash('paper');   // the old GitHub trader is retired; the home panel shows the live paper books
    case 'site_audit':return await siteAuditRun(a.details||{project:a.query});
    case 'learn_this':return await learnThis(a.query||raw);
    case 'make_skill':return await makeSkill(a.details||{name:a.query});
@@ -5297,7 +5419,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  if(!window.__maxErrors.length)status('Ready');
  checkCloud().then(()=>{
   if(window.__maxJustSignedIn&&cloud.signedIn){setSub('','Signed in with Google ✓ Your Calendar and Tasks are connected.')}
-  if(cloud.memory){migrateOldMemories();syncNotes()}
+  try{initDash()}catch(e){console.warn('dash',e)}
+ if(cloud.memory){migrateOldMemories();syncNotes()}
   if(!window.__maxErrors.length&&cloud.state==='needpass')status('Ready · passcode needed (hold the circle → Settings)');
   if(!window.__maxErrors.length&&cloud.state==='needlogin')status('Ready · sign in with Google (hold the circle → Settings)');
  });
