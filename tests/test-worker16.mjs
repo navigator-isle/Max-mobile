@@ -30,7 +30,7 @@ for (const [q, want] of cases) { const r = await chat(q); ok(r.status === 200 &&
 
 let r = await chat("how is my paper trading doing?");
 ok(/SPECIALIST ON DUTY: Trading desk/.test(sysSeen) && /never place real trades/.test(sysSeen), "the trading specialist gets its own rules");
-ok(/TRADING DESK DATA/.test(sysSeen) && /PSE \(COL Financial fees\)/.test(sysSeen) && /Queued for the next open|Strategies/.test(sysSeen), "…and the live paper-account numbers, so it never has to guess", sysSeen.slice(sysSeen.indexOf("TRADING DESK DATA"), sysSeen.indexOf("TRADING DESK DATA") + 300));
+ok(/TRADING DESK DATA \(Max's own paper trading/.test(sysSeen) && /"total":"₱/.test(sysSeen) && /PSE dividend top-10/.test(sysSeen), "…and the live paper-account numbers, so it never has to guess", sysSeen.slice(sysSeen.indexOf("TRADING DESK DATA"), sysSeen.indexOf("TRADING DESK DATA") + 300));
 ok(/app_control|APP CONTROL/i.test(sysSeen) && /add_event/.test(sysSeen), "every app action is still available to the specialist (nothing removed)");
 ok(r.data.dept.name === "Trading desk" && r.data.dept.icon === "📈", "the answer says which desk handled it");
 r = await chat("write a blog post for Hobby Isle");

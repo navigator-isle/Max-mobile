@@ -23,9 +23,13 @@ const worker = (await import(workerPath)).default;
 const sqlite = new DatabaseSync(":memory:"); const ORIGIN = "http://127.0.0.1:8093";
 const env = { GEMINI_API_KEY: "k", ALLOWED_ORIGIN: ORIGIN, MAX_PASSCODE: "pw", MAX_MEMORY: new D1(sqlite), MAX_OWNER_EMAIL: "owner@example.com", GOOGLE_CLIENT_ID: "c", GOOGLE_CLIENT_SECRET: "s", MAX_SEAL_KEY: "x" };
 let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
-// ---- the hourly email (worker scheduled handler) ----
-// A fixed weekday hour, so weekly agent reports (Sunday slots) never land inside this test.
-const run = async () => { const ps = []; await worker.scheduled({ cron: "45 * * * *", scheduledTime: Date.parse("2026-11-04T13:45:00Z") }, env, { waitUntil: x => ps.push(x) }); await Promise.all(ps); };
+// ---- the trade emails (Max's own paper trading, 10 Nov 2026): every new BUY/SELL is emailed once, to the owner only ----
+const run = async () => { const ps = []; const lg = console.log; const seen = []; console.log = (...a) => seen.push(a.join(" ")); await worker.scheduled({ cron: "45 * * * *", scheduledTime: Date.parse("2026-11-04T13:45:00Z") }, env, { waitUntil: x => ps.push(x) }); await Promise.all(ps); console.log = lg; if (process.env.DEBUG) lg(seen.join("\n")); };
+sqlite.exec("CREATE TABLE IF NOT EXISTS max_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL)");
+const bk = (k, php, ccy) => ({key: k, start: ccy === "PHP" ? php : php / 60, startPhp: php, cash: ccy === "PHP" ? php : php / 60, positions: [], pending: [], trades: [], hist: [], qty: 0});
+const PS = {v: 2, opened: "2026-11-04", usdphp: 60, fxSet: true, jid: 1, emailed: 0, step: {}, errors: [], bench: {}, books: {pse_dividend: bk("pse_dividend", 40000, "PHP"), crypto_swing: bk("crypto_swing", 21000, "USDT"), btc_trend: bk("btc_trend", 9000, "USDT"), gold_trend: bk("gold_trend", 30000, "USDT")},
+  journal: [{id: 1, at: Date.now(), kind: "BUY", book: "crypto_swing", sym: "SOL", d: "2026-11-04", text: "BUY 1.5 SOL @ $200 = $300.00", why: "breakout above the 20-day high", copy: "On Binance or Coins.ph, buy about ₱18,000 of SOL now.", outcome: "If the stop is hit: about −₱105."}]};
+sqlite.prepare("INSERT OR REPLACE INTO max_settings VALUES ('max_paper', ?, 1)").run(JSON.stringify(PS));
 await run();
 ok(sent.length === 0, "no email while Google isn't connected (nothing crashes)");
 // pretend Google is linked: seal a refresh token the way the worker does
@@ -35,13 +39,16 @@ const iv = crypto.getRandomValues(new Uint8Array(12));
 const sealed = b64u(iv) + "." + b64u(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode("rt")));
 sqlite.prepare("INSERT INTO max_google VALUES ('owner','owner@example.com',?, 'gmail.compose', 1)").run(sealed);
 await run();
-const raw = sent[0] ? Buffer.from(sent[0].raw.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8") : "";
-ok(sealed && sent.length === 1 && /^To: owner@example.com/m.test(raw) && /pretend money only/.test(raw) && raw.includes(EVENTS.at(-1).text), "new updates are emailed once — to the owner only, marked as pretend money", raw.slice(0, 200));
+const dec = m => { const r = Buffer.from(m.raw.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"); const [h, b] = r.split("\r\n\r\n"); return h + "\n" + Buffer.from(b.replace(/\r\n/g, ""), "base64").toString("utf8"); };
+const raw = sent[0] ? dec(sent[0]) : "";
+ok(sealed && sent.length === 1 && /^To: owner@example.com/m.test(raw) && /pretend money only/.test(raw) && /BUY 1\.5 SOL/.test(raw) && /To copy: On Binance/.test(raw) && /Possible outcome:/.test(raw) && /TOTAL: ₱/.test(raw), "a new trade is emailed once — to the owner only, pretend money, with how to copy, possible outcome and the ₱ total", raw.slice(0, 300));
 await run(); ok(sent.length === 1, "nothing new → no second email");
-EVENTS.push({ id: EVENTS.at(-1).id + 1, at: new Date().toISOString(), day: "2026-11-02", market: "pse", type: "order", text: "Next trading day at the open: BUY 1,000 TEST (last 10.00, about ₱10,000) — pse-breakout: 20-day high." });
+const S2 = JSON.parse(sqlite.prepare("SELECT value FROM max_settings WHERE key = 'max_paper'").get().value);
+S2.journal.push({id: 2, at: Date.now(), kind: "SELL", book: "crypto_swing", sym: "SOL", d: "2026-11-04", text: "SELL 1.5 SOL @ $220", pnlPhp: 1800}); S2.jid = 2;
+sqlite.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").run(JSON.stringify(S2));
 await run();
-const raw2 = sent[1] ? Buffer.from(sent[1].raw.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8") : "";
-ok(sent.length === 2 && /BUY 1,000 TEST/.test(raw2) && !raw2.includes(EVENTS.at(-2).text), "only the new update goes out in the next email");
+const raw2 = sent[1] ? dec(sent[1]) : "";
+ok(sent.length === 2 && /SELL 1\.5 SOL/.test(raw2) && !/BUY 1\.5 SOL/.test(raw2), "only the new trade goes out in the next email");
 // ---- the app (signed in with the passcode; Google sign-in is tested elsewhere) ----
 const envApp = { ...env, GOOGLE_CLIENT_ID: undefined };
 const sW = http.createServer(async (req, res) => { const c = []; for await (const x of req) c.push(x);
@@ -72,6 +79,7 @@ await p.click("#dashFullClose");
 await say("turn off trading emails");
 ok(/Trading emails are off/.test(await answer()), "“turn off trading emails”");
 EVENTS.push({ id: EVENTS.at(-1).id + 1, at: new Date().toISOString(), day: "2026-11-03", market: "pse", type: "fill", text: "Bought 1,000 TEST at 10.02." });
+{ const S3 = JSON.parse(sqlite.prepare("SELECT value FROM max_settings WHERE key = 'max_paper'").get().value); S3.journal.push({id: 3, at: Date.now(), kind: "BUY", book: "btc_trend", sym: "BTC", d: "2026-11-04", text: "BUY BTC"}); S3.jid = 3; sqlite.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").run(JSON.stringify(S3)); }
 await run(); ok(sent.length === 2, "…and then no emails are sent");
 await say("turn on trading emails"); ok(/Trading emails are on/.test(await answer()), "and back on");
 await say("brief me");

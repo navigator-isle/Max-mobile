@@ -1,11 +1,10 @@
 [
- "Home screen dashboard is now two square tiles side by side: 📈 Paper trading (what ₱100,000 is worth now + the PSE / crypto / Bitcoin / gold split) and 💰 Best rates (% a year and ₱ per month per ₱100k for MP2, SSS, savings incl. special offers, time deposits). Tap a tile for the full screen view",
- "NEW Investments notes: your ₱100,000 plan (Nov 2026), every option compared and scored, promos (Maya 15%, GCash), warnings — the investment agent now checks the plan every week and says what to move",
- "PSE paper trading lets big winners run: a stock that doubles keeps all its shares (tested: 8.8% a year vs 8.4%)",
- "NEW trading notes layout: Trading › PSE › Strategy / Stocks / Dividend, Crypto › Strategy / Coins, Forex › Strategy / Currency, Copy trading › Strategy / Platform / Traders (1,102 notes, loaded by the server itself — no zip import)",
- "Every PSE dividend since 2013 in its own note per stock, a dividend calendar, every strategy version year by year, 12 copy-trading platforms, 76 trader notes",
- "Fixed dividend amounts read wrongly from PSE Edge (EMI ₱0.1351, not ₱51; amounts in words; Canadian dollars)",
- "Old trading notes (earlier layouts and zip copies) are removed automatically; your own notes are not touched",
- "Notes move to the phone's large storage when they get big, and sync now sends only what changed (much less data at sea)",
- "Price on any past date: “how much was LTC on November 5 2025”"
+ "Your priorities are set: 1 trading, 2 investments, 3 notes, 4 websites, 5 apps. Max does them every day by himself; Claude checks them every Sunday as backup",
+ "Paper trading now runs on Max's own server every day, even when your phone is off: crypto and gold every morning, PSE every weekday evening (₱100,000: 40% PSE dividend top-10, 21% crypto swing, 9% Bitcoin trend, 30% gold via PAXG)",
+ "An email for every BUY and SELL (and PSE orders for the next opening): why, how to copy it, possible outcome, and your ₱100,000 total. Plus a weekly update every Sunday",
+ "Paper trading tile → 📒 Journal (every trade), 🎯 Possible outcome (what ₱100,000 could become in a year, from the tests), 📊 Positions",
+ "Investment updates: an email when a top rate changes or a new promo appears, and a note “What to invest in now” rebuilt every day",
+ "NEW Investments folders like Trading: Savings, Time deposits, Government (MP2, SSS, bonds), Funds, Dividend stocks & REITs, Promos — one note per option with its rate history",
+ "Trading notes keep themselves up to date: each coin, PSE stock, dividend and currency note has a “Latest data” box Max refreshes by himself",
+ "NEW 🌐 Websites and 📱 Apps tiles: up/speed, SEO, security, errors, affiliate links, content, analytics, Google Play — checked every day"
 ]

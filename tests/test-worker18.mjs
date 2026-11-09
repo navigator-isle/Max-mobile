@@ -55,7 +55,7 @@ await at("2026-11-04T22:45:00Z"); // Thursday 6:45 am in Manila
 let rep = JSON.parse(sqlite.prepare("SELECT value FROM max_settings WHERE key='max_srv_guard_report'").get().value);
 ok(rep.sites.length === 4 && rep.sites.every(s => s.up) && rep.sites.find(s => s.name === "Hobby Isle").score >= 60, "checks every site: up, speed, and a full security & SEO score for Hobby Isle", JSON.stringify(rep.sites.map(s => [s.name, s.up, s.score])));
 ok(rep.problems.some(p => /passage-planner-android: "Android build" failed/.test(p)), "spots a failed app build on GitHub", JSON.stringify(rep.problems));
-ok(rep.problems.some(p => /PSE is paused by the risk breaker/.test(p)), "spots the paper trader's risk breaker", JSON.stringify(rep.problems));
+ok(rep.max.some(x => /^Paper trading:/.test(x)), "checks Max's own paper trading (last step, crypto and PSE checks)", JSON.stringify(rep.max));
 ok(rep.max.some(x => /Gemini key working/.test(x)) && rep.max.some(x => /Google connected/.test(x)), "checks Max himself (brain key, Google connection)", JSON.stringify(rep.max));
 ok(sent.length === 1 && /Subject: =\?UTF-8\?B\?/.test(sent[0]) && /⚠ NEW:/.test(sent[0]) && /To: mark@example.com/.test(sent[0]), "new problems → one email to him", sent[0]?.slice(0, 300));
 ok(!/max-backup/.test(sent[0]), "no backup on weekdays");

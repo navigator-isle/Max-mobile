@@ -105,7 +105,7 @@ r = await run("apps");
 const appFacts = prompts.filter(t => /Apps agent/.test(t)).at(-1);
 ok(/sulit-o-hindi/.test(appFacts) && /Build script returned non-zero/.test(appFacts) && /Android build \(/.test(appFacts) && /Fix notes toolbar/.test(appFacts), "apps: Netlify deploys (with the error), GitHub changes and failed builds per app", appFacts?.slice(0, 300));
 r = await run("trading");
-ok(r.data.report.tables.length >= 2 && /PSE/.test(r.data.report.tables[0].title), "trading: a table per paper account (PSE, crypto, forex)", JSON.stringify(r.data.report.tables.map(t => t.title)));
+ok(r.data.report.tables[0].title === "₱100,000 paper account" && r.data.report.tables[0].rows.length === 5 && /PSE dividend/.test(r.data.report.tables[0].rows[0][0]), "trading: the ₱100,000 account table (4 parts + total) and this week's trades", JSON.stringify(r.data.report.tables.map(t => t.title)));
 ok(/Pretend money only/.test(Buffer.from(sent[0].split("Content-Transfer-Encoding: base64\r\n\r\n")[1].split("\r\n--")[0].replace(/\r\n/g, ""), "base64").toString()), "trading report says pretend money / not advice");
 // investments: week-on-week changes
 mp2Rate = "7.10%"; r = await run("investments");

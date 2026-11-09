@@ -444,6 +444,11 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
 #homeScreen:has(#homeDash:not([hidden])){justify-content:flex-start!important;gap:12px!important}
 #homeScreen:has(#homeDash:not([hidden])) .subtitles{min-height:9vh!important}
 .tile{aspect-ratio:auto;min-height:min(46vw,300px)}
+.ptabs{display:flex;gap:6px;flex-wrap:wrap}.ptabs button{background:#0f2438;border:1px solid #1d3a52;color:#c8d9e9;border-radius:999px;padding:6px 12px;font-size:.85rem}.ptabs button.on{background:#1d4d78;color:#fff;border-color:#3a77a5}
+.jrow{border:1px solid #16314a;border-radius:12px;padding:9px 11px;background:#0a1826;display:flex;flex-direction:column;gap:3px}.jhead{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.jk{font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 6px;background:#13304a;color:#9fc6e6}.jk.BUY{background:#0f3b2c;color:#4fd1a5}.jk.SELL{background:#3b1717;color:#ff9a9a}.jk.ORDER{background:#3a2a0c;color:#f7c76a}.jk.DIVIDEND{background:#24204a;color:#c7b8ff}
+.jcopy{color:#e8f3ff}.jout{color:#9fb6cc}.st-row{border:1px solid #16314a;border-radius:14px;padding:10px 12px;background:#0a1826;display:flex;flex-direction:column;gap:4px}.st-row h3{margin:0;font-size:1rem;color:#fff;display:flex;justify-content:space-between}
+.st-k{color:#9fb6cc;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;margin-top:4px}.tile-line{font-size:.8rem;padding:2px 0;border-top:1px solid #16314a;color:#e8f3ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style></head>
 <body>
 <div id="movedNote" hidden style="background:#3a2a05;color:#ffe9a8;padding:8px 12px;font:13px system-ui;text-align:center">Max now lives on Cloudflare: <a style="color:#ffd76a" href="https://max-app-axv.pages.dev/">max-app-axv.pages.dev</a> — open it and add it to your home screen.</div>
@@ -522,6 +527,8 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
     <section id="homeDash" class="home-dash" hidden>
       <div id="tilePaper" class="tile" role="button" tabindex="0" aria-label="Paper trading — open the full view"><div class="tile-top"><span>📈 Paper trading</span></div><div class="muted small">Loading…</div></div>
       <div id="tileGuide" class="tile" role="button" tabindex="0" aria-label="Investment rates — open the full view"><div class="tile-top"><span>💰 Best rates</span></div><div class="muted small">Loading…</div></div>
+      <div id="tileSites" class="tile" role="button" tabindex="0" aria-label="Websites status — open the full view"><div class="tile-top"><span>🌐 Websites</span></div><div class="muted small">Loading…</div></div>
+      <div id="tileApps" class="tile" role="button" tabindex="0" aria-label="Apps status — open the full view"><div class="tile-top"><span>📱 Apps</span></div><div class="muted small">Loading…</div></div>
     </section>
     <div hidden><button id="homeTalk">Talk</button><button id="homeStop">Stop</button></div>
   </main>
@@ -2136,6 +2143,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(import|bring in|load|add|upload)\b.*\b(obsidian|vault)\b/))return {type:'import_vault'};
   if(has(/\b(export|download|backup|back up)\b.*\b(obsidian|vault)\b/))return {type:'export_vault'};
   // ---- paper trading ----
+  if(has(/\b(trading journal|trade journal|journal (of|ng) (trades|trading)|trade (history|log)|trading (history|log))\b/))return {type:'home_dash',details:{name:'journal'}};
   if(has(/\b(trading|trade|trades)\b.*\b(emails?|mails?|notifications?)\b|\b(emails?|notifications?)\b.*\btrading\b/)&&has(/\b(off|stop|disable|no more|on|enable|start|resume)\b/))return {type:'trading_emails',details:{on:has(/\b(off|stop|disable|no more)\b/)?'off':'on'}};
   if(has(/\bpaper (trading|trade|trades|account|portfolio)\b|\b(my|your|max'?s?) (trades|trading|portfolio)\b|\btrading (account|update|updates|status|results?)\b|\bwhat did you (buy|sell|trade)\b|\b(orders?) for (tomorrow|the open|monday)\b/)&&!has(/\b(research|note|remind)\b/))return {type:'trading_status',details:{project:has(/\bcrypto|bitcoin|binance\b/)?'crypto':has(/\b(pse|stocks?|col)\b/)?'pse':''}};
   // ---- hands-free & interrupt ----
@@ -2208,6 +2216,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(price alerts?|my alerts)\b/)&&!has(/\b(set|add|create)\b/))return {type:'list_alerts'};
   if(has(/\b(show|display|use|set|change)\b.*\b(prices?|currenc(y|ies))\b.*\b(in|to)\b/)&&Object.keys(CUR_WORDS).some(w=>n.includes(w)))return {type:'set_currencies',query:raw};
   if(/\d/.test(n)&&has(/\b(to|in|into|sa)\b/)&&new RegExp('\\d\\s*(k|thousand|million|m)?\\s*('+Object.keys(CUR_WORDS).concat(Object.keys(CRYPTO_WORDS)).join('|')+')\\b').test(n.replace(/,/g,''))&&!has(/\b(remind|alarm|meeting|log|sale|sales|earned)\b/))return {type:'convert_currency',query:raw};
+  if(has(/\b(websites?|web ?sites?)\b/)&&has(/\b(status|check|report|analytics|seo|affiliate|errors?|security|kumusta|how (is|are))\b/)&&!has(/\b(audit|deep|research|build|make|create)\b/))return {type:'home_dash',details:{name:'sites'}};
+  if(has(/\b(apps?|play store|passage planner)\b/)&&has(/\b(status|report|reviews?|errors?|crash\w*|kumusta|how (is|are))\b/)&&!has(/\b(build|make|create|open)\b/))return {type:'home_dash',details:{name:'apps'}};
   if(has(/\b(paper trad\w*|trading dashboard|my trades)\b/)&&has(/\b(show|open|how|dashboard|status|check|kumusta|update)\b/)&&!has(/\b(email|turn|on|off|explain)\b/))return {type:'home_dash',details:{name:'paper'}};
   if(has(/\b(investment guide|investment plan|money plan|where (should|to) (i )?(save|invest|put)|best (savings|time deposit|investment)s?|top (10|ten) (savings|time deposits?|investments?|promos?))\b/))return {type:'home_dash',details:{name:'guide'}};
   if(has(/\b(expenses?|gastos|income|salary|sweldo|sahod)\b/)&&/\d/.test(raw)&&has(/\b(my|ang|i)\b/)&&!has(/\b(log|sale|earned|remind)\b/)){const t=setMoneyFromText(raw);if(t)return {type:'say_text',query:t}}
@@ -3646,14 +3656,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function paperHtml(d){
   const main=d.books.filter(b=>b.weight>0),watch=d.books.filter(b=>!(b.weight>0));
   const pos=b=>(b.positions||[]).length?'<ul class="dash-list">'+b.positions.map(p=>'<li><b>'+dashE(p.sym)+'</b> '+(p.kind==='copy'?'<span class="'+dashCls(p.chgPct)+'">'+dashPct(p.chgPct)+'</span>':(p.qty?(+p.qty).toLocaleString('en-US',{maximumFractionDigits:6})+' @ '+dashE(p.ep)+' → '+(p.last?dashE(+p.last.toPrecision(7)):'…')+' <span class="'+dashCls(p.chgPct)+'">'+dashPct(p.chgPct)+'</span>':'')+(p.stop?' · stop '+dashE(+(+p.stop).toPrecision(6)):''))+'</li>').join('')+'</ul>':'';
-  const pend=b=>(b.pending||[]).length?'<details class="dash-sub"><summary>'+b.pending.length+' order'+(b.pending.length>1?'s':'')+' waiting for the next run</summary><ul class="dash-list">'+b.pending.map(o=>'<li><b>'+dashE(o.side.toUpperCase()+' '+o.sym)+'</b>'+(o.amount?' '+dashPeso(o.amount):'')+' — '+dashE(o.why)+'</li>').join('')+'</ul></details>':'';
+  const pend=b=>(b.pending||[]).length?'<details class="dash-sub"><summary>'+b.pending.length+' order'+(b.pending.length>1?'s':'')+' waiting ('+(b.key==='pse_dividend'?'next opening':'next check')+')</summary><ul class="dash-list">'+b.pending.map(o=>'<li><b>'+dashE(o.side.toUpperCase()+' '+o.sym)+'</b>'+(o.amount?' '+dashPeso(o.amount):'')+' — '+dashE(o.why)+'</li>').join('')+'</ul></details>':'';
   const row=b=>'<div class="dash-book"><div class="dash-book-head"><span>'+dashE(b.name)+(b.weight?' <span class="muted">'+Math.round(b.weight*100)+'%</span>':'')+'</span><span class="'+dashCls(b.sinceNow)+'">'+dashPct(b.sinceNow)+'</span></div>'+
-   '<div class="muted small">'+(b.note?dashE(b.note):(b.valueNow!==null&&b.valueNow!==undefined?(b.ccy==='PHP'?dashPeso(b.valueNow):'$'+(+b.valueNow).toLocaleString('en-US',{maximumFractionDigits:2}))+' now':'')+' · '+(b.positions||[]).length+' open · '+(b.closed||0)+' closed ('+(b.wins||0)+' wins)'+(b.nextRebalance?' · next re-check '+dashE(b.nextRebalance):''))+'</div>'+pos(b)+pend(b)+'</div>';
-  return '<div class="dash-big"><span>MAX-MASTER-3 since '+dashE(d.opened||'start')+'</span><b class="'+dashCls(d.combinedSince)+'">'+dashPct(d.combinedSince)+'</b></div>'+
-   '<div class="muted small">'+(d.pricedAt?'Prices live at '+new Date(d.pricedAt).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'Prices from the report')+' · trades from the '+(d.from==='email'?'Sunday report of '+dashE(d.asOf):'first setup ('+dashE(d.asOf)+'; trades start at the next Sunday run)')+'</div>'+
+   '<div class="muted small">'+(b.note?dashE(b.note):(b.market&&b.market.ok===false&&b.key==='crypto_swing'?'New trades paused: Bitcoin is below its 50-day average · ':'')+(b.valueNow!==null&&b.valueNow!==undefined?(b.ccy==='PHP'?dashPeso(b.valueNow):'$'+(+b.valueNow).toLocaleString('en-US',{maximumFractionDigits:2}))+' now':'')+' · '+(b.positions||[]).length+' open · '+(b.closed||0)+' closed ('+(b.wins||0)+' wins)'+(b.nextRebalance?' · next re-check '+dashE(b.nextRebalance):''))+'</div>'+pos(b)+pend(b)+'</div>';
+  return '<div class="dash-big"><span>MAX-MASTER-3 since '+dashE(d.opened||'start')+'</span><b class="'+dashCls(d.combinedSince)+'">'+dashPct(d.combinedSince)+'</b></div>'+((d.errors||[]).length?'<div class="muted small">Last problem: '+dashE(d.errors[d.errors.length-1].job+' — '+d.errors[d.errors.length-1].error)+' (Max retries the next hour)</div>':'')+
+   '<div class="muted small">'+(d.pricedAt&&!isNaN(new Date(d.pricedAt))?'Prices live at '+new Date(d.pricedAt).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'Prices from the last check')+' · '+(d.asOf?'Max last checked '+new Date(d.asOf).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'first check on its way')+' · runs on Max’s server every day</div>'+
    main.map(row).join('')+(watch.length?'<details class="dash-sub"><summary>Watch-only books ('+watch.length+')</summary>'+watch.map(row).join('')+'</details>':'')+
    ((d.events||[]).length?'<details class="dash-sub"><summary>Latest actions</summary><ul class="dash-list">'+d.events.slice(-8).reverse().map(e=>'<li>'+dashE(e)+'</li>').join('')+'</ul></details>':'')+
-   '<div class="dash-actions"><button class="small-btn" data-dash="paper-refresh">Refresh prices</button><a class="small-btn" href="'+dashE(d.dashboard)+'" target="_blank" rel="noopener">Full dashboard</a></div><div class="muted small">Paper trading only — pretend money, not advice.</div>';
+   '<div class="dash-actions"><button class="small-btn" data-dash="paper-refresh">Refresh prices</button></div><div class="muted small">Paper trading only — pretend money, not advice.</div>';
  }
  function bestOf(g,key,f){const c=(g.cats||[]).find(x=>x.key===key);const it=(c?.items||[]).filter(f||(()=>true));return it[0]||null}
  function moneyPlan(g){
@@ -3682,8 +3692,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const TAXF={'20%':.8,'free':1,'10%':.9,'fund':1};
  const perMonth=i=>100000*(+i.rateNum||0)/100*(TAXF[i.tax]||.8)/12;
  // ₱100,000 split by the plan weights, each part grown by its book's result
- function paperAlloc(d){const plan=d.plan||{},parts=Object.entries(plan).map(([k,w])=>{const b=(d.books||[]).find(x=>x.key===k)||{};const start=100000*w,now=start*(1+(+(b.sinceNow??b.since)||0)/100);return {key:k,label:PART[k]?.label||b.name||k,color:PART[k]?.color||'#7cc4ff',w,start,now,pct:+(b.sinceNow??b.since)||0,open:(b.positions||[]).length,note:b.note}});
-  const total=parts.reduce((s,p)=>s+p.now,0);return {parts,total,pct:(total/100000-1)*100}}
+ function paperAlloc(d){const plan=d.plan||{},parts=Object.entries(plan).map(([k,w])=>{const b=(d.books||[]).find(x=>x.key===k)||{};const start=b.startPhp||100000*w,now=b.valuePhp??start*(1+(+(b.sinceNow??b.since)||0)/100);return {key:k,label:PART[k]?.label||b.name||k,color:PART[k]?.color||'#7cc4ff',w,start,now,pct:+(b.sinceNow??b.since)||0,open:(b.positions||[]).length,note:b.note}});
+  const total=d.totalPhp??parts.reduce((s,p)=>s+p.now,0);return {parts,total,pct:(total/(d.startPhp||100000)-1)*100}}
  const allocBar=parts=>'<div class="alloc-bar">'+parts.map(p=>'<span style="width:'+(p.w*100).toFixed(1)+'%;background:'+p.color+'" title="'+dashE(p.label)+'"></span>').join('')+'</div>';
  // the rate lists: % a year and what ₱100,000 earns a month after tax, highest first
  function rateGroups(g){
@@ -3704,42 +3714,86 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    '<div class="muted small">Inflation '+dashE(m.inflation||'')+' · BSP rate '+dashE(m.bsp||'')+' · PDIC '+dashE(m.pdic||'')+' · checked '+dashE(g.checked||'')+' by '+dashE(g.by||'Max')+'. Promos usually last weeks, not a year. Not licensed financial advice.</div>'+
    '<details class="dash-sub"><summary>My money plan (30% emergency money)</summary>'+moneyPlan(g)+'</details>'+
    '<div class="dash-actions"><button class="small-btn" data-dash="guide-refresh">Update now</button></div>'}
- function paperFull(d){const a=paperAlloc(d);
+ let paperTab='journal';
+ const jrow=e=>'<div class="jrow"><div class="jhead"><span class="jk '+dashE(e.kind)+'">'+dashE(e.kind)+'</span><b>'+dashE(e.sym||'')+'</b><span class="muted small">'+dashE(e.d||'')+' · '+dashE((PART[e.book]||{}).label||e.book||'')+'</span>'+(e.pnlPhp!==undefined&&e.pnlPhp!==null?'<span class="'+dashCls(e.pnlPhp)+'">'+(e.pnlPhp>=0?'+':'−')+dashPeso(Math.abs(e.pnlPhp))+'</span>':'')+'</div>'+
+  '<div class="small">'+dashE(e.text)+'</div>'+(e.why?'<details class="small"><summary class="muted">Why</summary>'+dashE(e.why)+'</details>':'')+(e.copy?'<div class="small jcopy">📋 <b>To copy:</b> '+dashE(e.copy)+'</div>':'')+(e.outcome?'<div class="small jout">🎯 <b>Possible outcome:</b> '+dashE(e.outcome)+'</div>':'')+'</div>';
+ function paperJournal(d){const J=(d.journal||[]).filter(e=>e.kind!=='WAIT');
+  return '<div class="muted small">Every trade Max makes, newest first, with the reason, how to copy it and what can happen. Crypto and gold: copy right when the email arrives. PSE: put the order in at the next opening.</div>'+
+   (J.length?J.map(jrow).join(''):'<div class="small">No trades yet. Max checks crypto and gold every morning (after 8 am) and PSE every weekday evening, and trades only when a setup meets the tested rules — waiting in cash is part of the plan.</div>')}
+ function paperOutcome(d){const y=d.planYears||{},risk=d.risk?.ifAllStopsHitPhp||0,tot=+d.totalPhp||100000,yrs=Object.entries(y);
+  const avg=17.6,good=Math.round(tot*(1+avg/100)),bad=Math.round(tot*(1-0.077)),worst=Math.round(tot*(1-0.116));
+  return '<div class="st-row"><h3>Possible outcome in 1 year</h3><div class="small">Based on the 2014–2026 test of this exact mix (not a promise):</div><ul class="dash-list"><li>Average year: <b class="up">'+dashPeso(good)+'</b> (+17.6%)</li><li>Worst year in the test (2018): <b class="down">'+dashPeso(bad)+'</b> (−7.7%)</li><li>Worst drop at any time: about <b class="down">'+dashPeso(worst)+'</b> (−11.6%)</li><li>Best year (2017): +70%</li></ul>'+
+   (risk?'<div class="small">If every open trade hit its stop today: about <b class="down">−'+dashPeso(risk)+'</b>.</div>':'')+'</div>'+
+   '<div class="st-row"><h3>Each part</h3><ul class="dash-list">'+(d.books||[]).map(b=>'<li><b>'+dashE(b.name)+'</b> — '+dashE(b.tested||'')+'</li>').join('')+'</ul></div>'+
+   (yrs.length?'<div class="st-row"><h3>Year by year in the test</h3><div class="small">'+yrs.map(([k,v])=>k+': <span class="'+dashCls(v)+'">'+(v>0?'+':'')+v+'%</span>').join(' · ')+'</div></div>':'')}
+ function paperFull(d){const a=paperAlloc(d),tab=paperTab;
   return '<div class="big-total"><span class="muted small">₱100,000 paper money is now</span><b>'+dashPeso(a.total)+'</b><span class="'+dashCls(a.pct)+'">'+dashPct(a.pct)+' since '+dashE(d.opened||'start')+'</span></div>'+allocBar(a.parts)+
-   '<div class="alloc-list">'+a.parts.map(p=>'<div class="alloc-item"><span class="dot" style="background:'+p.color+'"></span><span class="alloc-name">'+dashE(p.label)+' <span class="muted small">'+Math.round(p.w*100)+'%</span></span><span>'+dashPeso(p.now)+'</span><span class="'+dashCls(p.pct)+'">'+dashPct(p.pct)+'</span></div>').join('')+'</div>'+paperHtml(d)}
+   '<div class="alloc-list">'+a.parts.map(p=>'<div class="alloc-item"><span class="dot" style="background:'+p.color+'"></span><span class="alloc-name">'+dashE(p.label)+' <span class="muted small">'+Math.round(p.w*100)+'%</span></span><span>'+dashPeso(p.now)+'</span><span class="'+dashCls(p.pct)+'">'+dashPct(p.pct)+'</span></div>').join('')+'</div>'+
+   '<div class="ptabs" role="tablist">'+[['journal','📒 Journal'],['outcome','🎯 Possible outcome'],['books','📊 Positions']].map(([k,l])=>'<button data-ptab="'+k+'" class="'+(tab===k?'on':'')+'" role="tab" aria-selected="'+(tab===k)+'">'+l+'</button>').join('')+'</div>'+
+   (tab==='journal'?paperJournal(d):tab==='outcome'?paperOutcome(d):paperHtml(d))}
  function tilePaper(d){const a=paperAlloc(d);
   return '<div class="tile-top"><span>📈 Paper trading</span></div><div class="tile-label muted small">₱100,000 is now</div><div class="tile-big">'+dashPeso(a.total)+'</div><div class="tile-pct '+dashCls(a.pct)+'">'+dashPct(a.pct)+'</div>'+allocBar(a.parts)+
    '<div class="tile-legend">'+a.parts.map(p=>'<span><i style="background:'+p.color+'"></i>'+dashE(p.label.replace(' dividend','').replace(' trend','').replace(' swing',''))+' '+Math.round(p.w*100)+'%</span>').join('')+'</div>'}
  function tileGuide(g){const G=rateGroups(g),top=k=>G.find(x=>x.key===k)?.items[0];const rows=[['MP2',top('gov')],['Best savings',top('hysa')],['Time deposit',top('td')]].filter(r=>r[1]);
   return '<div class="tile-top"><span>💰 Best rates</span></div><div class="tile-label muted small">per ₱100k · % a year · ₱/month</div>'+rows.map(([l,i])=>'<div class="tile-rate"><span class="tile-rl"><span class="muted">'+dashE(l)+'</span><br>'+dashE(l==='MP2'?'Pag-IBIG MP2':i.name.replace(/\s*\(.*\)/g,''))+'</span><b>'+(+i.rateNum).toFixed(2)+'%</b><span class="muted small">'+dashPeso(perMonth(i))+'/mo</span></div>').join('')}
+ let dashStatusData=null,dashStatusAt=0;
+ async function loadStatus(force){
+  if(!force&&dashStatusData&&Date.now()-dashStatusAt<10*60e3)return dashStatusData;
+  const {r,data}=await fetchJson(workerBase()+'/api/home/status',{method:'GET'},30000);
+  if(r.status===404)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
+  if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  dashStatusData=data;dashStatusAt=Date.now();try{localStorage.setItem('max_cache_status',JSON.stringify(data))}catch{}return data;
+ }
+ const okMark=ok=>ok?'<span class="up">✓</span>':'<span class="down">!</span>';
+ const issueList=a=>(a||[]).length?'<ul class="dash-list">'+a.slice(0,8).map(x=>'<li>'+dashE(x)+'</li>').join('')+'</ul>':'<div class="small up">No problems found.</div>';
+ function siteFull(s){const c=s.content||{},af=s.affiliate||{},an=s.analytics||{},sp=s.speed||{};
+  return '<div class="st-row"><h3>'+dashE(s.name)+' '+(s.up?'<span class="up small">UP '+(s.ms||'')+' ms</span>':'<span class="down small">DOWN</span>')+'</h3><div class="muted small">'+dashE(s.url)+' · checked '+(s.at?new Date(s.at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+(s.score!==undefined?' · security & SEO score '+s.score+'/100':'')+'</div>'+
+   '<div class="st-k">Analytics</div>'+(an.notConnected?'<div class="small">Not connected — '+dashE(an.notConnected)+'</div>':an.error?'<div class="small down">'+dashE(an.error)+'</div>':'<div class="small">Today '+(an.today?.visitors||0)+' visitors / '+(an.today?.views||0)+' views · 7 days '+(an.week?.visitors||0)+' visitors'+((an.topPages||[]).length?' · top: '+an.topPages.slice(0,3).map(p=>dashE(p.path)+' ('+p.views+')').join(', '):'')+'</div>')+
+   '<div class="st-k">Affiliate</div><div class="small">'+(af.pagesChecked?af.links+' shop links on '+af.pagesChecked+' pages ('+Object.entries(af.stores||{}).map(([k,v])=>k+' '+v).join(', ')+')'+(af.amazonWithoutTag?' · <span class="down">'+af.amazonWithoutTag+' Amazon links without your tag</span>':'')+(af.disclosurePages<af.pagesChecked?' · <span class="down">disclosure missing on '+(af.pagesChecked-af.disclosurePages)+' page(s)</span>':' · disclosure ✓'):'not checked yet')+'</div>'+
+   '<div class="st-k">Content</div><div class="small">'+(c.pages!==undefined?c.pages+' pages in the sitemap · newest update '+dashE(c.newest||'unknown')+' · '+c.changed30d+' new/updated in the last 30 days':'No sitemap found')+'</div>'+issueList(s.contentIssues)+
+   '<div class="st-k">SEO</div>'+issueList(s.seo?.issues)+'<div class="st-k">Security</div>'+issueList(s.security?.issues)+'<div class="st-k">Errors</div>'+issueList(s.errors)+
+   '<div class="st-k">Speed (phone, Google PageSpeed)</div><div class="small">'+(sp.error?dashE(sp.error):'Performance '+(sp.performance??'–')+' · SEO '+(sp.seo??'–')+' · accessibility '+(sp.accessibility??'–')+(sp.lcp?' · main content shows in '+dashE(sp.lcp):''))+'</div></div>'}
+ function appFull(a){const p=a.play||{},sp=a.speed||{};
+  return '<div class="st-row"><h3>'+dashE(a.name)+' '+(a.up===false?'<span class="down small">DOWN</span>':a.up?'<span class="up small">UP '+(a.ms||'')+' ms</span>':'')+'</h3><div class="muted small">'+dashE(a.url||'')+'</div>'+
+   (a.version?'<div class="small">Version '+dashE(a.version)+(a.serverNow?' · server '+dashE(a.serverNow):'')+'</div>':'')+
+   (a.play?'<div class="st-k">Google Play</div><div class="small">'+(p.notConnected?dashE(p.notConnected):p.error?'<span class="down">'+dashE(p.error)+'</span>':(p.tracks||[]).map(t=>dashE(t.track)+': '+(t.releases||[]).map(r=>dashE((r.name||'')+' '+(r.versions||[]).join(',')+' '+r.status)).join('; ')).join(' · '))+'</div>'+
+    (p.reviews?'<div class="small">Reviews: '+(p.reviews.count?p.reviews.count+' recent, average '+p.reviews.average+'★':'none yet')+'</div>'+issueList(p.reviews.latest).replace('No problems found.',''):'')+'<div class="muted small">Crashes: '+dashE(p.crashes||'–')+'</div>':'')+
+   '<div class="st-k">Speed (phone)</div><div class="small">'+(sp.error?dashE(sp.error):'Performance '+(sp.performance??'–')+' · accessibility '+(sp.accessibility??'–')+' · best practices '+(sp.bestPractices??'–'))+'</div>'+(a.code?'<div class="muted small">'+dashE(a.code)+'</div>':'')+'</div>'}
+ const statusFull=k=>d=>((d[k]||[]).length?(d[k]).map(k==='sites'?siteFull:appFull).join(''):'<div class="small">'+dashE(d.note||'No report yet.')+'</div>')+'<div class="muted small">Max checks every day. Ask “Max, check my websites” for a deeper report.</div>';
+ const statusTile=k=>d=>{const S=(d.summary||{})[k]||[];return '<div class="tile-top"><span>'+(k==='sites'?'🌐 Websites':'📱 Apps')+'</span></div>'+(S.length?'<div class="tile-big">'+S.filter(x=>x.ok).length+'/'+S.length+'</div><div class="tile-label muted small">all good</div>'+S.slice(0,4).map(x=>'<div class="tile-line">'+okMark(x.ok)+' '+dashE(x.name)+(x.problems&&x.problems.length?' — '+dashE(x.problems.join(', ')):x.version?' · '+dashE(x.version):'')+'</div>').join(''):'<div class="muted small">Max checks every day — first report on its way.</div>')};
  function dashSummaryPaper(d){const a=paperAlloc(d);return '₱100,000 → '+dashPeso(a.total)+' ('+dashPct(a.pct)+')'}
  function dashSummaryGuide(g){const G=rateGroups(g),m=G.find(x=>x.key==='gov')?.items[0],s=G.find(x=>x.key==='hysa')?.items[0];return [m&&m.name.replace(/\s*\(.*\)/,'')+' '+(+m.rateNum).toFixed(2)+'% ('+dashPeso(perMonth(m))+'/month per ₱100k)',s&&'best savings '+s.name.replace(/\s*\(.*\)|\s*—.*/g,'')+' '+(+s.rateNum).toFixed(2)+'%'].filter(Boolean).join(', ')}
  let dashOpen=null;
  async function renderDash(which,force){
   const box=$('homeDash');if(!box||!workerBase())return;box.hidden=false;
-  const one=async(k,load,tile,full,cacheKey)=>{const t=$(k==='paper'?'tilePaper':'tileGuide');
+  const TID={paper:'tilePaper',guide:'tileGuide',sites:'tileSites',apps:'tileApps'},TNAME={paper:'📈 Paper trading',guide:'💰 Best rates',sites:'🌐 Websites',apps:'📱 Apps'};
+  const one=async(k,load,tile,full,cacheKey)=>{const t=$(TID[k]);
    let d=null,offline='';try{d=await load(force)}catch(e){d=jget(cacheKey,null);offline=d?'Offline — saved copy.':e.message}
-   if(!d){t.innerHTML='<div class="tile-top"><span>'+(k==='paper'?'📈 Paper trading':'💰 Best rates')+'</span></div><div class="muted small">'+dashE(offline)+'</div>';return}
+   if(!d){t.innerHTML='<div class="tile-top"><span>'+TNAME[k]+'</span></div><div class="muted small">'+dashE(offline)+'</div>';return}
    t.innerHTML=tile(d)+(offline?'<div class="muted small">saved copy</div>':'');
    if(dashOpen===k)$('dashFullBody').innerHTML=(offline?'<div class="muted small">'+dashE(offline)+'</div>':'')+full(d)};
   if(!which||which==='paper')await one('paper',loadPaper,tilePaper,paperFull,'max_cache_paper');
   if(!which||which==='guide')await one('guide',loadGuide,tileGuide,ratesFull,'max_cache_guide');
+  if(!which||which==='sites'||which==='apps'){if(!which||which==='sites')await one('sites',loadStatus,statusTile('sites'),statusFull('sites'),'max_cache_status');if(!which||which==='apps')await one('apps',loadStatus,statusTile('apps'),statusFull('apps'),'max_cache_status')}
  }
- function showFull(k){dashOpen=k;const o=$('dashFull');$('dashFullTitle').textContent=k==='paper'?'📈 Paper trading':'💰 Investment rates';$('dashFullBody').innerHTML='<div class="muted small">Loading…</div>';o.hidden=false;document.body.classList.add('dash-full-open');
-  const d=k==='paper'?dashPaperData:dashGuideData;if(d)$('dashFullBody').innerHTML=k==='paper'?paperFull(d):ratesFull(d);renderDash(k)}
+ function showFull(k){dashOpen=k;const o=$('dashFull');$('dashFullTitle').textContent={paper:'📈 Paper trading',guide:'💰 Investment rates',sites:'🌐 Websites',apps:'📱 Apps'}[k]||'Dashboard';$('dashFullBody').innerHTML='<div class="muted small">Loading…</div>';o.hidden=false;document.body.classList.add('dash-full-open');
+  const d=k==='paper'?dashPaperData:k==='guide'?dashGuideData:dashStatusData;if(d)$('dashFullBody').innerHTML=k==='paper'?paperFull(d):k==='guide'?ratesFull(d):statusFull(k)(d);renderDash(k)}
  function closeFull(){dashOpen=null;$('dashFull').hidden=true;document.body.classList.remove('dash-full-open')}
  function initDash(){
-  $('tilePaper').addEventListener('click',()=>showFull('paper'));$('tileGuide').addEventListener('click',()=>showFull('guide'));
-  [$('tilePaper'),$('tileGuide')].forEach(t=>t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t.click()}}));
+  $('tilePaper').addEventListener('click',()=>showFull('paper'));$('tileGuide').addEventListener('click',()=>showFull('guide'));$('tileSites').addEventListener('click',()=>showFull('sites'));$('tileApps').addEventListener('click',()=>showFull('apps'));
+  [$('tilePaper'),$('tileGuide'),$('tileSites'),$('tileApps')].forEach(t=>t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t.click()}}));
   $('dashFullClose').addEventListener('click',closeFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&dashOpen)closeFull()});
-  $('dashFull').addEventListener('click',async e=>{const t=e.target.closest('[data-dash]');if(!t)return;e.preventDefault();
+  $('dashFull').addEventListener('click',async e=>{const pt=e.target.closest('[data-ptab]');if(pt){paperTab=pt.dataset.ptab;if(dashPaperData)$('dashFullBody').innerHTML=paperFull(dashPaperData);return}
+   const t=e.target.closest('[data-dash]');if(!t)return;e.preventDefault();
    if(t.dataset.dash==='paper-refresh'){t.disabled=true;t.textContent='Refreshing…';await renderDash('paper',true)}
    if(t.dataset.dash==='guide-refresh'){t.disabled=true;t.textContent='Max is checking the latest rates and promos…';try{const {r,data}=await postJson('/api/home/guide/refresh',{},180000);toast(r.ok?(data.updated?.length?'Updated: '+data.updated.join(', '):'Checked — no changes found'):(data.error||'Could not update'))}catch(err){toast(err.message)}await renderDash('guide',true)}});
   $('dashFull').addEventListener('change',e=>{const k=e.target?.dataset?.mp;if(!k)return;const P=moneyProfile();P[k]=k==='risk'?e.target.value:Math.max(0,+e.target.value||0);jset(MONEY_KEY,P);const sub=e.target.closest('details');if(dashGuideData){$('dashFullBody').innerHTML=ratesFull(dashGuideData);const d=$('dashFullBody').querySelector('.dash-sub');if(d&&sub)d.open=true;const dd=$('dashFullBody').querySelector('.dash-plan details');if(dd)dd.open=true}});
   renderDash();setInterval(()=>{if(document.visibilityState==='visible'&&screen==='home')renderDash(dashOpen==='guide'?'guide':'paper')},5*60e3);
  }
  window.maxRenderDash=renderDash;
- function openDash(which){closeConnection();closeMenu();setSection('home');showFull(which==='paper'?'paper':'guide');
+ function openDash(which){closeConnection();closeMenu();setSection('home');if(which==='journal'){paperTab='journal';which='paper'}
+  if(which==='sites'||which==='apps'){showFull(which);const s=dashStatusData?.summary?.[which]||[];return s.length?(which==='sites'?'Websites':'Apps')+': '+s.filter(x=>x.ok).length+' of '+s.length+' all good'+(s.some(x=>!x.ok)?' — needs attention: '+s.filter(x=>!x.ok).map(x=>x.name+(x.problems&&x.problems.length?' ('+x.problems.join(', ')+')':'')).join('; '):'')+'. The full report is on your screen.':'Here is the '+(which==='sites'?'websites':'apps')+' status.'}
+  showFull(which==='paper'?'paper':'guide');
   if(which==='paper'){const p=dashPaperData;return p?'Paper trading: your ₱100,000 is now '+dashPeso(paperAlloc(p).total)+' ('+dashPct(paperAlloc(p).pct)+' since '+(p.opened||'the start')+'). The full view is on your screen.':'Here is your paper trading.'}
   const g=dashGuideData;return g?'Best rates now: '+dashSummaryGuide(g)+'. The full list is on your screen.':'Here are the investment rates.'}
  function setMoneyFromText(raw){const t=String(raw||'').toLowerCase().replace(/,/g,'');const P=moneyProfile();let hit=[];
@@ -3936,6 +3990,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    {badge:'SECRETARY',title:'Today',lines:[schedText||(/^linked/.test(cloud.google||'')?'Calendar: couldn’t read it right now.':'Calendar not connected (Google is off) — I only know what’s in your notes.')]},
    {badge:'SECRETARY',title:'Deadlines — next 30 days',lines:dl.length?dl.slice(0,6).map(x=>({text:(x.days<0?'⚠ ':'⏰ ')+x.what+' — '+whenText(x.date),cls:x.days<=7?'miss':''})):['Nothing due.'],buttons:dl.length?[['All deadlines',()=>doAction({type:'deadlines'},'').then(t=>{setSub('',t);speak(t)})]]:[]},
    ...(mailData?[{badge:'EMAIL',badgeClass:'badge-res',title:'Unread email (last 24 h)',lines:mailData.items?.length?[mailData.say,...mailData.items.filter(x=>x.priority==='high').slice(0,4).map(x=>({text:'• '+x.from+' — '+x.subject,cls:'miss'}))]:['No new email.'],buttons:mailData.items?.length?[['Open inbox',()=>checkEmail('unread today').then(t=>{setSub('',t);speak(t)})]]:[]}]:[]),
+   ...(tr&&tr.total?[{badge:'PAPER TRADING',badgeClass:'badge-res',title:'₱100,000 paper money → '+tr.total+' ('+tr.sinceStart+')',lines:[...(tr.parts||[]),...(tr.lastTrades||[]).slice(-2).map(t=>'Last: '+t)],buttons:[['Open',()=>{const t=openDash('paper');setSub('',t);speak(t)}]]}]:[]),
    ...(tr&&tr.markets?[{badge:'PAPER TRADING',badgeClass:'badge-res',title:'Pretend accounts',lines:Object.entries(tr.markets).map(([k,m])=>(k==='pse'?'PSE':k==='fx'?'Forex':'Crypto')+': '+trPct(m.returnPct)+' · '+m.positions.length+' open'+(m.orders?.length?' · '+m.orders.length+' order(s) for the next open':'')),buttons:[['Open',()=>tradingStatus({}).then(t=>{setSub('',t);speak(t)})]]}]:[]),
    ...(wx?[{badge:'WEATHER',badgeClass:'badge-res',title:wx.place+' — '+Math.round(wx.now.temp)+'°C, '+wx.now.sky,lines:['Today: '+wxLine(wx,0),'Tomorrow: '+wxLine(wx,1)],buttons:[['Full forecast',()=>weatherNow({location:wxPlace.name}).then(t=>{setSub('',t);speak(t)})]]}]:[]),
    {badge:'WAITING',badgeClass:'badge-draft',title:'Waiting for you',lines:wait.length?wait.map(x=>'• '+x):['Nothing waiting.']},
@@ -4948,7 +5003,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'show_watchlist':return await showWatchlist(true);
    case 'market_chart':return await marketChart(a.details||{symbol:a.query});
    case 'price_on_date':return await priceOnDate(a.details||{},raw);
-   case 'home_dash':return openDash((a.details||{}).name==='paper'?'paper':'guide');
+   case 'home_dash':{const n=(a.details||{}).name;return openDash(['paper','journal','sites','apps'].includes(n)?n:'guide')}
    case 'say_text':return a.query||'';
    case 'watchlist_add':return watchAdd(a.details||{symbol:a.query});
    case 'watchlist_remove':return watchRemove(a.details||{symbol:a.query});

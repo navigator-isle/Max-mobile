@@ -40,6 +40,9 @@ gemMode = "down"; r = await call("/api/chat", { message: "remind me tomorrow at 
 ok(r.status === 429, "(the brain was out for that one)");
 r = await call("/api/activity", { items: [{ dept: "schedule", kind: "add_event", text: "Added “Call agency” for Thu 9:00", ms: 840 }, { dept: "web", kind: "site_audit", text: "site_audit failed", detail: "timeout", ok: false }] });
 ok(r.status === 200 && r.data.saved === 2, "the phone sends the actions it carried out");
+sqlite.exec("CREATE TABLE IF NOT EXISTS max_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL)");
+sqlite.prepare("INSERT OR REPLACE INTO max_settings VALUES ('max_paper', ?, 1)").run(JSON.stringify({v: 2, opened: "2026-11-10", usdphp: 60, jid: 1, step: {}, errors: [], bench: {}, books: {pse_dividend: {key: "pse_dividend", start: 40000, startPhp: 40000, cash: 40000, positions: [], pending: [], trades: []}, crypto_swing: {key: "crypto_swing", start: 350, startPhp: 21000, cash: 350, positions: [], pending: [], trades: []}, btc_trend: {key: "btc_trend", start: 150, startPhp: 9000, cash: 150, positions: [], pending: [], trades: []}, gold_trend: {key: "gold_trend", start: 500, startPhp: 30000, cash: 500, positions: [], pending: [], trades: []}},
+  journal: [{id: 1, at: Date.now() - 60e3, kind: "BUY", book: "crypto_swing", sym: "SOL", text: "BUY 1.5 SOL @ $200"}]}));
 r = await call("/api/activity?days=7");
 const it = r.data.items || [];
 const chatT = it.find(x => x.kind === "chat" && /paper trading/.test(x.text));
@@ -49,7 +52,7 @@ ok(chatM && chatM.dept === "music" && /action: play_music/.test(chatM.detail), "
 const failed = it.find(x => x.kind === "chat" && /remind me/.test(x.text));
 ok(failed && failed.ok === 0 && failed.dept === "schedule" && /every brain failed/.test(failed.detail), "a failed answer is logged as a failure, with the reason", JSON.stringify(failed));
 ok(it.some(x => x.source === "phone" && x.kind === "add_event" && x.ok === 1) && it.some(x => x.source === "phone" && x.ok === 0 && x.detail === "timeout"), "phone actions are logged too, failures included");
-ok(it.some(x => x.source === "paper trader" && x.dept === "trading" && /BUY|SELL|started|Market/i.test(x.text)), "the paper trader's own moves show up in the Trading desk's log", JSON.stringify(it.filter(x => x.source === "paper trader").slice(0, 1)));
+ok(it.some(x => x.source === "paper trading" && x.dept === "trading" && /BUY 1\.5 SOL/.test(x.text)), "the paper trader's own moves show up in the Trading desk's log", JSON.stringify(it.filter(x => x.dept === "trading").slice(0, 2)));
 ok(r.data.failures === 2 && r.data.brains["gemini-3.5-flash"] >= 2, "it counts failures and which brains answered", JSON.stringify({ f: r.data.failures, b: r.data.brains }));
 ok(it.every((x, i) => i === 0 || it[i - 1].at >= x.at), "newest first");
 r = await call("/api/activity?days=7&dept=trading");

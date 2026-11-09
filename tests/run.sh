@@ -38,6 +38,7 @@ run "Shopping agent (weekly)" tests/test-worker24.mjs "$TMP/worker.mjs"
 run "Trading notes v2: load in parts, retire old, delta sync" tests/test-worker25.mjs "$TMP/worker.mjs"
 run "Price on a past date" tests/test-worker26.mjs "$TMP/worker.mjs"
 run "Home panels: live paper trading and investment guide" tests/test-worker27.mjs "$TMP/worker.mjs"
+run "Max's own paper trading, notes data, investments notes" tests/test-worker28.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
