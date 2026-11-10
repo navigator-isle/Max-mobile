@@ -444,6 +444,31 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
 #homeScreen:has(#homeDash:not([hidden])){justify-content:flex-start!important;gap:12px!important}
 #homeScreen:has(#homeDash:not([hidden])) .subtitles{min-height:9vh!important}
 .tile{aspect-ratio:auto;min-height:min(46vw,300px)}
+/* 18e: short home + swipe drawers */
+body.on-home .max-orb{width:min(58vw,250px)!important;height:min(58vw,250px)!important}
+body.on-home #homeScreen .orb-stage{flex:0 0 auto!important}
+body.on-home #homeScreen{justify-content:flex-start!important;gap:10px!important}
+body.on-home #homeScreen .subtitles{flex:1 1 auto;min-height:0!important;justify-content:flex-end;align-items:stretch!important;overflow:auto;width:100%}
+.sub-you:not(:empty){align-self:flex-end;max-width:84%;background:#12324b;color:#e8f3ff!important;padding:9px 12px;border-radius:14px 14px 4px 14px;font-size:.92rem;max-height:none!important;text-align:left}
+.home-answer:not(:empty){align-self:flex-start;max-width:94%;width:auto!important;background:#0e1a2b;border:1px solid #1d3550;padding:10px 12px!important;border-radius:14px 14px 14px 4px;text-align:left!important;font-size:1rem!important;box-sizing:border-box}
+.edge-tabs{position:fixed;top:96px;display:none;flex-direction:column;gap:8px;z-index:20}
+body.on-home.has-dash .edge-tabs{display:flex}
+.edge-tabs.left{left:0}.edge-tabs.right{right:0}
+.edge-tabs button{width:44px;height:54px;border:1px solid #1d3550;background:#0e1a2b;color:#38d6ff;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.edge-tabs.left button{border-left:none;border-radius:0 14px 14px 0}.edge-tabs.right button{border-right:none;border-radius:14px 0 0 14px}
+.edge-tabs button.alert{color:#ffc857;border-color:#6b5320}
+.drawer-shade{position:fixed;inset:0;background:#02060cb8;z-index:40}.drawer-shade[hidden]{display:none}
+.drawer{position:fixed;top:0;bottom:0;width:min(84vw,340px);background:#0a1422;z-index:41;padding:18px 14px;display:flex;flex-direction:column;gap:12px;overflow:auto;box-sizing:border-box;visibility:hidden;transition:transform .22s ease,visibility 0s .22s}
+.drawer.left{left:0;border-right:1px solid #38d6ff;border-radius:0 22px 22px 0;transform:translateX(-105%)}
+.drawer.right{right:0;border-left:1px solid #38d6ff;border-radius:22px 0 0 22px;transform:translateX(105%)}
+.drawer.open{transform:none;visibility:visible;transition:transform .22s ease,visibility 0s 0s}
+.drawer .tile{min-height:0!important;flex:0 0 auto}
+.drawer-hint{font-size:.68rem;letter-spacing:.1em;color:#8fa6bf;text-transform:uppercase}
+.info-i{width:36px;height:36px;border-radius:50%;border:1px solid #1d3a52;background:#0e1a2b;color:#38d6ff;font-weight:700;font-style:italic;font-family:Georgia,serif;font-size:1rem;cursor:pointer;padding:0}
+.info-i[aria-expanded="true"]{background:#12324b;border-color:#38d6ff}
+.info-box{margin:0 14px 8px;padding:10px 12px;border-radius:12px;background:#0e1a2b;border:1px solid #1d3550;color:#c8d9e9;font-size:.86rem;line-height:1.45}.info-box[hidden]{display:none}
+.ov-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;font-size:.88rem;padding:4px 0;border-top:1px solid #16314a}.ov-row:first-of-type{border-top:none}
+.ov-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ov-3 b{display:block;font-size:1rem}
 .ptabs{display:flex;gap:6px;flex-wrap:wrap}.ptabs button{background:#0f2438;border:1px solid #1d3a52;color:#c8d9e9;border-radius:999px;padding:6px 12px;font-size:.85rem}.ptabs button.on{background:#1d4d78;color:#fff;border-color:#3a77a5}
 .jrow{border:1px solid #16314a;border-radius:12px;padding:9px 11px;background:#0a1826;display:flex;flex-direction:column;gap:3px}.jhead{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .jk{font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 6px;background:#13304a;color:#9fc6e6}.jk.BUY{background:#0f3b2c;color:#4fd1a5}.jk.SELL{background:#3b1717;color:#ff9a9a}.jk.ORDER{background:#3a2a0c;color:#f7c76a}.jk.DIVIDEND{background:#24204a;color:#c7b8ff}
@@ -524,17 +549,28 @@ figure.note-media .media-missing{padding:18px 10px;font-size:.76rem;color:#9a9cb
       <button id="typeSend" class="send-btn" aria-label="Send">➤</button>
     </div>
     <div class="kbd-hint">Enter to send · Ctrl+K to type · Ctrl+Space to talk · Esc to stop</div>
-    <section id="homeDash" class="home-dash" hidden>
-      <div id="tilePaper" class="tile" role="button" tabindex="0" aria-label="Paper trading — open the full view"><div class="tile-top"><span>📈 Paper trading</span></div><div class="muted small">Loading…</div></div>
-      <div id="tileGuide" class="tile" role="button" tabindex="0" aria-label="Investment rates — open the full view"><div class="tile-top"><span>💰 Best rates</span></div><div class="muted small">Loading…</div></div>
-      <div id="tileSites" class="tile" role="button" tabindex="0" aria-label="Websites status — open the full view"><div class="tile-top"><span>🌐 Websites</span></div><div class="muted small">Loading…</div></div>
-      <div id="tileApps" class="tile" role="button" tabindex="0" aria-label="Apps status — open the full view"><div class="tile-top"><span>📱 Apps</span></div><div class="muted small">Loading…</div></div>
-    </section>
+    <!-- 18e (10 Nov 2026): the home screen stays short; the six dashboards hide at the edges (swipe or tap a tab) -->
+    <div id="edgeL" class="edge-tabs left"><button data-edge="paper" aria-label="Trading summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></button><button data-edge="guide" aria-label="Investments summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h4.500a2 2 0 0 1 0 4H9"/></svg></button><button data-edge="notes" aria-label="Notes summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/></svg></button></div>
+    <div id="edgeR" class="edge-tabs right"><button data-edge="sites" aria-label="Websites summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button><button data-edge="apps" aria-label="Apps summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></button><button data-edge="status" aria-label="Status summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></button></div>
     <div hidden><button id="homeTalk">Talk</button><button id="homeStop">Stop</button></div>
   </main>
 
+  <div id="drawerShade" class="drawer-shade" hidden></div>
+  <aside id="drawerL" class="drawer left" aria-label="Trading, Investments, Notes">
+    <div class="drawer-hint">Swipe back to hide · tap a card for details</div>
+    <div id="tilePaper" class="tile" role="button" tabindex="0" aria-label="Paper trading — open the full view"><div class="tile-top"><span>📈 Paper trading</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileGuide" class="tile" role="button" tabindex="0" aria-label="Investment rates — open the full view"><div class="tile-top"><span>💰 Best rates</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileNotes" class="tile" role="button" tabindex="0" aria-label="Notes — open the full view"><div class="tile-top"><span>🗂 Notes</span></div><div class="muted small">Loading…</div></div>
+  </aside>
+  <aside id="drawerR" class="drawer right" aria-label="Websites, Apps, Status">
+    <div class="drawer-hint">Swipe back to hide · tap a card for details</div>
+    <div id="tileSites" class="tile" role="button" tabindex="0" aria-label="Websites status — open the full view"><div class="tile-top"><span>🌐 Websites</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileApps" class="tile" role="button" tabindex="0" aria-label="Apps status — open the full view"><div class="tile-top"><span>📱 Apps</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileStatus" class="tile" role="button" tabindex="0" aria-label="Max status — open the full view"><div class="tile-top"><span>🩺 Status</span></div><div class="muted small">Loading…</div></div>
+  </aside>
   <div id="dashFull" class="dash-full" hidden role="dialog" aria-modal="true" aria-labelledby="dashFullTitle">
-    <div class="dash-full-head"><h2 id="dashFullTitle">Dashboard</h2><button id="dashFullClose" class="home-mic" aria-label="Close">✕ Close</button></div>
+    <div class="dash-full-head"><h2 id="dashFullTitle">Dashboard</h2><span style="display:flex;gap:8px;align-items:center"><button id="dashFullInfo" class="info-i" aria-label="What is this? Show the explanation" aria-expanded="false">i</button><button id="dashFullClose" class="home-mic" aria-label="Close">✕ Close</button></span></div>
+    <div id="dashFullInfoBox" class="info-box" hidden></div>
     <div id="dashFullBody" class="dash-full-body"></div>
   </div>
   <main id="researchScreen" class="section-screen">
@@ -1291,6 +1327,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const halo=g.createRadialGradient(c,c,ring*0.8,c,c,w/2);
   halo.addColorStop(0,'rgba('+accent+','+(0.10+en*0.14)+')');halo.addColorStop(1,'rgba('+accent+',0)');
   g.fillStyle=halo;g.beginPath();g.arc(c,c,w/2,0,Math.PI*2);g.fill();
+  if(st==='speaking'&&!orb.reduce)for(let k=0;k<3;k++){const p=(t*0.55+k/3)%1,r=ring+(w/2-ring)*p;g.strokeStyle='rgba('+accent+','+((1-p)*0.55*Math.min(1,en)).toFixed(3)+')';g.lineWidth=Math.max(1,w*0.006);g.beginPath();g.arc(c,c,r,0,Math.PI*2);g.stroke()}
   g.fillStyle='#0b1f33';g.strokeStyle='rgba('+accent+',0.6)';g.lineWidth=Math.max(1,w*0.005);
   g.beginPath();g.arc(c,c,ring,0,Math.PI*2);g.fill();g.stroke();
   const cg=g.createRadialGradient(c-core*0.35,c-core*0.4,core*0.1,c,c,core);
@@ -3714,7 +3751,16 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    '<div class="muted small">Inflation '+dashE(m.inflation||'')+' · BSP rate '+dashE(m.bsp||'')+' · PDIC '+dashE(m.pdic||'')+' · checked '+dashE(g.checked||'')+' by '+dashE(g.by||'Max')+'. Promos usually last weeks, not a year. Not licensed financial advice.</div>'+
    '<details class="dash-sub"><summary>My money plan (30% emergency money)</summary>'+moneyPlan(g)+'</details>'+
    '<div class="dash-actions"><button class="small-btn" data-dash="guide-refresh">Update now</button></div>'}
- let paperTab='journal';
+ let paperTab='overview';
+ function paperOverview(d){
+  const pos=(d.books||[]).flatMap(b=>(b.positions||[]).map(p=>({...p,book:b}))),J=(d.journal||[]).filter(e=>e.kind==='BUY'||e.kind==='SELL'||e.kind==='DIVIDEND').slice(0,3),wait=(d.books||[]).flatMap(b=>(b.pending||[]).map(o=>(o.side||'')+' '+o.sym));
+  const money=(p,v)=>p.kind==='pse'?'₱'+(+v).toLocaleString('en-US',{maximumFractionDigits:4}):'$'+(+v).toLocaleString('en-US',{maximumFractionDigits:v<10?4:2});
+  const tot=+d.totalPhp||100000,paused=(d.books||[]).find(b=>b.key==='crypto_swing'&&b.market&&b.market.ok===false);
+  return '<div class="st-row"><h3>Open positions and sell levels</h3>'+(pos.length?pos.slice(0,12).map(p=>'<div class="ov-row"><b>'+dashE(p.sym)+'</b><span class="muted small">'+(+p.qty).toLocaleString('en-US',{maximumFractionDigits:4})+' @ '+money(p,p.ep)+(p.chgPct!=null?' · <span class="'+dashCls(p.chgPct)+'">'+dashPct(p.chgPct)+'</span>':'')+'</span><span>'+(p.sell?'sell below '+money(p,p.sell):p.stop?'stop '+money(p,p.stop):'–')+'</span></div>').join(''):'<div class="small">No open positions — all cash.'+(paused?' Bitcoin is below its 50-day average, so new crypto trades are paused.':'')+'</div>')+
+    (wait.length?'<div class="muted small">Waiting: '+dashE(wait.slice(0,10).join(', '))+(wait.length>10?' +'+(wait.length-10):'')+' (PSE fills at the next opening)</div>':'')+'</div>'+
+   '<div class="st-row"><h3>Last trades</h3>'+(J.length?J.map(e=>'<div class="ov-row"><span class="jk '+dashE(e.kind)+'">'+dashE(e.kind)+'</span><span class="small">'+dashE(e.text)+'</span><span class="muted small">'+dashE(e.d||'')+'</span></div>').join(''):'<div class="small">No trades yet — Max trades only when a setup meets the tested rules.</div>')+'</div>'+
+   '<div class="st-row"><h3>Possible outcome in 1 year</h3><div class="ov-3 small"><span><span class="muted">Average</span><b class="up">'+dashPeso(Math.round(tot*1.176))+'</b></span><span><span class="muted">Worst year</span><b class="down">'+dashPeso(Math.round(tot*0.923))+'</b></span><span><span class="muted">Worst drop</span><b class="down">−11.6%</b></span></div></div>'+
+   '<div class="muted small">Next checks: crypto and gold every morning about 8:45 · PSE weekdays about 5:45 pm'+(d.asOf?' · last check '+new Date(d.asOf).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</div>'}
  const jrow=e=>'<div class="jrow"><div class="jhead"><span class="jk '+dashE(e.kind)+'">'+dashE(e.kind)+'</span><b>'+dashE(e.sym||'')+'</b><span class="muted small">'+dashE(e.d||'')+' · '+dashE((PART[e.book]||{}).label||e.book||'')+'</span>'+(e.pnlPhp!==undefined&&e.pnlPhp!==null?'<span class="'+dashCls(e.pnlPhp)+'">'+(e.pnlPhp>=0?'+':'−')+dashPeso(Math.abs(e.pnlPhp))+'</span>':'')+'</div>'+
   '<div class="small">'+dashE(e.text)+'</div>'+(e.why?'<details class="small"><summary class="muted">Why</summary>'+dashE(e.why)+'</details>':'')+(e.copy?'<div class="small jcopy">📋 <b>To copy:</b> '+dashE(e.copy)+'</div>':'')+(e.sellPlan?'<div class="small jcopy">🛑 <b>Sell plan:</b> '+dashE(e.sellPlan)+'</div>':'')+(e.outcome?'<div class="small jout">🎯 <b>Possible outcome:</b> '+dashE(e.outcome)+'</div>':'')+'</div>';
  function paperJournal(d){const J=(d.journal||[]).filter(e=>e.kind!=='WAIT');
@@ -3729,8 +3775,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function paperFull(d){const a=paperAlloc(d),tab=paperTab;
   return '<div class="big-total"><span class="muted small">₱100,000 paper money is now</span><b>'+dashPeso(a.total)+'</b><span class="'+dashCls(a.pct)+'">'+dashPct(a.pct)+' since '+dashE(d.opened||'start')+'</span></div>'+allocBar(a.parts)+
    '<div class="alloc-list">'+a.parts.map(p=>'<div class="alloc-item"><span class="dot" style="background:'+p.color+'"></span><span class="alloc-name">'+dashE(p.label)+' <span class="muted small">'+Math.round(p.w*100)+'%</span></span><span>'+dashPeso(p.now)+'</span><span class="'+dashCls(p.pct)+'">'+dashPct(p.pct)+'</span></div>').join('')+'</div>'+
-   '<div class="ptabs" role="tablist">'+[['journal','📒 Journal'],['outcome','🎯 Possible outcome'],['books','📊 Positions']].map(([k,l])=>'<button data-ptab="'+k+'" class="'+(tab===k?'on':'')+'" role="tab" aria-selected="'+(tab===k)+'">'+l+'</button>').join('')+'</div>'+
-   (tab==='journal'?paperJournal(d):tab==='outcome'?paperOutcome(d):paperHtml(d))}
+   '<div class="ptabs" role="tablist">'+[['overview','⭐ Overview'],['journal','📒 Journal'],['outcome','🎯 Possible outcome'],['books','📊 Positions']].map(([k,l])=>'<button data-ptab="'+k+'" class="'+(tab===k?'on':'')+'" role="tab" aria-selected="'+(tab===k)+'">'+l+'</button>').join('')+'</div>'+
+   (tab==='overview'?paperOverview(d):tab==='journal'?paperJournal(d):tab==='outcome'?paperOutcome(d):paperHtml(d))}
  function tilePaper(d){const a=paperAlloc(d);
   return '<div class="tile-top"><span>📈 Paper trading</span></div><div class="tile-label muted small">₱100,000 is now</div><div class="tile-big">'+dashPeso(a.total)+'</div><div class="tile-pct '+dashCls(a.pct)+'">'+dashPct(a.pct)+'</div>'+allocBar(a.parts)+
    '<div class="tile-legend">'+a.parts.map(p=>'<span><i style="background:'+p.color+'"></i>'+dashE(p.label.replace(' dividend','').replace(' trend','').replace(' swing',''))+' '+Math.round(p.w*100)+'%</span>').join('')+'</div>'}
@@ -3764,34 +3810,100 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function dashSummaryPaper(d){const a=paperAlloc(d);return '₱100,000 → '+dashPeso(a.total)+' ('+dashPct(a.pct)+')'}
  function dashSummaryGuide(g){const G=rateGroups(g),m=G.find(x=>x.key==='gov')?.items[0],s=G.find(x=>x.key==='hysa')?.items[0];return [m&&m.name.replace(/\s*\(.*\)/,'')+' '+(+m.rateNum).toFixed(2)+'% ('+dashPeso(perMonth(m))+'/month per ₱100k)',s&&'best savings '+s.name.replace(/\s*\(.*\)|\s*—.*/g,'')+' '+(+s.rateNum).toFixed(2)+'%'].filter(Boolean).join(', ')}
  let dashOpen=null;
- async function renderDash(which,force){
-  const box=$('homeDash');if(!box||!workerBase())return;box.hidden=false;
-  const TID={paper:'tilePaper',guide:'tileGuide',sites:'tileSites',apps:'tileApps'},TNAME={paper:'📈 Paper trading',guide:'💰 Best rates',sites:'🌐 Websites',apps:'📱 Apps'};
-  const one=async(k,load,tile,full,cacheKey)=>{const t=$(TID[k]);
-   let d=null,offline='';try{d=await load(force)}catch(e){d=jget(cacheKey,null);offline=d?'Offline — saved copy.':e.message}
-   if(!d){t.innerHTML='<div class="tile-top"><span>'+TNAME[k]+'</span></div><div class="muted small">'+dashE(offline)+'</div>';return}
-   t.innerHTML=tile(d)+(offline?'<div class="muted small">saved copy</div>':'');
-   if(dashOpen===k)$('dashFullBody').innerHTML=(offline?'<div class="muted small">'+dashE(offline)+'</div>':'')+full(d)};
-  if(!which||which==='paper')await one('paper',loadPaper,tilePaper,paperFull,'max_cache_paper');
-  if(!which||which==='guide')await one('guide',loadGuide,tileGuide,ratesFull,'max_cache_guide');
-  if(!which||which==='sites'||which==='apps'){if(!which||which==='sites')await one('sites',loadStatus,statusTile('sites'),statusFull('sites'),'max_cache_status');if(!which||which==='apps')await one('apps',loadStatus,statusTile('apps'),statusFull('apps'),'max_cache_status')}
+ // Notes summary (from the notes on this phone) and Max's status (from the public status page)
+ async function loadNotesSum(){
+  let N=[];try{N=rawLoad()}catch{}N=(Array.isArray(N)?N:[]).filter(n=>n&&!n.deleted);
+  const day=Date.now()-864e5,top={};for(const n of N){const c=String(n.category||'No folder').split(/\s*›\s*/)[0]||'No folder';top[c]=(top[c]||0)+1}
+  return {count:N.length,today:N.filter(n=>(n.updatedAt||0)>day).length,folders:Object.entries(top).sort((x,y)=>y[1]-x[1]),recent:[...N].sort((x,y)=>(y.updatedAt||0)-(x.updatedAt||0)).slice(0,8).map(n=>({title:n.title,category:n.category,at:n.updatedAt}))};
  }
- function showFull(k){dashOpen=k;const o=$('dashFull');$('dashFullTitle').textContent={paper:'📈 Paper trading',guide:'💰 Investment rates',sites:'🌐 Websites',apps:'📱 Apps'}[k]||'Dashboard';$('dashFullBody').innerHTML='<div class="muted small">Loading…</div>';o.hidden=false;document.body.classList.add('dash-full-open');
-  const d=k==='paper'?dashPaperData:k==='guide'?dashGuideData:dashStatusData;if(d)$('dashFullBody').innerHTML=k==='paper'?paperFull(d):k==='guide'?ratesFull(d):statusFull(k)(d);renderDash(k)}
+ const tileNotes=d=>'<div class="tile-top"><span>🗂 Notes</span></div><div class="tile-big">'+d.count.toLocaleString('en-US')+'</div><div class="tile-label muted small">notes · '+d.today+' updated in the last 24 hours</div>'+d.folders.slice(0,3).map(([k,n])=>'<div class="tile-line">'+dashE(k)+' · '+n+'</div>').join('');
+ const notesFull=d=>'<div class="big-total"><span class="muted small">Your second brain</span><b>'+d.count.toLocaleString('en-US')+' notes</b><span class="muted small">'+d.today+' updated in the last 24 hours (Max refreshes the data notes by himself)</span></div>'+
+  '<div class="st-row"><h3>Folders</h3>'+d.folders.slice(0,12).map(([k,n])=>'<div class="ov-row"><span></span><span>'+dashE(k)+'</span><span class="muted small">'+n+'</span></div>').join('')+'</div>'+
+  '<div class="st-row"><h3>Latest updates</h3>'+(d.recent.length?d.recent.map(n=>'<div class="ov-row"><span></span><span class="small">'+dashE(n.title||'Untitled')+'<br><span class="muted small">'+dashE(n.category||'')+'</span></span><span class="muted small">'+(n.at?new Date(n.at).toLocaleDateString([], {month:'short',day:'numeric'}):'')+'</span></div>').join(''):'<div class="small">No notes on this phone yet.</div>')+'</div>'+
+  '<div class="dash-actions"><button class="small-btn" data-dash="open-notes">Open my notes</button></div>';
+ let healthAt=0;
+ async function loadHealth(force){
+  if(!force&&dashData.status&&Date.now()-healthAt<5*60e3)return dashData.status;
+  const {r,data}=await fetchJson(workerBase()+'/health?t='+Date.now(),{method:'GET'},15000);
+  if(!r.ok||!data||!data.version)throw new Error('Max’s server did not answer.');
+  healthAt=Date.now();jset('max_cache_health',data);return data;
+ }
+ function healthAlerts(h){const a=[],g=String(h.guard||'').match(/(\d+) problem/);
+  if(g&&+g[1]>0)a.push('Guard found '+g[1]+' problem'+(+g[1]>1?'s':'')+' — say “check everything now” for the list');
+  const pf=String(h.paperTrading||'').match(/failed: ([^)]*)\)/);if(pf)a.push('Paper trading: the last step failed ('+pf[1]+') — Max retries');
+  if(h.lastTrigger&&h.lastTrigger.at&&Date.now()-Date.parse(h.lastTrigger.at)>2.5*3600e3)a.push('Max’s hourly clock has not run for over 2 hours');
+  if(h.google!==undefined&&!/^linked/.test(String(h.google)))a.push('Google (calendar, Gmail) is not linked');
+  if(h.database&&h.database!=='bound')a.push('The database is not connected');
+  return a}
+ const hShort=s=>String(s||'–').replace(/max-worker-\d{4}-\d\d-/,'').replace(/(\d{4}-\d\d-\d\dT\d\d:\d\d)(?::[\d.]+)?Z/g,(m,x)=>new Date(x+':00Z').toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}));
+ const tileStatus=h=>{const a=healthAlerts(h);return '<div class="tile-top"><span>🩺 Status</span></div><div class="tile-big '+(a.length?'down':'up')+'">'+(a.length?a.length+' alert'+(a.length>1?'s':''):'All OK')+'</div><div class="tile-label muted small">server '+dashE(hShort(h.version))+' · last run '+dashE(h.lastTrigger&&h.lastTrigger.at?hShort(h.lastTrigger.at):'–')+'</div>'+a.slice(0,2).map(x=>'<div class="tile-line">'+dashE(x)+'</div>').join('')};
+ const healthFull=h=>{const a=healthAlerts(h),row=(k,v,ok)=>'<div class="ov-row"><span>'+(ok===undefined?'':ok?'<span class="up">✓</span>':'<span class="down">!</span>')+'</span><span>'+dashE(k)+'</span><span class="muted small" style="text-align:right;max-width:58vw">'+dashE(hShort(v))+'</span></div>';
+  return '<div class="st-row"><h3>'+(a.length?a.length+' thing'+(a.length>1?'s':'')+' to look at':'All OK')+'</h3>'+(a.length?'<ul class="dash-list">'+a.map(x=>'<li>'+dashE(x)+'</li>').join('')+'</ul>':'<div class="small up">Nothing needs you right now.</div>')+'</div>'+
+   '<div class="st-row"><h3>Connections</h3>'+row('Google (calendar, tasks, Gmail)',h.google,/^linked/.test(String(h.google)))+row('Google Play',h.play,/^connected/.test(String(h.play)))+row('Database',h.database,h.database==='bound')+row('GitHub',/^connected/.test(String(h.github))?'token saved — account suspended in Nov 2026':h.github,false)+row('Website analytics',h.analytics,/^connected/.test(String(h.analytics)))+row('Brain',h.brain,true)+'</div>'+
+   '<div class="st-row"><h3>Daily jobs</h3>'+row('Paper trading',h.paperTrading,!/failed/.test(String(h.paperTrading)))+row('Websites and apps check',h.statusReport)+row('Notes data',h.notesData)+row('Guard',h.guard,!/[1-9]\d* problem/.test(String(h.guard)))+row('Hourly clock',h.lastTrigger&&h.lastTrigger.at)+((h.paperErrors||[]).length?'<details class="small"><summary class="muted">Latest notes from the trading steps</summary>'+h.paperErrors.map(x=>'<div>'+dashE(hShort(x))+'</div>').join('')+'</details>':'')+'</div>'+
+   '<div class="st-row"><h3>Version</h3>'+row('Server',h.version)+row('Notes loaded',h.tradingNotes)+'</div>'+
+   '<div class="dash-actions"><button class="small-btn" data-dash="status-refresh">Check again</button></div>'};
+ // the six dashboards: where each card lives, how it loads, its short card and its full overview
+ const dashData={};
+ const DASH={
+  paper:{name:'📈 Paper trading',title:'📈 Paper trading',tid:'tilePaper',side:'L',load:f=>loadPaper(f),tile:d=>tilePaper(d),full:d=>paperFull(d),cache:'max_cache_paper',
+   info:'Paper trading uses pretend money (₱100,000) so you can watch a tested plan before using real money. Max checks crypto and gold every morning and PSE every weekday evening, and emails you each buy and sell with how to copy it. “Sell below” is the price where Max will sell: a stop-loss that only moves up, or the long average for Bitcoin and gold. Possible outcome comes from the 2014–2026 test of this mix; it is not a promise and not advice.'},
+  guide:{name:'💰 Best rates',title:'💰 Investment rates',tid:'tileGuide',side:'L',load:f=>loadGuide(f),tile:d=>tileGuide(d),full:d=>ratesFull(d),cache:'max_cache_guide',
+   info:'Max checks Philippine rates every day: government (MP2, bonds), savings banks, time deposits, funds, dividend stocks and promos. “₱/month” is what ₱100,000 would earn in a month after tax. Promos last weeks, not a year, so read the conditions. These are examples to compare, not licensed financial advice.'},
+  notes:{name:'🗂 Notes',title:'🗂 Notes',tid:'tileNotes',side:'L',load:()=>loadNotesSum(),tile:d=>tileNotes(d),full:d=>notesFull(d),cache:null,
+   info:'Your second brain. Trading and Investments notes have a “Latest data” box that Max refreshes by himself; your own text in a note is kept. The count is the notes saved on this phone.'},
+  sites:{name:'🌐 Websites',title:'🌐 Websites',tid:'tileSites',side:'R',load:f=>loadStatus(f),tile:d=>statusTile('sites')(d),full:d=>statusFull('sites')(d),cache:'max_cache_status',
+   info:'Max checks each website once a day: is it up and fast, SEO and security problems, affiliate links (including your /go/ Amazon links and tag), new content and visitors. Visitors need a Cloudflare analytics key that only you can add.'},
+  apps:{name:'📱 Apps',title:'📱 Apps',tid:'tileApps',side:'R',load:f=>loadStatus(f),tile:d=>statusTile('apps')(d),full:d=>statusFull('apps')(d),cache:'max_cache_status',
+   info:'Max checks each app once a day: is it up, its speed on a phone, its version, and on Google Play the releases and newest reviews.'},
+  status:{name:'🩺 Status',title:'🩺 Max status',tid:'tileStatus',side:'R',load:f=>loadHealth(f),tile:d=>tileStatus(d),full:d=>healthFull(d),cache:'max_cache_health',
+   info:'This is Max’s own health: what is connected, whether today’s jobs ran, and what the Guard found. An alert means Max will retry or needs you; “check everything now” runs the Guard again.'}};
+ async function renderDash(which,force){
+  if(!workerBase())return;document.body.classList.add('has-dash');
+  for(const k of Object.keys(DASH)){
+   if(which&&which!==k)continue;const D=DASH[k],t=$(D.tid);if(!t)continue;
+   let d=null,offline='';try{d=await D.load(force)}catch(e){d=D.cache?jget(D.cache,null):null;offline=d?'Offline — saved copy.':e.message}
+   if(!d){t.innerHTML='<div class="tile-top"><span>'+D.name+'</span></div><div class="muted small">'+dashE(offline)+'</div>';continue}
+   dashData[k]=d;t.innerHTML=D.tile(d)+(offline?'<div class="muted small">saved copy</div>':'');
+   if(k==='status'){const b=document.querySelector('[data-edge="status"]');if(b)b.classList.toggle('alert',healthAlerts(d).length>0)}
+   if(dashOpen===k)$('dashFullBody').innerHTML=(offline?'<div class="muted small">'+dashE(offline)+'</div>':'')+D.full(d)}
+ }
+ let drawerOpen=null;
+ function closeDrawer(){['drawerL','drawerR'].forEach(i=>$(i)&&$(i).classList.remove('open'));if($('drawerShade'))$('drawerShade').hidden=true;drawerOpen=null}
+ function openDrawer(side,focus){closeDrawer();const d=$(side==='R'?'drawerR':'drawerL');if(!d)return;d.classList.add('open');$('drawerShade').hidden=false;drawerOpen=side==='R'?'R':'L';
+  Object.keys(DASH).filter(k=>DASH[k].side===drawerOpen).forEach(k=>renderDash(k));
+  if(focus&&DASH[focus]){const t=$(DASH[focus].tid);if(t)try{t.scrollIntoView({block:'nearest'})}catch{}}}
+ function showFull(k){if(!DASH[k])k='paper';closeDrawer();dashOpen=k;const o=$('dashFull'),D=DASH[k];$('dashFullTitle').textContent=D.title;$('dashFullInfoBox').textContent=D.info;$('dashFullInfoBox').hidden=true;$('dashFullInfo').setAttribute('aria-expanded','false');
+  $('dashFullBody').innerHTML='<div class="muted small">Loading…</div>';o.hidden=false;document.body.classList.add('dash-full-open');
+  const d=dashData[k]||(k==='paper'?dashPaperData:k==='guide'?dashGuideData:k==='sites'||k==='apps'?dashStatusData:null);if(d)$('dashFullBody').innerHTML=D.full(d);renderDash(k)}
  function closeFull(){dashOpen=null;$('dashFull').hidden=true;document.body.classList.remove('dash-full-open')}
  function initDash(){
-  $('tilePaper').addEventListener('click',()=>showFull('paper'));$('tileGuide').addEventListener('click',()=>showFull('guide'));$('tileSites').addEventListener('click',()=>showFull('sites'));$('tileApps').addEventListener('click',()=>showFull('apps'));
-  [$('tilePaper'),$('tileGuide'),$('tileSites'),$('tileApps')].forEach(t=>t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t.click()}}));
-  $('dashFullClose').addEventListener('click',closeFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&dashOpen)closeFull()});
+  Object.keys(DASH).forEach(k=>{const t=$(DASH[k].tid);if(!t)return;t.addEventListener('click',()=>showFull(k));t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t.click()}})});
+  document.querySelectorAll('[data-edge]').forEach(b=>b.addEventListener('click',()=>openDrawer(DASH[b.dataset.edge].side,b.dataset.edge)));
+  $('drawerShade').addEventListener('click',closeDrawer);
+  $('dashFullInfo').addEventListener('click',()=>{const b=$('dashFullInfoBox');b.hidden=!b.hidden;$('dashFullInfo').setAttribute('aria-expanded',String(!b.hidden))});
+  // swipe right anywhere on the home screen → left drawer (Trading, Investments, Notes); swipe left → right drawer (Websites, Apps, Status); swipe back to hide
+  let sw=null;
+  document.addEventListener('touchstart',e=>{const t=e.touches[0];sw=e.touches.length===1?{x:t.clientX,y:t.clientY,inField:!!(e.target.closest&&e.target.closest('input,textarea,[contenteditable]'))}:null},{passive:true});
+  document.addEventListener('touchend',e=>{if(!sw)return;const t=e.changedTouches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y,s=sw;sw=null;
+   if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*0.6)return;
+   if(drawerOpen){if((drawerOpen==='L'&&dx<0)||(drawerOpen==='R'&&dx>0))closeDrawer();return}
+   if(s.inField||screen!=='home'||dashOpen||!document.body.classList.contains('has-dash'))return;
+   let busy=false;try{busy=modalOpen()||!$('quickMenu').hidden}catch{}if(busy)return;
+   openDrawer(dx>0?'L':'R')},{passive:true});
+  $('dashFullClose').addEventListener('click',closeFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(dashOpen)closeFull();else if(drawerOpen)closeDrawer()}});
   $('dashFull').addEventListener('click',async e=>{const pt=e.target.closest('[data-ptab]');if(pt){paperTab=pt.dataset.ptab;if(dashPaperData)$('dashFullBody').innerHTML=paperFull(dashPaperData);return}
    const t=e.target.closest('[data-dash]');if(!t)return;e.preventDefault();
+   if(t.dataset.dash==='open-notes'){closeFull();setSection('notes');return}
+   if(t.dataset.dash==='status-refresh'){t.disabled=true;t.textContent='Checking…';await renderDash('status',true);return}
    if(t.dataset.dash==='paper-refresh'){t.disabled=true;t.textContent='Refreshing…';await renderDash('paper',true)}
    if(t.dataset.dash==='guide-refresh'){t.disabled=true;t.textContent='Max is checking the latest rates and promos…';try{const {r,data}=await postJson('/api/home/guide/refresh',{},180000);toast(r.ok?(data.updated?.length?'Updated: '+data.updated.join(', '):'Checked — no changes found'):(data.error||'Could not update'))}catch(err){toast(err.message)}await renderDash('guide',true)}});
   $('dashFull').addEventListener('change',e=>{const k=e.target?.dataset?.mp;if(!k)return;const P=moneyProfile();P[k]=k==='risk'?e.target.value:Math.max(0,+e.target.value||0);jset(MONEY_KEY,P);const sub=e.target.closest('details');if(dashGuideData){$('dashFullBody').innerHTML=ratesFull(dashGuideData);const d=$('dashFullBody').querySelector('.dash-sub');if(d&&sub)d.open=true;const dd=$('dashFullBody').querySelector('.dash-plan details');if(dd)dd.open=true}});
   renderDash();setInterval(()=>{if(document.visibilityState==='visible'&&screen==='home')renderDash(dashOpen==='guide'?'guide':'paper')},5*60e3);
  }
- window.maxRenderDash=renderDash;
+ window.maxRenderDash=renderDash;window.maxOpenDrawer=openDrawer;window.maxCloseDrawer=closeDrawer;
  function openDash(which){closeConnection();closeMenu();setSection('home');if(which==='journal'){paperTab='journal';which='paper'}
+  if(which==='status'||which==='notes'){showFull(which);return which==='status'?'Here is my status.':'Here is your notes summary.'}
   if(which==='sites'||which==='apps'){showFull(which);const s=dashStatusData?.summary?.[which]||[];return s.length?(which==='sites'?'Websites':'Apps')+': '+s.filter(x=>x.ok).length+' of '+s.length+' all good'+(s.some(x=>!x.ok)?' — needs attention: '+s.filter(x=>!x.ok).map(x=>x.name+(x.problems&&x.problems.length?' ('+x.problems.join(', ')+')':'')).join('; '):'')+'. The full report is on your screen.':'Here is the '+(which==='sites'?'websites':'apps')+' status.'}
   showFull(which==='paper'?'paper':'guide');
   if(which==='paper'){const p=dashPaperData;return p?'Paper trading: your ₱100,000 is now '+dashPeso(paperAlloc(p).total)+' ('+dashPct(paperAlloc(p).pct)+' since '+(p.opened||'the start')+'). The full view is on your screen.':'Here is your paper trading.'}
@@ -5003,7 +5115,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'show_watchlist':return await showWatchlist(true);
    case 'market_chart':return await marketChart(a.details||{symbol:a.query});
    case 'price_on_date':return await priceOnDate(a.details||{},raw);
-   case 'home_dash':{const n=(a.details||{}).name;return openDash(['paper','journal','sites','apps'].includes(n)?n:'guide')}
+   case 'home_dash':{const n=(a.details||{}).name;return openDash(['paper','journal','sites','apps','status','notes'].includes(n)?n:'guide')}
    case 'say_text':return a.query||'';
    case 'watchlist_add':return watchAdd(a.details||{symbol:a.query});
    case 'watchlist_remove':return watchRemove(a.details||{symbol:a.query});
@@ -5385,7 +5497,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   hf.on=!!on;jset('max_handsfree',hf.on);hf.fails=0;
   $('hfMenu')&&($('hfMenu').textContent=hf.on?'👂 Hands-free: on':'👂 Hands-free');
   document.body.classList.toggle('hands-free',hf.on);
-  if(hf.on){keepAwake(true);setTimeout(hfResume,1200);return 'Hands-free is on. Say “Hey Max” anytime while my screen is open — I’ll keep the screen awake. Say “hands-free off” to stop.'}
+  if(hf.on){keepAwake(true);setTimeout(hfResume,1200);return 'I’m always listening now. Say “Max” and your question anytime while my screen is open — I’ll keep the screen awake. Say “hands-free off” to stop.'}
   hfPause();keepAwake(false);status('Ready');return 'Hands-free is off. Tap the circle when you need me.';
  }
  function hfPause(){hf.token++;clearTimeout(hf.timer);if(hf.rec){const r=hf.rec;hf.rec=null;try{r.abort()}catch{}}if($('maxOrb'))$('maxOrb').classList.remove('waiting')}
@@ -5420,7 +5532,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   };
   rec.onerror=e=>{if(token!==hf.token)return;if(e.error==='not-allowed'||e.error==='service-not-allowed'){hf.fails=9;status('Hands-free needs the microphone. Tap the circle once to wake me.')}else if(e.error!=='no-speech'&&e.error!=='aborted')hf.fails++};
   rec.onend=()=>{if(token!==hf.token||done)return;hf.rec=null;if(hf.fails>=5){$('maxOrb').classList.remove('waiting');if(hf.fails<9)status('Hands-free paused — the microphone keeps stopping. Tap the circle to talk.');return}clearTimeout(hf.timer);hf.timer=setTimeout(()=>{if(token===hf.token)hfListen()},400)};
-  try{rec.start();$('maxOrb').classList.add('waiting');status('Hands-free — say “Hey Max”')}catch(e){hf.fails++;hfResume()}
+  try{rec.start();$('maxOrb').classList.add('waiting');status('Standby · listening — say “Max”')}catch(e){hf.fails++;hfResume()}
  }
  function bargeStart(text,speakTok){
   const SR=SRc();if(!SR)return;bargeStop();
@@ -5520,7 +5632,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  step('circle',()=>requestAnimationFrame(orbLoop));
  // Works offline: the app itself is kept on the phone, notes are already stored here.
  step('meaning-index',()=>{setTimeout(()=>{if(workerBase())indexNotes().catch(()=>{})},8000)});
- step('handsfree',()=>{if(jget('max_handsfree',false))handsFree(true)});
+ // 18e: Max listens by himself from the start (standby), unless Mark turned it off here. Automated test browsers have no microphone, so they keep the old default unless a test asks for it.
+ step('handsfree',()=>{let on=jget('max_handsfree',null);if(on===null){let auto=false;try{auto=!!SRc()&&(localStorage.getItem('max_hf_auto')==='1'||!navigator.webdriver)}catch{}on=auto}if(on)handsFree(true)});
  step('offline',()=>{if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{})});
  step('shared',()=>{setTimeout(()=>takeShared().catch(()=>{}),800)});
  // Self-update: when a new version of Max is published, he reloads himself the next time you come back to him (never mid-conversation).

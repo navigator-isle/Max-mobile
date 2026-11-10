@@ -98,7 +98,7 @@ ok((await page.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3"))[0
 await page.click("#miniHome");
 
 // Greeting on first tap of the empty area; not on the circle
-await page.mouse.click(30, 250);
+await page.mouse.click(200, 520);
 await wait(200);
 ok((await page.evaluate(() => window.__spoken[0] || "")).includes("I’m Max"), "greeting spoken on first tap");
 

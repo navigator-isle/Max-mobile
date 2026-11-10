@@ -46,8 +46,8 @@ const emit = (t, f = true) => p.evaluate(([t, f]) => window.__emit(t, f), [t, f]
 const lastQ = () => gem.at(-1)?.contents.at(-1).parts[0].text;
 const idle = () => p.waitForFunction(() => !window.__speaking && !document.getElementById("maxOrb").classList.contains("processing"), null, { timeout: 15000 }).catch(() => {});
 await say("turn on hands free");
-ok(/Hands-free is on/.test(await answer()), "“turn on hands free” → on", await answer());
-ok(await waitCont() && await p.evaluate(() => document.getElementById("maxOrb").classList.contains("waiting")) && /Hey Max/.test(await p.locator("#homeStatus").textContent()), "then waits for “Hey Max” (glowing circle, status line)");
+ok(/always listening now/.test(await answer()), "“turn on hands free” → on", await answer());
+ok(await waitCont() && await p.evaluate(() => document.getElementById("maxOrb").classList.contains("waiting")) && /Standby · listening/.test(await p.locator("#homeStatus").textContent()), "then waits for “Hey Max” (glowing circle, status line)");
 ok(await p.evaluate(() => window.__wl) >= 1, "keeps the screen awake while hands-free");
 // ordinary talk nearby is ignored
 let g = gem.length;
@@ -103,6 +103,15 @@ await say("hands free off");
 ok(/Hands-free is off/.test(await answer()), "“hands free off” → off");
 await p.waitForTimeout(1500);
 ok(!(await cont()) && !(await p.evaluate(() => JSON.parse(localStorage.getItem("max_handsfree")))), "no microphone after hands-free is off");
+// 18e: a phone that never chose → Max listens by himself from the start (standby); the earlier "off" choice is respected
+await p.reload(); await p.waitForTimeout(1500);
+ok(!(await cont()), "he turned listening off → it stays off after reopening");
+await p.evaluate(() => { localStorage.removeItem("max_handsfree"); localStorage.setItem("max_hf_auto", "1"); });
+await p.reload(); await p.waitForTimeout(1500);
+ok(await waitCont() && /Standby · listening/.test(await p.locator("#homeStatus").textContent()) && await p.evaluate(() => JSON.parse(localStorage.getItem("max_handsfree"))) === true, "no choice made yet → Max is on standby and listening without a tap", await p.locator("#homeStatus").textContent());
+await emit("max what time is it"); await p.waitForTimeout(1200);
+ok(gem.length > 0 || /\d/.test(await answer()), "just say “Max …” — no button needed", await answer());
+await p.evaluate(() => document.getElementById("homeStop").click());
 ok(errs.length === 0, "no script errors", errs.join(" | "));
 await ctx.close(); await b.close(); sW.close(); sP.close();
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18d";
+const WORKER_VERSION = "max-worker-2026-11-18e";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -2918,6 +2918,8 @@ async function paperView(env) {
     const books = Object.entries(PBOOK).map(([k, cfg]) => { const B = S.books[k], part = T.parts.find(p => p.key === k);
       const positions = B.positions.map(x => { const last = x.shares ? live.pse[x.sym] || (B.lastPx || {})[x.sym] : live.crypto[x.sym]; const qty = x.shares || x.qty;
         return {sym: x.sym, kind: x.shares ? "pse" : k === "gold_trend" ? "gold" : "crypto", qty, ep: +(+x.ep).toPrecision(7), entry: x.entry, stop: x.stop ? +(+x.stop).toPrecision(7) : null, divs: x.divs ? Math.round(x.divs) : undefined,
+          sell: x.shares ? +((x.hi || x.ep) * 0.75).toPrecision(6) : x.stop ? +(+x.stop).toPrecision(6) : B.market && B.market.sma ? +(+B.market.sma).toPrecision(6) : null,
+          sellWhy: x.shares ? "25% below its highest close" : x.stop ? "trailing stop-loss" : k === "btc_trend" ? "100-day average" : k === "gold_trend" ? "200-day average" : null,
           last: last || null, chgPct: last ? +((last / x.ep - 1) * 100).toFixed(2) : null, valuePhp: Math.round(qty * (last || x.ep) * (x.shares ? 1 : fx)),
           riskPhp: x.stop ? Math.round(Math.max(0, (last || x.ep) - x.stop) * qty * fx) : x.shares ? Math.round(x.shares * (x.hi || x.ep) * 0.25) : null}; });
       return {key: k, name: cfg.name, status: "main", weight: cfg.w, ccy: cfg.ccy, start: +B.start.toFixed(2), startPhp: B.startPhp, cash: +B.cash.toFixed(2), cashPhp: Math.round(B.cash * fxOf(S, B)), valueNow: part.value, valuePhp: part.php, sinceNow: part.pct,
