@@ -59,7 +59,7 @@ await swipe(340, 120); await p.waitForTimeout(600);
 const b3 = await box("#tileSites"), b4 = await box("#tileApps"), bS = await box("#tileStatus");
 ok(await vis("#tileSites") && b4.y > b3.y && bS.y > b4.y && b3.x + b3.width <= vp.width + 1, "swipe left → the right drawer: Websites, Apps, Status", JSON.stringify([b3, b4, bS]));
 const ts = await p.locator("#tileStatus").textContent();
-ok(/🩺 Status(All OK|\d+ alerts?)/.test(ts) && /server 18e/.test(ts), "status card: all OK or the number of alerts, and the server version", ts);
+ok(/🩺 Status(All OK|\d+ alerts?)/.test(ts) && /server 18[e-z]/.test(ts), "status card: all OK or the number of alerts, and the server version", ts);
 await p.screenshot({ path: process.env.SHOT_DIR + "/drawer-right.png" });
 await p.click("#tileStatus"); await p.waitForTimeout(500);
 const sf = await p.locator("#dashFullBody").textContent();

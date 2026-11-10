@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18e";
+const WORKER_VERSION = "max-worker-2026-11-18f";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -2884,13 +2884,18 @@ async function backgroundStep(env, when) {
   let S; try { S = await paperLoad(env); } catch (e) { return "paper account not readable right now — nothing changed (" + cleanText(String(e.message), 80) + ")"; }
   const ctx = {n: 0, max: 38}, out = [];
   const fails = j => (S.errors || []).filter(e => e.job === j && pD(e.at) === today).length;   // after 3 failures a job waits until tomorrow, so the others still run
-  let job = S.step.crypto !== today && fails("crypto") < 3 ? "crypto" : h >= 9 && h <= 15 && dow >= 1 && dow <= 5 && S.step.pse !== today && fails("pse") < 3 ? "pse" : null;
+  // PSE (10 Nov 2026): PSE Edge often publishes the day's prices late, sometimes only the next morning. So Max tries every evening hour
+  // until today's prices are there, and again in the morning (10 am, 12 pm, 2 pm Manila) if yesterday's are still missing.
+  const prevWd = d => { let x = pAdd(d, -1); while ([0, 6].includes(new Date(x + "T00:00:00Z").getUTCDay())) x = pAdd(x, -1); return x; };
+  const pseLast = S.books.pse_dividend.last_day || "", hourKey = today + "T" + h, pseTriedNow = S.step.pseHour === hourKey;
+  const pseEvening = h >= 9 && h <= 15 && dow >= 1 && dow <= 5 && pseLast < today, pseMorning = [2, 4, 6].includes(h) && dow >= 2 && dow <= 6 && pseLast < prevWd(today);
+  let job = S.step.crypto !== today && fails("crypto") < 3 ? "crypto" : (pseEvening || pseMorning) && !pseTriedNow && fails("pse") < 3 ? "pse" : null;
   const scan = job ? null : await setting(env, "max_paper_scan", null);
   if (!job && scan && scan.phase !== "done" && fails("scan") < 6) job = "scan";
   if (!job) job = await otherJob(env, t);
   try {
     if (job === "crypto") { out.push(await paperCryptoStep(S, ctx, now)); S.step.crypto = today; }
-    else if (job === "pse") { out.push(await pseStep(env, S, ctx, today)); S.step.pse = today; }
+    else if (job === "pse") { S.step.pseHour = hourKey; out.push(await pseStep(env, S, ctx, today)); S.step.pse = today; S.step.pseData = S.books.pse_dividend.last_day || null; }
     else if (job === "scan") out.push(await pseScanStep(env, S, ctx, today));
     else if (job) out.push(await runOtherJob(env, job, ctx, S));
     S.lastStep = {at: Date.now(), job, ok: true};
@@ -3439,7 +3444,7 @@ export default {
         lastTrigger: await (async () => { try { return env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_last_cron") || "null") : null; } catch { return null; } })(),
         app: env.ASSETS ? "served by this Worker" : "not attached (GitHub Pages only)",
         codeBackup: await (async () => { const c = await codeBackup(env); return c ? c.files + " files, built " + c.built : "not attached"; })(),
-        paperTrading: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const S = await paperLoad(env); return S.lastStep ? "running — last step " + new Date(S.lastStep.at).toISOString().slice(0, 16) + "Z (" + S.lastStep.job + (S.lastStep.ok ? ", ok" : ", failed: " + S.lastStep.error) + "), crypto checked " + (S.step.crypto || "never") + ", PSE checked " + (S.step.pse || "never") + ", " + S.jid + " journal entries" : "starting (first step at the next hourly check)"; } catch { return "unknown"; } })(),
+        paperTrading: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const S = await paperLoad(env); return S.lastStep ? "running — last step " + new Date(S.lastStep.at).toISOString().slice(0, 16) + "Z (" + S.lastStep.job + (S.lastStep.ok ? ", ok" : ", failed: " + S.lastStep.error) + "), crypto checked " + (S.step.crypto || "never") + ", PSE checked " + (S.step.pse || "never") + " (prices up to " + (S.books.pse_dividend.last_day || "–") + ")" + ", " + S.jid + " journal entries" : "starting (first step at the next hourly check)"; } catch { return "unknown"; } })(),
         paperErrors: await (async () => { try { if (!env.MAX_MEMORY) return []; const S = await paperLoad(env); return (S.errors || []).slice(-4).map(e => new Date(e.at).toISOString().slice(0, 16) + "Z " + e.job + ": " + e.error).concat(S.cryptoSrc ? ["crypto prices from " + S.cryptoSrc + ((S.cryptoTried || []).length ? " (" + S.cryptoTried.join("; ") + ")" : "")] : []); } catch { return []; } })(),
         statusReport: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const r = await setting(env, "max_srv_status_report", null); return r && r.at ? "websites " + (r.sites || []).length + ", apps " + (r.apps || []).length + ", checked " + new Date(r.at).toISOString().slice(0, 16) + "Z" : "first check on its way"; } catch { return "unknown"; } })(),
         notesData: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const r = await setting(env, "max_srv_notes_live", null), i = await srvSetting(env, "max_srv_inv_notes"); return (r ? "trading data notes cursor " + r.cursor + (r.fx ? ", forex " + r.fx : "") : "not started") + "; investment notes " + (i || "not built yet"); } catch { return "unknown"; } })(),

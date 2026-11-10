@@ -95,6 +95,22 @@ const aaa = S.books.pse_dividend.positions.find(p => p.sym === "AAA"), aBuy = S.
 ok(aBuy && /Stop-loss: sell if AAA closes below ₱7\.65/.test(aBuy.sellPlan) && /3-month re-check/.test(aBuy.sellPlan), "PSE buy: sell plan with the stop-loss price (₱7.65 = 25% below ₱10.20) and the re-check rule", aBuy && aBuy.sellPlan);
 ok(aaa && aaa.ep === 10.2 && aaa.shares % 100 === 0 && aBuy.fee >= 22, "PSE buy at the next opening price, whole board lots, COL fees (min ₱20 + VAT)", JSON.stringify([aaa, aBuy && aBuy.fee]));
 ok(S.books.pse_dividend.cash < 2000 + 40000 * 0 + 21000 && S.books.pse_dividend.cash >= 0, "leftover cash is put to work with extra board lots (little cash left idle)", String(S.books.pse_dividend.cash));
+// late prices (what happened on 10 Nov 2026): the evening step finds no new day yet → it tries again the next hour, and the next morning, until the prices appear
+{ const late = new Date(eve.getTime() + 7 * 864e5); while ([0, 6].includes(late.getUTCDay())) late.setUTCDate(late.getUTCDate() + 1);
+  const lateDay = late.toISOString().slice(0, 10); let S9 = await T.paperLoad(env); const before = S9.books.pse_dividend.last_day;
+  S9.step.crypto = lateDay; S9.step.pse = null; S9.step.pseHour = null; await env.MAX_MEMORY.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").bind(JSON.stringify(S9)).run();
+  const t1 = new Date(lateDay + "T09:45:00Z").getTime(); let r1 = await T.backgroundStep(env, t1);
+  let r2 = await T.backgroundStep(env, t1 + 60e3);
+  ok(/pse/.test(r1) && !/pse/.test(r2), "evening: the PSE step runs once per hour", r1 + " | " + r2);
+  r2 = await T.backgroundStep(env, t1 + 3600e3);
+  ok(/pse/.test(r2), "no prices for today yet → Max tries again the next hour", r2);
+  for (const s of ["AAA", "ABA", "AETF"]) M.pse[s].bars.push({d: lateDay, o: M.pse[s].bars.at(-1).c, c: M.pse[s].bars.at(-1).c, v: 2e7});
+  r2 = await T.backgroundStep(env, t1 + 2 * 3600e3); S9 = await T.paperLoad(env);
+  ok(/pse/.test(r2) && S9.books.pse_dividend.last_day === lateDay, "…and the prices are processed as soon as PSE Edge publishes them", r2 + " " + S9.books.pse_dividend.last_day);
+  r2 = await T.backgroundStep(env, t1 + 3 * 3600e3);
+  ok(!/pse/.test(r2), "once today's prices are in, no more PSE steps today", r2);
+  for (const s of ["AAA", "ABA", "AETF"]) M.pse[s].bars.pop();
+  S9.books.pse_dividend.last_day = before; await env.MAX_MEMORY.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").bind(JSON.stringify(S9)).run(); }
 // a 25% drop → safety-stop order for the next opening; dividends are credited on the ex-date
 const d2 = new Date(next.getTime() + 864e5).toISOString().slice(0, 10);
 M.pse.AAA.bars.push({d: d2, o: 7, c: 7.0, v: 2e7}); M.pse.ABA.bars.push({d: d2, o: 2, c: 2, v: 2e7});
