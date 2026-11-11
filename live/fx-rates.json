@@ -1,0 +1,46 @@
+{
+ "asOf": "2026-11-11",
+ "source": "OECD 3-month interbank rates via FRED (fred.stlouisfed.org), series IR3TIB01USM156N, IR3TIB01EZM156N, IR3TIB01JPM156N, IR3TIB01GBM156N, IR3TIB01CHM156N, IR3TIB01CAM156N, IR3TIB01AUM156N, IR3TIB01NZM156N, IR3TIB01MXM156N, IR3TIB01ZAM156N",
+ "rates": {
+  "USD": {
+   "rate": 3.94,
+   "month": "2026-09"
+  },
+  "EUR": {
+   "rate": 2.0277272727,
+   "month": "2026-01"
+  },
+  "JPY": {
+   "rate": 1.55991,
+   "month": "2026-08"
+  },
+  "GBP": {
+   "rate": 3.71,
+   "month": "2026-01"
+  },
+  "CHF": {
+   "rate": -0.041,
+   "month": "2026-09"
+  },
+  "CAD": {
+   "rate": 2.328,
+   "month": "2026-09"
+  },
+  "AUD": {
+   "rate": 4.51,
+   "month": "2026-08"
+  },
+  "NZD": {
+   "rate": 3.13,
+   "month": "2026-09"
+  },
+  "MXN": {
+   "rate": 6.81,
+   "month": "2026-09"
+  },
+  "ZAR": {
+   "rate": 6.85,
+   "month": "2026-09"
+  }
+ }
+}

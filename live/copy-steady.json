@@ -1,0 +1,170 @@
+{
+ "asOf": "2026-11-11",
+ "rule": "\u22654 of the last 6 months green, last 90 days positive, account \u2265 $100,000; top 10 by (average month \u00f7 its swings) over 6 months; very high-turnover accounts (likely market makers) left out",
+ "tested": "Copy top-10 steady: +81% a year on unseen 2025 \u2192 Oct 2026 (worst month \u221213.7%, worst drop \u221230.7%) after a 0.5%/month copy cost; survivor bias likely \u2014 treat as unproven",
+ "source": "Hyperliquid public leaderboard and api.hyperliquid.xyz portfolio",
+ "checked": 400,
+ "passed": 170,
+ "traders": [
+  {
+   "addr": "0x3e781befd071c59d820725f70ce109298f750706",
+   "accountValue": 257331,
+   "r90Pct": 50.5,
+   "greenMonths": "6/6",
+   "sharpe6": 2.07,
+   "monthsPct": [
+    16.3,
+    12.1,
+    3.4,
+    26.7,
+    12.5,
+    14.7
+   ],
+   "thisMonthPct": -2.0
+  },
+  {
+   "addr": "0xc9186f29695cfe18b79e6a8ebf1be13905cac077",
+   "accountValue": 510992,
+   "r90Pct": 10.3,
+   "greenMonths": "6/6",
+   "sharpe6": 1.99,
+   "monthsPct": [
+    5.4,
+    3.8,
+    1.5,
+    4.6,
+    4.6,
+    0.7
+   ],
+   "thisMonthPct": 0.6
+  },
+  {
+   "addr": "0xe0afe5de6831901db80d7ca9d17475f78b1a870c",
+   "accountValue": 319190,
+   "r90Pct": 18.1,
+   "greenMonths": "6/6",
+   "sharpe6": 1.85,
+   "monthsPct": [
+    9.5,
+    6.1,
+    0.8,
+    8.0,
+    4.0,
+    3.6
+   ],
+   "thisMonthPct": 4.0
+  },
+  {
+   "addr": "0x8f25818ff64be1abee91abca70c306b33b602062",
+   "accountValue": 817682,
+   "r90Pct": 80.4,
+   "greenMonths": "6/6",
+   "sharpe6": 1.8,
+   "monthsPct": [
+    20.4,
+    12.2,
+    7.2,
+    36.0,
+    8.6,
+    21.9
+   ],
+   "thisMonthPct": 0.0
+  },
+  {
+   "addr": "0xcb02837caaee310c178501855b63bf7f4f4b1f8b",
+   "accountValue": 1711301,
+   "r90Pct": 15.6,
+   "greenMonths": "5/6",
+   "sharpe6": 1.66,
+   "monthsPct": [
+    12.5,
+    9.5,
+    5.3,
+    13.2,
+    6.5,
+    -0.5
+   ],
+   "thisMonthPct": -2.5
+  },
+  {
+   "addr": "0x3895d155b005191686476a39580d43258a518e46",
+   "accountValue": 333175,
+   "r90Pct": 16.8,
+   "greenMonths": "6/6",
+   "sharpe6": 1.62,
+   "monthsPct": [
+    8.6,
+    4.5,
+    0.8,
+    4.0,
+    10.2,
+    3.0
+   ],
+   "thisMonthPct": 0.2
+  },
+  {
+   "addr": "0x6f97b7de6be7b7771e975e46bae96c35e332e172",
+   "accountValue": 391207,
+   "r90Pct": 386.1,
+   "greenMonths": "6/6",
+   "sharpe6": 1.56,
+   "monthsPct": [
+    14.2,
+    142.8,
+    137.4,
+    233.7,
+    36.1,
+    115.8
+   ],
+   "thisMonthPct": -26.8
+  },
+  {
+   "addr": "0x42fd5648cf21c158d15e4f58785760755b3f6623",
+   "accountValue": 3028777,
+   "r90Pct": 40.5,
+   "greenMonths": "6/6",
+   "sharpe6": 1.45,
+   "monthsPct": [
+    14.1,
+    8.6,
+    2.3,
+    17.3,
+    20.5,
+    0.9
+   ],
+   "thisMonthPct": 1.5
+  },
+  {
+   "addr": "0xe5289a88c94c2ac15500fff9dcd171c256046f40",
+   "accountValue": 106300,
+   "r90Pct": 282.4,
+   "greenMonths": "5/6",
+   "sharpe6": 1.42,
+   "monthsPct": [
+    58.0,
+    64.1,
+    -19.4,
+    71.3,
+    41.8,
+    39.4
+   ],
+   "thisMonthPct": 2.4
+  },
+  {
+   "addr": "0x64a4fbb71858f681f3fa10a42b34180a9a48088d",
+   "accountValue": 740582,
+   "r90Pct": 28.7,
+   "greenMonths": "5/6",
+   "sharpe6": 1.39,
+   "monthsPct": [
+    13.5,
+    9.5,
+    9.4,
+    19.9,
+    29.7,
+    -1.6
+   ],
+   "thisMonthPct": -17.3
+  }
+ ]
+}
