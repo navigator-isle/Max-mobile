@@ -81,4 +81,5 @@ ok(/Yahoo/.test(S.etfSrc) && /TradingView/.test(S.etfSrc), "US prices: Yahoo his
 // ---------- 5) dashboard + email ----------
 const tot2 = T.paperTotals(S), txt = T.paperEmailText(S, S.journal.slice(-3));
 ok(/5 × ₱50,000/.test(txt) && /Copy trading/.test(txt) && /US stocks/.test(txt) && /currencies|Currencies/.test(txt), "email shows the 5 categories and the new mixes", txt.slice(0, 600));
+ok(T.shortSym("0x3e781befd071c59d820725f70ce109298f750706") === "trader 0x3e781bef…" && T.shortSym("SPY") === "SPY", "emails show copy traders as a short id, not a 42-character wallet");
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

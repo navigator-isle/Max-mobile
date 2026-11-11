@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18l";
+const WORKER_VERSION = "max-worker-2026-11-18m";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -3234,11 +3234,13 @@ function paperTotals(S, live = {}) {
   return {parts, cats, total, pct: +((total / PAPER_START - 1) * 100).toFixed(2)};
 }
 const EMAIL_KINDS = new Set(["BUY", "SELL", "DIVIDEND", "ORDER", "REBALANCE", "PLAN"]);
+// long wallet addresses (copy trading) are shortened where people read them; the full one stays in "To copy"
+const shortSym = s => /^0x[0-9a-f]{20,}$/i.test(String(s || "")) ? "trader " + String(s).slice(0, 10) + "…" : (s || "");
 function paperEmailText(S, entries, weekly) {
   const T = paperTotals(S), L = ["Max paper trading — pretend money only. Nothing real was bought or sold. Not financial advice.", "",
     `TOTAL: ${peso(T.total)} (${sgn(T.pct)} since ${S.planSince || S.opened}, ${peso(PAPER_START)} = 5 × ₱50,000)`, T.cats.map(c => `${c.name.split(" (")[0]} ${peso(c.php)} (${sgn(c.pct)})`).join(" · "), ""];
   const BOOKN = k => PBOOK[k]?.name.split(" (")[0] || k;
-  if (entries.length) { L.push(weekly ? "THIS WEEK" : "NEW"); entries.forEach((e, i) => { L.push(`${i + 1}) ${e.kind} ${e.sym || ""} — ${BOOKN(e.book)} — ${e.d || ""}`.replace(/\s+—\s+—/, " —")); L.push("   " + e.text);
+  if (entries.length) { L.push(weekly ? "THIS WEEK" : "NEW"); entries.forEach((e, i) => { L.push(`${i + 1}) ${e.kind} ${shortSym(e.sym)} — ${BOOKN(e.book)} — ${e.d || ""}`.replace(/\s+—\s+—/, " —")); L.push("   " + e.text);
     if (e.why) L.push("   Why: " + e.why); if (e.copy) L.push("   To copy: " + e.copy); if (e.sellPlan) L.push("   Sell plan: " + e.sellPlan); if (e.outcome) L.push("   Possible outcome: " + e.outcome); L.push(""); }); }
   else L.push(weekly ? "No trades this week — no setup met the rules. Waiting is part of the plan." : "");
   const open = [];
@@ -3263,7 +3265,7 @@ async function paperEmails(env, S, today, dow) {
   const out = [], fresh = S.journal.filter(e => e.id > (S.emailed || 0) && EMAIL_KINDS.has(e.kind));
   if (fresh.length) {
     const T = paperTotals(S), trades = fresh.filter(e => e.kind === "BUY" || e.kind === "SELL"), orders = fresh.filter(e => e.kind === "ORDER");
-    const subject = "Max paper trading: " + [trades.length && trades.map(e => e.kind + " " + e.sym).slice(0, 3).join(", ") + (trades.length > 3 ? " +" + (trades.length - 3) : ""), orders.length && orders.length + " order" + (orders.length > 1 ? "s" : "") + " for the next opening",
+    const subject = "Max paper trading: " + [trades.length && trades.map(e => e.kind + " " + shortSym(e.sym)).slice(0, 3).join(", ") + (trades.length > 3 ? " +" + (trades.length - 3) : ""), orders.length && orders.length + " order" + (orders.length > 1 ? "s" : "") + " for the next opening",
       fresh.some(e => e.kind === "DIVIDEND") && "dividend", fresh.some(e => e.kind === "PLAN") && "new 5 × ₱50,000 plan"].filter(Boolean).join(" · ") + " — total " + peso(T.total);
     const r = await paperSendEmail(env, subject, paperEmailText(S, fresh)); out.push(r);
     if (r === "emailed" || r === "emails off" || fresh[0].at < Date.now() - 3 * 864e5) S.emailed = Math.max(...fresh.map(e => e.id));   // Gmail down: try again next hour (up to 3 days)
@@ -3955,7 +3957,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {shortSym, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
