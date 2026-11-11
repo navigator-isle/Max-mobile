@@ -627,6 +627,7 @@ body.on-home.has-dash .edge-tabs{display:flex}
       <button id="organizeBtn" class="pill">Organize with Max</button>
       <button id="restoreBackup" class="pill">⟲ Restore from a Max backup (.json)</button>
       <button id="codeBackupBtn" class="pill">⬇ Download all of Max's code (.zip)</button>
+      <button id="offlineBrainBtn" class="pill">🧠 Offline brain (answers without internet)</button>
     </div>
     <div class="vault-bar" role="toolbar" aria-label="Vault actions">
       <button id="newNote" title="New note" aria-label="New note">✎</button>
@@ -2073,11 +2074,93 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const top=scored.filter(x=>x.v>0).sort((a,b)=>b.v-a.v||a.i-b.i).slice(0,max).sort((a,b)=>a.i-b.i).map(x=>x.s);
   return (top.length?top:sents.slice(0,max)).join(' ').slice(0,700);
  }
- function offlineAnswer(q){
-  const found=rankNotes(q,3);
-  if(!found.length)return {text:'I’m offline right now, so I can’t think that one through. Your notes and screen commands still work — try “show my notes”, or ask about something in your notes.',refs:[]};
-  const n=found[0];
-  return {text:'I’m offline, but your note “'+(n.title||'Untitled')+'” says: '+bestSentences(plain(n.body),q,3),refs:found.map(x=>x.title)};
+ // ---------- offline (11 Nov 2026, Mark): find the exact part of a note, then Max's offline brain explains it ----------
+ // 1) Section search on the phone — every note (incl. saved PDF text and video summaries) split at its headings.
+ const SEC={key:'',secs:[],df:null};
+ function noteSections(){
+  const notes=getNotes().filter(n=>!n.deleted&&n.category!==SKILL_CAT);
+  const key=notes.length+':'+notes.reduce((m,n)=>Math.max(m,n.updatedAt||0),0);if(SEC.key===key)return SEC;
+  const secs=[];
+  for(const n of notes){const html=String(n.body||'')+(n.analysis?.summary?'<p><b>Max’s summary</b></p><p>'+escHtml(n.analysis.summary)+'</p>':'');
+   const parts=html.split(/(?=<p><(?:b|strong)>)|(?=<hr\b)|(?=<h[1-4]\b)/i);let cur=null;
+   const push=()=>{if(cur&&cur.text.trim())secs.push(cur)};
+   for(const h of parts){const head=(/^<p><(?:b|strong)>(.*?)<\/(?:b|strong)>/i.exec(h)||/^<h[1-4][^>]*>(.*?)<\/h/i.exec(h)||[])[1];const tx=plain(h).trim();if(!tx)continue;
+    if(!cur||head||cur.text.length>1500){push();cur={n,head:head?plain(head).slice(0,120):(cur?.head||''),text:tx}}else cur.text+='\n'+tx}
+   push()}
+  for(const s of secs)s.low=(s.text+' '+(s.n.title||'')+' '+(s.n.tags||[]).join(' ')).toLowerCase();
+  SEC.key=key;SEC.secs=secs;SEC.df=new Map();return SEC;
+ }
+ function searchSections(q,k=4){
+  const ws=excerptWords(q);if(!ws.length)return [];
+  const S=noteSections(),N=S.secs.length||1,hit=(hay,w)=>hay.includes(w)||(w.length>4&&hay.includes(w.slice(0,-1)))||(w.length>5&&hay.includes(w.slice(0,-2)));
+  const idf=w=>{if(!S.df.has(w))S.df.set(w,S.secs.reduce((a,s)=>a+(hit(s.low,w)?1:0),0));const d=S.df.get(w);return Math.log(1+(N-d+0.5)/(d+0.5))};
+  const scored=[];
+  for(const s of S.secs){let v=0,m=0;const t=(s.n.title||'').toLowerCase(),h=(s.head||'').toLowerCase();
+   for(const w of ws){if(!hit(s.low,w))continue;m++;const tf=s.low.split(w).length-1;v+=idf(w)*(tf*2.2/(tf+1.2))+(hit(t,w)?1.5:0)+(hit(h,w)?1:0)}
+   if(m)scored.push({...s,score:v*(0.5+m/ws.length)})}
+  scored.sort((a,b)=>b.score-a.score);const out=[],per={};
+  for(const s of scored){if((per[s.n.id]=(per[s.n.id]||0)+1)>2)continue;out.push(s);if(out.length>=k)break}
+  return out.filter(s=>s.score>=out[0]?.score*0.35);
+ }
+ // 2) Max's offline brain: Google's Gemma 4 (small) running inside Chrome on the phone, downloaded once on Wi-Fi.
+ //    Chrome's own built-in AI is used instead if the phone has it and Gemma isn't downloaded.
+ const OB_KEY='max_offline_brain',OB_MODELS=['gemma-4-E2B-it-q4f16_1-MLC','gemma-4-E2B-it-q4f32_1-MLC'];
+ let obEngine=null,obLoading=null;
+ const obLib=()=>import('./web-llm.js');
+ async function obChromeAI(){try{if(self.LanguageModel&&typeof LanguageModel.availability==='function')return (await LanguageModel.availability())==='available'}catch{}return false}
+ async function obPickModel(){
+  if(!navigator.gpu)throw new Error('Chrome on this phone has no WebGPU (update Chrome)');
+  const a=await navigator.gpu.requestAdapter();if(!a)throw new Error('Chrome can’t use this phone’s graphics chip');
+  return a.features.has('shader-f16')?OB_MODELS[0]:OB_MODELS[1];
+ }
+ function obState(){return jget(OB_KEY,null)}
+ async function obGet(){
+  if(obEngine)return obEngine;const st=obState();
+  if(st?.ready){if(!obLoading)obLoading=obLib().then(lib=>lib.CreateMLCEngine(st.model,{initProgressCallback:()=>{}})).then(e=>obEngine=e).catch(e=>{obLoading=null;throw e});return obLoading}
+  return (await obChromeAI())?'chrome':null;
+ }
+ async function obAsk(system,user){
+  const e=await obGet();if(!e)return null;
+  if(e==='chrome'){const s=await LanguageModel.create({initialPrompts:[{role:'system',content:system}]});try{return String(await s.prompt(user)).trim()}finally{try{s.destroy()}catch{}}}
+  const r=await e.chat.completions.create({messages:[{role:'system',content:system},{role:'user',content:user}],temperature:0.2,max_tokens:450});
+  return String(r.choices?.[0]?.message?.content||'').replace(/<think>[\s\S]*?<\/think>/g,'').trim();
+ }
+ async function offlineBrainSetup(force){
+  const st=obState();if(st?.ready&&!force)return 'Your offline brain is already on this phone ('+st.model.split('-q')[0]+', downloaded '+localDate(new Date(st.at))+'). When there’s no internet I use it automatically.';
+  if(isOffline())return 'I need internet once to download the offline brain (about 3 GB). Ask me again when you have Wi-Fi.';
+  if(navigator.connection?.type==='cellular'&&force!=='anyway')return 'You’re on mobile data. The offline brain is about 3 GB — better on Wi-Fi. Say “download offline brain anyway” if you’re sure.';
+  let model;try{model=await obPickModel()}catch(e){return (await obChromeAI())?'I can’t run Gemma here ('+e.message+'), but Chrome’s own built-in AI works on this phone, so I’ll use that when offline.':'This phone can’t run the offline brain: '+e.message+'. Offline note search still works.'}
+  try{await navigator.storage?.persist?.()}catch{}
+  setSection('display');$('dispTitle').textContent='Downloading Max’s offline brain';$('dispSub').textContent='Gemma 4 (Google) · about 3 GB, once · keep Max open';$('dispBody').replaceChildren();
+  const bar=document.createElement('progress');bar.max=1;bar.value=0;bar.style.width='100%';const line=document.createElement('p');$('dispBody').append(bar,line);
+  try{
+   const lib=await obLib();try{await caches.open('max-offline-lib').then(c=>c.add('./web-llm.js'))}catch{}
+   obEngine=await lib.CreateMLCEngine(model,{initProgressCallback:p=>{bar.value=p.progress||0;line.textContent=String(p.text||'').replace(/\[.*?\]\s*/,'')}});
+   jset(OB_KEY,{model,ready:true,at:Date.now()});
+   const test=await obAsk('Reply in one short sentence.','Say: offline brain ready.');
+   $('dispSub').textContent='Ready ✓';line.textContent='Test answer: '+test;
+   return 'Done — your offline brain is on this phone. When there’s no internet, I’ll find the right part of your notes and explain it with it.';
+  }catch(e){$('dispSub').textContent='Download stopped';line.textContent=String(e.message||e);return 'The download didn’t finish ('+String(e.message||e).slice(0,160)+'). Ask me again on good Wi-Fi — it continues where it stopped.'}
+ }
+ async function offlineBrainRemove(){
+  const st=obState();if(!st)return 'There’s no offline brain on this phone.';
+  try{if(obEngine&&obEngine.unload)await obEngine.unload()}catch{}obEngine=null;obLoading=null;
+  try{const lib=await obLib();await lib.deleteModelAllInfoInCache(st.model)}catch{}
+  jset(OB_KEY,null);return 'Removed the offline brain from this phone. Offline note search still works.';
+ }
+ const OB_SYS='You are Max, the personal assistant of Mark Jun, a Filipino ship officer (not a native English speaker). You are running OFFLINE on his phone with no internet. Answer in short, simple English. When the note parts below answer the question, use ONLY them and name the note. Never invent regulation numbers, dates or figures that are not in the notes. If the notes do not answer it, say so in one line and give your best short general answer, marked as unchecked.';
+ async function offlineAnswer(q){
+  const secs=searchSections(q,4),refs=[...new Set(secs.map(s=>s.n.title||'Untitled'))];
+  const ctx=secs.map(s=>'### '+(s.n.title||'Untitled')+(s.head?' — '+s.head:'')+'\n'+s.text.slice(0,1600)).join('\n\n').slice(0,6000);
+  if(obState()?.ready||obEngine||await obChromeAI()){
+   try{status('Thinking offline…');
+    const a=await Promise.race([obAsk(OB_SYS,(ctx?'NOTE PARTS:\n'+ctx+'\n\n':'(No matching notes.)\n\n')+'QUESTION: '+q),new Promise((_,no)=>setTimeout(()=>no(new Error('slow')),120000))]);
+    if(a)return {text:a+(secs.length?'':' (Offline answer — I’ll check it with my main brain when we’re back online.)'),refs,ai:true,fromNotes:secs.length>0};
+   }catch(e){console.warn('offline brain',e)}
+  }
+  if(!secs.length)return {text:'I’m offline right now, so I can’t think that one through. Your notes and screen commands still work — try “show my notes”, or ask about something in your notes.',refs:[]};
+  const s=secs[0];
+  return {text:'I’m offline, but your note “'+(s.n.title||'Untitled')+'”'+(s.head&&s.head!==s.n.title?' ('+s.head+')':'')+' says: '+bestSentences(s.text,q,3),refs,fromNotes:true};
  }
  function readNote(n){
   loadNote(n.id);
@@ -2410,6 +2493,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   {const m=raw.match(/\b(?:update|edit|improve|expand|complete|correct|fix|add (?:more |details? )?to)\s+(?:my |the |ang |yung )?(?:note\s+(?:about|on|for)\s+)?(.+?)\s+note\b[\s,:-]*(.*)$/i)||raw.match(/\b(?:update|edit|improve|expand|complete|correct|fix)\s+(?:my |the )?note\s+(?:about|on|for|called|titled)\s+(.+?)(?:\s*[,:-]\s*|\s+(?:with|and|to|by)\s+)(.+)$/i);
    if(m&&m[1]&&findNote(m[1].trim()))return {type:'improve_note',query:m[1].trim(),details:{instruction:(m[2]||'').trim()}}}
   if(has(/\bundo\b/)&&has(/\bnote\b/)&&has(/\b(change|edit|update)\b/))return {type:'undo_note_change'};
+  if(has(/\boffline\s+(brain|ai|model|mode)\b/))return {type:'offline_brain',query:has(/\b(remove|delete|uninstall|tanggal)\b/)?'remove':has(/\banyway\b/)?'anyway':has(/\b(download|install|set ?up|get|add|update)\b/)?'setup':'status'};
   if(has(/\b(new|create|make|start|write|add|gumawa)\b\s+(a\s+)?(new\s+)?note\b/)){const m=raw.match(/\b(?:about|called|titled|named|on|for)\s+(.+)$/i);return {type:'new_note',query:m?m[1].replace(/[?.!]+$/,'').trim():''}}
   if(has(/\b(read|basahin|read out|read aloud)\b/)&&(has(/\bnotes?\b/)||screen==='editor'&&wc<=5)){
    const m=raw.match(/\b(?:read|basahin)\b(?:\s+(?:me|out|aloud|to me|mo|nga))*\s+(?:my |the |ang |yung )?(.+?)\s+notes?\b/i)||raw.match(/\bnotes?\s+(?:about|on|for|tungkol sa)\s+(.+?)[?.!]*$/i);
@@ -2970,6 +3054,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return 'Discarded. Nothing was saved.';
  }
  $('attachBtn').onclick=()=>{$('attachSheet').hidden=false;$('linkInput').value=''};
+ $('offlineBrainBtn').onclick=async()=>{$('vaultMore').hidden=true;const s=await offlineBrainSetup(false);setSub('',s);speak(s)};
  $('attachPick').onclick=()=>{$('attachSheet').hidden=true;$('attachInput').click()};
  $('attachClose').onclick=()=>{$('attachSheet').hidden=true};
  $('attachSheet').addEventListener('click',e=>{if(e.target===$('attachSheet'))$('attachSheet').hidden=true});
@@ -5272,6 +5357,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'attach_file':$('attachBtn').classList.add('pulse');setTimeout(()=>$('attachBtn').classList.remove('pulse'),6000);return 'Tap the 📎 at the top, then pick a file, photo, video or recording — or paste a link. I’ll read it for you.';
    case 'save_attachment':return saveAttachment();
    case 'undo_note_change':return undoNoteChange();
+   case 'offline_brain':if(a.query==='remove')return await offlineBrainRemove();if(a.query==='status'){const st=obState();return st?.ready?'Your offline brain ('+st.model.split('-q')[0]+') is on this phone. Without internet I find the right part of your notes and explain it with it.':(await obChromeAI())?'Chrome’s built-in AI is ready on this phone for offline answers. Say “download offline brain” for Gemma, which is usually better.':'No offline brain yet. Say “download offline brain” on Wi-Fi (about 3 GB, once). Offline note search already works.'}return await offlineBrainSetup(a.query==='anyway'?'anyway':false);
    case 'discard_attachment':return discardAttachment();
    case 'show_attachment':if(!attachFresh())return 'There’s no file open. Tap the 📎 at the top to send me one.';renderAttachment();return 'Here’s the file again.';
    case 'display':return await displayThing(a.query||a.details?.topic||raw);
@@ -5405,7 +5491,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   }catch(e){console.error('Command failed',e)}
   const base=workerBase();
   if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.',finish);return}
-  if(navigator.onLine===false){const o=offlineAnswer(q);if(!o.refs.length)o.text=queuedReply(q,null)+' Meanwhile your notes and commands still work.';talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
+  if(navigator.onLine===false){const o=await offlineAnswer(q);if(!o.fromNotes)o.text=(o.ai?o.text+' ':'')+queuedReply(q,null)+(o.ai?'':' Meanwhile your notes and commands still work.');talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:await notesContextSmart(q),projects:projects().map(p=>p.name),skills:relevantSkills(q),personality:personality(),lastDept:deskHint(),...(voice&&heardFor(q)?{heard:heardFor(q)}:{}),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
@@ -5428,7 +5514,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(remembered)setTimeout(()=>{$('memoryBadge').textContent='✓ Noted in memory';$('memoryBadge').hidden=false;setTimeout(()=>$('memoryBadge').hidden=true,5000)},200);
   }catch(err){
    $('maxOrb').classList.remove('processing');
-   if(err.offline){cloud.state='offline';cloud.memory=false;const o=offlineAnswer(q);if(!o.refs.length)o.text=queuedReply(q,null)+' Meanwhile your notes and commands still work.';refreshConnectionLabel();talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
+   if(err.offline){cloud.state='offline';cloud.memory=false;const o=await offlineAnswer(q);if(!o.fromNotes)o.text=(o.ai?o.text+' ':'')+queuedReply(q,null)+(o.ai?'':' Meanwhile your notes and commands still work.');refreshConnectionLabel();talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
    endConversation(null);showAnswer('I could not reach my AI service. '+err.message,finish)}
   });
  }

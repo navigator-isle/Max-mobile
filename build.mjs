@@ -4,12 +4,13 @@
 // Run: node build.mjs   (deploy.sh / deploy.bat and "npx wrangler deploy" run it for you)
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const APP = ['index.html', 'privacy.html', 'manifest.webmanifest', 'sw.js', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
+const APP = ['index.html', 'privacy.html', 'manifest.webmanifest', 'sw.js', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'web-llm.js'];
 const EXTRA = ['worker.js', 'updater.js', 'UPDATE-NOTES.json', 'UPDATE-STEPS.md', 'wrangler.jsonc', 'build.mjs', 'deploy.sh', 'deploy.bat', 'HANDOFF.md', 'DEPLOY.md', 'SETUP.md', 'README.md', 'README.txt', '.gitignore'];
 const dirFiles = d => fs.existsSync(path.join(ROOT, d)) ? fs.readdirSync(path.join(ROOT, d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? dirFiles(d + '/' + e.name) : [d + '/' + e.name]) : [];
 // Never pack secrets or local junk.
 const SKIP = /(^|\/)(\.env|\.dev\.vars|node_modules|\.wrangler|site|test-results)(\/|$)|\.(p12|jks|keystore|pem|key)$/i;
-const files = [...APP, ...EXTRA, ...dirFiles('trader'), ...dirFiles('tests'), ...dirFiles('.github')].filter(f => fs.existsSync(path.join(ROOT, f)) && !SKIP.test(f));
+// web-llm.js (6.8 MB, @mlc-ai/web-llm 0.2.88 from npm/jsDelivr) is left out of the code backup so the backup email stays under Gmail's 25 MB
+const files = [...APP.filter(f => f !== 'web-llm.js'), ...EXTRA, ...dirFiles('trader'), ...dirFiles('tests'), ...dirFiles('.github')].filter(f => fs.existsSync(path.join(ROOT, f)) && !SKIP.test(f));
 
 const T = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; T[n] = c >>> 0; }
 const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = T[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };

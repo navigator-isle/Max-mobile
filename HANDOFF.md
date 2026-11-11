@@ -92,3 +92,10 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Attachments auto-file (`autoFileAttachment`): same-subject note (same title, or same folder + ≥60% title words) gets an "Update <date>" section, else a new note. "Discard" undoes (`lastFiled`). Setting `max_autofile` false turns it off.
 - Meaning search: notes over ~3,200 chars also get section vectors (`vecChunks`, ≤24 × ~1,500 chars); score = best of note and sections. Index version `V.ver = 2` re-indexes once.
 - Phone app auto-deploy: the last workflow step unzips max-app.zip (never site/_src) and runs `wrangler pages deploy --project-name max-app`. Needs "Cloudflare Pages: Edit" on CLOUDFLARE_API_TOKEN or a PAGES_API_TOKEN secret; it only warns if missing.
+
+## Offline brain (18m app, 11 Nov 2026)
+- `searchSections(q)` — BM25-style search over note sections (split at bold headings / h1-4 / hr, ≤~1,500 chars), max 2 sections per note. Used by `offlineAnswer(q)` (now async) whenever the phone is offline or the chat call fails with a network error.
+- Offline brain: `web-llm.js` (= @mlc-ai/web-llm 0.2.88, Apache-2.0, self-contained ESM, loaded only on demand) runs `gemma-4-E2B-it-q4f16_1-MLC` (q4f32 if the GPU lacks shader-f16), 2.8 GB from huggingface.co/mlc-ai + wasm from raw.githubusercontent.com. State in localStorage `max_offline_brain`. Chrome's built-in `LanguageModel` (Prompt API) is used if available and Gemma isn't downloaded.
+- Commands: "download offline brain" (+ "anyway" on mobile data), "offline brain status", "remove offline brain"; button in Notes ⋯ menu.
+- sw.js v4: only deletes old `max-app-*` caches (never `webllm/*` model caches); serves `web-llm.js` cache-first from `max-offline-lib`.
+- Tested: e2e43 with a stand-in engine; the real library loads in Chromium. A real model run needs Mark's phone (WebGPU) — not tested here.

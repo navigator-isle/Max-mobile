@@ -1,13 +1,13 @@
 // Max offline support: keeps the app on the phone so it opens without internet.
 // The page is always fetched fresh when online (so updates arrive), and the saved copy is used offline.
-const CACHE = "max-app-v3";
+const CACHE = "max-app-v4";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== "max-share").map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith("max-app-") && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener("fetch", e => {
   const req = e.request, url = new URL(req.url);
@@ -30,6 +30,12 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (req.method !== "GET" || url.origin !== self.location.origin) return; // Max's AI calls always go to the network
+  // the offline brain's program (web-llm.js): saved once, then used from the phone even without internet
+  if (url.pathname.endsWith("/web-llm.js")) {
+    e.respondWith((async () => { const c = await caches.open("max-offline-lib"), hit = await c.match("./web-llm.js");
+      if (hit) return hit; const r = await fetch(req); if (r.ok) c.put("./web-llm.js", r.clone()); return r; })());
+    return;
+  }
   if (url.searchParams.has("v")) return; // Max checking for a new version: always ask the website itself
   const isPage = req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html");
   if (!isPage) return;

@@ -88,4 +88,5 @@ run "Phone: price on a past date" tests/e2e39.mjs "$PWD/index.html" "$TMP/worker
 run "Phone: 1,100 trading notes, large storage, sync only changes" tests/e2e40.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: home panels (paper trading, investment guide, money plan)" tests/e2e41.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: notes Max researches (create, update, undo)" tests/e2e42.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: offline note search + offline brain" tests/e2e43.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }
