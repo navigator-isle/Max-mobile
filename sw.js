@@ -1,6 +1,6 @@
 // Max offline support: keeps the app on the phone so it opens without internet.
 // The page is always fetched fresh when online (so updates arrive), and the saved copy is used offline.
-const CACHE = "max-app-v4";
+const CACHE = "max-app-v5";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png"];
 
 self.addEventListener("install", e => {
@@ -30,10 +30,10 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (req.method !== "GET" || url.origin !== self.location.origin) return; // Max's AI calls always go to the network
-  // the offline brain's program (web-llm.js): saved once, then used from the phone even without internet
-  if (url.pathname.endsWith("/web-llm.js")) {
-    e.respondWith((async () => { const c = await caches.open("max-offline-lib"), hit = await c.match("./web-llm.js");
-      if (hit) return hit; const r = await fetch(req); if (r.ok) c.put("./web-llm.js", r.clone()); return r; })());
+  // the offline brain (web-llm.js) and the old-Office reader (sheetjs.js): saved once, then used from the phone even without internet
+  if (/\/(web-llm|sheetjs)\.js$/.test(url.pathname)) {
+    e.respondWith((async () => { const c = await caches.open("max-offline-lib"), key = "./" + url.pathname.split("/").pop(), hit = await c.match(key);
+      if (hit) return hit; const r = await fetch(req); if (r.ok) c.put(key, r.clone()); return r; })());
     return;
   }
   if (url.searchParams.has("v")) return; // Max checking for a new version: always ask the website itself

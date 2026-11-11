@@ -33,7 +33,7 @@ const sW = http.createServer(async (req, res) => { const c = []; for await (cons
   const r = await worker.fetch(new Request(WK + req.url, { method: req.method, headers: req.headers, body: ["GET", "HEAD", "OPTIONS"].includes(req.method) ? undefined : Buffer.concat(c) }), env);
   res.writeHead(r.status, Object.fromEntries(r.headers)); res.end(Buffer.from(await r.arrayBuffer())); }).listen(8841);
 const dir = path.dirname(pagePath);
-const sP = http.createServer((q, r) => { const f = q.url.split("?")[0].endsWith("sw.js") ? "sw.js" : "index.html"; r.writeHead(200, { "Content-Type": f === "sw.js" ? "text/javascript" : "text/html" }); r.end(fs.readFileSync(path.join(dir, f))); }).listen(8055);
+const sP = http.createServer((q, r) => { const u = q.url.split("?")[0], f = u.endsWith("sw.js") ? "sw.js" : u.endsWith("sheetjs.js") ? "sheetjs.js" : "index.html"; r.writeHead(200, { "Content-Type": f.endsWith(".js") ? "text/javascript" : "text/html" }); r.end(fs.readFileSync(path.join(dir, f))); }).listen(8055);
 let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
 const b = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), args: ["--no-sandbox"] });
 const mock = () => { window.__spoken = []; window.__q = []; window.__opened = [];
@@ -80,7 +80,7 @@ await p.click("#miniHome");
 
 const before = seen.length;
 await send("old.doc", "application/msword", Buffer.from("x"));
-ok(seen.length === before && /save it as .docx or PDF/.test(await answer()), "old .doc: explains how to save it so Max can read it", await answer());
+ok(seen.length === before && /old Word document seems damaged or locked/.test(await answer()), "old .doc (11 Nov 2026: now read on the phone) — a broken one is explained, nothing sent", await answer());
 
 // video
 await send("drill.mp4", "video/mp4", Buffer.alloc(120000, 3));

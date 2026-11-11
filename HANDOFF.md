@@ -99,3 +99,10 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Commands: "download offline brain" (+ "anyway" on mobile data), "offline brain status", "remove offline brain"; button in Notes ⋯ menu.
 - sw.js v4: only deletes old `max-app-*` caches (never `webllm/*` model caches); serves `web-llm.js` cache-first from `max-offline-lib`.
 - Tested: e2e43 with a stand-in engine; the real library loads in Chromium. A real model run needs Mark's phone (WebGPU) — not tested here.
+
+## Folders, old Office files, folder import (app, 11 Nov 2026)
+- Old Office: `sheetjs.js` = SheetJS CE 0.20.3 (cdn.sheetjs.com, Apache-2.0), loaded on demand by `sheetLib()`. `oldDocText` (Word 97 piece table via XLSX.CFB), `oldPptText` (TextChars/TextBytes atoms, masters skipped), `oldSheetText` (xls/xlsb/ods → CSV). Fixtures in tests/fixtures/old-office (made with LibreOffice).
+- `maxReadFile(f)` is the one way to read a file (used by 📎 and by import); `fileProblem(f)` gives the size/type message.
+- Folder ⋯ menu (`openFolderSheet`): `folderAdd`, `folderRename(from,to)` (moves notes + subfolders; "/" or ">" work as separators), `folderDelete(path, withNotes)` (keep notes → moved up one level). Editor has a folder `<select>` (`fillFolderPick`).
+- Import: `importStart(entries, base)` expands .zip files (one top folder → kept; loose files → zip name becomes the folder), skips junk (__MACOSX, .DS_Store, ~$ files), stores each file in Cache `max-import` and the job in localStorage `max_import_job`; `importRun()` reads one file at a time, pauses when offline and resumes on reconnect / app start / "continue import". Notes: source 'import', title = file name, category = base + zip/folder path; same file in the same folder again → note updated. Pictures are stored in the media DB and shown in the note.
+- sw.js v5: web-llm.js and sheetjs.js are cache-first in `max-offline-lib` — change the file name (or that cache) when updating either library.

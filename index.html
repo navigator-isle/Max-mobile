@@ -474,6 +474,13 @@ body.on-home.has-dash .edge-tabs{display:flex}
 .jk{font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 6px;background:#13304a;color:#9fc6e6}.jk.BUY{background:#0f3b2c;color:#4fd1a5}.jk.PLAN{background:#2a2350;color:#c9b8ff}.jk.SELL{background:#3b1717;color:#ff9a9a}.jk.ORDER{background:#3a2a0c;color:#f7c76a}.jk.DIVIDEND{background:#24204a;color:#c7b8ff}
 .jcopy{color:#e8f3ff}.jout{color:#9fb6cc}.st-row{border:1px solid #16314a;border-radius:14px;padding:10px 12px;background:#0a1826;display:flex;flex-direction:column;gap:4px}.st-row h3{margin:0;font-size:1rem;color:#fff;display:flex;justify-content:space-between}
 .st-k{color:#9fb6cc;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;margin-top:4px}.tile-line{font-size:.8rem;padding:2px 0;border-top:1px solid #16314a;color:#e8f3ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f-menu{margin-left:6px;padding:0 8px;border:0;background:transparent;color:inherit;font-size:18px;line-height:1;cursor:pointer;opacity:.75}
+.fs-col{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.fs-col[hidden]{display:none!important}
+.f-count.zero+.f-menu{margin-left:auto}
+#folderSheet .quick-sheet{max-height:88vh;overflow-y:auto}
+#editorFolderPick{width:100%;margin-bottom:6px;font:inherit;padding:8px;border-radius:10px}
+.imp-row{display:flex;gap:8px;font-size:14px;padding:3px 0;border-bottom:1px solid rgba(127,127,127,.15)}.imp-row .s{width:1.4em;flex:none}
 </style></head>
 <body>
 <div id="movedNote" hidden style="background:#3a2a05;color:#ffe9a8;padding:8px 12px;font:13px system-ui;text-align:center">Max now lives on Cloudflare: <a style="color:#ffd76a" href="https://max-app-axv.pages.dev/">max-app-axv.pages.dev</a> — open it and add it to your home screen.</div>
@@ -521,7 +528,7 @@ body.on-home.has-dash .edge-tabs{display:flex}
   <header class="topbar">
     <div class="brand">MAX</div>
     <div style="display:flex;align-items:center;gap:8px"><div class="top-status" id="globalStatus">Local mode</div><button id="attachBtn" class="icon-btn" aria-label="Send Max a file or photo" title="Send Max a file or photo">📎</button><button id="openConnection" class="icon-btn" aria-label="Settings" title="Settings">⚙</button></div>
-    <input id="attachInput" type="file" accept="image/*,video/*,audio/*,application/pdf,.pdf,.zip,application/zip,.txt,.md,.csv,.json,.html,.htm,.heic,.heif,.docx,.xlsx,.xlsm,.pptx,.doc,.xls,.ppt,.mp3,.m4a,.wav,.ogg,.aac,.amr,.mp4,.mov,.webm,.3gp" hidden>
+    <input id="attachInput" type="file" accept="image/*,video/*,audio/*,application/pdf,.pdf,.zip,application/zip,.txt,.md,.csv,.json,.html,.htm,.heic,.heif,.docx,.xlsx,.xlsm,.pptx,.doc,.dot,.xls,.xlsb,.ods,.ppt,.pps,.mp3,.m4a,.wav,.ogg,.aac,.amr,.mp4,.mov,.webm,.3gp" hidden>
   </header>
 
   <!-- Max minimized: shown on every screen except the circle screen. Keeps talking and showing subtitles. -->
@@ -628,6 +635,7 @@ body.on-home.has-dash .edge-tabs{display:flex}
       <button id="restoreBackup" class="pill">⟲ Restore from a Max backup (.json)</button>
       <button id="codeBackupBtn" class="pill">⬇ Download all of Max's code (.zip)</button>
       <button id="offlineBrainBtn" class="pill">🧠 Offline brain (answers without internet)</button>
+      <button id="importRootBtn" class="pill">📥 Add files or a whole folder (e.g. a manual)</button>
     </div>
     <div class="vault-bar" role="toolbar" aria-label="Vault actions">
       <button id="newNote" title="New note" aria-label="New note">✎</button>
@@ -670,7 +678,8 @@ body.on-home.has-dash .edge-tabs{display:flex}
       <input id="editorTitle" placeholder="Title" aria-label="Note title">
       <details class="meta-fold"><summary id="metaSummary">📁 Unsorted</summary>
         <div class="editor-meta">
-          <input id="editorCategory" list="topicList" placeholder="Folder, e.g. Maritime › IMO › Conventions" aria-label="Folder" value="Unsorted">
+          <select id="editorFolderPick" aria-label="Choose a folder"></select>
+          <input id="editorCategory" list="topicList" placeholder="Folder, e.g. Maritime › IMO › Conventions (or SMS / CSM SMS)" aria-label="Folder" value="Unsorted">
           <input id="editorTags" placeholder="Tags, separated by commas" aria-label="Tags">
         </div>
       </details>
@@ -701,11 +710,33 @@ body.on-home.has-dash .edge-tabs{display:flex}
 <datalist id="topicList"></datalist>
 
 <!-- Hold the circle (or say "menu") for these -->
+<div id="folderSheet" class="quick-menu" hidden>
+  <div class="quick-sheet att-sheet">
+    <h2 id="fsTitle">Folder</h2><p id="fsInfo" class="muted small"></p>
+    <div id="fsMain" class="fs-col">
+      <button id="fsNewNote" class="pill">✎ New note in this folder</button>
+      <button id="fsNewSub" class="pill">🗀 New folder inside</button>
+      <button id="fsImport" class="pill pill-ok">📥 Add files or a whole folder</button>
+      <button id="fsRename" class="pill">✏️ Rename or move</button>
+      <button id="fsDelete" class="pill">🗑 Delete folder</button>
+    </div>
+    <div id="fsAsk" class="fs-col" hidden><label id="fsAskLabel" class="muted small" for="fsInput"></label><input id="fsInput" class="field" enterkeyhint="done"><button id="fsOk" class="pill pill-ok">OK</button></div>
+    <div id="fsDel" class="fs-col" hidden><p id="fsDelText"></p><button id="fsDelUp" class="pill"></button><button id="fsDelAll" class="pill"></button></div>
+    <div id="fsImp" class="fs-col" hidden>
+      <button id="fsPickFolder" class="pill pill-ok">🗂 Pick a folder</button>
+      <button id="fsPickFiles" class="pill">📄 Pick files or a .zip</button>
+      <p class="muted small">Max reads every PDF, Word, Excel, PowerPoint, picture and video inside, and keeps the same folders. If “Pick a folder” doesn’t work on your phone: in My Files, long-press the folder → Compress (.zip), then use “Pick files or a .zip”.</p>
+    </div>
+    <button id="fsClose" class="pill">Close</button>
+  </div>
+</div>
+<input id="importFilesInput" type="file" multiple hidden>
+<input id="importFolderInput" type="file" multiple webkitdirectory hidden>
 <div id="attachSheet" class="quick-menu" hidden>
   <div class="quick-sheet att-sheet">
     <h2>Send Max something</h2>
     <button id="attachPick" class="pill pill-ok">📎 Photo, file, video or recording</button>
-    <p class="muted small">PDF, Word, Excel, PowerPoint, photos, screenshots, videos, voice recordings, text.</p>
+    <p class="muted small">PDF, Word, Excel, PowerPoint (new and old), photos, screenshots, videos, voice recordings, text — or a .zip of a whole folder.</p>
     <div class="res-edit-row"><input id="linkInput" class="field" type="url" inputmode="url" placeholder="…or paste a website or YouTube link" aria-label="Web or YouTube link"><button id="linkGo" class="pill">Read</button></div>
     <button id="attachClose" class="pill">Close</button>
   </div>
@@ -1410,7 +1441,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    const count=n=>n.notes.length+[...n.folders.values()].reduce((s,f)=>s+count(f),0);
    [...node.folders.values()].filter(f=>!q||count(f)>0).sort((a,b)=>byName(a.name,b.name)).forEach(f=>{
     const det=document.createElement('details');det.className='topic tree-folder';det.dataset.path=f.path;det.open=!!q||fresh||open.has(f.path);
-    const sum=document.createElement('summary');if(f.path===selFolder)sum.className='sel';const nm=document.createElement('span');nm.textContent=f.name;const cnt=document.createElement('span');const cf=count(f);cnt.className='f-count'+(cf?'':' zero');cnt.textContent=cf;sum.append(nm,cnt);det.append(sum);
+    const sum=document.createElement('summary');if(f.path===selFolder)sum.className='sel';const nm=document.createElement('span');nm.textContent=f.name;const cnt=document.createElement('span');const cf=count(f);cnt.className='f-count'+(cf?'':' zero');cnt.textContent=cf;const fm=document.createElement('button');fm.type='button';fm.className='f-menu';fm.textContent='⋯';fm.title='Folder options';fm.setAttribute('aria-label','Options for folder '+f.name);fm.onclick=e=>{e.preventDefault();e.stopPropagation();openFolderSheet(f.path)};
+    sum.append(nm,cnt,fm);det.append(sum);
     det.addEventListener('toggle',()=>{if(q||fresh&&det.open&&!det.dataset.touched)return;const o=fresh&&localStorage.getItem(TREE_OPEN)===null?new Set([...list.querySelectorAll('details[open]')].map(d=>d.dataset.path)):openSet();det.open?o.add(f.path):o.delete(f.path);jset(TREE_OPEN,[...o])});
     sum.addEventListener('click',()=>{selFolder=f.path;list.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));sum.classList.add('sel')});
     const kids=document.createElement('div');kids.className='tree-kids';draw(f,kids);det.append(kids);parent.append(det);
@@ -1431,6 +1463,68 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('newFolder').onclick=()=>{$('newFolderRow').hidden=false;$('newFolderName').value=selFolder?selFolder+' › ':'';$('newFolderName').focus()};
  const addFolder=()=>{const v=splitPath($('newFolderName').value).join(' › ');$('newFolderRow').hidden=true;if(!v)return;const l=jget(FOLDERS,[]);if(!l.includes(v))l.push(v);jset(FOLDERS,l);const o=openSet();splitPath(v).forEach((_,i,a)=>o.add(a.slice(0,i+1).join(' › ')));jset(TREE_OPEN,[...o]);selFolder=v;renderList();status('Folder “'+v.split(' › ').pop()+'” added. ✎ makes a note inside it.')};
  $('newFolderOk').onclick=addFolder;$('newFolderName').onkeydown=e=>{if(e.key==='Enter')addFolder();if(e.key==='Escape')$('newFolderRow').hidden=true};
+ // ---------- folders made easy (11 Nov 2026, Mark): ⋯ on every folder → new note / folder inside / add files / rename or move / delete ----------
+ const pathOf=c=>splitPath(c).join(' › ');
+ const underPath=(p,base)=>p===base||p.startsWith(base+' › ');
+ function folderCount(path){return getNotes().filter(n=>underPath(pathOf(n.category),path)).length}
+ function folderAdd(path){const v=pathOf(path);if(!v)return '';const l=jget(FOLDERS,[]);if(!l.map(pathOf).includes(v))l.push(v);jset(FOLDERS,l);const o=openSet();splitPath(v).forEach((_,i,a)=>o.add(a.slice(0,i+1).join(' › ')));jset(TREE_OPEN,[...o]);return v}
+ function folderRename(from,to){
+  from=pathOf(from);to=pathOf(to);if(!from||!to||to===from)return 0;
+  if(underPath(to,from))throw new Error('A folder can’t go inside itself.');
+  const sw=c=>{const p=pathOf(c);return underPath(p,from)?to+p.slice(from.length):null};
+  const all=loadAll(),now=Date.now();let n=0;
+  for(const x of all){if(x.deleted)continue;const v=sw(x.category);if(v!==null){x.category=v;x.updatedAt=now;n++}}
+  putNotes(all);
+  jset(FOLDERS,[...new Set([...jget(FOLDERS,[]).map(f=>sw(f)??pathOf(f)),to])]);
+  jset(TREE_OPEN,[...new Set([...openSet()].map(f=>sw(f)??f))]);folderAdd(to);
+  if(selFolder&&sw(selFolder)!==null)selFolder=sw(selFolder);
+  return n;
+ }
+ function folderDelete(path,withNotes){
+  path=pathOf(path);const parent=splitPath(path).slice(0,-1).join(' › '),all=loadAll(),now=Date.now();let n=0;
+  const up=p=>{const rest=p.slice(path.length).replace(/^ › /,'');return [parent,rest].filter(Boolean).join(' › ')||'Unsorted'};
+  for(const x of all){if(x.deleted)continue;const p=pathOf(x.category);if(!underPath(p,path))continue;n++;x.updatedAt=now;if(withNotes)x.deleted=true;else x.category=up(p)}
+  putNotes(all);
+  jset(FOLDERS,jget(FOLDERS,[]).map(pathOf).flatMap(f=>underPath(f,path)?(withNotes||f===path?[]:[up(f)]):[f]));
+  if(selFolder&&underPath(selFolder,path))selFolder=parent;
+  return n;
+ }
+ let fsPath='';
+ function fsShow(part){for(const id of ['fsMain','fsAsk','fsDel','fsImp'])$(id).hidden=id!==part}
+ function openFolderSheet(path){
+  fsPath=path;selFolder=path;const c=folderCount(path);
+  $('fsTitle').textContent=path?'🗀 '+splitPath(path).at(-1):'📥 Add to your notes';$('fsInfo').textContent=path?path+' · '+c+' note'+(c===1?'':'s'):'Files go into new folders at the top of your notes.';
+  fsShow(path?'fsMain':'fsImp');$('folderSheet').hidden=false;
+ }
+ function fsAsk(label,value,onOk){$('fsAskLabel').textContent=label;$('fsInput').value=value;fsShow('fsAsk');$('fsOk').onclick=()=>onOk($('fsInput').value);$('fsInput').onkeydown=e=>{if(e.key==='Enter')onOk($('fsInput').value)};setTimeout(()=>$('fsInput').focus(),50)}
+ const fsDone=msg=>{$('folderSheet').hidden=true;renderList();savedBanner(msg)};
+ $('fsClose').onclick=()=>{$('folderSheet').hidden=true};
+ $('folderSheet').addEventListener('click',e=>{if(e.target===$('folderSheet'))$('folderSheet').hidden=true});
+ $('fsNewNote').onclick=()=>{$('folderSheet').hidden=true;selFolder=fsPath;createNewNote('');$('editorCategory').value=fsPath;metaSummary()};
+ $('fsNewSub').onclick=()=>fsAsk('Name of the new folder inside “'+splitPath(fsPath).at(-1)+'”','',v=>{const name=splitPath(v).join(' › ');if(!name)return;const full=folderAdd(fsPath+' › '+name);selFolder=full;fsDone('Folder added: '+full)});
+ $('fsRename').onclick=()=>fsAsk('New name — or a new place, like “SMS › CSM SMS” (use › or /)',fsPath,v=>{try{const n=folderRename(fsPath,v);fsDone('Folder is now “'+pathOf(v)+'”'+(n?' ('+n+' note'+(n===1?'':'s')+' moved)':''))}catch(e){$('fsAskLabel').textContent=e.message}});
+ $('fsDelete').onclick=()=>{const c=folderCount(fsPath),parent=splitPath(fsPath).slice(0,-1).join(' › ')||'the top level';
+  if(!c){folderDelete(fsPath,false);fsDone('Folder deleted.');return}
+  $('fsDelText').textContent='“'+splitPath(fsPath).at(-1)+'” has '+c+' note'+(c===1?'':'s')+'. What should happen to '+(c===1?'it':'them')+'?';
+  $('fsDelUp').textContent='Delete the folder, keep the notes (move them to '+parent+')';$('fsDelAll').textContent='🗑 Delete the folder AND its '+c+' note'+(c===1?'':'s');
+  $('fsDelUp').onclick=()=>{const n=folderDelete(fsPath,false);fsDone('Folder deleted; '+n+' note'+(n===1?'':'s')+' moved to '+parent+'.')};
+  $('fsDelAll').onclick=()=>{const n=folderDelete(fsPath,true);fsDone('Folder and '+n+' note'+(n===1?'':'s')+' deleted.')};
+  fsShow('fsDel')};
+ $('fsImport').onclick=()=>fsShow('fsImp');
+ $('importRootBtn').onclick=()=>{$('vaultMore').hidden=true;openFolderSheet('')};
+ $('fsPickFolder').onclick=()=>{$('importFolderInput').value='';$('importFolderInput').click()};
+ $('fsPickFiles').onclick=()=>{$('importFilesInput').value='';$('importFilesInput').click()};
+ const pickedEntries=inp=>[...inp.files].map(f=>({file:f,rel:f.webkitRelativePath||f.name}));
+ $('importFolderInput').onchange=async()=>{const e=pickedEntries($('importFolderInput'));if(!e.length)return;$('folderSheet').hidden=true;const s=await importStart(e,fsPath);setSub('',s);speak(s)};
+ $('importFilesInput').onchange=async()=>{const e=pickedEntries($('importFilesInput'));if(!e.length)return;$('folderSheet').hidden=true;const s=await importStart(e,fsPath);setSub('',s);speak(s)};
+ // editor: pick the folder from a list instead of typing ›
+ function fillFolderPick(){const s=$('editorFolderPick'),cur=pathOf($('editorCategory').value)||'Unsorted';s.replaceChildren();
+  const opts=[...new Set(['Unsorted',...getNotes().map(n=>pathOf(n.category)).filter(Boolean),...folderList()])].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+  const o0=document.createElement('option');o0.value='';o0.textContent='📁 Choose a folder…';s.append(o0);
+  for(const f of opts){const o=document.createElement('option');o.value=f;o.textContent=f;if(f===cur)o.selected=true;s.append(o)}
+  const on=document.createElement('option');on.value='__new';on.textContent='＋ New folder (type it below)';s.append(on)}
+ $('editorFolderPick').onchange=()=>{const v=$('editorFolderPick').value;if(v==='__new'){$('editorCategory').value=pathOf($('editorCategory').value)==='Unsorted'?'':$('editorCategory').value+' › ';$('editorCategory').focus()}else if(v){$('editorCategory').value=v;dirty=true}metaSummary()};
+ document.querySelector('.meta-fold').addEventListener('toggle',e=>{if(e.target.open)fillFolderPick()});
  $('sortNotes').onclick=()=>{const v=jget(TREE_SORT,'name')==='name'?'modified':'name';jset(TREE_SORT,v);renderList();status(v==='name'?'Sorted A to Z.':'Newest changes first.')};
  $('collapseAll').onclick=()=>{jset(TREE_OPEN,[]);renderList()};
  $('vaultMoreBtn').onclick=()=>{$('vaultMore').hidden=!$('vaultMore').hidden};
@@ -2493,6 +2587,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   {const m=raw.match(/\b(?:update|edit|improve|expand|complete|correct|fix|add (?:more |details? )?to)\s+(?:my |the |ang |yung )?(?:note\s+(?:about|on|for)\s+)?(.+?)\s+note\b[\s,:-]*(.*)$/i)||raw.match(/\b(?:update|edit|improve|expand|complete|correct|fix)\s+(?:my |the )?note\s+(?:about|on|for|called|titled)\s+(.+?)(?:\s*[,:-]\s*|\s+(?:with|and|to|by)\s+)(.+)$/i);
    if(m&&m[1]&&findNote(m[1].trim()))return {type:'improve_note',query:m[1].trim(),details:{instruction:(m[2]||'').trim()}}}
   if(has(/\bundo\b/)&&has(/\bnote\b/)&&has(/\b(change|edit|update)\b/))return {type:'undo_note_change'};
+  if(has(/\b(continue|resume|status of|how is|how's)\b.*\bimport/)||has(/\bimport\s+(status|progress)\b/))return {type:'import_status'};
   if(has(/\boffline\s+(brain|ai|model|mode)\b/))return {type:'offline_brain',query:has(/\b(remove|delete|uninstall|tanggal)\b/)?'remove':has(/\banyway\b/)?'anyway':has(/\b(download|install|set ?up|get|add|update)\b/)?'setup':'status'};
   if(has(/\b(new|create|make|start|write|add|gumawa)\b\s+(a\s+)?(new\s+)?note\b/)){const m=raw.match(/\b(?:about|called|titled|named|on|for)\s+(.+)$/i);return {type:'new_note',query:m?m[1].replace(/[?.!]+$/,'').trim():''}}
   if(has(/\b(read|basahin|read out|read aloud)\b/)&&(has(/\bnotes?\b/)||screen==='editor'&&wc<=5)){
@@ -2855,6 +2950,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     if(method===0)return dec.decode(raw);
     if(method!==8)throw new Error('This Office file uses packing I can’t open. Save it as PDF and send that.');
     return await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()};
+   files[name].bytes=async()=>{const lnl=dv.getUint16(off+26,true),lxl=dv.getUint16(off+28,true),start=off+30+lnl+lxl,raw=b.subarray(start,start+csize);
+    if(method===0)return raw.slice();if(method!==8)throw new Error('packed in a way I can’t open');
+    return new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())};
   }
   return files;
  }
@@ -2898,8 +2996,53 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return out.trim();
  }
  const OFFICE={docx:['Word document',docxText],docm:['Word document',docxText],xlsx:['Excel spreadsheet',xlsxText],xlsm:['Excel spreadsheet',xlsxText],pptx:['PowerPoint',pptxText]};
+ // Old Office files (Word 97–2003 .doc, Excel .xls, PowerPoint .ppt) — read on the phone with SheetJS (sheetjs.js, loaded only when needed).
+ function oldDocText(X,buf){
+  const cfb=X.CFB.read(new Uint8Array(buf),{type:'array'}),get=n=>{const e=X.CFB.find(cfb,n);return e&&e.content?Uint8Array.from(e.content):null};
+  const wd=get('WordDocument');if(!wd)throw new Error('This .doc has no Word text in it.');
+  const dv=new DataView(wd.buffer,wd.byteOffset,wd.byteLength),flags=dv.getUint16(0x0A,true);
+  if(flags&0x0100)throw new Error('This Word file is password-protected. Remove the password and send it again.');
+  const tbl=get(flags&0x0200?'1Table':'0Table');
+  const out=[];
+  if(tbl&&wd.length>0x1AA){
+   const fcClx=dv.getUint32(0x1A2,true),lcbClx=dv.getUint32(0x1A6,true),tv=new DataView(tbl.buffer,tbl.byteOffset,tbl.byteLength);
+   let p=fcClx;const end=fcClx+lcbClx;
+   while(p<end&&tbl[p]===1)p+=3+tv.getUint16(p+1,true);              // skip formatting blocks (Prc)
+   if(tbl[p]===2){const lcb=tv.getUint32(p+1,true),base=p+5,n=(lcb-4)/12;
+    for(let i=0;i<n;i++){const cp0=tv.getUint32(base+i*4,true),cp1=tv.getUint32(base+i*4+4,true),fc=tv.getUint32(base+(n+1)*4+i*8+2,true),len=cp1-cp0;
+     if(fc&0x40000000){const o=(fc&0x3FFFFFFF)/2;out.push(new TextDecoder('windows-1252').decode(wd.subarray(o,o+len)))}
+     else out.push(new TextDecoder('utf-16le').decode(wd.subarray(fc,fc+len*2)))}}
+  }
+  let t=out.join('');
+  if(!t.trim()){const ccp=dv.getUint32(0x4C,true),fcMin=dv.getUint32(0x18,true);t=new TextDecoder('windows-1252').decode(wd.subarray(fcMin,fcMin+ccp))}   // very old Word: plain text block
+  return t.replace(/\x13[^\x14\x15]*\x14?/g,'').replace(/[\x14\x15\x01\x08]/g,'').replace(/\x07/g,'\t').replace(/\r|\x0b|\x0c/g,'\n').replace(/[\x00-\x08\x0e-\x1f]/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+ }
+ function oldPptText(X,buf){
+  const cfb=X.CFB.read(new Uint8Array(buf),{type:'array'}),e=X.CFB.find(cfb,'PowerPoint Document');
+  if(!e||!e.content)throw new Error('This .ppt has no slides in it.');
+  const b=Uint8Array.from(e.content),dv=new DataView(b.buffer),out=[];let p=0;
+  while(p+8<=b.length){const ver=b[p]&0x0F,type=dv.getUint16(p+2,true),len=dv.getUint32(p+4,true);
+   if(ver===0x0F){p+=type===0x03F8||type===0x0FC9?8+len:8;continue}  // container: look inside (skip slide masters and handout master)
+   if(type===0x0FA0)out.push(new TextDecoder('utf-16le').decode(b.subarray(p+8,p+8+len)));
+   else if(type===0x0FA8)out.push(new TextDecoder('windows-1252').decode(b.subarray(p+8,p+8+len)));
+   p+=8+len}
+  const MASTER=/^(click to edit master (title|text|subtitle) styles?|second level|third level|fourth level|fifth level|\*|‹#›|#)$/i;
+  return out.map(s=>s.replace(/\r|\x0b/g,'\n').trim()).filter(s=>s&&!MASTER.test(s)).filter((s,i,a)=>a.indexOf(s)===i).join('\n').trim();
+ }
+ function oldSheetText(X,buf){
+  const wb=X.read(new Uint8Array(buf),{type:'array',dense:true});
+  return wb.SheetNames.map(n=>'=== Sheet: '+n+' ===\n'+X.utils.sheet_to_csv(wb.Sheets[n],{blankrows:false}).replace(/,+$/gm,'')).join('\n\n').trim();
+ }
+ const OLD_OFFICE={doc:['Word document',oldDocText],dot:['Word document',oldDocText],xls:['Excel spreadsheet',oldSheetText],xlt:['Excel spreadsheet',oldSheetText],xlsb:['Excel spreadsheet',oldSheetText],ods:['Spreadsheet',oldSheetText],ppt:['PowerPoint',oldPptText],pps:['PowerPoint',oldPptText]};
+ let sheetLibP=null;
+ const sheetLib=()=>sheetLibP||(sheetLibP=new Promise((ok,no)=>{if(self.XLSX)return ok(self.XLSX);const s=document.createElement('script');s.src='./sheetjs.js';s.onload=()=>self.XLSX?ok(self.XLSX):no(new Error('The old-Office reader didn’t load.'));s.onerror=()=>{sheetLibP=null;no(new Error('The old-Office reader didn’t load — open Max once with internet.'))};document.head.append(s)}));
  async function officeToText(f){
-  const ext=(f.name.split('.').pop()||'').toLowerCase(),[label,fn]=OFFICE[ext];
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(OLD_OFFICE[ext]){const [label,fn]=OLD_OFFICE[ext],X=await sheetLib();let text;
+   try{text=fn(X,await f.arrayBuffer())}catch(e){throw new Error(/password/i.test(e.message)?e.message:'This old '+label+' seems damaged or locked ('+String(e.message).slice(0,80)+'). Save it as PDF and send that.')}
+   if(!String(text||'').trim())throw new Error('That '+label+' looks empty.');
+   return {label,text:text.slice(0,400000)}}
+  const [label,fn]=OFFICE[ext];
   if(typeof DecompressionStream!=='function')throw new Error('This phone’s browser can’t open Office files. Save it as PDF and send that.');
   const text=await fn(await unzip(await f.arrayBuffer()));
   if(!text.trim())throw new Error('That '+label+' looks empty.');
@@ -2937,31 +3080,45 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(t.startsWith('video/')||t.startsWith('audio/'))return t;
   const media={mp4:'video/mp4',mov:'video/quicktime',webm:'video/webm','3gp':'video/3gpp',mkv:'',avi:'video/avi',mp3:'audio/mp3',m4a:'audio/mp4',aac:'audio/aac',wav:'audio/wav',ogg:'audio/ogg',opus:'audio/ogg',flac:'audio/flac',amr:'audio/amr'};
   if(media[ext])return media[ext];
-  if(OFFICE[ext])return 'office';
+  if(OFFICE[ext]||OLD_OFFICE[ext])return 'office';
+  if(ext==='zip'||t==='application/zip'||t==='application/x-zip-compressed')return 'zip';
   if(['json','xml','log','ini','yaml','yml'].includes(ext))return 'text/plain';
   if(['html','htm'].includes(ext))return 'text/html';
   return '';
  }
- async function readAttachment(f){
+ function fileProblem(f){
   const mime=attachMime(f),ext=(f.name.split('.').pop()||'').toLowerCase();
-  if(!mime)return ['doc','xls','ppt'].includes(ext)?'That’s an old Office format. Open it and save it as '+(ext==='doc'?'.docx':ext==='xls'?'.xlsx':'.pptx')+' or PDF, then send it again.':
-   ext==='mkv'?'I can’t read MKV videos. Send it as MP4.':'I can read photos, screenshots, PDFs, Word, Excel, PowerPoint, text files, videos and voice recordings — but not this kind of file.';
+  if(!mime)return ext==='mkv'?'I can’t read MKV videos. Send it as MP4.':'I can read photos, screenshots, PDFs, Word, Excel, PowerPoint (new and old), text files, videos and voice recordings — but not this kind of file.';
   const media=mime.startsWith('video/')||mime.startsWith('audio/');
   if(f.size>(media?95e6:19e6)&&!(mime==='application/pdf'&&f.size<=95e6))return media?'That video is too big for me (over 95 MB). Trim it or send a shorter clip.':'That file is too big for me (over 19 MB). Send a smaller one, or a few pages at a time.';
+  return '';
+ }
+ // Max reads one file (on the phone for Office, with his AI for the rest) → {att, mime, localText}
+ async function maxReadFile(f){
+  const mime=attachMime(f),bad=fileProblem(f);if(bad)throw Object.assign(new Error(bad),{skip:true});
+  const media=mime.startsWith('video/')||mime.startsWith('audio/');let r,res,localText='';
+  if(media||(mime==='application/pdf'&&f.size>15e6)){
+   ({r,data:res}=await fetchJson(workerBase()+'/api/attachment/upload',{method:'POST',headers:{'Content-Type':mime,'X-File-Type':mime,'X-File-Name':encodeURIComponent(f.name),'X-Topics':encodeURIComponent(allTopics().slice(0,60).join('|'))},body:f},300000));
+  }else if(mime==='office'){
+   const {label,text}=await officeToText(f);localText=text;
+   ({r,data:res}=await postJson('/api/attachment',{name:f.name,mime:'text/plain',from:label,data:utf8B64(text),topics:allTopics()},120000));
+  }else{
+   const {mime:m,data}=mime.startsWith('image/')&&mime!=='image/heic'?await shrinkImage(f):{mime,data:await fileToB64(f)};
+   ({r,data:res}=await postJson('/api/attachment',{name:f.name,mime:m,data,topics:allTopics()},120000));
+  }
+  if(r.status===404)throw new Error('Reading this needs the newest Max backend.');
+  if(!r.ok)throw new Error(res.error||('HTTP '+r.status));
+  return {att:res.attachment,mime,localText};
+ }
+ async function readAttachment(f){
+  const mime=attachMime(f);
+  if(mime==='zip')return await importStart([{file:f,rel:f.name}],selFolder&&screen==='notes'?selFolder:'');
+  const bad=fileProblem(f);if(bad)return bad;
+  const media=mime.startsWith('video/')||mime.startsWith('audio/');
   setSection('display');$('dispTitle').textContent=(media?'Watching ':'Reading ')+f.name+'…';$('dispSub').textContent=media?'Videos and recordings take up to a minute or two.':'This takes a few seconds for big files.';$('dispBody').replaceChildren();
   try{
-   let r,res;
-   if(media||(mime==='application/pdf'&&f.size>15e6)){
-    ({r,data:res}=await fetchJson(workerBase()+'/api/attachment/upload',{method:'POST',headers:{'Content-Type':mime,'X-File-Type':mime,'X-File-Name':encodeURIComponent(f.name),'X-Topics':encodeURIComponent(allTopics().slice(0,60).join('|'))},body:f},300000));
-   }else if(mime==='office'){
-    const {label,text}=await officeToText(f);
-    ({r,data:res}=await postJson('/api/attachment',{name:f.name,mime:'text/plain',from:label,data:utf8B64(text),topics:allTopics()},120000));
-   }else{
-    const {mime:m,data}=mime.startsWith('image/')&&mime!=='image/heic'?await shrinkImage(f):{mime,data:await fileToB64(f)};
-    ({r,data:res}=await postJson('/api/attachment',{name:f.name,mime:m,data,topics:allTopics()},120000));
-   }
-   if(r.status===404)throw new Error('Reading this needs the newest Max backend.');
-   if(!r.ok)throw new Error(res.error||('HTTP '+r.status));
+   let res;
+   res={attachment:(await maxReadFile(f)).att};
    if(attachURL)URL.revokeObjectURL(attachURL);
    attachURL=mime.startsWith('image/')||mime.startsWith('video/')?URL.createObjectURL(f):'';
    return gotAttachment(res.attachment,mime.startsWith('video/')?'video':'');
@@ -3044,6 +3201,90 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   pendingAttach=null;saveAttach();loadNote(n.id);lastNote={id:n.id,at:Date.now()};
   return 'Saved to your notes under '+topic+'.';
  }
+ // ---------- bring in a whole folder (or .zip): every file read by Max, saved as notes in the same folders ----------
+ const IMP_KEY='max_import_job',IMP_CACHE='max-import';
+ const IMP_SKIP=/(^|\/)(__MACOSX|\.DS_Store|Thumbs\.db|desktop\.ini)(\/|$)|(^|\/)~\$|(^|\/)\.[^/]*$/i;
+ let impRunning=false,impStop=false;
+ const EXT_TYPE={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',bmp:'image/bmp',heic:'image/heic',heif:'image/heif',pdf:'application/pdf',txt:'text/plain',csv:'text/csv',md:'text/markdown',html:'text/html',htm:'text/html',mp4:'video/mp4',mov:'video/quicktime',webm:'video/webm','3gp':'video/3gpp',mp3:'audio/mp3',m4a:'audio/mp4',wav:'audio/wav',ogg:'audio/ogg'};
+ const typeOf=name=>EXT_TYPE[(String(name).split('.').pop()||'').toLowerCase()]||'';
+ function impCategory(base,rel){const dirs=String(rel||'').split('/').slice(0,-1).map(s=>s.trim()).filter(Boolean);return pathOf([base,...dirs].filter(Boolean).join(' › '))||'Imported'}
+ async function importStart(entries,base){
+  base=pathOf(base||'');const list=[];
+  for(const e of entries){
+   const rel=String(e.rel||e.file.name).replace(/\\/g,'/');
+   if(/\.zip$/i.test(e.file.name)){
+    let z;try{z=await unzip(await e.file.arrayBuffer())}catch{list.push({...e,rel,bad:'This .zip seems damaged.'});continue}
+    const dir=rel.split('/').slice(0,-1).join('/'),zname=e.file.name.replace(/\.zip$/i,'');
+    const names=Object.keys(z).filter(n=>!n.endsWith('/')&&!IMP_SKIP.test(n));
+    const top=new Set(names.map(n=>n.split('/')[0]));const wrap=!(top.size===1&&names.every(n=>n.includes('/')));   // zip of one folder → keep that folder's name; loose files → use the zip's name
+    for(const n of names){let bytes;try{bytes=await z[n].bytes()}catch(err){list.push({file:new File([],n.split('/').pop()),rel:n,bad:String(err.message)});continue}
+     list.push({file:new File([bytes],n.split('/').pop(),{type:typeOf(n)}),rel:[dir,wrap?zname:'',n].filter(Boolean).join('/')})}
+   }else if(!IMP_SKIP.test(rel))list.push({...e,rel});
+  }
+  if(!list.length)return 'I didn’t find any files in that.';
+  const c=await caches.open(IMP_CACHE),job=jget(IMP_KEY,null)||{base,items:[],at:Date.now()};job.base=job.base??base;
+  for(const e of list){const key='/imp/'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+   const item={key,name:e.file.name,rel:e.rel,base,size:e.file.size,type:e.file.type||'',status:'wait'};
+   if(e.bad){item.status='fail';item.err=e.bad}else{const bad=fileProblem(e.file);if(bad){item.status='skip';item.err=bad}else{try{await c.put(key,new Response(e.file))}catch(err){item.status='fail';item.err='Phone storage is full: '+err.message}}}
+   job.items.push(item)}
+  jset(IMP_KEY,job);
+  const waiting=job.items.filter(i=>i.status==='wait').length,where=pathOf(base)||'new folders';
+  setTimeout(()=>importRun(true),50);
+  return 'Got '+list.length+' file'+(list.length===1?'':'s')+'. I’m reading '+(waiting===list.length?'them':waiting+' of them')+' into '+where+' now — about '+Math.max(1,Math.round(waiting*12/60))+' minute'+(waiting*12<90?'':'s')+'. You can keep using Max meanwhile.';
+ }
+ function impRender(cur){
+  const job=jget(IMP_KEY,null);if(!job||!impShowing())return;
+  const done=job.items.filter(i=>i.status!=='wait').length;$('dispSub').textContent=done+' of '+job.items.length+' done'+(cur?' · reading '+cur:'');
+  const box=document.createElement('div');box.dataset.imp='1';
+  for(const i of job.items.slice(-200)){const r=document.createElement('div');r.className='imp-row';const s=document.createElement('span');s.className='s';s.textContent={wait:'⏳',done:'✓',skip:'–',fail:'✗'}[i.status]||'?';const tx=document.createElement('span');tx.textContent=i.rel+(i.err?' — '+i.err:'');r.append(s,tx);box.append(r)}
+  const stop=document.createElement('button');stop.className='pill';stop.textContent=impRunning?'Pause':'Close';stop.onclick=()=>{impStop=true;setSection('notes')};
+  $('dispBody').replaceChildren(stop,box);
+ }
+ const impShowing=()=>screen==='display'&&!!$('dispBody').querySelector('[data-imp]');
+ function impOpen(){setSection('display');$('dispTitle').textContent='Adding files to your notes';const m=document.createElement('div');m.dataset.imp='1';$('dispBody').replaceChildren(m);impRender()}
+ async function importOne(f,cat,rel){
+  const {att,mime,localText}=await maxReadFile(f);
+  let fig='';
+  if(mime.startsWith('image/')&&mime!=='image/heic'){try{const blob=await shrinkForNote(f),id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);await mediaPut({id,blob,mime:blob.type||f.type,name:f.name,synced:false,at:Date.now()});fig='<figure class="note-media" data-media="'+id+'" data-kind="image"><figcaption>📷 '+escHtml(att.summary||f.name)+'</figcaption></figure>';mediaUpload(id)}catch{}}
+  const title=f.name.replace(/\.[^.]+$/,'').replace(/_+/g,' ').trim()||att.title||'Untitled';
+  const full=localText||att.text||'';
+  const body=fig+'<p><i>📁 From your folder: '+escHtml(rel)+' · '+localDate(new Date())+'</i></p>'+(att.title&&att.title!==title?'<p><b>'+escHtml(att.title)+'</b></p>':'')+(att.summary?'<p>'+escHtml(att.summary)+'</p>':'')+
+   ((att.points||[]).length?'<ul>'+att.points.map(p=>'<li>'+escHtml(p)+'</li>').join('')+'</ul>':'')+
+   ((att.dates||[]).length?'<h3>Dates</h3><ul>'+att.dates.map(d=>'<li>'+escHtml(d.what)+': '+d.date+'</li>').join('')+'</ul>':'')+
+   (full?'<h3>Full text</h3><pre>'+escHtml(full.slice(0,300000))+'</pre>':'');
+  const all=loadAll(),now=Date.now();let n=all.find(x=>!x.deleted&&x.source==='import'&&pathOf(x.category)===cat&&x.file?.name===f.name);
+  if(n){n.body=body;n.updatedAt=now;n.analysis={summary:att.summary||'',fullText:(att.points||[]).join('\n')}}
+  else{n={id:newId(),title,category:cat,tags:[...new Set([...(att.tags||[]),...splitPath(cat).slice(-2)].map(x=>String(x).toLowerCase()))].slice(0,6),body,source:'import',file:{name:f.name,kind:att.kind||mime,path:rel},sources:[],analysis:{summary:att.summary||'',fullText:(att.points||[]).join('\n')},createdAt:now,updatedAt:now,deleted:false};all.push(n)}
+  putNotes(all);folderAdd(cat);
+  return {status:'done',noteId:n.id};
+ }
+ async function importRun(show){
+  if(impRunning)return;impRunning=true;impStop=false;let paused='';
+  try{
+   if(show&&!impShowing())impOpen();
+   for(;;){
+    const job=jget(IMP_KEY,null),it=job?.items.find(i=>i.status==='wait');if(!it)break;
+    if(impStop){paused='Paused. Say “continue import” or open ⋯ → Add files to go on.';break}
+    if(isOffline()){paused='Paused — no internet. I’ll continue when we’re back online.';break}
+    status('Reading '+it.name+'…');impRender(it.name);
+    const c=await caches.open(IMP_CACHE),resp=await c.match(it.key);let res;
+    if(!resp)res={status:'fail',err:'the file was lost — add it again'};
+    else{const blob=await resp.blob();try{res=await importOne(new File([blob],it.name,{type:it.type||blob.type||typeOf(it.name)}),impCategory(it.base??job.base,it.rel),it.rel)}
+     catch(e){if(e.offline){paused='Paused — no internet. I’ll continue when we’re back online.';break}res={status:e.skip?'skip':'fail',err:String(e.message||e).slice(0,160)}}}
+    const j2=jget(IMP_KEY,null);if(!j2)break;const x=j2.items.find(i=>i.key===it.key);if(x)Object.assign(x,res);jset(IMP_KEY,j2);c.delete(it.key).catch(()=>{});
+   }
+  }finally{impRunning=false}
+  const job=jget(IMP_KEY,null);if(!job)return;impRender();
+  if(paused){status(paused);return}
+  const ok=job.items.filter(i=>i.status==='done').length,bad=job.items.filter(i=>i.status==='fail'||i.status==='skip');
+  jset('max_import_last',{at:Date.now(),base:job.base,done:ok,problems:bad.map(i=>i.rel+': '+i.err).slice(0,30)});jset(IMP_KEY,null);
+  const msg='Finished: '+ok+' file'+(ok===1?'':'s')+' added to '+(pathOf(job.base)||'your notes')+(bad.length?'. '+bad.length+' couldn’t be read: '+bad.slice(0,3).map(i=>i.name).join(', ')+(bad.length>3?'…':''):'')+'. Ask me anything about them.';
+  if(impShowing())$('dispTitle').textContent='Done ✓';
+  status(msg);setSub('',msg);try{speak(msg)}catch{}
+  if(screen==='notes')renderList();
+ }
+ addEventListener('online',()=>setTimeout(()=>{if(jget(IMP_KEY,null))importRun()},3000));
+ setTimeout(()=>{const j=jget(IMP_KEY,null);if(j&&j.items.some(i=>i.status==='wait')&&!isOffline())importRun()},20000);
  function discardAttachment(){
   if(!pendingAttach)return 'There’s no file to discard.';
   if(pendingAttach.filed&&lastFiled&&lastFiled.id===pendingAttach.filed){const all=loadAll(),n=all.find(x=>x.id===lastFiled.id);
@@ -5357,6 +5598,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'attach_file':$('attachBtn').classList.add('pulse');setTimeout(()=>$('attachBtn').classList.remove('pulse'),6000);return 'Tap the 📎 at the top, then pick a file, photo, video or recording — or paste a link. I’ll read it for you.';
    case 'save_attachment':return saveAttachment();
    case 'undo_note_change':return undoNoteChange();
+   case 'import_status':{const j=jget(IMP_KEY,null);if(!j){const l=jget('max_import_last',null);return l?'The last import finished: '+l.done+' files added to '+(pathOf(l.base)||'your notes')+(l.problems.length?', '+l.problems.length+' had problems.':'.'):'There’s no import running. Open Notes, tap ⋯ on a folder, then “Add files or a whole folder”.'}
+    const w=j.items.filter(i=>i.status==='wait').length;impOpen();importRun(true);return w?'Continuing — '+w+' file'+(w===1?'':'s')+' left.':'Almost done.'}
    case 'offline_brain':if(a.query==='remove')return await offlineBrainRemove();if(a.query==='status'){const st=obState();return st?.ready?'Your offline brain ('+st.model.split('-q')[0]+') is on this phone. Without internet I find the right part of your notes and explain it with it.':(await obChromeAI())?'Chrome’s built-in AI is ready on this phone for offline answers. Say “download offline brain” for Gemma, which is usually better.':'No offline brain yet. Say “download offline brain” on Wi-Fi (about 3 GB, once). Offline note search already works.'}return await offlineBrainSetup(a.query==='anyway'?'anyway':false);
    case 'discard_attachment':return discardAttachment();
    case 'show_attachment':if(!attachFresh())return 'There’s no file open. Tap the 📎 at the top to send me one.';renderAttachment();return 'Here’s the file again.';

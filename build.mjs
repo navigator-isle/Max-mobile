@@ -4,7 +4,7 @@
 // Run: node build.mjs   (deploy.sh / deploy.bat and "npx wrangler deploy" run it for you)
 import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const APP = ['index.html', 'privacy.html', 'manifest.webmanifest', 'sw.js', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'web-llm.js'];
+const APP = ['index.html', 'privacy.html', 'manifest.webmanifest', 'sw.js', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'web-llm.js', 'sheetjs.js'];
 const EXTRA = ['worker.js', 'updater.js', 'UPDATE-NOTES.json', 'UPDATE-STEPS.md', 'wrangler.jsonc', 'build.mjs', 'deploy.sh', 'deploy.bat', 'HANDOFF.md', 'DEPLOY.md', 'SETUP.md', 'README.md', 'README.txt', '.gitignore'];
 const dirFiles = d => fs.existsSync(path.join(ROOT, d)) ? fs.readdirSync(path.join(ROOT, d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? dirFiles(d + '/' + e.name) : [d + '/' + e.name]) : [];
 // Never pack secrets or local junk.
