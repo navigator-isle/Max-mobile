@@ -84,3 +84,11 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 3. Update Passage Planner privacy URL in Play Console
 4. Done 11 Nov 2026: Worker deploys from GitHub; commits pushed; old trader stays retired (Max's own engine trades)
 5. Optional: "beyond the convention" (US/Philippine rules) for STCW and MLC notes
+
+## Notes Max researches and fixes himself (18l, 11 Nov 2026)
+- `/api/note-draft` {topic, topics} → Gemini + google_search writes a note in `NOTE_FORMAT` (FOLDER/TITLE/---NOTE---), converted by `mdToNoteHtml`. App intent `new_note` with a topic → `draftNote()`; blank editor only if research fails or `max_note_research` is off.
+- `/api/note-improve` {note, instruction} → researched edit; refused (422) if the result is under 60% of the old note's length. App intent `improve_note` ("update/edit/improve/expand my X note …") → `improveNote()`, keeps the last 5 bodies in `n.history`; `undo_note_change` restores.
+- Nightly fact-check (`notesDailyCheck`, 8 notes, 6,000-char parts): verdict wrong/update + issues with exact `find`/`replace` + web sources → `applyNoteFixes`, old body in `max_note_versions` (last 10 per note), check marked `fixed`. Never changes a note without sources. `/api/notes/undo-fix` {id} restores; the app shows "✓ Max corrected this note" with an Undo button.
+- Attachments auto-file (`autoFileAttachment`): same-subject note (same title, or same folder + ≥60% title words) gets an "Update <date>" section, else a new note. "Discard" undoes (`lastFiled`). Setting `max_autofile` false turns it off.
+- Meaning search: notes over ~3,200 chars also get section vectors (`vecChunks`, ≤24 × ~1,500 chars); score = best of note and sections. Index version `V.ver = 2` re-indexes once.
+- Phone app auto-deploy: the last workflow step unzips max-app.zip (never site/_src) and runs `wrangler pages deploy --project-name max-app`. Needs "Cloudflare Pages: Edit" on CLOUDFLARE_API_TOKEN or a PAGES_API_TOKEN secret; it only warns if missing.

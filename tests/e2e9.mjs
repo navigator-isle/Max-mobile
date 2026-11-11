@@ -59,14 +59,14 @@ const answer = async () => (await vis("#homeAnswer")) ? p.locator("#homeAnswer")
 // a big photo: resized on the phone, read by Max, shown with its deadline
 const big = await p.evaluate(() => { const c = document.createElement("canvas"); c.width = 3000; c.height = 2000; const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 3000, 2000); x.fillStyle = "#000"; x.font = "120px sans-serif"; x.fillText("SAFETY EQUIPMENT CERTIFICATE", 100, 300); return c.toDataURL("image/png").split(",")[1]; });
 await p.setInputFiles("#attachInput", { name: "certificate.png", mimeType: "image/png", buffer: Buffer.from(big, "base64") });
-await p.waitForFunction(() => /not in your notes yet/.test(document.getElementById("dispSub").textContent), null, { timeout: 15000 }).catch(() => {});
+await p.waitForFunction(() => /filed in your notes|not in your notes yet/.test(document.getElementById("dispSub").textContent), null, { timeout: 15000 }).catch(() => {});
 await p.waitForTimeout(400);
 let a = await answer();
 ok(sent.length === 1 && sent[0].mime === "image/jpeg" && sent[0].size < Buffer.from(big, "base64").length * 1.4, "big photo is shrunk on the phone before sending", JSON.stringify(sent));
-ok(await vis("#displayScreen") && /Safety Equipment Certificate for MV Sample/.test(a) && /Certificate expires: 1 March 2027/.test(a) && /Say “save it”/.test(a), "Max says what it is, the deadline, and asks before saving", a);
+ok(await vis("#displayScreen") && /Safety Equipment Certificate for MV Sample/.test(a) && /Certificate expires: 1 March 2027/.test(a) && /Filed as a new note under Ship › Certificates/.test(a) && /Say “discard” to undo/.test(a), "Max says what it is, the deadline, and files it straight away (11 Nov 2026: Mark wants files organized automatically)", a);
 const disp = await p.locator("#dispBody").textContent();
 ok(/FROM FILE/.test(disp) && /⏰ Certificate expires: 1 March 2027/.test(disp) && await p.locator("#dispBody img.att-img").count() === 1, "display shows the photo, key facts and the deadline");
-ok(!(await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3") || "[]").some(n => n.source === "attachment"))), "nothing saved before you say so");
+ok((await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3") || "[]").filter(n => n.source === "attachment").length)) === 1, "saved once, automatically, in the right folder");
 await p.click("text=Show full text");
 ok((await p.locator("#attText").textContent()).includes("<script>") && await p.evaluate(() => !window.__bad), "full text shown as plain text (nothing in the file can run)");
 await p.screenshot({ path: process.env.SHOT_DIR + "/attachment.png" });
@@ -77,16 +77,19 @@ ok((await answer()).includes("It expires on 1 March 2027"), "questions are answe
 await say("save it");
 let notes = await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")));
 const saved = notes.find(n => n.source === "attachment");
-ok(saved && saved.title === "Safety Equipment Certificate — MV Sample" && saved.category === "Ship › Certificates" && /Valid until 1 March 2027/.test(saved.body) && /&lt;script&gt;/.test(saved.body), "“save it” → filed in notes under its topic, with the full text", JSON.stringify(saved).slice(0, 300));
+ok(saved && saved.title === "Safety Equipment Certificate — MV Sample" && saved.category === "Ship › Certificates" && /Valid until 1 March 2027/.test(saved.body) && /&lt;script&gt;/.test(saved.body), "“save it” → it’s already in notes under its topic, with the full text (not saved twice)", JSON.stringify(saved).slice(0, 300));
 ok(await vis("#editorScreen") && (await p.locator("#editorBadge").textContent()).length > 0, "opens the saved note");
 await p.click("#miniHome");
 
 // a PDF, then discard
 await p.setInputFiles("#attachInput", { name: "circular.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%fake\n") });
-await p.waitForFunction(() => /not in your notes yet/.test(document.getElementById("dispSub").textContent), null, { timeout: 15000 }).catch(() => {});
+await p.waitForFunction(() => window.__spoken.some(s => /added it to your note/.test(s)), null, { timeout: 15000 }).catch(() => {});
+await p.waitForTimeout(300);
 ok(sent.at(-1).mime === "application/pdf", "PDFs are sent as PDFs");
 await say("discard it");
-ok(/Discarded/.test(await answer()) && (await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).filter(n => n.source === "attachment").length)) === 1, "“discard it” → nothing more saved", await answer());
+ok(/added it to your note “Safety Equipment Certificate — MV Sample”/.test(await p.evaluate(() => window.__spoken.join(" | "))), "a second file on the same subject is added to that note as an update", await p.evaluate(() => window.__spoken.slice(-3).join(" | ")));
+await say("discard it");
+ok(await p.evaluate(() => window.__spoken.some(s => /^Undone — I took that update out of your note/.test(s))) && await p.evaluate(() => { const a = JSON.parse(localStorage.getItem("max_notes_v3")).filter(n => n.source === "attachment" && !n.deleted); return a.length === 1 && !/<hr><p><b>Update /.test(a[0].body); }), "“discard it” → the update is taken out again", await answer());
 
 // unsupported file + voice asking to send a file
 await p.setInputFiles("#attachInput", { name: "report.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", buffer: Buffer.from("PK") });

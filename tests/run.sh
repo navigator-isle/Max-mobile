@@ -43,6 +43,7 @@ run "IMO conventions and codes notes" tests/test-worker29.mjs "$TMP/worker.mjs"
 run "Backup price sources (crypto, dollar rate, PSE)" tests/test-worker30.mjs "$TMP/worker.mjs"
 run "Paper trading: 5 × ₱50,000 (forex, copy, US ETF)" tests/test-worker31.mjs "$TMP/worker.mjs"
 run "Virtual investments: 4 × ₱100,000" tests/test-worker32.mjs "$TMP/worker.mjs"
+run "Notes Max researches: drafts, edits, self-fixes with undo" tests/test-worker33.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
@@ -86,4 +87,5 @@ run "Phone: typing box always on home" tests/e2e38.mjs "$PWD/index.html"
 run "Phone: price on a past date" tests/e2e39.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: 1,100 trading notes, large storage, sync only changes" tests/e2e40.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: home panels (paper trading, investment guide, money plan)" tests/e2e41.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: notes Max researches (create, update, undo)" tests/e2e42.mjs "$PWD/index.html" "$TMP/worker.mjs"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

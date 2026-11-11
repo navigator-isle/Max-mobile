@@ -109,3 +109,21 @@ jobs:
           out=$(curl -fsS "https://max-ai-backend.mjgaly-mg.workers.dev/health?deep=1")
           echo "$out"
           echo "::notice::health: $out"
+      # 11 Nov 2026: the phone app updates itself too — no more uploading max-app.zip by hand.
+      # Needs "Cloudflare Pages: Edit" on the same token (or a PAGES_API_TOKEN secret). If it is missing, this only warns.
+      - name: Deploy the phone app (Cloudflare Pages, project max-app)
+        continue-on-error: true
+        env:
+          PAGES_TOKEN: ${{ secrets.PAGES_API_TOKEN }}
+        run: |
+          [ -n "$PAGES_TOKEN" ] && export CLOUDFLARE_API_TOKEN="$PAGES_TOKEN"
+          node build.mjs
+          # publish exactly what max-app.zip holds (never site/_src, the private code backup)
+          rm -rf pages_out && mkdir pages_out && (cd pages_out && unzip -q ../max-app.zip)
+          [ -d pages_out/_src ] && { echo "::error::private backup found in app files"; exit 1; }
+          if npx --yes wrangler@4 pages deploy pages_out --project-name max-app --branch main --commit-dirty=true > pages.log 2>&1; then
+            grep -E "https://|Success|Deployment complete" pages.log | while IFS= read -r l; do echo "::notice::app: $l"; done
+          else
+            echo "::warning::The phone app was not published automatically. Give the Cloudflare key the 'Cloudflare Pages: Edit' permission (or add a PAGES_API_TOKEN secret). Until then, upload max-app.zip by hand."
+            grep -iE "error|✘|authentication|permission" pages.log | grep -v TOKEN | head -5 | while IFS= read -r l; do echo "::warning::$l"; done
+          fi

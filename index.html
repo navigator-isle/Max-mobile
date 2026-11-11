@@ -1931,6 +1931,36 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(document.activeElement!==$('resTopic'))$('resTopic').value=draft.topic||'Research';
  }
  $('resTopic').addEventListener('input',()=>{if(draft){draft.topic=$('resTopic').value;saveDraft()}});
+ // 11 Nov 2026 (Mark): "create a note about X" → Max searches first and writes a full draft (sources included); Mark only edits it.
+ async function draftNote(topic){
+  setSection('display');$('dispTitle').textContent='Writing your note: '+topic;$('dispSub').textContent='Searching official sources first — this takes about a minute.';$('dispBody').replaceChildren();
+  try{
+   const {r,data}=await postJson('/api/note-draft',{topic,topics:allTopics()},150000);
+   if(r.status===404)throw new Error('This needs the newest Max server.');
+   if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+   const folder=splitPath(data.folder||'').join(' › ')||'Research',now=Date.now();
+   const n={id:newId(),title:data.title||topic,category:folder,tags:[...new Set(splitPath(folder).map(x=>x.toLowerCase()))].slice(0,5),body:data.html,source:'research',sources:data.sources||[],createdAt:now,updatedAt:now,deleted:false};
+   const all=loadAll();all.push(n);putNotes(all);loadNote(n.id);lastNote={id:n.id,at:now};
+   return 'Your note “'+n.title+'” is ready under '+folder+(data.sources?.length?', written from '+data.sources.length+' web sources':', but I couldn’t search the web, so please check it')+'. Edit anything you like.';
+  }catch(e){createNewNote(topic);return 'I couldn’t research it ('+e.message+'), so I opened a blank note called '+topic+'.'}
+ }
+ async function improveNote(query,instruction){
+  const n0=findNote(query);if(!n0)return 'I couldn’t find a note called '+query+'.';
+  const ask=instruction||'make it more complete and correct, with current official information';
+  setSection('display');$('dispTitle').textContent='Updating “'+n0.title+'”';$('dispSub').textContent='Searching the web for: '+ask;$('dispBody').replaceChildren();
+  try{
+   const {r,data}=await postJson('/api/note-improve',{note:{title:n0.title,body:n0.body},instruction:ask},150000);
+   if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+   const all=loadAll(),n=all.find(x=>x.id===n0.id);if(!n)throw new Error('the note was removed');
+   n.history=[...(n.history||[]),{at:Date.now(),body:n.body,why:'before: '+ask}].slice(-5);n.body=data.html;n.updatedAt=Date.now();
+   n.sources=[...(n.sources||[]),...(data.sources||[])].filter((s,i,arr)=>s.url&&arr.findIndex(x=>x.url===s.url)===i).slice(-30);putNotes(all);loadNote(n.id);lastNote={id:n.id,at:Date.now()};
+   return 'Updated “'+n.title+'”'+(data.changes?': '+data.changes:'')+'. The old version is kept — say “undo note change” to go back.';
+  }catch(e){return 'I couldn’t update it. '+e.message}
+ }
+ function undoNoteChange(){
+  const id=lastNote?.id,all=loadAll(),n=all.find(x=>x.id===id);if(!n||!(n.history||[]).length)return 'There’s no recent note change to undo.';
+  const h=n.history.pop();n.body=h.body;n.updatedAt=Date.now();putNotes(all);loadNote(n.id);return 'Done — “'+n.title+'” is back to the version before '+(h.why||'the change').replace(/^before: /,'')+'.';
+ }
  async function startResearch(topic){
   setSection('research');
   $('resLoading').hidden=false;$('resLoadingTopic').textContent=topic;$('resDraft').hidden=true;$('resEmpty').hidden=true;
@@ -2315,7 +2345,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(has(/\b(attach|upload|send you|scan|read|check|look at)\b.*\b(file|document|pdf|photo|picture|screenshot|certificate|receipt|letter|form)\b/)&&!attachFresh()&&!has(/\bnotes?\b/)||has(/^(attach|upload)( a| the)? (file|photo|picture|document|pdf)/))return {type:'attach_file'};
   if(attachFresh()&&(screen==='display'||has(/\b(file|document|pdf|photo|picture|screenshot|attachment|certificate|receipt|letter)\b/))){
    if(has(/\b(save|keep|store|file|add|put|approve[sd]?|i ?save|isave|ilagay)\b/)&&(has(/^(save|keep|file|approve)( it| this| that)?( now| please)?$/)||has(/\b(notes?|second brain)\b/)||has(/\b(it|this|that|the (file|document|pdf|photo|picture|screenshot))\b/))&&!QUESTION.test(n))return {type:'save_attachment'};
-   if(has(/\b(discard|delete|throw (it|that|this) away|don'?t save|do not save|cancel|scrap|forget (it|that|this))\b/))return {type:'discard_attachment'};
+   if(has(/\b(discard|delete|throw (it|that|this) away|don'?t save|do not save|cancel|scrap|forget (it|that|this)|undo)\b/))return {type:'discard_attachment'};
    if(has(/^(show|open|back to)( me)? (the |that )?(file|document|pdf|photo|picture|attachment)$/))return {type:'show_attachment'};
   }
   if(hasDraft&&(screen==='research'||has(/\b(research|draft|findings)\b/))){
@@ -2376,6 +2406,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(screen==='editor'&&has(/^(save|i ?save|isave)( it| this| the note| my note)?( now)?$/))return {type:'save_note'};
   if(has(/\b(save|put|add|keep|store|write|i ?save|isave|ilagay)\b/)&&has(/\b(that|this|it|answer|what you said|sinabi mo)\b/)&&has(/\b(notes?|second brain)\b/))return {type:'save_answer'};
   if(has(/^(save|keep) (that|this|it)$/)&&talkHistory.some(m=>m.role==='model'))return {type:'save_answer'};
+  // "update / edit / improve / expand my note X (with …)" → Max researches the change and updates the note (old version kept)
+  {const m=raw.match(/\b(?:update|edit|improve|expand|complete|correct|fix|add (?:more |details? )?to)\s+(?:my |the |ang |yung )?(?:note\s+(?:about|on|for)\s+)?(.+?)\s+note\b[\s,:-]*(.*)$/i)||raw.match(/\b(?:update|edit|improve|expand|complete|correct|fix)\s+(?:my |the )?note\s+(?:about|on|for|called|titled)\s+(.+?)(?:\s*[,:-]\s*|\s+(?:with|and|to|by)\s+)(.+)$/i);
+   if(m&&m[1]&&findNote(m[1].trim()))return {type:'improve_note',query:m[1].trim(),details:{instruction:(m[2]||'').trim()}}}
+  if(has(/\bundo\b/)&&has(/\bnote\b/)&&has(/\b(change|edit|update)\b/))return {type:'undo_note_change'};
   if(has(/\b(new|create|make|start|write|add|gumawa)\b\s+(a\s+)?(new\s+)?note\b/)){const m=raw.match(/\b(?:about|called|titled|named|on|for)\s+(.+)$/i);return {type:'new_note',query:m?m[1].replace(/[?.!]+$/,'').trim():''}}
   if(has(/\b(read|basahin|read out|read aloud)\b/)&&(has(/\bnotes?\b/)||screen==='editor'&&wc<=5)){
    const m=raw.match(/\b(?:read|basahin)\b(?:\s+(?:me|out|aloud|to me|mo|nga))*\s+(?:my |the |ang |yung )?(.+?)\s+notes?\b/i)||raw.match(/\bnotes?\s+(?:about|on|for|tungkol sa)\s+(.+?)[?.!]*$/i);
@@ -2849,9 +2883,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    return gotAttachment(res.attachment,mime.startsWith('video/')?'video':'');
   }catch(e){$('dispTitle').textContent='Couldn’t read it';$('dispSub').textContent=e.message;return 'I couldn’t read that. '+e.message}
  }
- function gotAttachment(att,preview){
+ function gotAttachment(att,preview,noFile){
   pendingAttach={...att,preview:preview||'',at:Date.now()};saveAttach();
+  // 11 Nov 2026 (Mark): file every file and link straight into the library — into the note on the same subject if there is one
+  let filed='';if(!noFile&&jget('max_autofile',true)!==false){try{filed=' '+autoFileAttachment()}catch{}}
   renderAttachment();
+  if(filed.trim()){const d0=pendingAttach.dates[0];return (pendingAttach.say||pendingAttach.summary||'Here’s what’s in it.')+(d0&&!/\d{4}-\d\d-\d\d|\b(expir|due|deadline)/i.test(pendingAttach.say||'')?' '+d0.what+': '+fullDate(d0.date)+'.':'')+filed}
   const d=pendingAttach.dates[0];
   return (pendingAttach.say||pendingAttach.summary||'Here’s what’s in it.')+(d&&!/\d{4}-\d\d-\d\d|\b(expir|due|deadline)/i.test(pendingAttach.say||'')?' '+d.what+': '+fullDate(d.date)+'.':'')+' Say “save it” to put it in your notes, or ask me anything about it.';
  }
@@ -2871,7 +2908,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function renderAttachment(){
   const a=pendingAttach;if(!a)return;
   const lines=[...a.points.map(t=>({text:'• '+t})),...a.dates.map(d=>({text:'⏰ '+d.what+': '+fullDate(d.date),cls:'miss'})),...a.amounts.map(x=>({text:'💰 '+x.what+': '+money(x.currency||'',x.amount),cls:'ok'}))];
-  showDisplay(a.title,(a.url?'🔗 ':'📎 ')+a.name+' · '+a.kind+' · not in your notes yet',[{badge:'FROM FILE',badgeClass:'badge-draft',meta:'Will be filed under '+a.topic,title:a.summary||a.title,lines,
+  showDisplay(a.title,(a.url?'🔗 ':'📎 ')+a.name+' · '+a.kind+' · '+(a.filed?'filed in your notes':'not in your notes yet'),[{badge:'FROM FILE',badgeClass:'badge-draft',meta:'Will be filed under '+a.topic,title:a.summary||a.title,lines,
    buttons:[['Save to notes',()=>{const s=saveAttachment();setSub('',s);speak(s)}],['Show full text',()=>{const el=$('attText');if(el)el.hidden=!el.hidden}],['Discard',()=>{const s=discardAttachment();setSub('',s);speak(s)}]]}]);
   const card=$('dispBody').firstElementChild;
   if(attachURL){const v=a.preview==='video'?document.createElement('video'):document.createElement('img');v.src=attachURL;v.className='att-img';if(a.preview==='video'){v.controls=true;v.playsInline=true}else v.alt=a.title;card.insertBefore(v,card.children[1])}
@@ -2881,8 +2918,36 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(a.procedure){const b=document.createElement('button');b.className='pill pill-ok';b.textContent='🧠 Learn “'+a.procedure.name+'” as a skill';b.onclick=()=>makeSkill({}).then(t=>{setSub('',t);speak(t)});card.append(b)}
   const pre=document.createElement('pre');pre.id='attText';pre.className='att-text';pre.hidden=true;pre.textContent=a.text||'(no text)';card.append(pre);
  }
- function saveAttachment(){
+ // The note this file belongs in: same title, or same folder with mostly the same title words
+ function sameSubjectNote(a){
+  const t=norm(a.title||''),topic=splitPath(a.topic).join(' › ').toLowerCase(),tw=new Set(t.split(' ').filter(w=>w.length>3));
+  let best=null,bs=0;
+  for(const n of getNotes()){if(n.deleted||[SKILL_CAT,SALES_CAT].includes(n.category))continue;const nt=norm(n.title||'');
+   let s=nt&&nt===t?3:0;
+   if(!s&&tw.size&&String(n.category||'').toLowerCase()===topic){const nw=new Set(nt.split(' ').filter(w=>w.length>3));let c=0;tw.forEach(w=>{if(nw.has(w))c++});const j=c/(tw.size+nw.size-c||1);if(j>=0.6)s=1+j}
+   if(s>bs){bs=s;best=n}}
+  return best;
+ }
+ function attachmentHtml(a){
+  return (a.url?'<p><i>🔗 From <a href="'+escHtml(a.url)+'">'+escHtml(a.url)+'</a> ('+escHtml(a.kind)+') · '+localDate(new Date())+'</i></p>':'<p><i>📎 From file: '+escHtml(a.name)+' ('+escHtml(a.kind)+') · '+localDate(new Date())+'</i></p>')+(a.summary?'<p>'+escHtml(a.summary)+'</p>':'')+
+   (a.points.length?'<ul>'+a.points.map(p=>'<li>'+escHtml(p)+'</li>').join('')+'</ul>':'')+
+   (a.dates.length?'<h3>Dates</h3><ul>'+a.dates.map(d=>'<li>'+escHtml(d.what)+': '+d.date+'</li>').join('')+'</ul>':'')+
+   (a.amounts.length?'<h3>Amounts</h3><ul>'+a.amounts.map(x=>'<li>'+escHtml(x.what)+': '+escHtml(money(x.currency||'',x.amount))+'</li>').join('')+'</ul>':'');
+ }
+ let lastFiled=null;
+ function autoFileAttachment(){
+  const a=pendingAttach;if(!a||a.filed)return '';
+  const ex=sameSubjectNote(a);
+  if(ex){const all=loadAll(),n=all.find(x=>x.id===ex.id);if(n){
+   lastFiled={id:n.id,mode:'merge',prev:n.body,prevUpdated:n.updatedAt,at:Date.now()};
+   n.body=(n.body||'')+'<hr><p><b>Update '+localDate(new Date())+' — '+escHtml(a.url?'from a link':'from '+a.name)+'</b></p>'+attachmentHtml(a);
+   n.updatedAt=Date.now();n.sources=[...(n.sources||[]),...(a.url?[{title:a.name,url:a.url}]:[])].slice(-30);putNotes(all);
+   a.filed=n.id;saveAttach();return 'I added it to your note “'+n.title+'” as an update section. Say “discard” to undo.'}}
+  const s=saveAttachment(true);return s+' Say “discard” to undo.';
+ }
+ function saveAttachment(auto){
   const a=pendingAttach;if(!a)return 'There’s no file waiting to be saved. Tap the 📎 at the top to send me one.';
+  if(a.filed&&!auto){const n=getNotes().find(x=>x.id===a.filed);if(n){loadNote(n.id);return 'It’s already in your notes: '+n.title+'.'}}
   const topic=splitPath(a.topic).join(' › ')||'Inbox';
   const body=(a.url?'<p><i>🔗 From <a href="'+escHtml(a.url)+'">'+escHtml(a.url)+'</a> ('+escHtml(a.kind)+') · '+localDate(new Date())+'</i></p>':'<p><i>📎 From file: '+escHtml(a.name)+' ('+escHtml(a.kind)+') · '+localDate(new Date())+'</i></p>')+(a.summary?'<p>'+escHtml(a.summary)+'</p>':'')+(a.details?'<h2>Detailed summary</h2>'+mdToHtml(a.details):'')+(a.points.length?'<h3>Key facts</h3>':'')+
    (a.points.length?'<ul>'+a.points.map(p=>'<li>'+escHtml(p)+'</li>').join('')+'</ul>':'')+
@@ -2891,11 +2956,16 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    (a.text?'<h3>Full text</h3><pre>'+escHtml(a.text)+'</pre>':'');
   const n={id:newId(),title:a.title,category:topic,tags:[...new Set(a.tags.map(t=>t.toLowerCase()))].slice(0,6),body,source:'attachment',file:{name:a.name,kind:a.kind,url:a.url||''},sources:a.url?[{title:a.name,url:a.url}]:[],analysis:{summary:a.summary,fullText:a.points.join('\n')},createdAt:Date.now(),updatedAt:Date.now(),deleted:false};
   const all=loadAll();all.push(n);putNotes(all);
+  if(auto){a.filed=n.id;saveAttach();lastFiled={id:n.id,mode:'new',at:Date.now()};lastNote={id:n.id,at:Date.now()};return 'Filed as a new note under '+topic+'.'}
   pendingAttach=null;saveAttach();loadNote(n.id);lastNote={id:n.id,at:Date.now()};
   return 'Saved to your notes under '+topic+'.';
  }
  function discardAttachment(){
   if(!pendingAttach)return 'There’s no file to discard.';
+  if(pendingAttach.filed&&lastFiled&&lastFiled.id===pendingAttach.filed){const all=loadAll(),n=all.find(x=>x.id===lastFiled.id);
+   if(n){if(lastFiled.mode==='merge'){n.body=lastFiled.prev;n.updatedAt=Date.now()}else{n.deleted=true;n.updatedAt=Date.now()}putNotes(all)}
+   const m=lastFiled.mode;lastFiled=null;pendingAttach=null;saveAttach();if(screen==='display')setSection('home');
+   return m==='merge'?'Undone — I took that update out of your note.':'Undone — I removed that note.'}
   pendingAttach=null;saveAttach();if(screen==='display')setSection('home');
   return 'Discarded. Nothing was saved.';
  }
@@ -2968,7 +3038,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const prob=gmailProblem(data);if(prob)throw new Error(prob);
   if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
   if(attachURL){URL.revokeObjectURL(attachURL);attachURL=''}
-  return gotAttachment(data.attachment,'');
+  return gotAttachment(data.attachment,'',true);   // emails Max reads are not filed unless Mark says "save it"
  }
  async function readEmail(q){
   let x=pickEmail(q);
@@ -4355,6 +4425,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const dot=(a,b)=>{let s=0;for(let i=0;i<Math.min(a.length,b.length);i++)s+=a[i]*b[i];return s};
  const noteHash=n=>{const t=(n.title||'')+'|'+(n.category||'')+'|'+plain(n.body).slice(0,3000);let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return String(h)};
  const vecText=n=>(n.title||'')+'\n'+(n.category||'')+'\n'+(n.tags||[]).join(', ')+'\n'+plain(n.body).slice(0,3000);
+ // Long notes (SOLAS, COLREG…): also one vector per section, so a question about Rule 19 or Annex VI finds the right part
+ function vecChunks(n){const html=String(n.body||'');if(plain(html).length<=3200)return [];
+  const parts=html.split(/(?=<p><(?:b|strong)>)|(?=<hr\b)|(?=<h[1-4]\b)/i).map(h=>plain(h).trim()).filter(Boolean),out=[];let cur='';
+  for(const p of parts){if((cur+'\n'+p).length>1500&&cur){out.push(cur);cur=p}else cur=cur?cur+'\n'+p:p}if(cur)out.push(cur);
+  return out.slice(0,24).map(c=>(n.title||'')+' — '+c.slice(0,1800))}
  function scheduleIndex(){clearTimeout(vecTimer);vecTimer=setTimeout(()=>indexNotes().catch(()=>{}),4000)}
  async function indexNotes(){
   if(vecBusy||!workerBase()||navigator.onLine===false)return;vecBusy=true;
@@ -4362,12 +4437,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    // the ~1,000 trading data notes (one per stock, coin, dividend list, trader) are found by name, so they are not embedded (saves AI quota and phone storage)
    const V=vecLoad(),notes=getNotes().filter(n=>!(String(n.id).startsWith('tn2-')&&/ › (Stocks|Coins|Dividend|Traders|Currency)$/.test(n.category||''))),ids=new Set(notes.map(n=>n.id));
    for(const id of Object.keys(V.items))if(!ids.has(id))delete V.items[id];
+   if(V.ver!==2){V.ver=2;for(const k of Object.keys(V.items))V.items[k].h=''}   // 11 Nov 2026: re-index once with section vectors
    let todo=notes.filter(n=>V.items[n.id]?.h!==noteHash(n)).slice(0,200);
-   for(let i=0;i<todo.length;i+=25){
-    const batch=todo.slice(i,i+25),{r,data}=await postJson('/api/embed',{texts:batch.map(vecText),task:'doc'},30000);
+   for(let i=0;i<todo.length;){
+    // pack notes + their section texts into requests of at most 40 texts
+    const batch=[],texts=[];while(i<todo.length&&(texts.length===0||texts.length+1+vecChunks(todo[i]).length<=40)){const ch=vecChunks(todo[i]);batch.push([todo[i],texts.length,ch.length]);texts.push(vecText(todo[i]),...ch);i++}
+    const {r,data}=await postJson('/api/embed',{texts,task:'doc'},45000);
     if(!r.ok)break;
-    if(V.model&&V.model!==data.model){V.items={};todo=notes;i=-25;V.model=data.model;continue} // model changed → re-index everything
-    V.model=data.model;batch.forEach((n,k)=>{V.items[n.id]={h:noteHash(n),v:data.vectors[k]}});vecSave();
+    if(V.model&&V.model!==data.model){V.items={};todo=notes;i=0;V.model=data.model;continue} // model changed → re-index everything
+    V.model=data.model;batch.forEach(([n,k,c])=>{V.items[n.id]={h:noteHash(n),v:data.vectors[k],...(c?{c:data.vectors.slice(k+1,k+1+c)}:{})}});vecSave();
    }
   }finally{vecBusy=false}
  }
@@ -4382,7 +4460,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const base=notesContext(q);
   const qv=await queryVec(q);if(!qv)return base;
   const V=vecLoad(),notes=getNotes(),kw=new Map(rankNotes(q,20).map((n,i)=>[n.id,1-i/20]));
-  const scored=notes.map(n=>{const it=V.items[n.id];const c=it?dot(qv,vecDecode(it.v)):0;return {n,s:c+0.35*(kw.get(n.id)||0)+(isCore(n)?0.08:0),c}}).filter(x=>x.c>=0.45||kw.has(x.n.id)).sort((a,b)=>b.s-a.s).slice(0,8);
+  const scored=notes.map(n=>{const it=V.items[n.id];const c=it?Math.max(dot(qv,vecDecode(it.v)),...(it.c||[]).map(x=>dot(qv,vecDecode(x)))):0;return {n,s:c+0.35*(kw.get(n.id)||0)+(isCore(n)?0.08:0),c}}).filter(x=>x.c>=0.45||kw.has(x.n.id)).sort((a,b)=>b.s-a.s).slice(0,8);
   if(!scored.length)return base;
   return {...base,items:scored.map(({n})=>({id:n.id,title:n.title||'Untitled',category:n.category,text:noteExcerpt(n,q)}))};
  }
@@ -5049,6 +5127,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const h=document.createElement('div');h.className='rc-head';h.textContent=(ok?'✓ ':bad?'⚠ ':'? ')+(c.expert||'Fact-checker')+' — '+c.verdict+' · '+new Date(c.at).toLocaleDateString();box.append(h);
   if(c.summary){const p=document.createElement('div');p.textContent=c.summary;box.append(p)}
   for(const i of c.issues||[]){const p=document.createElement('div');p.className='rc-issue';p.textContent='• '+(i.problem||i.claim)+(i.correct?' → '+i.correct:'')+(i.source?' ('+i.source+')':'');box.append(p)}
+  if(c.fixed&&!c.fixed.undone&&(c.fixed.changes||[]).length){const p=document.createElement('div');p.className='rc-head';p.textContent='✓ Max corrected this note on '+new Date(c.fixed.at).toLocaleDateString()+' ('+c.fixed.changes.length+' change'+(c.fixed.changes.length>1?'s':'')+'):';box.append(p);
+   for(const x of c.fixed.changes){const d=document.createElement('div');d.className='rc-issue';d.textContent='• '+x.from+' → '+x.to;box.append(d)}
+   const b=document.createElement('button');b.className='chip';b.textContent='Undo Max’s correction';b.onclick=async()=>{b.disabled=true;try{const {r,data}=await postJson('/api/notes/undo-fix',{id},20000);if(!r.ok)throw new Error(data.error||r.status);jset(NC_KEY,null);await syncNotes().catch(()=>{});const s='Undone — the note is back to your version.';setSub('',s);speak(s)}catch(e){b.disabled=false;setSub('','I couldn’t undo it. '+(e.message||e))}};box.append(b)}
   for(const s of (c.sources||[]).slice(0,3)){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.className='ext-link';a.textContent=s.title||s.url;const d=document.createElement('div');d.append(a);box.append(d)}
   box.hidden=false;
  }
@@ -5190,6 +5271,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'read_link':return await readLink(a.query||a.details?.url||raw);
    case 'attach_file':$('attachBtn').classList.add('pulse');setTimeout(()=>$('attachBtn').classList.remove('pulse'),6000);return 'Tap the 📎 at the top, then pick a file, photo, video or recording — or paste a link. I’ll read it for you.';
    case 'save_attachment':return saveAttachment();
+   case 'undo_note_change':return undoNoteChange();
    case 'discard_attachment':return discardAttachment();
    case 'show_attachment':if(!attachFresh())return 'There’s no file open. Tap the 📎 at the top to send me one.';renderAttachment();return 'Here’s the file again.';
    case 'display':return await displayThing(a.query||a.details?.topic||raw);
@@ -5222,7 +5304,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     return a.query?doAction({type:'show_notes',query:a.query},raw):'Which note should I read? Say “read my” and the note’s name.';
    }
    case 'open_note':{const n=findNote(a.query);if(n){loadNote(n.id);return 'Here’s your '+n.title+' note.'}return doAction({type:'show_notes',query:a.query},raw)}
-   case 'new_note':createNewNote(a.query||'');return a.query?'New note started: '+a.query+'.':'New note ready. Type it, or tap Dictate.';
+   case 'new_note':if(a.query&&jget('max_note_research',true)!==false&&workerBase()&&!isOffline())return await draftNote(a.query);createNewNote(a.query||'');return a.query?'New note started: '+a.query+'.':'New note ready. Type it, or tap Dictate.';
+   case 'improve_note':return await improveNote(a.query,a.details?.instruction||'');
    case 'research':return await startResearch(a.query||raw);
    case 'show_research':setSection('research');return draft?'Here’s the research. Say approve, or tell me what to change.':'There’s no research yet. Tell me what to look up.';
    case 'edit_research':return await editResearch(a.query||raw);

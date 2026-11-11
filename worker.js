@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18k";
+const WORKER_VERSION = "max-worker-2026-11-18l";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -369,6 +369,64 @@ async function seedImoNotes(env) {
   await srvSetting(env, "max_srv_seed_imo", sig);
   if (added || updated) await logAct(env, {dept: "notes", kind: "organized notes", text: `IMO conventions and codes: added ${added} notes, updated ${updated}` + (kept ? `, left ${kept} you deleted` : "") + " (Maritime › IMO › Conventions / Codes, plus the IMO Index)", source: "Claude"});
 }
+// ---------- notes written by Max: markdown → the same note HTML as the IMO notes ----------
+function mdToNoteHtml(md) {
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const inline = s => esc(s.replace(/\[\[([^\]|]+)(\|([^\]]+))?\]\]/g, (_, a, __, b) => b || a)).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g, '<a href="$2">$1</a>').replace(/(?<!href=")(?<!">)(https:\/\/[^\s<)"]+)/g, '<a href="$1">$1</a>');
+  let out = "", depth = 0; const close = to => { while (depth > to) { out += "</li></ul>"; depth--; } };
+  for (const raw of String(md || "").replace(/\r/g, "").split("\n")) {
+    const m = /^(\s*)[-*] (.*)$/.exec(raw);
+    if (m) { const d = Math.min(3, Math.floor(m[1].length / 2) + 1);
+      if (d > depth) { while (depth < d) { out += "<ul><li>"; depth++; } out += inline(m[2]); } else { close(d); out += "</li><li>" + inline(m[2]); } continue; }
+    close(0); const s = raw.trim(); if (!s || /^```/.test(s)) continue;
+    if (/^---+$/.test(s)) out += "<hr>";
+    else if (/^#{1,4} /.test(s)) out += "<p><b>" + inline(s.replace(/^#+ /, "").replace(/^\*\*|\*\*$/g, "")) + "</b></p>";
+    else if (/^\*\*[^*]+\*\*:?$/.test(s)) out += "<p><b>" + inline(s.replace(/^\*\*|\*\*:?$/g, "")) + "</b></p>";
+    else out += "<p>" + inline(s) + "</p>";
+  }
+  close(0); return out;
+}
+const NOTE_FORMAT = `Write it in Mark's note format (Obsidian-style markdown, plain simple English, he is a Filipino ship officer, not a native speaker):
+**<Full title>**
+
+**What is <short name>**
+- 2–4 bullets
+
+**History**
+- dates, resolutions/laws, versions, latest changes (with dates)
+
+**Applies to**
+- who/what it applies to, thresholds
+
+---
+
+**<one bold heading per main part / chapter / topic>**
+- detailed bullets with the real numbers, limits, dates, names; sub-bullets indented by two spaces
+
+**Key Point**
+- 3–5 bullets: what matters most in practice
+
+**Sources (checked <today>)**
+- <site name> — <page title>: <full https URL>
+
+Rules: be detailed (a reference he can study and edit), never invent numbers or dates; if not sure, say "check". Prefer official sources (IMO, ILO, flag States, MARINA, class societies, government sites, manufacturers).`;
+async function noteVersionSave(db, id, body, reason) {
+  await db.prepare("CREATE TABLE IF NOT EXISTS max_note_versions (vid INTEGER PRIMARY KEY AUTOINCREMENT, note_id TEXT NOT NULL, body TEXT, reason TEXT, at INTEGER NOT NULL)").run();
+  await db.prepare("INSERT INTO max_note_versions (note_id, body, reason, at) VALUES (?, ?, ?, ?)").bind(id, String(body || "").slice(0, 200000), cleanText(reason || "", 300), Date.now()).run();
+  await db.prepare("DELETE FROM max_note_versions WHERE note_id = ? AND vid NOT IN (SELECT vid FROM max_note_versions WHERE note_id = ? ORDER BY vid DESC LIMIT 10)").bind(id, id).run();
+}
+// Apply fact-check corrections as exact text swaps inside the note (keeps his layout); returns what changed.
+function applyNoteFixes(html, fixes) {
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  let out = String(html || ""); const done = [];
+  for (const f of (Array.isArray(fixes) ? fixes : []).slice(0, 10)) {
+    const find = String(f?.find || "").trim(), rep = String(f?.replace || "").trim();
+    if (find.length < 4 || !rep || find === rep) continue;
+    for (const [a, b] of [[find, rep], [esc(find), esc(rep)]]) if (out.includes(a)) { out = out.replace(a, b); done.push({from: cleanText(find, 300), to: cleanText(rep, 300)}); break; }
+  }
+  return {html: out, done};
+}
 function plainText(html) {
   return String(html || "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|li|h\d|blockquote|pre)>/gi, "\n").replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
@@ -573,7 +631,7 @@ function deptOfAction(t) {
   if (/^(play_(overview|update|notes|reviews|build)|build_status|open_project|check_projects|show_projects|project_request|list_requests|merge_request|projects_overview|list_passage_plans)$/.test(t)) return "apps";
   if (/^(site_audit|seo_ideas|content_draft|project_stats|log_sale|sales_summary)$/.test(t)) return "web";
   if (/^(trading_|market_|show_watchlist|watchlist_|price_alert|list_alerts|convert_currency|set_currencies)/.test(t)) return "trading";
-  if (/^(learn_this|make_skill|improve_skill|walk_through|check_conflicts|show_notes|open_note|new_note|read_note|organize_notes|export_notes|research|show_research|edit_research|approve_research|reject_research|save_answer|verify_note|library_report|find_duplicates|new_skill|show_skills|forget_skill|read_link|save_attachment|watch_topic|unwatch_topic|check_watch|research_inbox)$/.test(t)) return "notes";
+  if (/^(learn_this|make_skill|improve_skill|walk_through|check_conflicts|show_notes|open_note|new_note|improve_note|undo_note_change|read_note|organize_notes|export_notes|research|show_research|edit_research|approve_research|reject_research|save_answer|verify_note|library_report|find_duplicates|new_skill|show_skills|forget_skill|read_link|save_attachment|watch_topic|unwatch_topic|check_watch|research_inbox)$/.test(t)) return "notes";
   if (/^(add_event|edit_event|delete_event|add_task|list_schedule|briefing|deadlines|check_email|read_email|draft_email|send_email|cancel_email|modify_email|whatsapp_draft|new_routine|start_routine|show_routines|delete_routine)$/.test(t)) return "schedule";
   if (/^coach_/.test(t)) return "training";
   if (/^(play_music|music_control)$/.test(t)) return "music";
@@ -605,7 +663,7 @@ async function deptContext(env, id) {
   } catch { return "\nTRADING DESK DATA: could not be loaded right now, so do not quote any paper-trading numbers."; }
 }
 // What Max may do to the app screen when he understands a request.
-const ACTIONS = ["agent_report","hear_fix","listen_lang","show_hearing","guard_report","guard_run","backup_now","play_music","music_control","activity","learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","price_on_date","home_dash","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
+const ACTIONS = ["improve_note","undo_note_change","agent_report","hear_fix","listen_lang","show_hearing","guard_report","guard_run","backup_now","play_music","music_control","activity","learn_this","make_skill","improve_skill","walk_through","check_conflicts","site_audit","seo_ideas","content_draft","trading_status","trading_emails","hands_free","barge_setting","weather","set_weather_place","set_personality","usage","whatsapp_draft","play_build","build_status","play_overview","play_update","play_notes","play_reviews","new_routine","start_routine","routine_step","show_routines","delete_routine","coach_talk","coach_checkin","coach_end","passage_distance","passage_eta","market_quote","show_watchlist","market_chart","price_on_date","home_dash","watchlist_add","watchlist_remove","price_alert","list_alerts","convert_currency","set_currencies","edit_event","delete_event","modify_email","check_email","read_email","draft_email","send_email","cancel_email","briefing","deadlines","show_crew","watch_topic","unwatch_topic","check_watch","research_inbox","verify_note","library_report","find_duplicates","new_skill","show_skills","forget_skill","read_link","attach_file","save_attachment","discard_attachment","display","projects_overview","project_stats","log_sale","sales_summary","open_project","check_projects","show_projects","project_request","list_requests","merge_request","list_passage_plans","add_event","add_task","list_schedule","read_note","show_keyboard","hide_keyboard","show_notes","open_note","new_note","research","show_research","edit_research","approve_research","reject_research","save_answer","organize_notes","open_settings","go_home","export_notes"];
 function cleanAction(a) {
   if (!a || typeof a !== "object" || !ACTIONS.includes(a.type)) return null;
   const out = {type: a.type, query: cleanText(String(a.query || ""), 300)};
@@ -1933,13 +1991,23 @@ async function notesDailyCheck(env, max = 4) {
   if (!env.MAX_MEMORY) return "no database";
   const notes = (await listNotes(env.MAX_MEMORY)).filter(n => !n.deleted && plainText(n.body).length > 40 && !/^Max › Skills/.test(n.category || ""));
   const checks = await setting(env, "max_srv_notecheck", {});
-  const due = notes.filter(n => !checks[n.id] || checks[n.id].at < (n.updatedAt || 0) || Date.now() - checks[n.id].at > 90 * 864e5)
+  const due = notes.filter(n => !checks[n.id] || checks[n.id].at < (n.updatedAt || 0) || (checks[n.id].parts > 1 && checks[n.id].part < checks[n.id].parts - 1) || Date.now() - checks[n.id].at > 90 * 864e5)
     .sort((a, b) => (/^Maritime/.test(b.category || "") - /^Maritime/.test(a.category || "")) || ((checks[a.id]?.at || 0) - (checks[b.id]?.at || 0))).slice(0, max);
   let done = 0;
   for (const n of due) {
-    const r = await agentAsk(env, "notes", `You are ${expertFor(n.category)}, checking one of Mark Jun's personal study/work notes for correctness against current, official sources (search the web: IMO, flag states, USCG/eCFR, classification societies, MARINA, manufacturers). Today is ${new Date().toISOString().slice(0, 10)}.\nNOTE TITLE: ${n.title}\nFOLDER: ${n.category}\nNOTE:\n${plainText(n.body).slice(0, 6000)}\n\nReply ONLY with JSON: {"verdict": "correct" | "needs update" | "wrong" | "can't verify", "summary": "one or two plain sentences", "issues": [{"claim": "what the note says", "problem": "what is wrong or outdated", "correct": "the correct current information", "source": "which source"}]}. Only list real errors or outdated facts — not style. If the note is right, issues is empty.`, {search: true});
+    // long notes are checked part by part (6,000 characters at a time), one part per visit, so all of SOLAS gets checked over time
+    const full = plainText(n.body), parts = Math.max(1, Math.ceil(full.length / 6000)), part = ((checks[n.id]?.part ?? -1) + 1) % parts, text = full.slice(part * 6000, part * 6000 + 6000);
+    const r = await agentAsk(env, "notes", `You are ${expertFor(n.category)}, checking one of Mark Jun's personal study/work notes for correctness against current, official sources (search the web: IMO, flag states, USCG/eCFR, classification societies, MARINA, manufacturers). Today is ${new Date().toISOString().slice(0, 10)}.\nNOTE TITLE: ${n.title}\nFOLDER: ${n.category}\nNOTE${parts > 1 ? ` (part ${part + 1} of ${parts})` : ""}:\n${text}\n\nReply ONLY with JSON: {"verdict": "correct" | "needs update" | "wrong" | "can't verify", "summary": "one or two plain sentences", "issues": [{"claim": "what the note says", "problem": "what is wrong or outdated", "correct": "the correct current information", "source": "which source", "find": "the EXACT words from the NOTE to replace (copied character for character from one line)", "replace": "the corrected words to put there"}]}. Only list real errors or outdated facts — not style. If the note is right, issues is empty.`, {search: true});
     if (!r.data || !r.data.verdict) continue;
-    checks[n.id] = {at: Date.now(), title: cleanText(n.title || "", 120), folder: cleanText(n.category || "", 120), verdict: cleanText(String(r.data.verdict), 20), summary: cleanText(String(r.data.summary || ""), 400),
+    // 11 Nov 2026 (Mark): fix what is wrong right away — exact text swaps, old version kept (undo in the app)
+    let fixed = null;
+    if (/wrong|update/.test(String(r.data.verdict)) && Array.isArray(r.data.issues) && r.data.issues.length && (r.sources || []).length) {
+      const f = applyNoteFixes(n.body, r.data.issues);
+      if (f.done.length) { try { await noteVersionSave(env.MAX_MEMORY, n.id, n.body, "before fact-check fix");
+        await env.MAX_MEMORY.prepare("UPDATE max_notes SET body = ?, updated_at = ? WHERE id = ?").bind(f.html, Date.now() + 1, n.id).run(); n.updatedAt = Date.now() + 1;
+        fixed = {at: Date.now(), changes: f.done}; await logAct(env, {dept: "notes", kind: "fixed note", text: `Corrected ${f.done.length} fact${f.done.length > 1 ? "s" : ""} in "${cleanText(n.title || "", 80)}" (old version kept)`, detail: f.done.map(x => x.from + " → " + x.to).join(" | ").slice(0, 900), source: "fact-checker"}); } catch (e) { console.log("fix failed", e.message); } }
+    }
+    checks[n.id] = {at: Date.now() + 2, part, parts, ...(fixed ? {fixed} : {}), title: cleanText(n.title || "", 120), folder: cleanText(n.category || "", 120), verdict: cleanText(String(r.data.verdict), 20) + (fixed ? " — fixed" : ""), summary: cleanText(String(r.data.summary || ""), 400),
       issues: (Array.isArray(r.data.issues) ? r.data.issues : []).slice(0, 6).map(i => ({claim: cleanText(String(i.claim || ""), 300), problem: cleanText(String(i.problem || ""), 300), correct: cleanText(String(i.correct || ""), 400), source: cleanText(String(i.source || ""), 160)})),
       sources: r.sources.slice(0, 5), expert: /maritime/.test(expertFor(n.category)) ? "Maritime expert" : "Topic expert"};
     done++;
@@ -2223,7 +2291,7 @@ async function agentsCron(env, when) {
   if (!env.MAX_MEMORY) return "no database";
   const d = new Date(when || Date.now()), day = d.getUTCDay(), hour = d.getUTCHours(), out = [];
   const once = async (key, fn) => { const k = "max_srv_once_" + key, stamp = d.toISOString().slice(0, 13); if ((await srvSetting(env, k)) === stamp) return; await srvSetting(env, k, stamp); out.push(key + ": " + await fn().catch(e => "failed " + e.message)); };
-  if (hour === 21 && day !== 6) await once("notescheck", () => notesDailyCheck(env, 4));
+  if (hour === 21 && day !== 6) await once("notescheck", () => notesDailyCheck(env, 8));
   if (hour === 1) await once("investguide", async () => "guide: " + ((await refreshGuide(env)).updated.join(",") || "no change"));   // 9 am Manila, every day
   if (hour === 20 && day === 6) await once("tradeideas", () => tradingIdeasJob(env));
   for (const a of AGENT_LIST) if (WEEKLY_AUTO.includes(a.id) && a.day === day && a.hour === hour) await once("report_" + a.id, async () => (await runAgentReport(env, a.id, {source: "schedule", email: false})).emailed);
@@ -3887,7 +3955,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -4143,7 +4211,7 @@ export default {
           "GOOGLE PLAY (his apps on the Play Store, e.g. Passage Planner): play_overview (show its store listing and test/production releases; details = {project}) · play_update (change listing text; details = {project, field: \"title\"|\"shortDescription\"|\"fullDescription\", instruction: what to change, or text if he dictated the exact words}) · play_notes (release notes / what\'s new for the latest test release; details = {project, instruction or text}) · play_reviews (details = {project}) · LEARNING: learn_this (he wants you to learn / study / summarize the file, link or note he is looking at into a detailed note; query = what) · make_skill (turn a note, file or link into a skill you follow; details = {name: the skill or note name}) · improve_skill (he corrects how you did a skill; details = {name: skill name, instruction: the correction}) · walk_through (he wants step-by-step guidance through a procedure or skill, one step at a time; details = {name}) · check_conflicts (find notes that contradict each other or look outdated) · WEBSITE TEAM (for his sites like Hobby Isle): site_audit (check a site's security, SEO, pictures and broken links; details = {project}) · seo_ideas (SEO / keyword / content ideas; details = {project, topic if he gave one}) · content_draft (write a blog post, review, guide, comparison or social post; details = {project, topic, name: \"blog\"|\"review\"|\"comparison\"|\"guide\"|\"social\"}) — drafts only, he decides what gets published · PAPER TRADING (pretend money only — you never place real trades): trading_status (how his paper trading is doing, positions, orders for the next open, which strategies are winning; details = {project: \"pse\" or \"crypto\" if he named one}) · trading_emails (turn the trading update emails on/off; details = {on: \"on\"|\"off\"}) · VOICE: hands_free (he wants you to always listen for \"Hey Max\" / stop doing that; details = {on: \"on\"|\"off\"}) · barge_setting (allow or stop interrupting you by voice; details = {on: \"on\"|\"off\"}) · WEATHER & SEA: weather (forecast, wind, waves, swell for a place; details = {location: the place, or empty for his saved place, on: \"today\"|\"tomorrow\"|\"week\"}) · set_weather_place (his default weather place; details = {location}) · set_personality (he wants you to talk differently; details = {name: \"butler\"|\"concise\"|\"witty\"|\"formal\"}) · usage (how much AI was used today / which brain answered) · whatsapp_draft (he wants to send a WhatsApp message; details = {to: the person or phone number, text: the finished message written in his voice and language}; the app opens WhatsApp with it filled in and HE taps send — never say it was sent) · play_build (build a NEW VERSION of the Android app from the latest website and upload it to his Play closed test; details = {project, notes: what's new if he said}; the app asks him first; never production) · build_status (is the app build finished / how did it go; details = {project}). The app always shows the new text and asks him before publishing. · MUSIC (the app plays it right away): play_music (he wants music played — a song, artist, album, genre or mood; query = exactly what to play, e.g. \"Ben&Ben Maybe the Night\", \"OPM love songs\", \"lofi\"; details = {mode: \"radio\" if he asked for a radio station or wants it to keep playing with the screen off, otherwise \"video\"}) · music_control (details = {op: \"pause\"|\"resume\"|\"stop\"|\"next\"|\"louder\"|\"softer\"|\"what\" (what is playing)}) · HIS AGENTS (each sends a detailed weekly report by email on Sunday): agent_report (he wants an agent's report — show the last one, or run a fresh one now when he says now/new/send; details = {agent: \"notes\"|\"research\"|\"web\"|\"apps\"|\"security\"|\"trading\"|\"investments\"|\"business\"|\"music\"|\"schedule\"|\"email\", send: true to run a new one now and email it}) · HOW YOU HEAR HIM: hear_fix (he teaches you a word you keep mishearing, e.g. \"when you hear hobby aisle I mean Hobby Isle\"; details = {heard, meant}) · listen_lang (listen in Filipino or English; details = {lang: \"fil-PH\"|\"en-PH\"}) · show_hearing (the words he taught you / how you understand him) · GUARD: guard_report (is everything OK / security or status report / anything broken) · guard_run (check everything now) · backup_now (back up his notes and memory now — emailed to himself) · ACTIVITY: activity (he asks what you or his desks did, which brain answered, what failed, or for the activity log; details = {dept: \"apps\"|\"web\"|\"trading\"|\"notes\"|\"schedule\"|\"training\"|\"music\" if he named one, range: \"today\"|\"week\"}) · ROUTINES & REPEATING REMINDERS: repeating reminders are add_event with details.repeat = \"daily\"|\"weekdays\"|\"weekends\"|\"weekly:MO,WE\"|\"monthly\"|\"every 2 days\" · new_routine (a checklist he does regularly; details = {name, steps: [...], time: \"HH:MM\" if he gave one, repeat}) · start_routine (details = {name}) · routine_step (during a routine: query = \"done\"|\"skip\"|\"stop\") · show_routines · delete_routine (details = {name}) · COACHES (investment, fitness, skills, business, career, life): coach_talk (he wants to talk to one of his coaches; details = {coach}) · coach_checkin (a coach should check in with him regularly; details = {coach, time: \"HH:MM\", repeat}) · coach_end (he is done with the coach) · PASSAGE PLANNER (his own app): passage_distance (sea distance between two ports; details = {from, to}) · passage_eta (ETA or speed needed; details = {from, to, speed in knots, depart: \"YYYY-MM-DDTHH:MM\" local time at departure port, arriveBy: \"YYYY-MM-DDTHH:MM\" local at arrival if he wants the speed needed, delays hours}) · MARKETS (prices only — you never advise buying or selling and never trade; if he asks whether to buy or sell, give the facts and say you are not a licensed advisor): market_quote (price of stocks / crypto / a currency; details = {symbols: [\"SM\", \"BTC\"], kind: \"pse\"|\"crypto\"|\"fx\" when clear}) · show_watchlist (his watchlist, optionally with charts) · market_chart (chart of one symbol; details = {symbol, days}) · home_dash (show his home-screen panels: details = {name: \"paper\" for paper trading results/positions, \"guide\" for the investment guide, money plan, top-10 savings, time deposits, promos, MP2 and dividend stocks}) · price_on_date (the price of a stock, coin, currency, gold or index ON A PAST DATE, e.g. \"LTC on 5 November 2025\", \"SM price last Christmas\"; details = {symbol, kind: \"pse\"|\"crypto\"|\"fx\" or empty for gold/oil/PSEi/indices, date: \"YYYY-MM-DD\"}; the app gets the exact number from the source — never answer a past price from memory or from the yearly numbers in his notes) · watchlist_add (details = {symbol, kind, tier: \"blue chip\"|\"middle\"|\"speculative\" if he says}) · watchlist_remove (details = {symbol}) · price_alert (tell him when a price goes above/below a level; details = {symbol, kind, direction: \"above\"|\"below\", price, currency}) · list_alerts · convert_currency (details = {amount, from, to: [codes]}) · set_currencies (which currencies to show; details = {currencies: [\"PHP\",\"USD\",...]}) · GMAIL (he connected his Gmail): check_email (what is in his inbox / any important or new emails / emails from someone or about something; query = a Gmail search like \"from:agency newer_than:7d\" or empty for the last 2 days) · read_email (open/read one email; query = which one: a number from the list, a sender or a subject) · draft_email (write or reply to an email; details = {to: name or address (empty when replying), subject, instruction: what to say, reply: true when replying to the email he is looking at}) · send_email (ONLY when he clearly says yes/send it to a draft he has heard) · cancel_email (don't send / discard the draft) · modify_email (organize emails; details = {target: \"this\" for the email he is looking at, \"number 2\" from the list, or a Gmail search like \"from:shop newer_than:30d\", op: archive|trash|read|unread|star|unstar|important|label|unlabel, label: name for label ops}; the app always asks him to confirm; trash is recoverable for 30 days; never say emails are permanently deleted). Never claim an email was sent unless the app confirms it. · HIS CREW (you are their chief; they work for him through you): the Secretary, the Researcher and the Librarian. Crew actions: briefing (daily briefing / what is going on / what did I miss) · deadlines (what is due or expiring; details = {days}) · show_crew · watch_topic (the Researcher should keep an eye on a topic for updates; query = topic) · unwatch_topic (query = topic) · check_watch (check the watched topics now) · research_inbox (open the Researcher's findings) · verify_note (fact-check one of his notes; query = which note) · library_report (state of his notes) · find_duplicates (duplicate notes) · new_skill (he teaches you a new playbook; query = his full instruction including its name) · show_skills · forget_skill (query = skill name) · read_link (he wants you to read, summarize or watch a web page or YouTube video; query = the web address) · attach_file (he wants to send/scan/show you a file, photo or document — the app tells him to tap the clip) · save_attachment (save the file he just sent into his notes) · discard_attachment (throw that file away) · display (he wants something shown on the screen; query = what to show — the app checks his notes first, then the web) · projects_overview (how many projects he has, how each is doing, what is missing or needs upgrading; query = one project name or empty for all) · project_stats (visitors / how a site is doing; details = {project}) · log_sale (he tells you money he earned; details = {project, amount (number), currency like USD or PHP, source like Amazon or Play Store, date YYYY-MM-DD}) · sales_summary (how much he earned; details = {project, period: today|week|month|year|all}) · " +
           "open_project (query = project name; he wants to open one of his apps or sites) · check_projects (are his apps/sites up) · show_projects · list_passage_plans (his saved routes in Passage Planner) · " +
           "project_request (he wants something CHANGED or ADDED in one of his apps/sites; details = {project: name, request: his full request in clear words}) · list_requests (details = {project}) · merge_request (details = {project, number}) · " +
-          "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = optional title) · research (query = what to research on the web) · show_research (see the current research) · " +
+          "read_note (query = note title; he wants you to read a note out loud) · show_keyboard (he wants to type) · hide_keyboard · show_notes (query = topic to search, or empty) · open_note (query = note title) · new_note (query = the topic; Max researches the web and writes a full draft note) · improve_note (query = which note; details.instruction = what to add/fix; Max researches and updates that note, old version kept) · undo_note_change (undo Max's last edit to a note) · research (query = what to research on the web) · show_research (see the current research) · " +
           "edit_research (query = his exact change to the research draft) · approve_research · reject_research · save_answer (save your last answer into his notes) · organize_notes (sort notes into topics) · open_settings · go_home (back to just talking) · export_notes. " +
           "Work out dates from the current time below (e.g. 'Friday 9am' = the coming Friday). Only set an action when he clearly wants it; otherwise null. When you set one, 'reply' is a short spoken confirmation. If the app cannot do what he asks, say so honestly. " : "") +
         (!db && actionsOn ? "Reply ONLY with JSON: {\"reply\": \"what you say\", \"used_notes\": [\"exact titles of his notes you used\"], \"action\": null or {\"type\": \"...\", \"query\": \"...\", \"details\": {...}}" + (body.coach ? ", \"coach_notes\": [\"...\"]" : "") + "}. " : "");
@@ -4286,6 +4354,45 @@ CONFIDENCE: <high, medium or low, and why in a few words>`;
       if (!draft.searched) draft.confidence = "low — Max could not search the web for this, so these points come from his own knowledge only";
       if (!draft.points.length) return json({error:"Max could not put the research together. Try asking in a different way."}, 502, origin, env);
       return json({draft}, 200, origin, env);
+    }
+    // 11 Nov 2026 (Mark): "create a note about X" → Max researches first and writes a full draft he only needs to edit;
+    // "update/edit my note X …" → Max researches the change and returns the improved note (the app keeps the old version).
+    if ((url.pathname === "/api/note-draft" || url.pathname === "/api/note-improve") && request.method === "POST") {
+      if (!env.GEMINI_API_KEY) return json({error:"GEMINI_API_KEY secret is not configured."}, 500, origin, env);
+      let body; try { body = await request.json(); } catch { return json({error:"Invalid JSON body."}, 400, origin, env); }
+      const draftMode = url.pathname === "/api/note-draft", today = new Date().toISOString().slice(0, 10);
+      const topic = cleanText(body.topic || body.instruction || "", 600), topics = Array.isArray(body.topics) ? body.topics.slice(0, 80).map(x => cleanText(x, 80)).filter(Boolean) : [];
+      if (!topic) return json({error: draftMode ? "What should the note be about?" : "What should I change in the note?"}, 400, origin, env);
+      const old = draftMode ? "" : String(body.note?.body || "").slice(0, 120000), oldTitle = cleanText(body.note?.title || "", 160);
+      if (!draftMode && !old) return json({error: "Which note? Open it first or say its name."}, 400, origin, env);
+      const db = env.MAX_MEMORY && auth.ok ? env.MAX_MEMORY : null; let mine = [];
+      if (db && draftMode) { try { await ensureSchema(db); mine = await relevantNotes(db, topic); } catch {} }
+      const prompt = draftMode
+        ? `Search the web and write a NEW reference note for Mark's notes on: ${topic}\nToday is ${today}.\n${NOTE_FORMAT.replace("<today>", today)}\n${mine.length ? "His existing notes that may overlap (do not copy them; mention in Key Point if this note should link to one):\n" + mine.map(n => "- " + n.title + " (" + n.category + ")").join("\n") + "\n" : ""}\nAnswer with: first line FOLDER: <best folder path like "Maritime › IMO › Codes"${topics.length ? ", reuse one of: " + topics.slice(0, 60).join(" | ") : ""}>, second line TITLE: <short title>, then a line ---NOTE--- and the note.`
+        : `Mark wants to change his note "${oldTitle}". His request: ${topic}\nToday is ${today}. Search the web for anything new you add, so it is correct.\nRules: keep everything in the note that is still correct; keep his layout (bold headings, bullets); add or change only what the request needs; update the "Sources" list with the pages you used. Return the WHOLE updated note as markdown (bold headings with **…**, bullets with "- ").\nAnswer with: first line CHANGES: <one line listing what you changed>, then a line ---NOTE--- and the full note.\n\nTHE NOTE NOW (as text):\n${plainText(old).slice(0, 30000)}`;
+      let g; try { g = await gemini(env, {contents: [{role: "user", parts: [{text: prompt}]}], tools: [{google_search: {}}], generationConfig: {temperature: 0.2, maxOutputTokens: 8192}}, {deep: true}); } catch { g = null; }
+      if (!g || !g.ok) return json({error: "Research failed: " + cleanText(String(g?.data?.error?.message || "no AI answer"), 200)}, 502, origin, env);
+      const cand = g.data?.candidates?.[0] || {}, text = (cand.content?.parts || []).map(p => p.text || "").join("\n");
+      const sources = (cand.groundingMetadata?.groundingChunks || []).map(c => c.web).filter(Boolean).map(w => ({title: cleanText(String(w.title || ""), 120), url: String(w.uri || "")})).filter(s => /^https:\/\//.test(s.url)).slice(0, 10);
+      const [head, ...rest] = text.split(/^-{3}NOTE-{3}\s*$/m), md = rest.join("\n").trim() || text;
+      const folder = cleanText((/FOLDER:\s*(.+)/i.exec(head) || [])[1] || "", 120).replace(/^["']|["']$/g, ""), title = cleanText((/TITLE:\s*(.+)/i.exec(head) || [])[1] || "", 160).replace(/^["']|["']$/g, "");
+      let html = mdToNoteHtml(md); const bodyLen = plainText(html).length;
+      if (sources.length && !/Sources/i.test(md)) html += "<p><b>Sources (searched " + today + ")</b></p><ul>" + sources.map(s => `<li>${s.title.replace(/</g, "&lt;")}: <a href="${s.url}">${s.url.replace(/</g, "&lt;").slice(0, 120)}</a></li>`).join("") + "</ul>";
+      if (!draftMode && bodyLen < plainText(old).length * 0.6) return json({error: "The new version came out much shorter than your note, so I didn't use it. Try asking for the change in smaller steps."}, 422, origin, env);
+      if (plainText(html).length < 200) return json({error: "I couldn't write enough about that. Try a more specific topic."}, 422, origin, env);
+      return json({html, title: title || (draftMode ? cleanText(topic, 80) : oldTitle), folder, changes: cleanText((/CHANGES:\s*(.+)/i.exec(head) || [])[1] || "", 400), sources, searched: sources.length > 0}, 200, origin, env);
+    }
+    if (url.pathname === "/api/notes/undo-fix" && request.method === "POST") {
+      const db = env.MAX_MEMORY && auth.ok ? env.MAX_MEMORY : null; if (!db) return json({error: "Not signed in."}, 401, origin, env);
+      let body; try { body = await request.json(); } catch { return json({error:"Invalid JSON body."}, 400, origin, env); }
+      const id = safeId(body.id); if (!id) return json({error: "Which note?"}, 400, origin, env);
+      await db.prepare("CREATE TABLE IF NOT EXISTS max_note_versions (vid INTEGER PRIMARY KEY AUTOINCREMENT, note_id TEXT NOT NULL, body TEXT, reason TEXT, at INTEGER NOT NULL)").run();
+      const v = await db.prepare("SELECT * FROM max_note_versions WHERE note_id = ? ORDER BY vid DESC LIMIT 1").bind(id).first();
+      if (!v) return json({error: "No earlier version of this note is saved."}, 404, origin, env);
+      const now = Date.now(); await db.prepare("UPDATE max_notes SET body = ?, updated_at = ? WHERE id = ?").bind(v.body, now, id).run();
+      await db.prepare("DELETE FROM max_note_versions WHERE vid = ?").bind(v.vid).run();
+      const checks = await setting(env, "max_srv_notecheck", {}); if (checks[id]) { checks[id].fixed = {...(checks[id].fixed || {}), undone: now}; checks[id].verdict = String(checks[id].verdict || "").replace(" — fixed", " — fix undone"); await srvSetting(env, "max_srv_notecheck", JSON.stringify(checks)); }
+      return json({ok: true, restored: v.reason, updatedAt: now}, 200, origin, env);
     }
     if (url.pathname === "/api/research-edit" && request.method === "POST") {
       if (!env.GEMINI_API_KEY) return json({error:"GEMINI_API_KEY secret is not configured."}, 500, origin, env);
