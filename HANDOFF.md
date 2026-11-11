@@ -16,7 +16,7 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Email: trash only, never permanent delete
 - Backups go to his Gmail, never to a public repo
 
-**Where things live now (GitHub account navigator-isle SUSPENDED 7 Nov 2026)**
+**Where things live now (GitHub account navigator-isle was suspended 7 Nov 2026; restored 10 Nov 2026 — pushes to main auto-deploy the Worker after tests)**
 - Max phone app → Cloudflare Pages: https://max-app-axv.pages.dev (zip upload from phone)
 - Max backend → Cloudflare Worker `max-ai-backend`: https://max-ai-backend.mjgaly-mg.workers.dev (live version max-worker-2026-11-15h)
   - D1 database `max-memory` (binding MAX_MEMORY): notes, memory, settings, reports
@@ -40,10 +40,10 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 
 **Paused**
 - Paper trading now: Claude's Sunday scheduled run + dashboard https://claude.ai/artifact/25fnUcKASedJmKSZBRbW9H (MAX-MASTER-3; engine and state in its database `paper/`); email to his Gmail
-- Old GitHub Actions paper trader retired
+- Old GitHub Actions paper trader retired (workflow disabled 11 Nov 2026; Max's server paper engine is the only trader)
 - Passage Planner Android auto-builds / Play upload (GitHub Actions)
 - Max's GitHub features (project code updates, build checks, trading ideas write)
-- 4+ local commits not pushed (GitHub refuses) — push when account is restored
+- All local commits pushed 10–11 Nov 2026 (18f, 18g live)
 
 **Backups**
 - Weekly Gmail: max-backup-DATE.json (data) — code zip added once new Worker is deployed
@@ -71,5 +71,5 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 1. Upload latest max-app.zip (new site addresses + project-list migration) to Pages project max-app
 2. Check Hobby Isle (Cloudflare → hobbyisle → Settings → Build: linked repo?) and Netlify officer-checklist site (linked repo?)
 3. Update Passage Planner privacy URL in Play Console
-4. When a laptop or GitHub is available: deploy the new Worker; push local commits; restart trader
+4. Done 11 Nov 2026: Worker deploys from GitHub; commits pushed; old trader stays retired (Max's own engine trades)
 5. Optional: "beyond the convention" (US/Philippine rules) for STCW and MLC notes
