@@ -38,6 +38,11 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Deploy: `node build.mjs` then `npx wrangler deploy` (deploy.bat / deploy.sh; first time `wrangler login` in his browser)
 - Phone-only updates: rebuild site → zip site/ without _src → he uploads to Pages project max-app ("Create deployment")
 
+**Rule: backup data sources (Mark, 11 Nov 2026)**
+- Every outside data source needs backups so no job stops because one site is down. New live data → use firstOk() in worker.js (main source first, then backups; it reports which answered)
+- Now: crypto candles CRYPTO_SOURCES (Binance, OKX, Coinbase, Kraken, KuCoin, Gate.io) · crypto price now cryptoSpotUsd (same 6) · USD/PHP usdPhp and fxRates (ECB/Frankfurter, ExchangeRate-API, currency-api) · past-day rate fxOnDate (Frankfurter, currency-api dated copy) · PSE bars: PSE Edge → saved bars (S.pseHist) → TradingView (finished days only, after 4 pm Manila) → Phisix (value only, never fills) · PSE price now: PSE Edge → TradingView → Phisix → web search
+- No good free backup yet: PSE dividend list (PSE Edge only; last saved list is kept), 1-year forex history for notes (retries next day), investment rate pages (keep last data)
+
 **Paused**
 - Paper trading now: Claude's Sunday scheduled run + dashboard https://claude.ai/artifact/25fnUcKASedJmKSZBRbW9H (MAX-MASTER-3; engine and state in its database `paper/`); email to his Gmail
 - Old GitHub Actions paper trader retired (workflow disabled 11 Nov 2026; Max's server paper engine is the only trader)

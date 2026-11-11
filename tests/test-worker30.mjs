@@ -12,6 +12,17 @@ const M = {down: /^$/, calls: [], edge: null, tv: null, phisix: null, fx: {}};
 globalThis.fetch = async (u, init = {}) => {
   const url = String(u); M.calls.push(url);
   if (M.down.test(url)) return new Response("blocked", {status: 403});
+  if (url.includes("ticker/price?symbol=")) return Response.json({price: "70001"});
+  if (url.includes("okx.com/api/v5/market/ticker")) return Response.json({data: [{last: "70002"}]});
+  if (url.includes("coinbase.com/products/") && url.endsWith("/ticker")) return Response.json({price: "70003"});
+  if (url.includes("kraken.com/0/public/Ticker")) return Response.json({result: {XXBTZUSD: {c: ["70004", "1"]}}});
+  if (url.includes("kucoin.com/api/v1/market/orderbook")) return Response.json({data: {price: "70005"}});
+  if (url.includes("gateio.ws/api/v4/spot/tickers")) return Response.json([{last: "70006"}]);
+  if (url.includes("frankfurter.dev/v1/latest?base=EUR")) return Response.json({date: "2026-11-10", rates: {PHP: 68}});
+  if (/frankfurter\.dev\/v1\/\d{4}-/.test(url)) return Response.json({date: "2026-11-05", rates: {PHP: 57.5}});
+  if (url.includes("er-api.com/v6/latest/EUR")) return Response.json({time_last_update_unix: 1794355352, rates: {PHP: 68.5}});
+  if (url.includes("currency-api@latest/v1/currencies/eur.json")) return Response.json({date: "2026-11-10", eur: {php: 69, btc: 0.00001}});
+  if (url.includes("currency-api@2026-11-05/v1/currencies/usd.json")) return Response.json({date: "2026-11-05", usd: {php: 57.7}});
   if (url.includes("binance.vision")) return Response.json(btc.map(b => [b.t, "1", "1", "1", String(b.c), "0", b.t + DAY - 1, "1000"]));
   if (url.includes("okx.com")) return Response.json({code: "0", data: btc.map(b => [String(b.t), "1", "1", "1", String(b.c), "0", "0", "1000", "1"]).reverse()});
   if (url.includes("coinbase.com")) return Response.json(btc.map(b => [b.t / 1000, 1, 1, 1, b.c, 10]).reverse());
@@ -91,4 +102,19 @@ const P2 = JSON.parse(JSON.stringify(P)); P2.pseHist = {};
 r = await T.pseStep(env, P2, {n: 0, max: 40}, today);
 const B2 = P2.books.pse_dividend;
 ok(B2.last_day === lastBefore && P2.journal.length === jBefore && B2.lastPx.AAA === 6.5 && /phisix 1/.test(P2.pseSrc), "only Phisix answers → holdings valued at its last price, no order filled without a real opening price", JSON.stringify([B2.last_day, B2.lastPx, P2.pseSrc]));
+// ---------- live data for chats and the dashboard (11 Nov 2026 rule: every source has backups) ----------
+M.down = /^$/;
+let q = await T.cryptoSpotUsd("BTC"); ok(q === 70001, "crypto price now: Binance first", q);
+M.down = /binance|okx|coinbase|kraken/; q = await T.cryptoSpotUsd("ETH"); ok(q === 70005, "Binance, OKX, Coinbase, Kraken down → KuCoin", q);
+M.down = /binance|okx|coinbase|kraken|kucoin|gateio/; err = null; try { await T.cryptoSpotUsd("SOL"); } catch (e) { err = e; }
+ok(err && /No crypto price source answered/.test(err.message) && (err.message.match(/answered 403/g) || []).length === 6, "all 6 down → a clear message listing each source", err && err.message);
+M.down = /^$/; let fr = await T.fxRates("EUR"); ok(fr.source === "ECB (Frankfurter)" && fr.rates.PHP === 68 && fr.rates.EUR === 1, "currency rates: ECB first", JSON.stringify(fr));
+M.down = /frankfurter/; fr = await T.fxRates("eur"); ok(fr.source === "ExchangeRate-API" || fr.source === "ECB (Frankfurter)", "ECB down → ExchangeRate-API (a cached answer is fine too)", fr.source);
+M.down = /^$/; let fd = await T.fxOnDate("USD", "PHP", "2026-11-05"); ok(fd.rate === 57.5 && /Frankfurter/.test(fd.source), "a past day's rate: ECB first", JSON.stringify(fd));
+M.down = /frankfurter/; fd = await T.fxOnDate("USD", "PHP", "2026-11-05"); ok(fd.rate === 57.7 && /currency-api/.test(fd.source), "ECB down → the saved daily copy of that day", JSON.stringify(fd));
+M.down = /^$/; M.tv = {BDO: [121.8, -0.16, -0.2, "BDO Unibank, Inc.", 1794364893]};
+let pq = await T.pseQuoteBackup("BDO"); ok(pq.price === 121.8 && /TradingView/.test(pq.source) && pq.name === "BDO Unibank, Inc.", "PSE price now when PSE Edge fails: TradingView", JSON.stringify(pq));
+M.tv = null; M.phisix = 122; pq = await T.pseQuoteBackup("BDO"); ok(pq.price === 122 && pq.source === "Phisix", "…then Phisix", JSON.stringify(pq));
+const fo = await T.firstOk("test", [["a", async () => { throw new Error("down"); }], ["b", async () => null], ["c", async () => 5]]);
+ok(fo.value === 5 && fo.source === "c" && fo.tried.length === 2, "firstOk: the helper for every future data source returns the first good answer and which source gave it", JSON.stringify(fo));
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18h";
+const WORKER_VERSION = "max-worker-2026-11-18i";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -325,7 +325,7 @@ async function seedMemories(env) {
   await srvSetting(env, "max_srv_seed_memories_2026_11_11", String(now));
   await logAct(env, {dept: "notes", kind: "memory", text: `Saved ${st.length} things Mark told Claude (8–9 Nov 2026) into long-term memory`, source: "Claude"});
 }
-const SEED_SIGNATURE = SEED_NOTES.map(n => n.id + ":" + (n.v || 1)).join(",") + "|imo:" + IMO_NOTES.map(n => n.id + ":" + n.v).join(",") + "|mem20261111|" + TN2;
+const SEED_SIGNATURE = SEED_NOTES.map(n => n.id + ":" + (n.v || 1)).join(",") + "|imo:" + IMO_NOTES.map(n => n.id + ":" + n.v).join(",") + "|mem20261111b|" + TN2;
 async function seedNotes(env) {
   const db = env.MAX_MEMORY; if (!db || env.MAX_SEED_NOTES !== "on") return;
   const sig = String(SEED_SIGNATURE.length) + ":" + [...SEED_SIGNATURE].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -343,6 +343,8 @@ async function seedNotes(env) {
   }
   await seedImoNotes(env).catch(e => console.log("IMO notes seed failed:", e.message));
   await seedMemories(env).catch(e => console.log("memory seed failed:", e.message));
+  // 11 Nov 2026: GitHub is back — replace the old "suspended" memory so Max stops saying it.
+  if (!(await srvSetting(env, "max_srv_seed_mem_github_back"))) { const now = Date.now(), st = upsertMemoryStmt(db, {id: "mem-claude-2026-11-01", text: "Mark's GitHub account navigator-isle was suspended on 7 Nov 2026 and restored on 10 Nov 2026. Max's server updates now deploy automatically from GitHub (navigator-isle/Max-mobile) after all tests pass; the phone app is still uploaded to Cloudflare Pages as max-app.zip.", source: "Claude (11 Nov 2026)", createdAt: now, updatedAt: now}); if (st) await st.run().catch(() => {}); await srvSetting(env, "max_srv_seed_mem_github_back", String(now)); }
   await srvSetting(env, "max_srv_seed_all", sig);
 }
 // IMO conventions and codes pack (11 Nov 2026): one log line for the whole pack. If Mark already has a note with the
@@ -2286,6 +2288,29 @@ async function cg(path) {
   if (!res.ok) throw new Error("CoinGecko answered " + res.status + ".");
   return res.json();
 }
+// Crypto price now (in USD): six exchanges, first answer wins.
+const KRAKEN_SYM = {BTC: "XBT", DOGE: "XDG"};
+async function cryptoSpotUsd(sym) {
+  sym = String(sym || "").toUpperCase();
+  return cached("spot:" + sym, 60e3, async () => (await firstOk("crypto price", [
+    ["Binance", async () => +(await jget("https://data-api.binance.vision/api/v3/ticker/price?symbol=" + sym + "USDT")).price],
+    ["OKX", async () => +(await jget("https://www.okx.com/api/v5/market/ticker?instId=" + sym + "-USDT"))?.data?.[0]?.last],
+    ["Coinbase", async () => +(await jget("https://api.exchange.coinbase.com/products/" + sym + "-USD/ticker")).price],
+    ["Kraken", async () => { const d = await jget("https://api.kraken.com/0/public/Ticker?pair=" + (KRAKEN_SYM[sym] || sym) + "USD"); const k = d.result && Object.keys(d.result)[0]; return k ? +d.result[k].c[0] : null; }],
+    ["KuCoin", async () => +(await jget("https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=" + sym + "-USDT"))?.data?.price],
+    ["Gate.io", async () => +(await jget("https://api.gateio.ws/api/v4/spot/tickers?currency_pair=" + sym + "_USDT"))?.[0]?.last]].map(([n, f]) => [n, async () => { const v = await f(); return v > 0 ? v : null; }]))).value);
+}
+// PSE price now when PSE Edge's page fails: TradingView → Phisix.
+async function pseQuoteBackup(sym) {
+  sym = String(sym || "").toUpperCase();
+  const r = await firstOk("PSE price", [
+    ["TradingView (delayed)", async () => { const r = await fetch("https://scanner.tradingview.com/philippines/scan", {method: "POST", headers: {"Content-Type": "application/json", "User-Agent": UA},
+      body: JSON.stringify({symbols: {tickers: ["PSE:" + sym]}, columns: ["close", "change", "change_abs", "description", "last_bar_update_time"]})});
+      if (!r.ok) throw new Error("TradingView answered " + r.status); const x = (await r.json())?.data?.[0]?.d; if (!x || !(x[0] > 0)) return null;
+      return {symbol: sym, name: x[3] || sym, price: +x[0], changePct: x[1] ?? null, change: x[2] ?? null, asOf: x[4] ? new Date(x[4] * 1000).toISOString() : ""}; }],
+    ["Phisix", async () => { const d = await jget("https://phisix-api3.appspot.com/stocks/" + encodeURIComponent(sym) + ".json"); const s = d?.stocks?.[0]; return s && s.price?.amount > 0 && {symbol: sym, name: s.name || sym, price: +s.price.amount, changePct: s.percentChange ?? null, change: null, asOf: d.as_of || ""}; }]]);
+  return {...r.value, source: r.source};
+}
 async function cryptoId(sym) {
   const k = String(sym || "").toLowerCase().trim(); if (CRYPTO[k]) return CRYPTO[k];
   return cached("cgid:" + k, 864e5, async () => {
@@ -2293,12 +2318,28 @@ async function cryptoId(sym) {
     const c = (r.coins || []).find(x => x.symbol.toLowerCase() === k || x.id === k || x.name.toLowerCase() === k) || (r.coins || [])[0];
     if (!c) throw new Error("I couldn't find a coin called " + sym + "."); return c.id; });
 }
+// RULE (Mark, 11 Nov 2026): every outside data source needs backups so a job never stops because one site is down.
+// Use firstOk() for any NEW live data: list the main source first, then the backups; it returns the first good answer
+// and says which source answered. (Paper trading has its own chains: CRYPTO_SOURCES, usdPhp, PSE Edge → TradingView → Phisix.)
+async function firstOk(label, tries) {
+  const errs = [];
+  for (const [name, fn] of tries) {
+    try { const v = await fn(); if (v !== undefined && v !== null && v !== false) return {value: v, source: name, tried: errs}; errs.push(name + ": no data"); }
+    catch (e) { if (/budget/.test(e.message)) throw e; errs.push(name + ": " + cleanText(String(e.message), 60)); }
+  }
+  throw new Error("No " + label + " source answered — " + errs.join("; "));
+}
+const jget = async u => { const r = await fetch(u, {headers: {"User-Agent": UA, Accept: "application/json"}}); if (!r.ok) throw new Error(new URL(u).hostname + " answered " + r.status); return r.json(); };
+// Currency rates: ECB (Frankfurter) → ExchangeRate-API → free currency API (fawazahmed0, served by jsDelivr).
 async function fxRates(base) {
   base = String(base || "USD").toUpperCase();
   return cached("fx:" + base, 30 * 60e3, async () => {
-    const res = await fetch("https://api.frankfurter.dev/v1/latest?base=" + base, {headers: {"User-Agent": UA}});
-    if (!res.ok) throw new Error("Currency rates unavailable (" + res.status + ").");
-    const d = await res.json(); return {date: d.date, rates: {...d.rates, [base]: 1}};
+    const r = await firstOk("currency rate", [
+      ["ECB (Frankfurter)", async () => { const d = await jget("https://api.frankfurter.dev/v1/latest?base=" + base); return d.rates && {date: d.date, rates: d.rates}; }],
+      ["ExchangeRate-API", async () => { const d = await jget("https://open.er-api.com/v6/latest/" + base); return d.rates && {date: new Date((d.time_last_update_unix || 0) * 1000).toISOString().slice(0, 10), rates: d.rates}; }],
+      ["currency-api", async () => { const d = await jget("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/" + base.toLowerCase() + ".json"); const x = d[base.toLowerCase()];
+        return x && {date: d.date, rates: Object.fromEntries(Object.entries(x).filter(([k]) => FIAT.includes(k.toUpperCase())).map(([k, v]) => [k.toUpperCase(), v]))}; }]]);
+    const d = r.value; return {date: d.date, source: r.source, rates: {...d.rates, [base]: 1}};
   });
 }
 async function convertAmount(amount, from, tos) {
@@ -2391,6 +2432,13 @@ const YAHOO = {gold: "GC=F", xau: "GC=F", silver: "SI=F", xag: "SI=F", oil: "CL=
 const CRYPTO_TICK = Object.fromEntries(Object.entries(CRYPTO).filter(([k, id]) => k !== id && k.length <= 5).map(([k, id]) => [id, k.toUpperCase()]));
 const dayUTC = s => { const m = String(s || "").match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return null; const t = Date.UTC(+m[1], +m[2] - 1, +m[3]); return new Date(t).getUTCDate() === +m[3] ? t : null; };
 const isoDay = t => new Date(t).toISOString().slice(0, 10);
+// A past day's currency rate: ECB (Frankfurter) → currency-api's saved copy of that day.
+async function fxOnDate(F, T, day) {
+  const r = await firstOk("currency rate", [
+    ["ECB rates (Frankfurter)", async () => { const d = await jget("https://api.frankfurter.dev/v1/" + day + "?base=" + F + "&symbols=" + T); return Number.isFinite(d?.rates?.[T]) && {rate: d.rates[T], day: d.date}; }],
+    ["currency-api (daily copy)", async () => { const d = await jget("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@" + day + "/v1/currencies/" + F.toLowerCase() + ".json"); const v = d?.[F.toLowerCase()]?.[T.toLowerCase()]; return Number.isFinite(v) && {rate: v, day: d.date || day}; }]]);
+  return {...r.value, source: r.source};
+}
 async function getJson(u, init = {}) { const r = await fetch(u, {...init, headers: {"User-Agent": UA, Accept: "application/json", ...(init.headers || {})}}); if (!r.ok) throw new Error(new URL(u).hostname + " answered " + r.status); return r.json(); }
 async function yahooDay(ticker, t) {
   const d = await getJson("https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(ticker) + "?interval=1d&period1=" + Math.floor((t - 10 * 864e5) / 1000) + "&period2=" + Math.floor((t + 864e5) / 1000));
@@ -2429,9 +2477,8 @@ async function priceOnDate(env, sym, kind, date) {
   }
   if (kind === "fx") {
     const F = k.toUpperCase(), T = F === "PHP" ? "USD" : "PHP";
-    const d = await getJson("https://api.frankfurter.dev/v1/" + isoDay(t) + "?base=" + F + "&symbols=" + T);
-    if (!d.rates || !Number.isFinite(d.rates[T])) throw new Error("No rate for " + F + " on that day.");
-    return out({symbol: F, kind, name: "1 " + F + " in " + T, day: d.date, close: d.rates[T], currency: T, note: "European Central Bank reference rate (set about 4 PM Frankfurt time)", source: "ECB rates (Frankfurter)"});
+    const r = await fxOnDate(F, T, isoDay(t)).catch(() => null); if (!r) throw new Error("No rate for " + F + " on that day.");
+    return out({symbol: F, kind, name: "1 " + F + " in " + T, day: r.day, close: r.rate, currency: T, note: r.source === "ECB rates (Frankfurter)" ? "European Central Bank reference rate (set about 4 PM Frankfurt time)" : "daily reference rate", source: r.source});
   }
   const y = await yahooDay(YAHOO[k] || sym, t), FUT = {"GC=F": "Gold", "SI=F": "Silver", "CL=F": "WTI crude oil", "BZ=F": "Brent crude oil"};
   if (FUT[YAHOO[k]]) y.name = FUT[YAHOO[k]] + " (futures)";
@@ -2998,8 +3045,8 @@ async function paperView(env) {
     const cs = [...new Set([...S.books.crypto_swing.positions.map(p => p.sym), (S.books.btc_trend.qty || 0) > 0 ? "BTC" : null, (S.books.gold_trend.qty || 0) > 0 ? "PAXG" : null].filter(Boolean))];
     if (cs.length) { try { const r = await fetch("https://data-api.binance.vision/api/v3/ticker/price?symbols=" + encodeURIComponent(JSON.stringify(cs.map(s => s + "USDT"))), {headers: {"User-Agent": UA}}); const d = await r.json();
       for (const x of Array.isArray(d) ? d : []) live.crypto[x.symbol.replace(/USDT$/, "")] = +x.price; } catch (e) { errors.push("Binance: " + e.message); }
-      for (const s of cs.filter(s => !(live.crypto[s] > 0)).slice(0, 10)) { try { const d = await (await fetch(`https://www.okx.com/api/v5/market/ticker?instId=${s}-USDT`, {headers: {"User-Agent": UA}})).json(); const p = +d?.data?.[0]?.last; if (p > 0) live.crypto[s] = p; } catch {} } }
-    for (const p of S.books.pse_dividend.positions.slice(0, 20)) { try { live.pse[p.sym] = (await pseQuote(p.sym)).price; } catch (e) { errors.push(p.sym + ": " + e.message); } }
+      for (const s of cs.filter(s => !(live.crypto[s] > 0)).slice(0, 10)) { try { live.crypto[s] = await cryptoSpotUsd(s); } catch (e) { errors.push(s + ": " + e.message); } } }
+    for (const p of S.books.pse_dividend.positions.slice(0, 20)) { try { live.pse[p.sym] = (await pseQuote(p.sym)).price; } catch (e) { try { live.pse[p.sym] = (await pseQuoteBackup(p.sym)).price; } catch (e2) { errors.push(p.sym + ": " + e.message); } } }
     const T = paperTotals(S, live), fx = S.usdphp;
     const books = Object.entries(PBOOK).map(([k, cfg]) => { const B = S.books[k], part = T.parts.find(p => p.key === k);
       const positions = B.positions.map(x => { const last = x.shares ? live.pse[x.sym] || (B.lastPx || {})[x.sym] : live.crypto[x.sym]; const qty = x.shares || x.qty;
@@ -3333,13 +3380,22 @@ async function marketRoutes(request, env, url, origin) {
           const main = curs[0].toLowerCase();
           out.push({kind: "crypto", symbol: c.symbol.toUpperCase(), id, name: id.replace(/-/g, " "), price: p[main], currency: curs[0], changePct: p[main + "_24h_change"] ?? null, changeLabel: "24h",
             equiv: Object.fromEntries(curs.slice(1).filter(x => p[x.toLowerCase()] !== undefined).map(x => [x, p[x.toLowerCase()]])), asOf: p.last_updated_at ? new Date(p.last_updated_at * 1000).toISOString() : "", source: "CoinGecko"}); });
-      } catch (e) { coins.forEach(c => out.push({...c, error: e.message})); }
+      } catch (e) {      // CoinGecko down or busy → exchange prices (USD), converted with the currency rates
+        for (const c of coins) {
+          try { const usdP = await cryptoSpotUsd(c.symbol), conv = await convertAmount(usdP, "USD", curs.filter(x => x !== "USD")).catch(() => ({values: {}})), vals = {USD: usdP, ...conv.values};
+            out.push({kind: "crypto", symbol: c.symbol.toUpperCase(), name: c.symbol.toUpperCase(), price: vals[curs[0]] ?? usdP, currency: vals[curs[0]] !== undefined ? curs[0] : "USD", changePct: null, changeLabel: "24h",
+              equiv: Object.fromEntries(curs.slice(1).filter(x => vals[x] !== undefined).map(x => [x, vals[x]])), asOf: new Date().toISOString(), source: "exchange price (CoinGecko unavailable)"}); }
+          catch (e2) { out.push({...c, error: e.message + " · backups: " + e2.message}); }
+        }
+      }
     }
     for (const s of items.filter(x => x.kind === "pse")) {
       try {
         let q, source = "PSE Edge", asOf;
         try { q = await pseQuote(s.symbol); asOf = q.status && /open/i.test(q.status) ? "today (delayed)" : "last close"; }
-        catch (e) { if (/Which one|No PSE company/.test(e.message)) throw e; q = await webQuote(env, s.symbol); source = "web search (may be delayed)"; asOf = q.asOf; }
+        catch (e) { if (/Which one|No PSE company/.test(e.message)) throw e;
+          try { q = await pseQuoteBackup(s.symbol); source = q.source; asOf = q.asOf || "latest"; }
+          catch { q = await webQuote(env, s.symbol); source = "web search (may be delayed)"; asOf = q.asOf; } }
         const others = curs.filter(c => c !== "PHP"), conv = others.length ? await convertAmount(q.price, "PHP", others).catch(() => ({values: {}})) : {values: {}};
         const mainPrice = curs[0] === "PHP" ? q.price : conv.values[curs[0]] ?? q.price;
         out.push({kind: "pse", symbol: q.symbol, name: q.name, price: mainPrice, currency: conv.values[curs[0]] !== undefined || curs[0] === "PHP" ? curs[0] : "PHP", local: q.price, localCurrency: "PHP", changePct: q.changePct ?? null, change: q.change ?? null, changeLabel: "day",
@@ -3376,7 +3432,7 @@ async function marketRoutes(request, env, url, origin) {
     const sym = cleanText(String(body.symbol || ""), 40), date = String(body.date || "").slice(0, 10);
     try {
       const p = await priceOnDate(env, sym, body.kind, date);
-      if (p.currency !== "PHP" && curs.includes("PHP")) { try { const fx = await getJson("https://api.frankfurter.dev/v1/" + p.day + "?base=" + p.currency + "&symbols=PHP"); if (fx.rates?.PHP) p.php = {rate: fx.rates.PHP, close: +(p.close * fx.rates.PHP).toFixed(2), rateDay: fx.date}; } catch {} }
+      if (p.currency !== "PHP" && curs.includes("PHP")) { try { const fr = await fxOnDate(p.currency, "PHP", p.day), fx = {rates: {PHP: fr.rate}, date: fr.day}; if (fx.rates?.PHP) p.php = {rate: fx.rates.PHP, close: +(p.close * fx.rates.PHP).toFixed(2), rateDay: fx.date}; } catch {} }
       return json(p, 200, origin, env);
     } catch (e) { return json({error: String(e.message || e).slice(0, 200)}, 502, origin, env); }
   }
@@ -3492,7 +3548,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep};
+export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -3543,6 +3599,8 @@ export default {
       if (request.headers.get("X-Max-Pass") !== null) health.passcode = auth.enforced ? "replaced by Google sign-in" : passcodeOk(request, env) ? "accepted" : "wrong";
       if (auth.session) health.session = auth.session;
       if (auth.ok && (request.headers.get("X-Max-Pass") !== null || auth.via === "google")) health.database = await dbStatus(env);
+      // Signed in (his own app): show WHAT the Guard found, not just how many — so the Status screen can list it.
+      if (auth.ok && (request.headers.get("X-Max-Pass") !== null || auth.via === "google")) { try { const g = JSON.parse(await srvSetting(env, "max_srv_guard_report") || "null"); if (g) health.guardProblems = (g.problems || []).slice(0, 8).map(x => cleanText(String(x), 200)); } catch {} }
       // ?deep=1: really try the Play Store key (reads nothing, changes nothing — opens an edit and throws it away).
       if (url.searchParams.get("deep") === "1" && env.PLAY_SERVICE_ACCOUNT) {
         try { const a = playApp(env, "passage planner"); const e = await papi(env, a.pkg + "/edits", {method: "POST", body: "{}"}); await papi(env, a.pkg + "/edits/" + e.id, {method: "DELETE"}).catch(() => {}); health.play = "connected — Passage Planner reachable"; }

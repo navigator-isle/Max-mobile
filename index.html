@@ -3829,17 +3829,17 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   healthAt=Date.now();jset('max_cache_health',data);return data;
  }
  function healthAlerts(h){const a=[],g=String(h.guard||'').match(/(\d+) problem/);
-  if(g&&+g[1]>0)a.push('Guard found '+g[1]+' problem'+(+g[1]>1?'s':'')+' — say “check everything now” for the list');
+  if(g&&+g[1]>0){if(Array.isArray(h.guardProblems)&&h.guardProblems.length)h.guardProblems.forEach(x=>a.push('Guard: '+x));else a.push('Guard found '+g[1]+' problem'+(+g[1]>1?'s':'')+' — say “check everything now” for the list')}
   const pf=String(h.paperTrading||'').match(/failed: ([^)]*)\)/);if(pf)a.push('Paper trading: the last step failed ('+pf[1]+') — Max retries');
   if(h.lastTrigger&&h.lastTrigger.at&&Date.now()-Date.parse(h.lastTrigger.at)>2.5*3600e3)a.push('Max’s hourly clock has not run for over 2 hours');
   if(h.google!==undefined&&!/^linked/.test(String(h.google)))a.push('Google (calendar, Gmail) is not linked');
-  if(h.database&&h.database!=='bound')a.push('The database is not connected');
+  if(h.database&&!/^(bound|ready)/.test(String(h.database)))a.push('The database is not connected');
   return a}
  const hShort=s=>String(s||'–').replace(/max-worker-\d{4}-\d\d-/,'').replace(/(\d{4}-\d\d-\d\dT\d\d:\d\d)(?::[\d.]+)?Z/g,(m,x)=>new Date(x+':00Z').toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}));
  const tileStatus=h=>{const a=healthAlerts(h);return '<div class="tile-top"><span>🩺 Status</span></div><div class="tile-big '+(a.length?'down':'up')+'">'+(a.length?a.length+' alert'+(a.length>1?'s':''):'All OK')+'</div><div class="tile-label muted small">server '+dashE(hShort(h.version))+' · last run '+dashE(h.lastTrigger&&h.lastTrigger.at?hShort(h.lastTrigger.at):'–')+'</div>'+a.slice(0,2).map(x=>'<div class="tile-line">'+dashE(x)+'</div>').join('')};
  const healthFull=h=>{const a=healthAlerts(h),row=(k,v,ok)=>'<div class="ov-row"><span>'+(ok===undefined?'':ok?'<span class="up">✓</span>':'<span class="down">!</span>')+'</span><span>'+dashE(k)+'</span><span class="muted small" style="text-align:right;max-width:58vw">'+dashE(hShort(v))+'</span></div>';
   return '<div class="st-row"><h3>'+(a.length?a.length+' thing'+(a.length>1?'s':'')+' to look at':'All OK')+'</h3>'+(a.length?'<ul class="dash-list">'+a.map(x=>'<li>'+dashE(x)+'</li>').join('')+'</ul>':'<div class="small up">Nothing needs you right now.</div>')+'</div>'+
-   '<div class="st-row"><h3>Connections</h3>'+row('Google (calendar, tasks, Gmail)',h.google,/^linked/.test(String(h.google)))+row('Google Play',h.play,/^connected/.test(String(h.play)))+row('Database',h.database,h.database==='bound')+row('GitHub',/^connected/.test(String(h.github))?'token saved — account suspended in Nov 2026':h.github,false)+row('Website analytics',h.analytics,/^connected/.test(String(h.analytics)))+row('Brain',h.brain,true)+'</div>'+
+   '<div class="st-row"><h3>Connections</h3>'+row('Google (calendar, tasks, Gmail)',h.google,/^linked/.test(String(h.google)))+row('Google Play',h.play,/^connected/.test(String(h.play)))+row('Database',h.database,/^(bound|ready)/.test(String(h.database)))+row('GitHub',h.github,/^connected/.test(String(h.github)))+row('Website analytics',h.analytics,/^connected/.test(String(h.analytics)))+row('Brain',h.brain,true)+'</div>'+
    '<div class="st-row"><h3>Daily jobs</h3>'+row('Paper trading',h.paperTrading,!/failed/.test(String(h.paperTrading)))+row('Websites and apps check',h.statusReport)+row('Notes data',h.notesData)+row('Guard',h.guard,!/[1-9]\d* problem/.test(String(h.guard)))+row('Hourly clock',h.lastTrigger&&h.lastTrigger.at)+((h.paperErrors||[]).length?'<details class="small"><summary class="muted">Latest notes from the trading steps</summary>'+h.paperErrors.map(x=>'<div>'+dashE(hShort(x))+'</div>').join('')+'</details>':'')+'</div>'+
    '<div class="st-row"><h3>Version</h3>'+row('Server',h.version)+row('Notes loaded',h.tradingNotes)+'</div>'+
    '<div class="dash-actions"><button class="small-btn" data-dash="status-refresh">Check again</button></div>'};
