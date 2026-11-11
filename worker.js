@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18g";
+const WORKER_VERSION = "max-worker-2026-11-18h";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -2494,9 +2494,38 @@ async function pseDaily(ctx, sym, days) {
   return (d.chartData || []).filter(x => +x.CLOSE > 0).map(x => ({d: pD(Date.parse(String(x.CHART_DATE).replace(/ 00:00:00$/, "") + " UTC")), o: +x.OPEN || +x.CLOSE, c: +x.CLOSE, v: +x.VALUE || 0}))
     .filter(x => /^\d{4}-/.test(x.d)).sort((a, b) => a.d < b.d ? -1 : 1);
 }
+// Dollar–peso rate: Frankfurter (ECB) first, then 2 backups.
+// PSE backup 1: TradingView's PSE screener — the last finished trading day for many stocks in ONE request.
+// Only a FINISHED day is used: a bar from today counts only after 4 pm Manila (market closed, 15-minute delay over).
+async function tvPse(ctx, syms) {
+  if (!syms.length) return {};
+  const r = await pFetch(ctx, "https://scanner.tradingview.com/philippines/scan", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({symbols: {tickers: syms.map(s => "PSE:" + s)}, columns: ["open", "close", "Value.Traded", "last_bar_update_time"]})});
+  const d = await r.json(), out = {}, man = Date.now() + 8 * 3600e3, todayM = pD(man), hourM = new Date(man).getUTCHours();
+  for (const x of (d && d.data) || []) {
+    const [o, c, v, at] = x.d || []; if (!(o > 0 && c > 0 && at > 0)) continue;
+    const day = pD(at * 1000 + 8 * 3600e3); if (day > todayM || (day === todayM && hourM < 16)) continue;
+    out[String(x.s).replace(/^PSE:/, "")] = {d: day, o: +o, c: +c, v: +v || 0};
+  }
+  return out;
+}
+// PSE backup 2: Phisix — latest price only (no opening price), so it only values what Max holds; it never fills an order.
+async function phisixPrice(ctx, sym) {
+  const d = await (await pFetch(ctx, "https://phisix-api3.appspot.com/stocks/" + encodeURIComponent(sym) + ".json")).json();
+  const s = d && d.stocks && d.stocks[0], p = s && s.price && +s.price.amount; if (!(p > 0)) throw new Error("phisix: no price");
+  return p;
+}
 async function usdPhp(ctx) {
-  const d = await (await pFetch(ctx, "https://api.frankfurter.dev/v1/latest?base=USD&symbols=PHP,CAD")).json();
-  return {php: +d.rates.PHP, cadphp: +d.rates.PHP / +d.rates.CAD};
+  const ok = (php, cad) => php > 30 && php < 150 && cad > 0.5 && cad < 3;
+  const tried = [];
+  for (const [name, url, pick] of [
+    ["frankfurter", "https://api.frankfurter.dev/v1/latest?base=USD&symbols=PHP,CAD", d => [+d.rates.PHP, +d.rates.CAD]],
+    ["er-api", "https://open.er-api.com/v6/latest/USD", d => [+d.rates.PHP, +d.rates.CAD]],
+    ["currency-api", "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json", d => [+d.usd.php, +d.usd.cad]]]) {
+    try { const [php, cad] = pick(await (await pFetch(ctx, url)).json()); if (ok(php, cad)) return {php, cadphp: php / cad, src: name}; tried.push(name + ": odd numbers"); }
+    catch (e) { if (/budget/.test(e.message)) throw e; tried.push(name + ": " + cleanText(String(e.message), 50)); }
+  }
+  throw new Error("no exchange-rate source answered — " + tried.join("; "));
 }
 function boardLot(p) { for (const [lim, lot] of [[0.01, 1000000], [0.05, 100000], [0.5, 10000], [5, 1000], [50, 100], [1000, 10]]) if (p < lim) return lot; return 5; }
 // COL-style costs: 0.25% commission (min ₱20) + 12% VAT, PSE 0.005% + SCCP 0.01%, and 0.1% sales tax when selling; plus 0.2% for the price moving against you.
@@ -2668,16 +2697,29 @@ async function cryptoCandles(ctx, src, sym, limit) {
   if (src === "binance") rows = (await (await pFetch(ctx, `https://data-api.binance.vision/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=${limit + 1}`)).json()).map(r => [pD(r[0]), +r[4], +r[7]]);
   else if (src === "okx") { const d = await (await pFetch(ctx, `https://www.okx.com/api/v5/market/candles?instId=${sym}-USDT&bar=1Dutc&limit=${Math.min(300, limit + 1)}`)).json();
     if (d.code !== "0" || !Array.isArray(d.data)) throw new Error("okx: " + cleanText(String(d.msg || "no data"), 60)); rows = d.data.map(r => [pD(+r[0]), +r[4], +r[7]]).reverse(); }
-  else { const d = await (await pFetch(ctx, `https://api.exchange.coinbase.com/products/${sym}-USD/candles?granularity=86400`)).json();
+  else if (src === "coinbase") { const d = await (await pFetch(ctx, `https://api.exchange.coinbase.com/products/${sym}-USD/candles?granularity=86400`)).json();
     if (!Array.isArray(d)) throw new Error("coinbase: " + cleanText(String(d.message || "no data"), 60)); rows = d.slice(0, limit + 1).map(r => [pD(r[0] * 1000), +r[4], +r[5] * +r[4]]).reverse(); }
+  else if (src === "kraken") { const k = {BTC: "XBT", DOGE: "XDG"}[sym] || sym, since = Math.floor(Date.now() / 1000) - (limit + 2) * 86400;
+    const d = await (await pFetch(ctx, `https://api.kraken.com/0/public/OHLC?pair=${k}USD&interval=1440&since=${since}`)).json();
+    const key = d && d.result && Object.keys(d.result).find(x => x !== "last"); if (!key) throw new Error("kraken: " + cleanText(String((d && d.error || []).join(" ") || "no data"), 60));
+    rows = d.result[key].map(r => [pD(r[0] * 1000), +r[4], +r[5] * +r[6]]); }                 // [time, open, high, low, close, vwap, volume] → value = vwap × volume
+  else if (src === "kucoin") { const start = Math.floor(Date.now() / 1000) - (limit + 2) * 86400;
+    const d = await (await pFetch(ctx, `https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=${sym}-USDT&startAt=${start}`)).json();
+    if (d.code !== "200000" || !Array.isArray(d.data)) throw new Error("kucoin: " + cleanText(String(d.msg || "no data"), 60)); rows = d.data.map(r => [pD(+r[0] * 1000), +r[2], +r[6]]).reverse(); }   // [time, open, close, high, low, volume, turnover]
+  else if (src === "gate") { const d = await (await pFetch(ctx, `https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=${sym}_USDT&interval=1d&limit=${Math.min(1000, limit + 1)}`)).json();
+    if (!Array.isArray(d)) throw new Error("gate: " + cleanText(String(d.message || d.label || "no data"), 60)); rows = d.map(r => [pD(+r[0] * 1000), +r[2], +r[1]]); }                 // [time, quote volume, close, high, low, open, ...]
+  else throw new Error("unknown price source " + src);
   rows = rows.filter(r => r[1] > 0);
   const last = rows[rows.length - 1];
   return {closed: rows.filter(r => r[0] < today), live: last ? last[1] : null};
 }
-const CRYPTO_SOURCES = ["binance", "okx", "coinbase"];
+// Main source + 5 backups, tried in order (the one that worked last time goes first, so a blocked source costs nothing).
+const CRYPTO_SOURCES = ["binance", "okx", "coinbase", "kraken", "kucoin", "gate"];
+const CRYPTO_NAMES = {binance: "Binance", okx: "OKX", coinbase: "Coinbase", kraken: "Kraken", kucoin: "KuCoin", gate: "Gate.io"};
 async function paperCryptoStep(S, ctx, now) {
   let src = null, btc = null; const tried = [];
-  for (const s of CRYPTO_SOURCES.filter(x => !(ctx.skip || []).includes(x))) {
+  const order = [...new Set([...(S.cryptoSrc && CRYPTO_SOURCES.includes(S.cryptoSrc) ? [S.cryptoSrc] : []), ...CRYPTO_SOURCES])];
+  for (const s of order.filter(x => !(ctx.skip || []).includes(x))) {
     try { const k = await cryptoCandles(ctx, s, "BTC", 160); if (k.closed.length >= 101) { src = s; btc = k; break; } tried.push(s + ": too little data"); }
     catch (e) { if (/budget/.test(e.message)) throw e; tried.push(s + ": " + cleanText(String(e.message), 60)); }
   }
@@ -2708,9 +2750,23 @@ async function paperCryptoStep(S, ctx, now) {
 async function pseStep(env, S, ctx, today) {
   const B = S.books.pse_dividend, since = B.last_day || pAdd(today, -4);
   const syms = [...new Set([...B.positions.map(p => p.sym), ...B.pending.map(o => o.sym), ...(B.topup || []).map(t => t.sym), "AETF"])];
-  const prices = {};
-  for (const s of syms) { try { prices[s] = Object.fromEntries((await pseDaily(ctx, s, 25)).map(x => [x.d, x])); } catch (e) { if (/budget/.test(e.message)) throw e; } }
-  const lastPx = sym => { const s = prices[sym] || {}; const ks = Object.keys(s).sort(); return ks.length ? s[ks[ks.length - 1]].c : (B.positions.find(p => p.sym === sym) || {}).ep || 0; };
+  // Prices: PSE Edge (main) → Max's own saved bars when PSE Edge fails → TradingView adds a finished day PSE Edge doesn't have yet
+  // (PSE Edge is sometimes late) → Phisix gives a last price to value holdings when nothing else answered.
+  const prices = {}, used = {edge: 0, saved: 0, tradingview: 0, phisix: 0}, edgeFail = [], H = S.pseHist = S.pseHist || {};
+  for (const s of syms) {
+    try { prices[s] = Object.fromEntries((await pseDaily(ctx, s, 25)).map(x => [x.d, x])); used.edge++; }
+    catch (e) { if (/budget/.test(e.message)) throw e; edgeFail.push(s); if (H[s] && H[s].length) { prices[s] = Object.fromEntries(H[s].map(x => [x.d, x])); used.saved++; } }
+  }
+  try {
+    const tv = await tvPse(ctx, syms);
+    for (const [s, bar] of Object.entries(tv)) { const have = prices[s] = prices[s] || {}; const last = Object.keys(have).sort().pop() || "";
+      if (bar.d > last) { have[bar.d] = {...bar, src: "tradingview"}; used.tradingview++; } }
+  } catch (e) { if (/budget/.test(e.message)) throw e; S.pseSrcErr = cleanText(String(e.message), 80); }
+  const lastOnly = {};
+  for (const s of B.positions.map(p => p.sym)) if (!prices[s] || !Object.keys(prices[s]).length) { try { lastOnly[s] = await phisixPrice(ctx, s); used.phisix++; } catch (e) { if (/budget/.test(e.message)) throw e; } }
+  for (const s of syms) if (prices[s]) H[s] = Object.values(prices[s]).sort((a, b) => a.d < b.d ? -1 : 1).slice(-30).map(({d, o, c, v}) => ({d, o, c, v}));
+  S.pseSrc = Object.entries(used).filter(([, n]) => n).map(([k, n]) => k + " " + n).join(", ") + (edgeFail.length ? " (PSE Edge failed for " + edgeFail.join(", ") + ")" : "");
+  const lastPx = sym => { const s = prices[sym] || {}; const ks = Object.keys(s).sort(); return ks.length ? s[ks[ks.length - 1]].c : lastOnly[sym] || (B.positions.find(p => p.sym === sym) || {}).ep || 0; };
   const equity = () => B.cash + B.positions.reduce((t, x) => t + x.shares * lastPx(x.sym), 0);
   // fresh dividend announcements (first pages of PSE Edge's list)
   const fx = {php: S.usdphp, cadphp: S.cadphp || S.usdphp * 0.72}, divs = await setting(env, "max_paper_divs", {});
@@ -3020,7 +3076,7 @@ async function notesLiveStep(env, ctx) {
         if (!/Binance: trading now/.test(n.body)) continue;
         const src = (await paperLoad(env)).cryptoSrc || "binance", k = (await cryptoCandles(ctx, src, String(n.title).trim(), src === "binance" ? 400 : 299)).closed; if (k.length < 10) continue;
         const r = k.map(x => [x[0], x[1]]), m = v => "$" + g6(v), avgVal = mean(k.slice(-30).map(x => x[2]));
-        if (await setLiveBox(env, n.id, liveBox("Latest data", [...changeLine(r, "", m), `Traded value on ${src === "okx" ? "OKX" : src === "coinbase" ? "Coinbase" : "Binance"}: about $${(avgVal / 1e6).toFixed(1)}M a day (last 30 days)`]))) out.updated++;
+        if (await setLiveBox(env, n.id, liveBox("Latest data", [...changeLine(r, "", m), `Traded value on ${CRYPTO_NAMES[src] || src}: about $${(avgVal / 1e6).toFixed(1)}M a day (last 30 days)`]))) out.updated++;
       } else if (n.category === "Trading › PSE › Stocks") {
         const sym = String(n.title).trim(); if (!PSE_DIR[sym]) continue;
         const b = await pseDaily(ctx, sym, 400); if (b.length < 10) continue;
@@ -3436,7 +3492,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines};
+export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -3469,7 +3525,7 @@ export default {
         lastTrigger: await (async () => { try { return env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_last_cron") || "null") : null; } catch { return null; } })(),
         app: env.ASSETS ? "served by this Worker" : "not attached (GitHub Pages only)",
         codeBackup: await (async () => { const c = await codeBackup(env); return c ? c.files + " files, built " + c.built : "not attached"; })(),
-        paperTrading: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const S = await paperLoad(env); return S.lastStep ? "running — last step " + new Date(S.lastStep.at).toISOString().slice(0, 16) + "Z (" + S.lastStep.job + (S.lastStep.ok ? ", ok" : ", failed: " + S.lastStep.error) + "), crypto checked " + (S.step.crypto || "never") + ", PSE checked " + (S.step.pse || "never") + " (prices up to " + (S.books.pse_dividend.last_day || "–") + ")" + ", " + S.jid + " journal entries" : "starting (first step at the next hourly check)"; } catch { return "unknown"; } })(),
+        paperTrading: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const S = await paperLoad(env); return S.lastStep ? "running — last step " + new Date(S.lastStep.at).toISOString().slice(0, 16) + "Z (" + S.lastStep.job + (S.lastStep.ok ? ", ok" : ", failed: " + S.lastStep.error) + "), crypto checked " + (S.step.crypto || "never") + ", PSE checked " + (S.step.pse || "never") + " (prices up to " + (S.books.pse_dividend.last_day || "–") + ")" + ", " + S.jid + " journal entries" + (S.cryptoSrc ? ", crypto prices from " + (CRYPTO_NAMES[S.cryptoSrc] || S.cryptoSrc) : "") + (S.pseSrc ? ", PSE prices: " + S.pseSrc : "") : "starting (first step at the next hourly check)"; } catch { return "unknown"; } })(),
         paperErrors: await (async () => { try { if (!env.MAX_MEMORY) return []; const S = await paperLoad(env); return (S.errors || []).slice(-4).map(e => new Date(e.at).toISOString().slice(0, 16) + "Z " + e.job + ": " + e.error).concat(S.cryptoSrc ? ["crypto prices from " + S.cryptoSrc + ((S.cryptoTried || []).length ? " (" + S.cryptoTried.join("; ") + ")" : "")] : []); } catch { return []; } })(),
         statusReport: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const r = await setting(env, "max_srv_status_report", null); return r && r.at ? "websites " + (r.sites || []).length + ", apps " + (r.apps || []).length + ", checked " + new Date(r.at).toISOString().slice(0, 16) + "Z" : "first check on its way"; } catch { return "unknown"; } })(),
         notesData: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const r = await setting(env, "max_srv_notes_live", null), i = await srvSetting(env, "max_srv_inv_notes"); return (r ? "trading data notes cursor " + r.cursor + (r.fx ? ", forex " + r.fx : "") : "not started") + "; investment notes " + (i || "not built yet"); } catch { return "unknown"; } })(),

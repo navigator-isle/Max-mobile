@@ -40,6 +40,7 @@ run "Price on a past date" tests/test-worker26.mjs "$TMP/worker.mjs"
 run "Home panels: live paper trading and investment guide" tests/test-worker27.mjs "$TMP/worker.mjs"
 run "Max's own paper trading, notes data, investments notes" tests/test-worker28.mjs "$TMP/worker.mjs"
 run "IMO conventions and codes notes" tests/test-worker29.mjs "$TMP/worker.mjs"
+run "Backup price sources (crypto, dollar rate, PSE)" tests/test-worker30.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
