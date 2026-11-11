@@ -1,6 +1,7 @@
 // Turns the Obsidian IMO notes (notes/imo/**.md) into Max's note format and writes them into worker.js (const IMO_NOTES).
 //   node notes/imo-to-js.mjs
-import fs from "fs"; import path from "path";
+import fs from "fs"; import path from "path"; import crypto from "crypto";
+// v = a hash of the note text, so Max updates the note in the app whenever its text changes here.
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const inline = s => esc(s.replace(/\[\[([^\]|]+)(\|([^\]]+))?\]\]/g, (_, a, __, b) => b || a)).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
@@ -32,7 +33,7 @@ for (const [dir, cat] of [["", "Maritime â€º IMO"], ["Conventions", "Maritime â€
   for (const f of fs.readdirSync(d).filter(f => f.endsWith(".md")).sort()) {
     const title = f.slice(0, -3), { body, tags } = toHtml(fs.readFileSync(path.join(d, f), "utf8"));
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    notes.push({ id: "note-imo-" + slug, v: 1, title, category: cat, tags: [...new Set([...(tags.length ? tags : [slug.split("-")[0]]), "imo", dir ? dir.toLowerCase().replace(/s$/, "") : "index"])].slice(0, 12), body });
+    notes.push({ id: "note-imo-" + slug, v: parseInt(crypto.createHash("sha1").update(body).digest("hex").slice(0, 7), 16), title, category: cat, tags: [...new Set([...(tags.length ? tags : [slug.split("-")[0]]), "imo", dir ? dir.toLowerCase().replace(/s$/, "") : "index"])].slice(0, 12), body });
   }
 }
 const W = path.join(ROOT, "worker.js"), src = fs.readFileSync(W, "utf8"), line = "const IMO_NOTES = " + JSON.stringify(notes) + ";";

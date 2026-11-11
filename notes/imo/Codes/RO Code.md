@@ -51,5 +51,5 @@ tags: [ro-code, recognized-organization, class, flag-state, imo, code]
 - When changing flag or class, keep RO survey status continuous (transfer of class agreements, IACS PR 1A/1B)
 
 **Sources (checked 10 Nov 2026)**
-- IMO — Recognized Organizations (RO Code): https://www.imo.org/en/OurWork/MSAS/Pages/RecognizedOrganizations.aspx
+- IMO — Member State Audit and implementation (RO Code context): https://www.imo.org/en/OurWork/MSAS/Pages/Default.aspx
 - IMO — Resolution MSC.349(92) RO Code: https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/MSCResolutions/MSC.349(92).pdf

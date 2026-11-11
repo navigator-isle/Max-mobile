@@ -34,8 +34,7 @@
 - SPS Code, CTU Code, GMDSS, MARPOL guidelines (EEDI/SEEMP, fuel oil quality), CSC 1972, Torremolinos 1977, STP/Space STP, Nuclear 1971, IMSO
 
 **Verification status (updated 11 Nov 2026)**
-- Full notes with sources (checked 10–11 Nov 2026): Hong Kong, Nairobi WRC, IMDG, IMSBC, IBC, IGC, ISM, ISPS, LSA, FSS, FTP, Polar, IGF, CSS, TDC, Grain, ESP, III, RO, Casualty Investigation
-- MSC 111 (May 2026) amendments added: IMDG 43-26, ESP remote inspection (MSC.584(111)), LSA free-fall launching, Load Lines guard rails, HSC VDES (all in force 1 Jan 2028)
-- Checked against IMO resolution texts or IMO press briefings: BWM, IP, INF, HSC (2000 Code), NOx (code body), HNS 2010, Cape Town 2012, MASS Code
-- Corrected after checking: FAL date, Bunkers threshold, many code structures
-- Written from knowledge, still to verify: COLREG, Load Lines, Tonnage, SAR, SUA, OPRC, LC/LP, Salvage, Intervention, BLU, IS Code, STCW-F, Athens, and numeric limits in CLC and LLMC
+- All 46 notes now use the same detailed format: what it is, history with dates and resolutions, who it applies to, chapter-by-chapter contents, key numbers, practical points on board, Key Point, sources checked 10–11 Nov 2026
+- Checked against IMO resolution texts: MASS Code (MSC.595(111)), IS Code (MSC.267(85)), BLU Code (A.862(20)), IP Code (MSC.527(106)), INF Code (MSC.88(71)), HSC 2000 (MSC.97(73)), NOx Technical Code (MEPC.177(58))
+- Checked against IMO press briefings and class/P&I summaries: HNS 2010 (in force 29 Nov 2027, limits), Cape Town Agreement (in force Feb 2027), STCW-F revision (in force 1 Jan 2026), LLMC 2012 limits, MSC 111 and MEPC 84 (2026) amendments
+- Still worth a check against the full official text before an exam or a legal answer: rule-by-rule wording of COLREG, freeboard tables in Load Lines, CLC/Fund figures in SDR (change only by amendment)

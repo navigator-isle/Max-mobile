@@ -52,4 +52,4 @@ tags: [ftp, fire-test, solas-ii-2, materials, imo, code]
 - PSC: check fire doors, divisions, penetrations (A-60 integrity not broken by new cables or pipes)
 
 **Sources (checked 10 Nov 2026)**
-- IMO — Fire Test Procedures (FTP Code) page: https://www.imo.org/en/OurWork/Safety/Pages/FireTestProcedures.aspx
+- IMO — Resolution MSC.307(88) 2010 FTP Code: https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/MSCResolutions/MSC.307(88).pdf

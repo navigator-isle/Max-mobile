@@ -1,4 +1,5 @@
 [
+ "Maritime notes: the 26 short IMO notes (COLREG, Load Lines, BWM, Tonnage, SAR, SUA, CLC/Fund, LLMC, HNS, MASS Code, IS Code, BLU, HSC, INF, IP and more) rewritten in full detail with dates, chapters, key numbers and sources — Max updates them in Notes › Maritime › IMO",
  "New plan: paper trading is now 5 × ₱50,000 = ₱250,000 — PSE (+₱10,000, nothing sold), Forex (gold + currencies), Crypto, Copy trading (10 steady traders), US ETFs. Investments: 4 virtual accounts × ₱100,000 (MP2, savings, bonds, time deposits) with daily interest after tax",
  "Backups for all live data: crypto prices now (6 exchanges), currency rates today and on past days (3 sources), PSE prices now (PSE Edge → TradingView → Phisix → web search). Status screen fixes: the database and GitHub show correctly, and the Guard's problems are listed by name",
  "Backup price sources: crypto now has Binance + 5 backups (OKX, Coinbase, Kraken, KuCoin, Gate.io), the dollar rate has 3 sources, and PSE uses PSE Edge → Max's saved prices → TradingView → Phisix. If PSE Edge is late or down, buys and the safety stop still work. The Status page shows which source was used",

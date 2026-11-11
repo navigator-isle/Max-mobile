@@ -59,5 +59,5 @@ tags: [css, cargo-securing, lashing, csm, solas-vi, imo, code]
 - From 2026 SOLAS V/31 & V/32: loss of containers must be reported (number, position) — part of the container-securing picture
 
 **Sources (checked 10 Nov 2026)**
-- IMO — Cargo securing (CSS Code and CSM guidelines): https://www.imo.org/en/OurWork/Safety/Pages/CargoSecuring.aspx
+- IMO — Resolution A.714(17) CSS Code: https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/AssemblyDocuments/A.714(17).pdf
 - Paris MoU — CIC 2026 on cargo securing arrangements: https://parismou.org/
