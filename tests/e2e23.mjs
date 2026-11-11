@@ -44,7 +44,7 @@ const raw = sent[0] ? dec(sent[0]) : "";
 ok(sealed && sent.length === 1 && /^To: owner@example.com/m.test(raw) && /pretend money only/.test(raw) && /BUY 1\.5 SOL/.test(raw) && /To copy: On Binance/.test(raw) && /Possible outcome:/.test(raw) && /TOTAL: ₱/.test(raw), "a new trade is emailed once — to the owner only, pretend money, with how to copy, possible outcome and the ₱ total", raw.slice(0, 300));
 await run(); ok(sent.length === 1, "nothing new → no second email");
 const S2 = JSON.parse(sqlite.prepare("SELECT value FROM max_settings WHERE key = 'max_paper'").get().value);
-S2.journal.push({id: 2, at: Date.now(), kind: "SELL", book: "crypto_swing", sym: "SOL", d: "2026-11-04", text: "SELL 1.5 SOL @ $220", pnlPhp: 1800}); S2.jid = 2;
+S2.jid += 1; S2.journal.push({id: S2.jid, at: Date.now(), kind: "SELL", book: "crypto_swing", sym: "SOL", d: "2026-11-04", text: "SELL 1.5 SOL @ $220", pnlPhp: 1800});
 sqlite.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").run(JSON.stringify(S2));
 await run();
 const raw2 = sent[1] ? dec(sent[1]) : "";
@@ -71,7 +71,7 @@ const answer = async () => (await p.locator("#homeAnswer").isVisible()) ? p.loca
 let g = gem.length;
 await say("how's my paper trading");
 const a = await answer();
-ok(gem.length === g && /^Paper trading: your ₱100,000 is now/.test(a) && await p.locator("#dashFull").isVisible(), "“how's my paper trading” → instant summary and the full paper-trading view (old GitHub trader retired)", a);
+ok(gem.length === g && /^Paper trading: your ₱250,000 is now/.test(a) && await p.locator("#dashFull").isVisible(), "“how's my paper trading” → instant summary and the full paper-trading view (old GitHub trader retired)", a);
 await p.click("#dashFullClose");
 await say("show my crypto paper trading");
 ok(/^Paper trading:/.test(await answer()), "asking for one market also opens the view", await answer());
@@ -79,7 +79,7 @@ await p.click("#dashFullClose");
 await say("turn off trading emails");
 ok(/Trading emails are off/.test(await answer()), "“turn off trading emails”");
 EVENTS.push({ id: EVENTS.at(-1).id + 1, at: new Date().toISOString(), day: "2026-11-03", market: "pse", type: "fill", text: "Bought 1,000 TEST at 10.02." });
-{ const S3 = JSON.parse(sqlite.prepare("SELECT value FROM max_settings WHERE key = 'max_paper'").get().value); S3.journal.push({id: 3, at: Date.now(), kind: "BUY", book: "btc_trend", sym: "BTC", d: "2026-11-04", text: "BUY BTC"}); S3.jid = 3; sqlite.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").run(JSON.stringify(S3)); }
+{ const S3 = JSON.parse(sqlite.prepare("SELECT value FROM max_settings WHERE key = 'max_paper'").get().value); S3.jid += 1; S3.journal.push({id: S3.jid, at: Date.now(), kind: "BUY", book: "btc_trend", sym: "BTC", d: "2026-11-04", text: "BUY BTC"}); sqlite.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").run(JSON.stringify(S3)); }
 await run(); ok(sent.length === 2, "…and then no emails are sent");
 await say("turn on trading emails"); ok(/Trading emails are on/.test(await answer()), "and back on");
 await say("brief me");

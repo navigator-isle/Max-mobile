@@ -38,6 +38,12 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Deploy: `node build.mjs` then `npx wrangler deploy` (deploy.bat / deploy.sh; first time `wrangler login` in his browser)
 - Phone-only updates: rebuild site → zip site/ without _src → he uploads to Pages project max-app ("Create deployment")
 
+**Paper plan since 11 Nov 2026 (Mark): 5 categories × ₱50,000 = ₱250,000**
+- PSE: pse_dividend ₱50k (got +₱10k cash; nothing sold) · Forex: gold_trend ₱30k + fx_carry ₱20k (carry + 6-month trend, 9 currencies, monthly) · Crypto: crypto_swing ₱35k + btc_trend ₱15k · Copy: copy_steady ₱50k (top-10 steady Hyperliquid wallets, monthly, −20% stop per trader, 0.5%/month copy cost) · US: us_etf ₱50k (50% SPY trend + 50% top-4 of 8 ETFs by 6-month gain above 200-day, monthly)
+- Weekly GitHub job .github/workflows/live-data.yml (trader/live/build_live.py) writes live/fx-rates.json and live/copy-steady.json to the trader-data branch; Max reads them
+- US ETF test: trader/research/2026-11-11-etf-results.json; copy/forex tests: trader/research (8–9 Nov)
+- Virtual investments: setting max_invest_paper, 4 × ₱100k (MP2, HYSA, bonds, time deposits), rules in VBOOK (worker.js), shown on the Investments screen
+
 **Rule: backup data sources (Mark, 11 Nov 2026)**
 - Every outside data source needs backups so no job stops because one site is down. New live data → use firstOk() in worker.js (main source first, then backups; it reports which answered)
 - Now: crypto candles CRYPTO_SOURCES (Binance, OKX, Coinbase, Kraken, KuCoin, Gate.io) · crypto price now cryptoSpotUsd (same 6) · USD/PHP usdPhp and fxRates (ECB/Frankfurter, ExchangeRate-API, currency-api) · past-day rate fxOnDate (Frankfurter, currency-api dated copy) · PSE bars: PSE Edge → saved bars (S.pseHist) → TradingView (finished days only, after 4 pm Manila) → Phisix (value only, never fills) · PSE price now: PSE Edge → TradingView → Phisix → web search

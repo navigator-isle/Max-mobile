@@ -39,7 +39,7 @@ let mon = new Date(); while (mon.getUTCDay() !== 2) mon = new Date(mon - 864e5);
 let r = await T.backgroundStep(env, at(17));
 let S = await T.paperLoad(env);
 ok(/crypto/.test(r) && S.step.crypto === new Date().toISOString().slice(0, 10), "the first hourly step of the day is the crypto check", r);
-ok(S.usdphp === 58 && Math.round(S.books.btc_trend.start * 58) === 9000 && Math.round(S.books.crypto_swing.start * 58) === 21000, "₱100,000 is split 40/21/9/30 and the dollar books are sized with today's rate", JSON.stringify([S.usdphp, S.books.btc_trend.start]));
+ok(S.usdphp === 58 && Math.round(S.books.btc_trend.start * 58) === 15000 && Math.round(S.books.crypto_swing.start * 58) === 35000 && S.books.pse_dividend.startPhp === 50000, "₱250,000 = 5 × ₱50,000 (crypto 35k swing + 15k Bitcoin trend) and the dollar books are sized with today's rate", JSON.stringify([S.usdphp, S.books.btc_trend.start]));
 const buys = S.journal.filter(e => e.kind === "BUY");
 const eth = buys.find(e => e.sym === "ETH");
 ok(eth && /^Stop-loss \$[\d,.]+ \(−[\d.]+% from the buy\)\. The stop only moves UP/.test(eth.sellPlan) && /No fixed target/.test(eth.sellPlan), "every BUY has a sell plan: stop-loss price, how it trails, no fixed target", eth && eth.sellPlan);
@@ -48,7 +48,7 @@ const pos = S.books.crypto_swing.positions.find(p => p.sym === "ETH");
 ok(pos && pos.qty * pos.risk <= S.books.crypto_swing.start * 0.0051 && pos.qty * pos.ep <= S.books.crypto_swing.start * 0.2501, "position size: about 0.5% of the money at risk to the stop, at most 25% in one coin", JSON.stringify(pos));
 ok(buys.some(e => e.sym === "BTC" && e.book === "btc_trend") && buys.some(e => e.sym === "PAXG" && e.book === "gold_trend"), "Bitcoin and gold are bought because both are above their averages");
 const tot = T.paperTotals(S);
-ok(Math.abs(tot.total - 100000) < 400 && tot.parts.length === 4, "total stays about ₱100,000 right after buying (only fees lost)", String(tot.total));
+ok(Math.abs(tot.total - 250000) < 400 && tot.parts.length === 7 && tot.cats.length === 5, "total stays about ₱250,000 right after buying (only fees lost), 7 parts in 5 categories", String(tot.total));
 // same day again → no second crypto run
 r = await T.backgroundStep(env, at(3)); S = await T.paperLoad(env);
 ok(!/crypto/.test(r) && S.journal.filter(e => e.kind === "BUY" && e.sym === "ETH").length === 1, "crypto runs once a day", r);
@@ -146,8 +146,8 @@ ok(/not emailed|emailed/.test(sum), "the Sunday summary is built without errors"
 ok(/quiet/.test(await T.backgroundStep(env, at(22))) && /quiet/.test(await T.backgroundStep(env, at(1))), "the step stays out of the hours used by the guard and the investment check");
 // ---------- 5) the home screen and the email text ----------
 const res = await w.fetch(new Request("https://x/api/home/paper", {headers: {"X-Max-Pass": "p"}}), env), P = await res.json();
-ok(res.status === 200 && P.v === 2 && P.books.length === 4 && Number.isFinite(P.totalPhp) && P.journal.length && P.journal[0].id > P.journal[P.journal.length - 1].id, "the paper tile gets the ₱ total, 4 parts and the journal (newest first)", JSON.stringify(Object.keys(P)));
-ok(P.tested.plan.includes("17.6%") && P.planYears["2018"] === -7.7, "possible outcome: the tested results come with the data");
+ok(res.status === 200 && P.v === 2 && P.books.length === 7 && P.cats.length === 5 && Number.isFinite(P.totalPhp) && P.journal.length && P.journal[0].id > P.journal[P.journal.length - 1].id, "the paper tile gets the ₱ total, 5 categories / 7 parts and the journal (newest first)", JSON.stringify(Object.keys(P)));
+ok(/no combined test/.test(P.tested.plan) && /\+7\.3% a year/.test(P.tested.us_etf) && /unproven/.test(P.tested.copy_steady), "possible outcome: each part's tested result comes with the data (no made-up combined number)");
 const txt = T.paperEmailText(S, S.journal.slice(-3));
 ok(/^Max paper trading — pretend money only/.test(txt) && /TOTAL: ₱/.test(txt) && /To copy:/.test(txt) && /OPEN POSITIONS \(today's sell levels\)/.test(txt) && /stop-loss ₱/.test(txt), "trade email: total, every trade with why / how to copy / possible outcome, open positions");
 // ---------- 6) live boxes in notes ----------

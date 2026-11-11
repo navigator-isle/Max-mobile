@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18i";
+const WORKER_VERSION = "max-worker-2026-11-18j";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -2195,8 +2195,8 @@ async function runAgentReport(env, id, opts = {}) {
     rep.tables = [{title: "Apps at a glance", head: ["App", "Up", "Mobile speed", "Failed builds (7 d)"], rows: f.apps.map(a => [a.app, a.up === undefined ? "—" : a.up ? "yes" : "DOWN", a.mobileSpeed?.performance ?? "—", Object.values(a).filter(v => v && v.failedBuilds).reduce((n, v) => n + v.failedBuilds.length, 0)])}]; }
   else if (id === "security") { const f = await factsSecurity(env); rep = await writeReport(env, id, f, {search: true, brief: "First report what the daily checks found this week and how each problem was or should be solved. Then search the web for NEW threats this week relevant to his setup (Cloudflare Workers and sites, GitHub Pages and Actions, Android apps on Play, Google/Gmail accounts, phishing aimed at seafarers and Filipinos) and say exactly what to do about each."}); }
   else if (id === "trading") { const f = await factsTrading(env), S = await paperLoad(env), T = paperTotals(S);
-    rep = await writeReport(env, id, f, {brief: "Cover the ₱100,000 paper account and each of its four parts (PSE dividend, crypto swing, Bitcoin trend, gold trend): value, this week and since start, every trade this week with why, what is waiting, risks, and how it compares with the tested results. Pretend money only; never tell him to buy or sell for real."});
-    rep.tables = [{title: "₱100,000 paper account", head: ["Part", "Share", "Value now", "Since start", "Open"], rows: [...T.parts.map(p => [p.name, Math.round(p.w * 100) + "%", peso(p.php), sgn(p.pct), p.open]), ["Total", "100%", peso(T.total), sgn(T.pct), T.parts.reduce((s, p) => s + p.open, 0)]]},
+    rep = await writeReport(env, id, f, {brief: "Cover the ₱250,000 paper account (since 11 Nov 2026: 5 categories × ₱50,000 — PSE stocks, Forex = gold trend + currencies, Crypto = swing + Bitcoin trend, Copy trading = 10 steady Hyperliquid traders, US stocks/ETF) and each part: value, this week and since start, every trade this week with why, what is waiting, risks, and how it compares with the tested results. Pretend money only; never tell him to buy or sell for real."});
+    rep.tables = [{title: "₱250,000 paper account (5 × ₱50,000)", head: ["Part", "Category", "Value now", "Since start", "Open"], rows: [...T.parts.map(p => [p.name, PCAT[p.cat]?.name || "", peso(p.php), sgn(p.pct), p.open]), ...T.cats.map(c => ["= " + c.name, "category", peso(c.php), sgn(c.pct), ""]), ["Total", "", peso(T.total), sgn(T.pct), T.parts.reduce((s, p) => s + p.open, 0)]]},
       {title: "Trades this week", head: ["Date", "What", "Result"], rows: S.journal.filter(e => e.at >= weekAgo() && (e.kind === "BUY" || e.kind === "SELL" || e.kind === "DIVIDEND")).slice(-20).map(e => [e.d || "", e.text, e.pnlPhp != null ? (e.pnlPhp >= 0 ? "+" : "−") + peso(Math.abs(e.pnlPhp)) : ""])}]; }
   else if (id === "investments") { const f = await factsInvestments(env); rep = await writeReport(env, id, {plan: f.plan, yourHoldings: f.facts.yourHoldings, research: f.sections.map(s => ({topic: s.key, rows: s.rows, news: s.news, watchOut: s.watchOut}))}, {brief: "Be detailed. FIRST: Mark's ₱100,000 plan (in facts.plan) — do today's rates still support Plan A/B/C? If a better option appeared or a rate in the plan dropped, say exactly which part to move, where, and how many pesos a year it changes; list promos ending soon. Then for each area (MP2, high-yield savings, time deposits, promos, government savings, UITF, VUL, bonds, dividend stocks, warnings): the current rates, what CHANGED since last week (the 'change' field), new perks, and the catches. Then compare them simply (safety, liquidity, return, tax). Not financial advice."});
     const T = {mp2: "Pag-IBIG MP2", hysa: "High-yield savings (PH)", uitf: "UITF", vul: "VUL", bonds: "Bonds", promos: "Promos (Maya, GCash, banks)", timedeposits: "Time deposits", government: "Government savings (SSS, RTB, Premyo)", warnings: "Warnings (SEC, BSP, app problems)", dividends: "Dividend stocks (PSE)"};
@@ -2494,14 +2494,28 @@ async function priceOnDate(env, sym, kind, date) {
 // so every trade can be copied in one app). Crypto and gold orders fill at the live price the moment Max decides (what Mark pays if he copies at once);
 // PSE orders are decided after the close and fill at the next day's opening price (what Mark gets with an order at the open).
 // The work is cut into small steps that run in quiet hours of the hourly trigger, each well inside Cloudflare's 50-requests-per-run limit.
-const PAPER_START = 100000;
+// 11 Nov 2026 (Mark): 5 categories × ₱50,000 = ₱250,000 — PSE, Forex, Crypto, Copy trading, US stocks/ETF. PSE only ADDS ₱10,000 (nothing already
+// bought is sold for this); gold moves under Forex (brokers trade it as XAU/USD); crypto keeps its 70/30 swing/Bitcoin-trend split.
+const PAPER_START = 250000;
 const PBOOK = {
-  pse_dividend: {name: "PSE dividend top-10", w: 0.40, ccy: "PHP"},
-  crypto_swing: {name: "Crypto swing (20-day breakout)", w: 0.21, ccy: "USDT"},
-  btc_trend: {name: "Bitcoin trend (above 100-day average)", w: 0.09, ccy: "USDT"},
-  gold_trend: {name: "Gold trend (PAXG above 200-day average)", w: 0.30, ccy: "USDT"}};
+  pse_dividend: {name: "PSE dividend top-10", php: 50000, cat: "pse", ccy: "PHP"},
+  gold_trend: {name: "Gold trend (above 200-day average)", php: 30000, cat: "forex", ccy: "USDT"},
+  fx_carry: {name: "Currencies: carry + trend (9 vs US dollar)", php: 20000, cat: "forex", ccy: "USD"},
+  crypto_swing: {name: "Crypto swing (20-day breakout)", php: 35000, cat: "crypto", ccy: "USDT"},
+  btc_trend: {name: "Bitcoin trend (above 100-day average)", php: 15000, cat: "crypto", ccy: "USDT"},
+  copy_steady: {name: "Copy 10 steady traders (Hyperliquid)", php: 50000, cat: "copy", ccy: "USD"},
+  us_etf: {name: "US ETFs: S&P 500 trend + top-4 rotation", php: 50000, cat: "us", ccy: "USD"}};
+for (const b of Object.values(PBOOK)) b.w = b.php / PAPER_START;
+const PCAT = {pse: {name: "PSE stocks", php: 50000}, forex: {name: "Forex (gold + currencies)", php: 50000}, crypto: {name: "Crypto", php: 50000}, copy: {name: "Copy trading", php: 50000}, us: {name: "US stocks / ETF", php: 50000}};
+const ETF_UNIV = ["SPY", "QQQ", "IWM", "EFA", "EEM", "TLT", "GLD", "VNQ"], ETF_CASH = "SHY";
+const ETF_TV = {SPY: "AMEX:SPY", QQQ: "NASDAQ:QQQ", IWM: "AMEX:IWM", EFA: "AMEX:EFA", EEM: "AMEX:EEM", TLT: "NASDAQ:TLT", GLD: "AMEX:GLD", VNQ: "AMEX:VNQ", SHY: "NASDAQ:SHY"};
+const ETF_NAME = {SPY: "S&P 500", QQQ: "Nasdaq 100", IWM: "US small companies", EFA: "Europe/Japan/Australia stocks", EEM: "emerging-market stocks", TLT: "long US government bonds", GLD: "gold", VNQ: "US real estate (REITs)", SHY: "short US government bonds (cash)"};
+const FX_CCY = ["EUR", "JPY", "GBP", "CHF", "CAD", "AUD", "NZD", "MXN", "ZAR"], FX_COST = {MXN: 0.001, ZAR: 0.001};
 // From Max's tests (notes: Trading › … › Strategy). Past results are not a promise.
-const PTESTED = {plan: "2014–2026 test of this mix: about +17.6% a year on average; worst drop −11.6%; worst year −7.7% (2018); best year +70% (2017)",
+const PTESTED = {plan: "Each part was tested on its own (below). The new 5-part mix (11 Nov 2026) has no combined test yet — Max shows each category's own result",
+  fx_carry: "+0.7% a year in 2000–Oct 2026, worst drop −10% — currencies barely pay; the gold part does the work in this category",
+  copy_steady: "+81% a year on unseen 2025 → Oct 2026 (worst month −13.7%, worst drop −30.7%) after a 0.5%/month copy cost — likely too good (survivor bias), treat as unproven",
+  us_etf: "+9.4% a year in 2004–2014 (used to choose, worst drop −13.5%); +7.3% a year in unseen 2015–Nov 2026 (worst drop −26.6%). Holding the S&P 500 alone: +12.9% a year in 2015–2026 but −55% in 2008",
   pse_dividend: "+8.4% a year in 2014–2026, worst drop −24% (with the 25% safety stop)", crypto_swing: "+46% a year on the top-20 coins, worst drop −28% (1,180 test trades)",
   btc_trend: "+63% a year in 2011–2026, worst drop −35% (plain Bitcoin: −92%)", gold_trend: "worst drop −34% in 2000–2026 (plain gold: −44%)"};
 const PLAN_YEARS = {"2014": 9.8, "2015": 5.2, "2016": 20.7, "2017": 70.2, "2018": -7.7, "2019": 21.2, "2020": 34.3, "2021": 34.6, "2022": -5.5, "2023": 16.1, "2024": 36.5, "2025": 18.0};
@@ -2621,11 +2635,30 @@ function mergeDivs(store, rows, fx) {   // store: {sym: [[exDate, pesoPerShare]]
 }
 const ttmDiv = (list, today) => (list || []).filter(([d]) => d > pAdd(today, -365) && d <= today).reduce((s, [, a]) => s + a, 0);
 function pj(S, e) { e.id = ++S.jid; e.at = Date.now(); S.journal.push(e); if (S.journal.length > 700) S.journal.splice(0, S.journal.length - 700); return e; }
+function newBook(k, fx) { const b = PBOOK[k], startPhp = b.php, start = b.ccy === "PHP" ? startPhp : startPhp / fx;
+  return {key: k, cash: start, start, startPhp, positions: [], pending: [], trades: [], hist: [], qty: 0, ...(["fx_carry", "copy_steady", "us_etf"].includes(k) ? {value: start, w: {}, px: {}, ep: {}} : {})}; }
 function paperNew() {
   const books = {}, fx = 63.03;
-  for (const [k, b] of Object.entries(PBOOK)) { const startPhp = PAPER_START * b.w, start = b.ccy === "PHP" ? startPhp : startPhp / fx;
-    books[k] = {key: k, cash: start, start, startPhp, positions: [], pending: [], trades: [], hist: [], qty: 0}; }
-  return {v: 2, opened: pD(Date.now()), usdphp: fx, fxSet: false, books, journal: [], jid: 0, emailed: 0, step: {}, errors: [], bench: {}};
+  for (const k of Object.keys(PBOOK)) books[k] = newBook(k, fx);
+  return {v: 2, plan: 3, opened: pD(Date.now()), usdphp: fx, fxSet: false, books, journal: [], jid: 0, emailed: 0, step: {}, errors: [], bench: {}};
+}
+// 11 Nov 2026: the ₱100,000 account becomes 5 × ₱50,000. Money is ADDED as cash — nothing that was bought is sold for this.
+function paperMigrate(S) {
+  if (S.plan >= 3) return false;
+  const fx = S.usdphp || 58, added = [];
+  for (const [k, b] of Object.entries(PBOOK)) {
+    const B = S.books[k];
+    if (!B) { S.books[k] = newBook(k, fx); added.push(`${b.name}: new, ${peso(b.php)}`); continue; }
+    const extra = b.php - B.startPhp; if (Math.abs(extra) < 1) continue;
+    const add = B.key === "pse_dividend" || b.ccy === "PHP" ? extra : extra / fx;
+    B.cash += add; B.start += add; B.startPhp = b.php; if (B.value !== undefined && B.key !== "pse_dividend") B.value = (B.value || 0) + add;
+    if (k === "pse_dividend") B.addCash = true;
+    added.push(`${b.name}: ${extra > 0 ? "+" : "−"}${peso(Math.abs(extra))} (now ${peso(b.php)})`);
+  }
+  S.plan = 3; S.planSince = pD(Date.now());
+  pj(S, {book: "plan", kind: "PLAN", d: pD(Date.now()), text: "New plan (11 Nov 2026): 5 categories × ₱50,000 = ₱250,000 — PSE stocks, Forex (gold + currencies), Crypto, Copy trading, US stocks/ETF. " + added.join(" · ") + ". Nothing already bought was sold; PSE buys extra board lots with its new ₱10,000 at the next openings.",
+    why: "Mark asked for equal ₱50,000 categories and two new ones (copy trading, US stocks/ETF). Each new category runs a strategy tested the same way as the others (settings chosen on older years, judged on years never used for choosing, all fees included)."});
+  return true;
 }
 // A database hiccup must never look like "no account yet": that would save an empty account over the real one. So a failed read throws.
 async function paperLoad(env) {
@@ -2633,7 +2666,7 @@ async function paperLoad(env) {
   const v = await srvSetting(env, "max_paper");
   if (v == null) return paperNew();
   let s = null; try { s = JSON.parse(v); } catch {}
-  if (s && s.v === 2 && s.books) return s;
+  if (s && s.v === 2 && s.books) { paperMigrate(s); return s; }
   throw new Error("the paper account data can't be read (a copy from yesterday is kept as max_paper_backup)");
 }
 async function paperSave(env, S) {
@@ -2642,6 +2675,186 @@ async function paperSave(env, S) {
   await srvSetting(env, "max_paper", JSON.stringify(S));
 }
 const fxOf = (S, B) => B.key === "pse_dividend" ? 1 : S.usdphp;
+const RB = new Set(["fx_carry", "copy_steady", "us_etf"]);      // books valued by daily returns of their weights (shorts allowed in forex)
+
+// ---- return-based books (forex currencies, copy trading, US ETFs) ----
+// B.value = money in the book (USD) · B.w = {sym: share of the money, negative = short} · B.px = last price used · B.ep = average entry price
+function rbMove(B, rets, carry = {}) {         // one day: rets {sym: price change}, carry {sym: interest gap for that day}
+  let R = 0; for (const [s, w] of Object.entries(B.w || {})) R += w * ((rets[s] || 0) + (carry[s] || 0));
+  const before = B.value; B.value = before * (1 + R);
+  if (B.value > 0) { const nw = {}; for (const [s, w] of Object.entries(B.w)) nw[s] = w * (1 + (rets[s] || 0)) / (1 + R); B.w = nw; }
+  return B.value - before;
+}
+function rbRebalance(S, key, target, prices, d, why, opts = {}) {      // trade from B.w to target weights; journal one BUY/SELL per change
+  const B = S.books[key], fx = S.usdphp, out = [], costOf = opts.cost || (() => 0.002);
+  const syms = [...new Set([...Object.keys(B.w || {}), ...Object.keys(target)])];
+  let cost = 0;
+  for (const s of syms) {
+    const from = B.w[s] || 0, to = target[s] || 0, dw = to - from; if (Math.abs(dw) < 0.02 && !(to === 0 && from !== 0)) { if (to) target[s] = from; continue; }
+    const amt = Math.abs(dw) * B.value, p = prices[s]; cost += amt * costOf(s);
+    const side = opts.side ? opts.side(s, from, to) : dw > 0 ? "BUY" : "SELL";
+    if (to !== 0 && Math.sign(to) === Math.sign(from || to) && Math.abs(to) > Math.abs(from)) B.ep[s] = from && B.ep[s] && p ? (Math.abs(from) * B.ep[s] + Math.abs(dw) * p) / Math.abs(to) : p;
+    if (to === 0) delete B.ep[s];
+    out.push({s, side, amt, from, to, p});
+  }
+  B.value -= cost; B.w = Object.fromEntries(Object.entries(target).filter(([, w]) => Math.abs(w) > 1e-9));
+  for (const [s, p] of Object.entries(prices)) if (p) B.px[s] = p;
+  for (const o of out) {
+    const e = opts.entry ? opts.entry(o) : {};
+    pj(S, {book: key, kind: o.side, sym: o.s, d, qty: o.p ? o.amt / o.p : undefined, px: o.p || undefined, ccy: "USD", php: Math.round(o.amt * fx),
+      text: e.text || `${o.side} ${usd(o.amt)} (${peso(o.amt * fx)}) of ${o.s}${o.p ? " @ " + g6(o.p) : ""} → ${Math.round(Math.abs(o.to) * 100)}% of this money${o.to < 0 ? " (short)" : ""}`, why: e.why || why, copy: e.copy, sellPlan: e.sellPlan, outcome: e.outcome});
+  }
+  B.trades.push({date: d, side: "REBALANCE", n: out.length, cost: +cost.toFixed(2)});
+  return out.length;
+}
+const monthKey = d => d.slice(0, 7);
+
+// ---- Forex currencies: 50% carry (long the 3 highest interest rates, short the 3 lowest) + 50% trend (each currency long/short by its 6-month direction), monthly ----
+async function fxStep(env, S, ctx, today) {
+  const B = S.books.fx_carry, H = S.fxHist = S.fxHist || {};
+  let src = "ECB (Frankfurter)";
+  try {
+    const start = pAdd(today, -300), d = await (await pFetch(ctx, `https://api.frankfurter.dev/v1/${start}..${today}?base=USD&symbols=${FX_CCY.join(",")}`)).json();
+    for (const [day, r] of Object.entries(d.rates || {})) H[day] = r;
+  } catch (e) { if (/budget/.test(e.message)) throw e;            // backup: today's rates from the other currency sources, history from Max's own copy
+    const r = await fxRates("USD"); src = r.source + " (backup)"; H[r.date || today] = Object.fromEntries(FX_CCY.map(c => [c, r.rates[c]])); }
+  const days = Object.keys(H).sort(); for (const d of days.slice(0, -320)) delete H[d];
+  let rates = S.fxRates;
+  try { const r = await (await pFetch(ctx, TRADER_RAW + "live/fx-rates.json?t=" + today)).json(); if (r && r.rates && r.rates.USD) rates = S.fxRates = r; } catch (e) { if (/budget/.test(e.message)) throw e; }
+  const usdR = rates?.rates?.USD?.rate, gap = c => rates?.rates?.[c] && usdR != null ? (rates.rates[c].rate - usdR) / 100 : null;
+  const D = Object.keys(H).sort(), since = B.last_day || D[D.length - 2] || pAdd(today, -1);
+  for (const d of D.filter(x => x > since)) {
+    const prev = D[D.indexOf(d) - 1]; if (!prev) { B.last_day = d; continue; }
+    const rets = {}, carry = {}, nd = (Date.parse(d) - Date.parse(prev)) / 864e5;
+    for (const c of FX_CCY) if (H[d][c] && H[prev][c]) { rets[c] = H[prev][c] / H[d][c] - 1; const g = gap(c); if (g != null) carry[c] = g * nd / 365; }   // holding the currency vs the dollar
+    rbMove(B, rets, carry);
+    // first trading day of a new month → new weights from the month-end data
+    if (monthKey(d) !== (B.month || "") && D.indexOf(d) >= 127) {
+      const hist = D.slice(0, D.indexOf(d)), last = hist[hist.length - 1], back = hist[hist.length - 127];
+      const trend = {}, carryW = {}, ranked = FX_CCY.filter(c => gap(c) != null).sort((a, b) => gap(b) - gap(a));
+      for (const c of FX_CCY) if (H[last][c] && H[back][c]) trend[c] = Math.sign(H[back][c] / H[last][c] - 1);
+      const tn = Object.values(trend).reduce((s, x) => s + Math.abs(x), 0) || 1;
+      if (ranked.length >= 6) { for (const c of ranked.slice(0, 3)) carryW[c] = 1 / 6; for (const c of ranked.slice(-3)) carryW[c] = -1 / 6; }
+      const target = {}; for (const c of FX_CCY) { const w = 0.5 * (carryW[c] || 0) + 0.5 * (trend[c] || 0) / tn; if (Math.abs(w) > 1e-6) target[c] = +w.toFixed(4); }
+      const px = Object.fromEntries(FX_CCY.map(c => [c, H[d][c]])), lines = Object.entries(target).sort((a, b) => b[1] - a[1]).map(([c, w]) => `${w > 0 ? "long" : "short"} ${c} ${Math.round(Math.abs(w) * 100)}%`).join(", ");
+      const why = `Monthly forex re-check (${d}). Carry: ${ranked.length >= 6 ? "highest interest " + ranked.slice(0, 3).map(c => `${c} ${rates.rates[c].rate}%`).join(", ") + " · lowest " + ranked.slice(-3).map(c => `${c} ${rates.rates[c].rate}%`).join(", ") + ` (US dollar ${usdR}%)` : "interest rates not available — carry part skipped"}. Trend: ${Object.entries(trend).map(([c, s]) => c + (s > 0 ? " up" : " down")).join(", ")} vs the dollar over 6 months. New mix: ${lines}.`;
+      if (B.month) rbRebalance(S, "fx_carry", target, px, d, why, {cost: c => FX_COST[c] || 0.0003, entry: o => ({
+        text: `${o.to === 0 ? "CLOSE" : o.to > 0 ? "LONG" : "SHORT"} ${o.s}/USD: ${usd(Math.abs(o.to - o.from) * B.value)} (${peso(Math.abs(o.to - o.from) * B.value * S.usdphp)}) → ${o.to === 0 ? "nothing" : (o.to > 0 ? "long " : "short ") + Math.round(Math.abs(o.to) * 100) + "% of this money"} @ ${g6(1 / o.p)} USD per ${o.s}`,
+        copy: o.to === 0 ? `If you copied: close your ${o.s}/USD position.` : `On a forex broker (no leverage): ${o.to > 0 ? "buy" : "sell"} ${o.s} against the US dollar for about ${peso(Math.abs(o.to) * B.value * S.usdphp)} in total.`,
+        sellPlan: o.to === 0 ? undefined : "Held until the next monthly re-check (first trading day of next month); no stop — the mix changes only monthly.",
+        outcome: o.to === 0 ? undefined : `Tested: ${PTESTED.fx_carry}.`})});
+      else { B.w = target; B.px = px; B.ep = {...px}; pj(S, {book: "fx_carry", kind: "BUY", sym: "FX", d, ccy: "USD", php: Math.round(B.value * S.usdphp), text: `Opened the currency mix with ${usd(B.value)} (${peso(B.value * S.usdphp)}): ${lines}`, why,
+        copy: "On a forex broker (no leverage): open each position with the % of your money shown.", sellPlan: "Held until the next monthly re-check (first trading day of next month).", outcome: `Tested: ${PTESTED.fx_carry}.`}); }
+      B.month = monthKey(d); B.market = {date: d, rates: rates?.asOf || null, mix: lines};
+    }
+    B.px = {...B.px, ...Object.fromEntries(FX_CCY.map(c => [c, H[d][c]]))}; B.hist.push([d, +B.value.toFixed(2)]); B.last_day = d;
+  }
+  if (B.hist.length > 400) B.hist.splice(0, B.hist.length - 400);
+  S.fxSrc = src;
+  return `fx: up to ${B.last_day} from ${src}, ${ctx.n} requests`;
+}
+
+// ---- Copy trading: paper-copy the 10 "steady" Hyperliquid traders (list refreshed weekly by GitHub; new list used each month) ----
+const COPY_DRAG_DAY = 0.005 / 30;          // copy delay + extra costs, 0.5% a month (as in the test)
+async function copyStep(env, S, ctx, today) {
+  const B = S.books.copy_steady, T = B.tr = B.tr || {};
+  let list = S.copyList;
+  try { const r = await (await pFetch(ctx, TRADER_RAW + "live/copy-steady.json?t=" + today)).json(); if (r && Array.isArray(r.traders)) list = S.copyList = r; } catch (e) { if (/budget/.test(e.message)) throw e; }
+  if (!list) return "copy: waiting for the first trader list (GitHub job)";
+  // 1) what each copied trader made since Max last looked (their profit ÷ their money)
+  const rets = {}, now = Date.now();
+  for (const a of Object.keys(B.w)) {
+    try {
+      const p = await (await pFetch(ctx, "https://api.hyperliquid.xyz/info", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({type: "portfolio", user: a})})).json();
+      const al = (Array.isArray(p) ? Object.fromEntries(p) : {}).allTime || {}, pn = al.pnlHistory || [], av = al.accountValueHistory || [];
+      const pnl = +(pn[pn.length - 1] || [])[1], val = +(av[av.length - 1] || [])[1]; if (!isFinite(pnl) || !isFinite(val)) continue;
+      if (T[a] && T[a].pnl != null) { const dp = pnl - T[a].pnl, cap = Math.max(T[a].val, val - dp); rets[a] = cap > 1000 ? Math.max(-1, dp / cap) : 0; }
+      T[a] = {...(T[a] || {}), pnl, val, at: now};
+    } catch (e) { if (/budget/.test(e.message)) throw e; }
+  }
+  const days = B.lastAt ? Math.max(0, (now - B.lastAt) / 864e5) : 0;
+  for (const a of Object.keys(rets)) rets[a] -= COPY_DRAG_DAY * days;
+  if (Object.keys(rets).length) rbMove(B, rets);
+  B.lastAt = now;
+  // 2) safety stop: stop copying a trader whose slice fell 20% from where Max started copying (or from its best since)
+  for (const a of Object.keys(B.w)) { const x = T[a]; if (!x || a === "CASH") continue; const slice = B.w[a] * B.value; x.hi = Math.max(x.hi || slice, slice); x.start = x.start || slice;
+    if (slice < x.hi * 0.8) { const tgt = {...B.w}; delete tgt[a]; tgt.CASH = (tgt.CASH || 0) + B.w[a];
+      rbRebalance(S, "copy_steady", tgt, {}, today, `Safety stop: copying ${a.slice(0, 10)}… lost 20% from its best (${usd(x.hi)} → ${usd(slice)}). Max stops copying this trader; the money waits until the next monthly pick.`, {cost: () => 0.001, side: (s, f, t) => s === "CASH" ? "HOLD" : t ? "BUY" : "SELL", entry: o => o.s === "CASH" ? {text: `Moved ${usd(o.amt)} to cash`} : {text: `STOP copying ${o.s.slice(0, 10)}… (${usd(o.amt)}, ${peso(o.amt * S.usdphp)})`, copy: `In your copy app: stop copying wallet ${o.s} and close its copied trades.`}}); } }
+  // 3) monthly: copy the newest steady list, equal shares
+  if (monthKey(today) !== (B.month || "") && list.traders.length) {
+    const pick = list.traders.slice(0, 10), target = Object.fromEntries(pick.map(t => [t.addr, 1 / pick.length]));
+    const why = `Monthly pick (${list.asOf} list): the ${pick.length} steadiest traders on Hyperliquid — ${list.rule}. They passed ${list.passed} of ${list.checked} active accounts checked. Copy apps' "hot" leaderboards lost −45% to −97% in Max's test, so Max never copies by last month's profit.`;
+    rbRebalance(S, "copy_steady", target, {}, today, why, {cost: () => 0.001, side: (s, f, t) => s === "CASH" ? "HOLD" : t > f ? "BUY" : "SELL", entry: o => {
+      const info = pick.find(t => t.addr === o.s) || {};
+      return o.s === "CASH" ? {text: `Cash ${usd(o.amt)} goes back to copying`} : o.to === 0 ? {text: `STOP copying ${o.s.slice(0, 10)}… (${usd(o.amt)}, ${peso(o.amt * S.usdphp)}) — no longer among the 10 steadiest`, copy: `In your copy app: stop copying wallet ${o.s}.`} : {
+        text: `COPY ${o.s.slice(0, 10)}… with ${usd(Math.abs(o.to) * B.value)} (${peso(Math.abs(o.to) * B.value * S.usdphp)}) — account ${usd(info.accountValue || 0)}, ${info.greenMonths || "?"} green months, last 90 days ${info.r90Pct != null ? "+" + info.r90Pct + "%" : "?"}`,
+        copy: `In a copy-trading app that follows Hyperliquid wallets: copy wallet ${o.s} with about ${peso(Math.abs(o.to) * B.value * S.usdphp)}, same size per trade as their account (no extra leverage).`,
+        sellPlan: "Max stops copying if this trader's slice falls 20% from its best, or at the next monthly pick if the trader is no longer among the 10 steadiest.",
+        outcome: `Last 6 months of this trader: ${(info.monthsPct || []).map(x => (x > 0 ? "+" : "") + x + "%").join(", ")}. Tested rule: ${PTESTED.copy_steady}.`}; }});
+    for (const a of Object.keys(target)) T[a] = {...(T[a] || {}), hi: null, start: null};
+    B.month = monthKey(today); B.market = {date: today, list: list.asOf, traders: pick.length};
+  }
+  B.hist.push([today, +B.value.toFixed(2)]); if (B.hist.length > 400) B.hist.splice(0, B.hist.length - 400); B.last_day = today;
+  return `copy: ${Object.keys(rets).length} traders priced, ${ctx.n} requests`;
+}
+
+// ---- US ETFs: 50% S&P 500 trend (SPY above its 200-day average, else short bonds SHY) + 50% top-4 of 8 ETFs by 6-month gain (only those above their 200-day), monthly ----
+async function etfDaily(ctx, sym) {        // Yahoo (adjusted for dividends) → Nasdaq (price only)
+  const r = await firstOk("US ETF price", [
+    ["Yahoo", async () => { const d = await (await pFetch(ctx, `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=2y&interval=1d`)).json(); const x = d?.chart?.result?.[0]; if (!x) return null;
+      const c = x.indicators?.adjclose?.[0]?.adjclose || x.indicators?.quote?.[0]?.close || []; return x.timestamp.map((t, i) => [pD(t * 1000), +c[i]]).filter(r => r[1] > 0); }],
+    ["Nasdaq", async () => { const d = await (await pFetch(ctx, `https://api.nasdaq.com/api/quote/${sym}/historical?assetclass=etf&fromdate=${pAdd(pD(Date.now()), -420)}&limit=400`, {headers: {Accept: "application/json"}})).json();
+      const rows = d?.data?.tradesTable?.rows; if (!rows) return null; return rows.map(r => { const [m, dd, y] = r.date.split("/"); return [`${y}-${m}-${dd}`, +String(r.close).replace(/[$,]/g, "")]; }).reverse().filter(r => r[1] > 0); }]]);
+  return {rows: r.value, src: r.source};
+}
+async function tvUs(ctx, syms) {
+  const r = await pFetch(ctx, "https://scanner.tradingview.com/america/scan", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({symbols: {tickers: syms.map(s => ETF_TV[s])}, columns: ["close", "last_bar_update_time"]})});
+  const d = await r.json(), out = {};
+  for (const x of d?.data || []) { const [c, at] = x.d || []; const s = String(x.s).split(":")[1]; if (c > 0 && at) out[s] = {d: pD(at * 1000 - 5 * 3600e3), c: +c}; }   // US trading day (New York time)
+  return out;
+}
+async function etfStep(env, S, ctx, today) {
+  const B = S.books.us_etf, H = S.etfHist = S.etfHist || {}, all = [...ETF_UNIV, ETF_CASH];
+  // daily: last finished US day for all 9 ETFs in one request (TradingView); backup: each ETF's history
+  let latest = {}, src = "TradingView";
+  try { latest = await tvUs(ctx, all); } catch (e) { if (/budget/.test(e.message)) throw e; }
+  const needHist = monthKey(today) !== (B.month || "") || Object.keys(latest).length < all.length;
+  if (needHist) { const used = new Set();
+    for (const s of all) { try { const r = await etfDaily(ctx, s); used.add(r.src); for (const [d, c] of r.rows.slice(-300)) (H[s] = H[s] || {})[d] = c; } catch (e) { if (/budget/.test(e.message)) throw e; } }
+    src = [...used].join(" + ") + (Object.keys(latest).length ? " + TradingView" : ""); }
+  for (const [s, b] of Object.entries(latest)) { const h = H[s] = H[s] || {}; const last = Object.keys(h).sort().pop(); if (!last || b.d > last) h[b.d] = b.c; }
+  for (const s of Object.keys(H)) { const ks = Object.keys(H[s]).sort(); for (const k of ks.slice(0, -320)) delete H[s][k]; }
+  const D = [...new Set(Object.values(H).flatMap(h => Object.keys(h)))].sort().filter(d => all.every(s => H[s] && H[s][d]));
+  if (D.length < 2) throw new Error("US ETF prices not available (" + (src || "no source") + " gave no full history) — Max retries tomorrow");
+  const since = B.last_day || D[D.length - 2] || today;
+  for (const d of D.filter(x => x > since)) {
+    const prev = D[D.indexOf(d) - 1]; if (!prev) continue;
+    const rets = Object.fromEntries(all.map(s => [s, H[s][d] / H[s][prev] - 1])); rbMove(B, rets);
+    if (monthKey(d) !== (B.month || "")) {                // first US trading day of a new month: decide on last month's closes, fill at today's close
+      const hist = D.slice(0, D.indexOf(d)), n = hist.length;
+      if (n >= 201) {
+        const at = (s, i) => H[s][hist[i]], sma = s => mean(hist.slice(-200).map(x => H[s][x])), last = s => at(s, n - 1), m6 = s => n > 126 ? last(s) / at(s, n - 127) - 1 : null;
+        const target = {}; const add = (s, w) => target[s] = (target[s] || 0) + w;
+        const spyUp = last("SPY") > sma("SPY"); add(spyUp ? "SPY" : ETF_CASH, 0.5);
+        const ranked = ETF_UNIV.filter(s => m6(s) != null).sort((a, b) => m6(b) - m6(a)), top = ranked.filter(s => last(s) > sma(s)).slice(0, 4);
+        for (const s of top) add(s, 0.5 / 4); if (top.length < 4) add(ETF_CASH, 0.5 * (4 - top.length) / 4);
+        const px = Object.fromEntries(all.map(s => [s, H[s][d]]));
+        const why = `Monthly US check (closes of ${hist[n - 1]}). Half: the S&P 500 (SPY) is ${spyUp ? "ABOVE" : "BELOW"} its 200-day average → ${spyUp ? "hold SPY" : "wait in short bonds (SHY)"}. Other half: best 6-month gains ${ranked.slice(0, 5).map(s => `${s} ${(m6(s) * 100).toFixed(1)}%`).join(", ")}; holding the top 4 that are above their 200-day average: ${top.join(", ") || "none"}${top.length < 4 ? " (the rest waits in SHY)" : ""}.`;
+        rbRebalance(S, "us_etf", target, px, d, why, {cost: () => 0.002, entry: o => ({
+          text: `${o.side} ${usd(o.amt)} (${peso(o.amt * S.usdphp)}) of ${o.s} — ${ETF_NAME[o.s]} @ $${g6(o.p)} → ${Math.round(o.to * 100)}% of this money`,
+          copy: o.side === "BUY" ? `On a US-stock app (e.g. one that sells US ETFs to Filipinos): buy about ${peso(o.amt * S.usdphp)} of ${o.s} at today's close or the next open.` : `If you copied: sell ${o.to === 0 ? "all your" : "about " + peso(o.amt * S.usdphp) + " of your"} ${o.s}.`,
+          sellPlan: o.side === "BUY" ? (o.s === "SPY" && target.SPY >= 0.5 ? "The S&P half is sold the first month SPY ends below its 200-day average." : o.s === ETF_CASH ? "Short bonds = the waiting place; sold when a trend comes back." : `Kept while ${o.s} stays in the top 4 by 6-month gain and above its 200-day average (checked monthly).`) : undefined,
+          outcome: o.side === "BUY" ? `Tested: ${PTESTED.us_etf}. US dividends: 25% US tax for Philippine residents.` : undefined})});
+        B.market = {date: d, spyAbove200: spyUp, top, ranked: ranked.slice(0, 8).map(s => [s, +(m6(s) * 100).toFixed(1)])};
+      }
+      B.month = monthKey(d);
+    }
+    B.px = Object.fromEntries(all.map(s => [s, H[s][d]])); B.hist.push([d, +B.value.toFixed(2)]); B.last_day = d;
+  }
+  if (B.hist.length > 400) B.hist.splice(0, B.hist.length - 400);
+  S.etfSrc = src;
+  return `etf: up to ${B.last_day || "—"} from ${src}, ${ctx.n} requests`;
+}
 
 // ---- crypto swing: 20-day breakout among the 20 most-traded coins, only when Bitcoin is above its 50-day average; stop 2× average daily move, trailing ----
 function cryptoSwing(S, U, upto, live, now) {
@@ -2777,7 +2990,7 @@ async function paperCryptoStep(S, ctx, now) {
   if (!pool.includes("BTC")) pool.push("BTC");
   try { const f = await usdPhp(ctx); if (f.php > 30 && f.php < 120) S.usdphp = f.php; } catch {}
   if (!S.fxSet) {           // first real run: size the dollar books with today's rate
-    for (const k of ["crypto_swing", "btc_trend", "gold_trend"]) { const B = S.books[k]; if (!B.trades.length && !B.positions.length) { B.start = B.startPhp / S.usdphp; B.cash = B.start; } }
+    for (const k of ["crypto_swing", "btc_trend", "gold_trend", ...RB]) { const B = S.books[k]; if (B && !B.trades.length && !B.positions.length) { B.start = B.startPhp / S.usdphp; B.cash = B.start; if (RB.has(k)) B.value = B.start; } }
     S.fxSet = true; S.usdphp0 = S.usdphp;
   }
   const U = {BTC: btc.closed}, live = {BTC: btc.live};
@@ -2853,15 +3066,19 @@ async function pseStep(env, S, ctx, today) {
       } else boughtToday = true;
     }
     // leftover cash: first the picks that didn't fit, then one extra lot at a time in yield order (keeps little cash idle)
-    if (!B.pending.some(o => o.side === "buy") && ((B.topup || []).length || (boughtToday && B.cash > 2000))) {
+    if (!B.pending.some(o => o.side === "buy") && ((B.topup || []).length || ((boughtToday || B.addCash) && B.cash > 2000))) {
       const ranked = Object.entries({...Object.fromEntries(B.positions.map(x => [x.sym, x.yieldAtBuy || 0])), ...Object.fromEntries((B.topup || []).map(t => [t.sym, t.yield]))}).sort((a, b) => b[1] - a[1]);
-      for (const first of [true, false]) for (const [sym, y] of ranked) {
+      if (B.addCash) {        // new money (11 Nov 2026): spread over what Max already holds, one order per stock (fewer fees), highest yield first
+        const held = ranked.filter(([s]) => B.positions.some(x => x.sym === s) && prices[s]?.[d]);
+        held.forEach(([sym, y], i) => buy(sym, prices[sym][d].o, B.cash / (held.length - i), d, "extra shares from the new ₱10,000 (11 Nov 2026 plan: PSE now ₱50,000) — spread over the stocks Max already holds; nothing sold", y, "from the new ₱10,000"));
+      }
+      for (const first of [true, false]) { for (const [sym, y] of ranked) {
         const bar = prices[sym]?.[d]; if (!bar) continue;
         const held = B.positions.find(x => x.sym === sym); if (first !== !held) continue;
         const lot = boardLot(bar.o), unit = bar.o * (1 + PSE_SLIP), c = lot * unit + pseFee(lot * unit); if (c > B.cash) continue;
         buy(sym, bar.o, c + 0.01, d, held ? "extra board lot from leftover cash (highest yield first)" : (B.topup.find(t => t.sym === sym) || {}).why, y, held ? "from leftover cash" : "bought from leftover cash");
-      }
-      B.topup = (B.topup || []).filter(t => !B.positions.some(x => x.sym === t.sym));
+      } }
+      B.topup = (B.topup || []).filter(t => !B.positions.some(x => x.sym === t.sym)); B.addCash = false;
     }
     for (const x of B.positions) {
       const bar = prices[x.sym]?.[d]; if (!bar) continue;
@@ -2936,25 +3153,30 @@ async function pseScanStep(env, S, ctx, today) {
 function paperTotals(S, live = {}) {
   const parts = Object.entries(PBOOK).map(([k, cfg]) => {
     const B = S.books[k]; let v;
-    if (k === "pse_dividend") v = B.cash + B.positions.reduce((t, x) => t + x.shares * ((live.pse || {})[x.sym] || (B.lastPx || {})[x.sym] || x.ep), 0);
+    if (RB.has(k)) v = B.value;
+    else if (k === "pse_dividend") v = B.cash + B.positions.reduce((t, x) => t + x.shares * ((live.pse || {})[x.sym] || (B.lastPx || {})[x.sym] || x.ep), 0);
     else if (k === "crypto_swing") v = B.cash + B.positions.reduce((t, x) => t + x.qty * ((live.crypto || {})[x.sym] || x.ep), 0);
     else v = B.cash + (B.qty || 0) * ((live.crypto || {})[k === "btc_trend" ? "BTC" : "PAXG"] || (B.positions[0] || {}).ep || 0);
     const php = v * fxOf(S, B);
-    return {key: k, name: cfg.name, w: cfg.w, ccy: cfg.ccy, value: +v.toFixed(2), php: Math.round(php), startPhp: B.startPhp, pct: +((php / B.startPhp - 1) * 100).toFixed(2), open: B.positions.length};
+    return {key: k, name: cfg.name, cat: cfg.cat, w: cfg.w, ccy: cfg.ccy, value: +v.toFixed(2), php: Math.round(php), startPhp: B.startPhp, pct: +((php / B.startPhp - 1) * 100).toFixed(2), open: RB.has(k) ? Object.keys(B.w || {}).filter(s => s !== "CASH").length : B.positions.length};
   });
   const total = parts.reduce((s, p) => s + p.php, 0);
-  return {parts, total, pct: +((total / PAPER_START - 1) * 100).toFixed(2)};
+  const cats = Object.entries(PCAT).map(([c, cfg]) => { const ps = parts.filter(p => p.cat === c), php = ps.reduce((s, p) => s + p.php, 0), start = ps.reduce((s, p) => s + p.startPhp, 0);
+    return {key: c, name: cfg.name, php, startPhp: start, pct: +((php / (start || 1) - 1) * 100).toFixed(2), books: ps.map(p => p.key)}; });
+  return {parts, cats, total, pct: +((total / PAPER_START - 1) * 100).toFixed(2)};
 }
-const EMAIL_KINDS = new Set(["BUY", "SELL", "DIVIDEND", "ORDER", "REBALANCE"]);
+const EMAIL_KINDS = new Set(["BUY", "SELL", "DIVIDEND", "ORDER", "REBALANCE", "PLAN"]);
 function paperEmailText(S, entries, weekly) {
   const T = paperTotals(S), L = ["Max paper trading — pretend money only. Nothing real was bought or sold. Not financial advice.", "",
-    `TOTAL: ${peso(T.total)} (${sgn(T.pct)} since ${S.opened}, started with ${peso(PAPER_START)})`, T.parts.map(p => `${p.name.split(" (")[0]} ${peso(p.php)} (${sgn(p.pct)})`).join(" · "), ""];
+    `TOTAL: ${peso(T.total)} (${sgn(T.pct)} since ${S.planSince || S.opened}, ${peso(PAPER_START)} = 5 × ₱50,000)`, T.cats.map(c => `${c.name.split(" (")[0]} ${peso(c.php)} (${sgn(c.pct)})`).join(" · "), ""];
   const BOOKN = k => PBOOK[k]?.name.split(" (")[0] || k;
   if (entries.length) { L.push(weekly ? "THIS WEEK" : "NEW"); entries.forEach((e, i) => { L.push(`${i + 1}) ${e.kind} ${e.sym || ""} — ${BOOKN(e.book)} — ${e.d || ""}`.replace(/\s+—\s+—/, " —")); L.push("   " + e.text);
     if (e.why) L.push("   Why: " + e.why); if (e.copy) L.push("   To copy: " + e.copy); if (e.sellPlan) L.push("   Sell plan: " + e.sellPlan); if (e.outcome) L.push("   Possible outcome: " + e.outcome); L.push(""); }); }
   else L.push(weekly ? "No trades this week — no setup met the rules. Waiting is part of the plan." : "");
   const open = [];
-  for (const k of Object.keys(PBOOK)) for (const x of S.books[k].positions) { const mk = S.books[k].market;
+  for (const k of Object.keys(PBOOK).filter(k => RB.has(k))) { const B = S.books[k]; const ws = Object.entries(B.w || {}).filter(([s]) => s !== "CASH");
+    if (ws.length) open.push(`- ${BOOKN(k)}: ` + ws.map(([s, w]) => `${k === "copy_steady" ? s.slice(0, 10) + "…" : s} ${w < 0 ? "short " : ""}${Math.round(Math.abs(w) * 100)}%`).join(", ") + ` (${peso(B.value * S.usdphp)}; re-checked monthly)`); }
+  for (const k of Object.keys(PBOOK).filter(k => !RB.has(k))) for (const x of S.books[k].positions) { const mk = S.books[k].market;
     const stop = x.shares ? ` · stop-loss ₱${g6((x.hi || x.ep) * 0.75)}` : x.stop ? ` · stop-loss $${g6(x.stop)}` : mk && mk.sma ? ` · sell below $${g6(mk.sma)} (${k === "btc_trend" ? 100 : 200}-day average)` : "";
     open.push(`- ${x.sym} (${BOOKN(k)}): ${x.shares ? x.shares.toLocaleString("en-US") + " sh @ ₱" + g6(x.ep) : g6(x.qty) + " @ $" + g6(x.ep)}${stop} since ${x.entry}`); }
   L.push("OPEN POSITIONS (today's sell levels)", ...(open.length ? open : ["- none yet (all cash)"]), "", "Possible outcome of the whole plan: " + PTESTED.plan + ". Past results are not a promise.", "",
@@ -2974,7 +3196,7 @@ async function paperEmails(env, S, today, dow) {
   if (fresh.length) {
     const T = paperTotals(S), trades = fresh.filter(e => e.kind === "BUY" || e.kind === "SELL"), orders = fresh.filter(e => e.kind === "ORDER");
     const subject = "Max paper trading: " + [trades.length && trades.map(e => e.kind + " " + e.sym).slice(0, 3).join(", ") + (trades.length > 3 ? " +" + (trades.length - 3) : ""), orders.length && orders.length + " order" + (orders.length > 1 ? "s" : "") + " for the next opening",
-      fresh.some(e => e.kind === "DIVIDEND") && "dividend"].filter(Boolean).join(" · ") + " — total " + peso(T.total);
+      fresh.some(e => e.kind === "DIVIDEND") && "dividend", fresh.some(e => e.kind === "PLAN") && "new 5 × ₱50,000 plan"].filter(Boolean).join(" · ") + " — total " + peso(T.total);
     const r = await paperSendEmail(env, subject, paperEmailText(S, fresh)); out.push(r);
     if (r === "emailed" || r === "emails off" || fresh[0].at < Date.now() - 3 * 864e5) S.emailed = Math.max(...fresh.map(e => e.id));   // Gmail down: try again next hour (up to 3 days)
   }
@@ -2983,13 +3205,14 @@ async function paperEmails(env, S, today, dow) {
 // ---- ONE Sunday email instead of twelve (10 Nov 2026): trading, investments, websites, apps, security — a few lines each ----
 async function sundaySummary(env) {
   const S = await paperLoad(env), T = paperTotals(S), wk = S.journal.filter(e => e.at > Date.now() - 7 * 864e5), tr = wk.filter(e => e.kind === "BUY" || e.kind === "SELL"), dv = wk.filter(e => e.kind === "DIVIDEND");
-  const open = Object.values(S.books).reduce((n, B) => n + B.positions.length, 0), L = [];
+  const open = T.parts.reduce((n, p) => n + p.open, 0), L = [];
   const fresh = async id => { const r = await lastReport(env, id).catch(() => null); return r && Date.now() - r.at < 36 * 3600e3 ? r : null; };
   L.push("Max weekly summary — one email for everything. Details are in the Max app.", "",
-    "1) TRADING (paper — pretend money, not advice)", `Total ${peso(T.total)} (${sgn(T.pct)} since ${S.opened})`, T.parts.map(p => `${p.name.split(" (")[0]} ${peso(p.php)} (${sgn(p.pct)})`).join(" · "),
+    "1) TRADING (paper — pretend money, not advice)", `Total ${peso(T.total)} (${sgn(T.pct)} since ${S.planSince || S.opened}; 5 × ₱50,000)`, T.cats.map(c => `${c.name.split(" (")[0]} ${peso(c.php)} (${sgn(c.pct)})`).join(" · "),
     tr.length ? `This week: ${tr.length} trade${tr.length > 1 ? "s" : ""}` : "This week: no trades — no setup met the rules.", ...tr.slice(-8).map(e => "- " + e.d + " " + e.text.slice(0, 150)),
     ...(dv.length ? ["Dividends: " + peso(dv.reduce((s, e) => s + (e.php || 0), 0)) + " from " + dv.map(e => e.sym).join(", ")] : []), `Open positions: ${open}. Sell levels and the journal: Paper trading tile.`, "");
-  try { const g = await investGuide(env); L.push("2) INVESTMENTS (best rates now, checked " + (g.checked || "–") + ")", ...invGuideLines(g).slice(0, 3).map(x => "- " + x)); const pr = (g.cats || []).find(c => c.key === "promos")?.items?.[0]; if (pr) L.push(`- Promo: ${pr.name} — ${pr.rate}${pr.ends ? " until " + pr.ends : ""}`); }
+  try { const g = await investGuide(env); L.push("2) INVESTMENTS (best rates now, checked " + (g.checked || "–") + ")", ...invGuideLines(g).slice(0, 3).map(x => "- " + x));
+    const v = await investView(env).catch(() => null); if (v) L.push(`- Virtual ₱400,000: ${peso(v.total)} (${sgn(v.pct)}) — ` + v.parts.map(p => `${p.name.split(" (")[0]} ${peso(p.php)}${p.product ? " in " + p.product.name.split(" (")[0] : ""}`).join(" · ")); const pr = (g.cats || []).find(c => c.key === "promos")?.items?.[0]; if (pr) L.push(`- Promo: ${pr.name} — ${pr.rate}${pr.ends ? " until " + pr.ends : ""}`); }
   catch { L.push("2) INVESTMENTS", "- Could not be read this week."); }
   L.push("");
   const rep = await setting(env, "max_srv_status_report", {sites: [], apps: []}), sum = statusSummary(rep);
@@ -3020,11 +3243,20 @@ async function backgroundStep(env, when) {
   let job = S.step.crypto !== today && fails("crypto") < 3 ? "crypto" : (pseEvening || pseMorning) && !pseTriedNow && fails("pse") < 3 ? "pse" : null;
   const scan = job ? null : await setting(env, "max_paper_scan", null);
   if (!job && scan && scan.phase !== "done" && fails("scan") < 6) job = "scan";
+  // 11 Nov 2026 (after the PSE re-check, which needs several hours in a row): three more daily jobs — US ETFs after the US close (9 am–8 pm Manila), copy trading any time, forex after the ECB rates (from midnight Manila)
+  if (!job && h >= 1 && h <= 12 && S.step.etf !== today && fails("etf") < 3) job = "etf";
+  if (!job && h >= 2 && S.step.copy !== today && fails("copy") < 3) job = "copy";
+  if (!job && h >= 16 && S.step.fx !== today && fails("fx") < 3) job = "fx";
+  if (!job && S.step.invest !== today && fails("invest") < 3) job = "invest";
   if (!job) job = await otherJob(env, t);
   try {
     if (job === "crypto") { out.push(await paperCryptoStep(S, ctx, now)); S.step.crypto = today; }
     else if (job === "pse") { S.step.pseHour = hourKey; out.push(await pseStep(env, S, ctx, today)); S.step.pse = today; S.step.pseData = S.books.pse_dividend.last_day || null; }
     else if (job === "scan") out.push(await pseScanStep(env, S, ctx, today));
+    else if (job === "etf") { out.push(await etfStep(env, S, ctx, today)); S.step.etf = today; }
+    else if (job === "copy") { out.push(await copyStep(env, S, ctx, today)); S.step.copy = today; }
+    else if (job === "fx") { out.push(await fxStep(env, S, ctx, today)); S.step.fx = today; }
+    else if (job === "invest") { out.push(await investStep(env, today)); S.step.invest = today; }
     else if (job) out.push(await runOtherJob(env, job, ctx, S));
     S.lastStep = {at: Date.now(), job, ok: true};
   } catch (e) {
@@ -3033,7 +3265,7 @@ async function backgroundStep(env, when) {
     S.errors = [...(S.errors || []), {at: Date.now(), job, error: msg}].slice(-20); S.lastStep = {at: Date.now(), job, ok: false, error: msg};
     out.push(job + " failed: " + msg);
   }
-  if (job === "crypto" || job === "pse" || job === "scan") { try { const m = await paperEmails(env, S, today, dow); if (m) out.push(m); } catch (e) { out.push("email failed: " + cleanText(String(e.message), 100)); } }
+  if (["crypto", "pse", "scan", "etf", "copy", "fx"].includes(job)) { try { const m = await paperEmails(env, S, today, dow); if (m) out.push(m); } catch (e) { out.push("email failed: " + cleanText(String(e.message), 100)); } }
   await paperSave(env, S);
   return out.join("; ") || "nothing to do";
 }
@@ -3048,26 +3280,36 @@ async function paperView(env) {
       for (const s of cs.filter(s => !(live.crypto[s] > 0)).slice(0, 10)) { try { live.crypto[s] = await cryptoSpotUsd(s); } catch (e) { errors.push(s + ": " + e.message); } } }
     for (const p of S.books.pse_dividend.positions.slice(0, 20)) { try { live.pse[p.sym] = (await pseQuote(p.sym)).price; } catch (e) { try { live.pse[p.sym] = (await pseQuoteBackup(p.sym)).price; } catch (e2) { errors.push(p.sym + ": " + e.message); } } }
     const T = paperTotals(S, live), fx = S.usdphp;
+    const rbPos = (k, B) => Object.entries(B.w || {}).filter(([s]) => s !== "CASH").map(([s, w]) => { const px = (B.px || {})[s], ep = (B.ep || {})[s], inv = k === "fx_carry";
+      const last = inv && px ? 1 / px : px, entry = inv && ep ? 1 / ep : ep, valUsd = Math.abs(w) * B.value;
+      return {sym: k === "copy_steady" ? s.slice(0, 6) + "…" + s.slice(-4) : s, addr: k === "copy_steady" ? s : undefined, kind: k === "copy_steady" ? "copy" : k === "fx_carry" ? "fx" : "etf", side: w < 0 ? "short" : "long", weightPct: +(w * 100).toFixed(1),
+        qty: last ? +(valUsd / last).toPrecision(6) : null, ep: entry ? +(+entry).toPrecision(7) : null, last: last ? +(+last).toPrecision(7) : null,
+        chgPct: last && entry ? +(((last / entry - 1) * (w < 0 ? -1 : 1)) * 100).toFixed(2) : k === "copy_steady" && B.tr?.[s]?.start ? +((valUsd / B.tr[s].start - 1) * 100).toFixed(2) : null,
+        valuePhp: Math.round(valUsd * fx), sell: null, sellWhy: k === "copy_steady" ? "stop at −20% from its best, or the monthly pick" : "monthly re-check", entry: B.month || null}; });
     const books = Object.entries(PBOOK).map(([k, cfg]) => { const B = S.books[k], part = T.parts.find(p => p.key === k);
+      if (RB.has(k)) return {key: k, name: cfg.name, cat: cfg.cat, status: "main", weight: cfg.w, ccy: cfg.ccy, start: +B.start.toFixed(2), startPhp: B.startPhp, cash: +(((B.w || {}).CASH || 0) * B.value + (Object.keys(B.w || {}).length ? 0 : B.value)).toFixed(2),
+        valueNow: part.value, valuePhp: part.php, sinceNow: part.pct, positions: rbPos(k, B), pending: [], closed: B.trades.length, wins: 0, nextRebalance: "first trading day of each month", market: B.market || null, tested: PTESTED[k],
+        note: !B.month && !B.hist.length ? (k === "copy_steady" ? "starts when the first weekly trader list is ready" : "starts at Max's first daily check") : undefined};
       const positions = B.positions.map(x => { const last = x.shares ? live.pse[x.sym] || (B.lastPx || {})[x.sym] : live.crypto[x.sym]; const qty = x.shares || x.qty;
         return {sym: x.sym, kind: x.shares ? "pse" : k === "gold_trend" ? "gold" : "crypto", qty, ep: +(+x.ep).toPrecision(7), entry: x.entry, stop: x.stop ? +(+x.stop).toPrecision(7) : null, divs: x.divs ? Math.round(x.divs) : undefined,
           sell: x.shares ? +((x.hi || x.ep) * 0.75).toPrecision(6) : x.stop ? +(+x.stop).toPrecision(6) : B.market && B.market.sma ? +(+B.market.sma).toPrecision(6) : null,
           sellWhy: x.shares ? "25% below its highest close" : x.stop ? "trailing stop-loss" : k === "btc_trend" ? "100-day average" : k === "gold_trend" ? "200-day average" : null,
           last: last || null, chgPct: last ? +((last / x.ep - 1) * 100).toFixed(2) : null, valuePhp: Math.round(qty * (last || x.ep) * (x.shares ? 1 : fx)),
           riskPhp: x.stop ? Math.round(Math.max(0, (last || x.ep) - x.stop) * qty * fx) : x.shares ? Math.round(x.shares * (x.hi || x.ep) * 0.25) : null}; });
-      return {key: k, name: cfg.name, status: "main", weight: cfg.w, ccy: cfg.ccy, start: +B.start.toFixed(2), startPhp: B.startPhp, cash: +B.cash.toFixed(2), cashPhp: Math.round(B.cash * fxOf(S, B)), valueNow: part.value, valuePhp: part.php, sinceNow: part.pct,
+      return {key: k, name: cfg.name, cat: cfg.cat, status: "main", weight: cfg.w, ccy: cfg.ccy, start: +B.start.toFixed(2), startPhp: B.startPhp, cash: +B.cash.toFixed(2), cashPhp: Math.round(B.cash * fxOf(S, B)), valueNow: part.value, valuePhp: part.php, sinceNow: part.pct,
         positions, pending: B.pending.filter(o => o.sym).map(o => ({sym: o.sym, side: o.side, amount: o.php ? Math.round(o.php) : null, why: o.why})), closed: B.trades.filter(t => t.pnl !== 0 || t.exit).length, wins: B.trades.filter(t => t.pnl > 0).length,
         nextRebalance: B.next_rebalance || null, market: B.market || null, tested: PTESTED[k], note: !S.step.crypto ? "starts at Max's first daily check" : k === "pse_dividend" && !B.positions.length && !B.pending.length ? "picking the top-10 dividend stocks (takes a few hours)" : undefined}; });
     const risk = books.flatMap(b => b.positions).reduce((s, p) => s + (p.riskPhp || 0), 0);
     return {v: 2, engine: "Max's server (daily, even when your phone is off)", opened: S.opened, asOf: S.lastStep ? new Date(S.lastStep.at).toISOString() : null, pricedAt: new Date().toISOString(), usdphp: fx,
-      plan: Object.fromEntries(Object.entries(PBOOK).map(([k, c]) => [k, c.w])), totalPhp: T.total, startPhp: PAPER_START, combinedSince: T.pct, books,
+      plan: Object.fromEntries(Object.entries(PBOOK).map(([k, c]) => [k, c.w])), cats: T.cats, planSince: S.planSince || S.opened, totalPhp: T.total, startPhp: PAPER_START, combinedSince: T.pct, books,
       journal: S.journal.slice(-80).reverse(), risk: {ifAllStopsHitPhp: risk}, tested: PTESTED, planYears: PLAN_YEARS, bench: S.bench, steps: S.step, lastStep: S.lastStep || null, errors: (S.errors || []).slice(-3), priceErrors: errors.slice(0, 5),
       events: S.journal.slice(-8).map(e => `${e.d || ""} ${e.kind}: ${e.text}`)};
   });
 }
 async function paperBrief(env) {   // for Max's brain and the weekly trading report
   const S = await paperLoad(env), T = paperTotals(S);
-  return {total: peso(T.total), sinceStart: sgn(T.pct), opened: S.opened, parts: T.parts.map(p => `${p.name}: ${peso(p.php)} (${sgn(p.pct)}), ${p.open} open`),
+  return {total: peso(T.total) + " (5 categories × ₱50,000 since " + (S.planSince || S.opened) + ")", sinceStart: sgn(T.pct), opened: S.opened, categories: T.cats.map(c => `${c.name}: ${peso(c.php)} (${sgn(c.pct)})`), parts: T.parts.map(p => `${p.name}: ${peso(p.php)} (${sgn(p.pct)}), ${p.open} open`),
+    mixes: Object.fromEntries([...RB].map(k => [PBOOK[k].name, Object.entries(S.books[k]?.w || {}).map(([s, w]) => `${s.length > 12 ? s.slice(0, 10) + "…" : s} ${Math.round(w * 100)}%`).join(", ") || "not started"])),
     open: Object.entries(S.books).flatMap(([k, B]) => B.positions.map(x => `${x.sym} [${PBOOK[k].name.split(" (")[0]}] ${x.shares ? x.shares + " sh @ ₱" + g6(x.ep) : g6(x.qty) + " @ $" + g6(x.ep)} since ${x.entry}${x.stop ? ", stop $" + g6(x.stop) : ""}`)),
     waiting: Object.values(S.books).flatMap(B => B.pending.filter(o => o.sym).map(o => `${o.side} ${o.sym}`)),
     lastTrades: S.journal.filter(e => e.kind === "BUY" || e.kind === "SELL").slice(-10).map(e => `${e.d} ${e.text}`), lastCheck: S.lastStep ? new Date(S.lastStep.at).toISOString() : "not yet", plan: PTESTED.plan};
@@ -3317,6 +3559,102 @@ async function investGuide(env) {
   if (!g || !Array.isArray(g.cats)) return GUIDE_SEED;
   return {...GUIDE_SEED, ...g, cats: GUIDE_SEED.cats.map(c => g.cats.find(x => x.key === c.key) || c)};
 }
+// ===================== 💰 Virtual investments (11 Nov 2026, Mark): 4 × ₱100,000 pretend money =====================
+// MP2 · High-yield savings · Government bonds · Time deposits. Each runs a simple, written rule on the rates Max already tracks (the guide above):
+// pick the best product that ₱100,000 can really get, count interest day by day after tax and fees, and move only when the rule says it's worth it.
+// Pretend money only — Max never moves real money. Examples, not licensed advice.
+const VBOOK = {
+  mp2: {name: "Pag-IBIG MP2", rule: "Put ₱100,000 in MP2 (tax-free, 5-year term). Dividends are declared once a year (Max uses the last declared rate as the estimate) and added to the balance each 31 Dec (compounded option). Early withdrawal = only half the dividends, so Max never switches."},
+  hysa: {name: "High-yield savings", rule: "Keep ₱100,000 in the best savings account that pays its full rate on ₱100,000 (no group/spend conditions, no cap below ₱100,000). Interest is counted daily, paid monthly, 20% tax withheld. Move only if another bank pays at least 0.25% more for 14 days in a row (₱25 transfer fee counted)."},
+  bonds: {name: "Government bonds (RTB / T-bills)", rule: "Buy the best government bond open to retail buyers today (an open RTB, else 1-year T-bills). Interest after 20% tax. Held to maturity — selling early can lose money when rates rise; at maturity the money goes into the best open bond then."},
+  deposits: {name: "Time deposits", rule: "Lock ₱100,000 in the best time deposit that accepts ₱100,000 for its term. Interest after 20% tax at maturity. No early break (banks cut the rate); at maturity the money goes into the best time deposit then."}};
+const VTAX = t => t === "free" ? 0 : t === "10%" ? 0.10 : 0.20;
+function vCap(i) {                  // the most money a product pays its rate on (from its conditions), or null
+  const m = /(?:max(?:imum)?|cap(?:ped)?|first|nothing above|up to)\s*₱\s*([\d,.]+)\s*(k|m|million)?/i.exec(`${i.conditions || ""} ${i.rate || ""}`); if (!m) return null;
+  let v = parseFloat(m[1].replace(/,/g, "")); const u = (m[2] || "").toLowerCase(); if (u === "k") v *= 1e3; else if (u) v *= 1e6; return v;
+}
+function vTermDays(i) {            // term from the name/rate text: "(6 months)", "(360 days)", "(180–364 days)", "(9–24 months)"; default 6 months
+  const s = `${i.name} ${i.rate}`, d = /(\d+)\s*(?:[–-]\s*\d+\s*)?days/i.exec(s), m = /(\d+)\s*(?:[–-]\s*\d+\s*)?months?/i.exec(s), y = /(\d+)[- ]?year/i.exec(s);
+  return d ? +d[1] : m ? Math.round(+m[1] * 30.4) : y ? +y[1] * 365 : 182;
+}
+function vPick(g, key) {           // the best product for ₱100,000 in this category today, by rate after tax
+  const cat = k => (g.cats || []).find(c => c.key === k)?.items || [];
+  let items = [];
+  if (key === "mp2") items = cat("government").filter(i => /mp2/i.test(i.name));
+  if (key === "hysa") items = cat("savings").filter(i => !/group|spend|stash with/i.test(`${i.name} ${i.conditions}`) && /any day/i.test(i.withdraw || "any day") && !(vCap(i) && vCap(i) < 100000));
+  if (key === "bonds") items = cat("government").filter(i => !/mp2|pag-ibig|sss/i.test(i.name) && !/closed|not open|wait for/i.test(`${i.rate} ${i.conditions}`));
+  if (key === "deposits") items = cat("timedeposits").filter(i => !(vCap(i) && vCap(i) < 100000) && !/not re-?verified|disagree/i.test(i.conditions || ""));
+  items = items.filter(i => +i.rateNum > 0).map(i => ({...i, net: +i.rateNum * (1 - VTAX(i.tax))})).sort((a, b) => b.net - a.net);
+  return items[0] || null;
+}
+async function investStep(env, today) {
+  const V = await setting(env, "max_invest_paper", null) || {v: 1, opened: today, books: {}, journal: [], jid: 0, emailed: 0};
+  const g = await investGuide(env), J = e => { e.id = ++V.jid; e.at = Date.now(); V.journal.push(e); if (V.journal.length > 300) V.journal.splice(0, V.journal.length - 300); };
+  const out = [];
+  for (const [key, cfg] of Object.entries(VBOOK)) {
+    let B = V.books[key];
+    const best = vPick(g, key);
+    if (!B) {
+      if (!best) { out.push(key + ": no product found yet"); continue; }
+      B = V.books[key] = {key, startPhp: 100000, principal: 100000, accrued: 0, taxPaid: 0, fees: 0, credited: 0, last: today, hist: [[today, 100000]], product: null};
+    }
+    const open = (p, why) => { const term = key === "hysa" ? null : key === "mp2" ? 5 * 365 : key === "bonds" ? (/rtb|retail treasury/i.test(p.name) ? 5 * 365 : 365) : vTermDays(p);
+      B.product = {name: p.name, rateNum: +p.rateNum, tax: p.tax, rateText: p.rate, since: today, until: term ? pAdd(today, term) : null, url: p.url || ""};
+      J({book: key, kind: "OPEN", d: today, php: Math.round(B.principal), text: `Put ${peso(B.principal)} in ${p.name} at ${p.rate}${B.product.until ? " until " + B.product.until : ""} — about ${peso(B.principal * p.rateNum / 100 * (1 - VTAX(p.tax)))} a year after tax`, why,
+        copy: key === "mp2" ? "Open MP2 in Virtual Pag-IBIG (₱500 minimum), choose the 5-year compounded option." : key === "bonds" ? `Buy through your bank or GCash GBonds when it is offered (${p.conditions || "check minimums"}).` : `Open it in the bank's app (${p.conditions || "check conditions"}).`}); };
+    if (!B.product) { open(best, cfg.rule); out.push(key + ": opened"); }
+    // interest day by day since the last run (after tax), paid monthly for savings, at maturity for locked ones, yearly for MP2
+    for (let d = pAdd(B.last, 1); d <= today; d = pAdd(d, 1)) {
+      const P = B.product, gross = (B.principal + (key === "hysa" ? 0 : 0)) * P.rateNum / 100 / 365, tax = gross * VTAX(P.tax);
+      B.accrued += gross - tax; B.taxPaid += tax;
+      const monthEnd = pAdd(d, 1).slice(8) === "01", yearEnd = d.slice(5) === "12-31", matured = P.until && d >= P.until;
+      if ((key === "hysa" && monthEnd) || (key === "mp2" && yearEnd) || ((key === "bonds" || key === "deposits") && matured)) {
+        B.principal += B.accrued; B.credited += B.accrued;
+        J({book: key, kind: matured ? "MATURED" : "INTEREST", d, php: Math.round(B.accrued), text: `${P.name}: ${peso(B.accrued)} interest after tax credited (${matured ? "matured" : key === "mp2" ? "yearly dividend, estimate" : "monthly"}) → ${peso(B.principal)}`});
+        B.accrued = 0;
+        if (matured) { const nb = vPick(g, key); if (nb) open(nb, `${P.name} matured on ${P.until}. ${cfg.rule}`); }
+      }
+      B.hist.push([d, Math.round(B.principal + B.accrued)]);
+    }
+    if (B.hist.length > 800) B.hist.splice(0, B.hist.length - 800);
+    B.last = today;
+    // savings only: move when another bank pays clearly more for two weeks
+    if (key === "hysa" && best && best.name !== B.product.name) {
+      const cur = (g.cats.find(c => c.key === "savings")?.items || []).find(i => i.name === B.product.name), curNet = (cur ? +cur.rateNum : B.product.rateNum) * 0.8;
+      if (cur && +cur.rateNum !== B.product.rateNum) { J({book: key, kind: "RATE", d: today, text: `${B.product.name} changed its rate: ${B.product.rateNum}% → ${cur.rateNum}%`}); B.product.rateNum = +cur.rateNum; B.product.rateText = cur.rate; }
+      if (best.net - curNet >= 0.2) {             // 0.25% before tax ≈ 0.2% after
+        B.better = B.better && B.better.name === best.name ? B.better : {name: best.name, since: today};
+        if (pAdd(B.better.since, 14) <= today) {
+          const fee = 25; B.principal += B.accrued - fee; B.credited += B.accrued; B.accrued = 0; B.fees += fee;
+          J({book: key, kind: "SWITCH", d: today, text: `Moved ${peso(B.principal)} from ${B.product.name} (${B.product.rateNum}%) to ${best.name} (${best.rate}) — ₱${fee} transfer fee`, why: `${best.name} has paid at least 0.25% more for 14 days. ${cfg.rule}`, copy: `Open ${best.name}, then move your savings there by InstaPay (about ₱25).`});
+          open(best, "Switch (see above)"); B.better = null;
+        }
+      } else B.better = null;
+    }
+    out.push(`${key}: ${peso(B.principal + B.accrued)}`);
+  }
+  V.checked = g.checked;
+  await srvSetting(env, "max_invest_paper", JSON.stringify(V));
+  // email only when money moves (open, switch, maturity) — interest credits are not emailed
+  const fresh = V.journal.filter(e => e.id > (V.emailed || 0) && ["OPEN", "SWITCH", "MATURED"].includes(e.kind));
+  if (fresh.length) {
+    const T = investTotals(V), text = ["Max virtual investments — pretend money only, nothing real was moved. Examples, not licensed advice.", "", `TOTAL: ${peso(T.total)} (4 × ₱100,000 since ${V.opened}; ${sgn(T.pct)})`, T.parts.map(p => `${p.name} ${peso(p.php)}`).join(" · "), "",
+      ...fresh.flatMap((e, i) => [`${i + 1}) ${e.kind} — ${VBOOK[e.book].name} — ${e.d}`, "   " + e.text, ...(e.why ? ["   Why: " + e.why] : []), ...(e.copy ? ["   To copy: " + e.copy] : []), ""]), "Open Max → Investments for the rates and these 4 virtual accounts."].join("\n");
+    const r = await paperSendEmail(env, "Max virtual investments: " + fresh.map(e => e.kind + " " + VBOOK[e.book].name).slice(0, 3).join(", ") + " — total " + peso(T.total), text).catch(e => "email failed: " + e.message);
+    if (r === "emailed" || r === "emails off" || fresh[0].at < Date.now() - 3 * 864e5) { V.emailed = Math.max(...fresh.map(e => e.id)); await srvSetting(env, "max_invest_paper", JSON.stringify(V)); }
+    out.push(r);
+  }
+  return "invest: " + out.join(", ");
+}
+function investTotals(V) {
+  const parts = Object.entries(VBOOK).map(([k, c]) => { const B = V.books[k]; const php = B ? B.principal + B.accrued : 100000;
+    return {key: k, name: c.name, php: Math.round(php), pct: +((php / 100000 - 1) * 100).toFixed(3), product: B?.product || null, taxPaid: Math.round(B?.taxPaid || 0), fees: B?.fees || 0, rule: c.rule,
+      perYear: B?.product ? Math.round(B.principal * B.product.rateNum / 100 * (1 - VTAX(B.product.tax))) : null, hist: (B?.hist || []).slice(-90)}; });
+  const total = parts.reduce((s, p) => s + p.php, 0);
+  return {parts, total, start: 400000, pct: +((total / 400000 - 1) * 100).toFixed(3)};
+}
+async function investView(env) { const V = await setting(env, "max_invest_paper", null); if (!V) return null;
+  return {...investTotals(V), opened: V.opened, checked: V.checked, journal: V.journal.slice(-30).reverse()}; }
 async function refreshGuide(env, opts = {}) {
   const cur = await investGuide(env), out = {...cur, cats: [...cur.cats]}, done = [];
   for (const c of out.cats) {
@@ -3349,7 +3687,8 @@ async function homeRoutes(request, env, url, origin) {
     }
     if (url.pathname === "/api/home/guide" && request.method === "GET") {
       const g = env.MAX_MEMORY ? await investGuide(env) : GUIDE_SEED;
-      return json({...g, cats: g.cats.map(c => ({...c, items: c.items.map(i => c.key === "promos" ? i : ({...i, netPer100k: Math.round(100000 * i.rateNum / 100 * (GUIDE_TAX[i.tax] || 0.8))}))}))}, 200, origin, env);   // promos last weeks, not a year
+      const virtual = env.MAX_MEMORY ? await investView(env).catch(() => null) : null;
+      return json({...g, virtual, cats: g.cats.map(c => ({...c, items: c.items.map(i => c.key === "promos" ? i : ({...i, netPer100k: Math.round(100000 * i.rateNum / 100 * (GUIDE_TAX[i.tax] || 0.8))}))}))}, 200, origin, env);   // promos last weeks, not a year
     }
     if (url.pathname === "/api/home/guide/refresh" && request.method === "POST") {
       if (!env.MAX_MEMORY) return json({error: "Needs Max's database."}, 503, origin, env);
@@ -3548,7 +3887,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup};
+export const __test = {sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {

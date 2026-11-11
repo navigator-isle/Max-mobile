@@ -1,0 +1,33 @@
+# Weekly: interest rates for the forex book and the 10 "steady" traders for the copy-trading book.
+# Writes small JSON files to the trader-data branch (live/…); Max's server reads them. Nothing here trades.
+name: Max live data
+
+on:
+  schedule:
+    - cron: "17 3 * * 0"      # Sunday 11:17 Manila
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build live data
+        run: mkdir -p /tmp/live && python trader/live/build_live.py /tmp/live
+      - name: Save to the trader-data branch
+        run: |
+          git config user.name "max-bot"; git config user.email "max-bot@users.noreply.github.com"
+          git fetch origin trader-data --depth 1 && git checkout -B trader-data origin/trader-data || git checkout --orphan trader-data
+          mkdir -p live && cp /tmp/live/*.json live/
+          git add live && (git diff --cached --quiet || git commit -m "Live data $(date -u +%F)") && git push origin trader-data

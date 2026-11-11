@@ -44,10 +44,10 @@ db.exec("CREATE TABLE IF NOT EXISTS max_settings (key TEXT PRIMARY KEY, value TE
 db.prepare("INSERT OR REPLACE INTO max_settings VALUES ('max_paper', ?, 1)").run(JSON.stringify(S));
 let r = await get("/api/home/paper");
 const pse = r.d.books?.find(b => b.key === "pse_dividend"), sol = r.d.books?.find(b => b.key === "crypto_swing")?.positions[0], gold = r.d.books?.find(b => b.key === "gold_trend");
-ok(r.s === 200 && r.d.v === 2 && r.d.journal[0].sym === "SOL", "the paper tile reads Max's own paper account (journal newest first)", JSON.stringify(r.d).slice(0, 200));
-ok(pse && pse.positions[0].last === 7.04 && pse.positions[0].chgPct === 10 && pse.valuePhp === 33600 + 7040 && pse.sinceNow === 1.6, "PSE position priced live from PSE Edge: PLUS ₱6.40 → ₱7.04 (+10%), value in pesos", JSON.stringify(pse?.positions[0]) + " " + pse?.valuePhp);
+ok(r.s === 200 && r.d.v === 2 && r.d.journal[0].kind === "PLAN" && r.d.journal[1].sym === "SOL" && r.d.cats.length === 5, "the paper tile reads Max's own paper account (journal newest first; the old ₱100k account shows the new 5 × ₱50k plan)", JSON.stringify(r.d).slice(0, 200));
+ok(pse && pse.positions[0].last === 7.04 && pse.positions[0].chgPct === 10 && pse.valuePhp === 33600 + 10000 + 7040 && pse.sinceNow === 1.28, "PSE position priced live from PSE Edge: PLUS ₱6.40 → ₱7.04 (+10%), value in pesos (+₱10,000 new cash, nothing sold)", JSON.stringify(pse?.positions[0]) + " " + pse?.valuePhp);
 ok(sol && sol.last === 220 && sol.chgPct === 10 && sol.riskPhp === Math.round(40 * 3 * 63) && gold.positions[0].last === 4200 && gold.positions[0].chgPct === 5, "crypto and gold (PAXG) priced live from Binance; risk to the stop in pesos", JSON.stringify([sol, gold?.positions[0]]));
-ok(r.d.totalPhp === pse.valuePhp + Math.round((21000 / 63 - 600 + 660) * 63) + 9000 + Math.round((30000 / 63 - 1000 + 1050) * 63), "total ₱ = sum of the four parts at live prices", String(r.d.totalPhp));
+ok(Math.abs(r.d.totalPhp - (pse.valuePhp + Math.round((35000 / 63 - 600 + 660) * 63) + 15000 + Math.round((30000 / 63 - 1000 + 1050) * 63) + 20000 + 50000 + 50000)) <= 3, "total ₱ = sum of all parts at live prices (new books start as ₱20k/₱50k/₱50k cash)", String(r.d.totalPhp));
 const b0 = binance; await get("/api/home/paper"); ok(binance === b0, "prices are cached for 5 minutes (no new calls on every open)");
 // investment guide
 r = await get("/api/home/guide");
