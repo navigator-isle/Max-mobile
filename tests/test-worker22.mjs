@@ -86,6 +86,13 @@ const z = Buffer.from(z64, "base64");
 ok(z.length > 500000 && z.readUInt32LE(0) === 0x04034b50 && z.equals(zipBytes), "the emailed zip is the full code copy (" + Math.round(z.length / 1024) + " KB)");
 ok(/rebuilds Max on Cloudflare/.test(mail), "the email says how to use it");
 
+// 4b) 22 Nov 2026: notes + code over Gmail's limit (it was 37 MB) → the notes still go, the code zip is left out (it is on GitHub)
+{ const big = "x".repeat(199000), ins = sqlite.prepare("INSERT INTO max_notes (id,title,category,tags,body,analysis,created_at,updated_at,deleted) VALUES (?,?,?,?,?,NULL,1,2,0)");
+  for (let i = 0; i < 80; i++) ins.run("big" + i, "Manual page " + i, "SMS", "[]", big + i);
+  sent = []; await viaSelf("/api/guard/run", { method: "POST", body: { backup: true }, session });
+  const m2 = sent.find(m => /max-backup-/.test(m)) || "";
+  ok(/filename="max-backup-/.test(m2) && !/filename="max-code-/.test(m2) && /code zip is not attached this time/.test(m2) && m2.length < 30e6, "too big with the code → the notes are still emailed, without the code zip (" + Math.round(m2.length / 1e6) + " MB)", m2.slice(0, 200));
+  sqlite.exec("DELETE FROM max_notes WHERE id LIKE 'big%'"); }
 // 5) Health shows it
 q = await viaSelf("/health");
 const h = await q.json();

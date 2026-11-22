@@ -27,4 +27,21 @@ ok(Math.abs(p("mp2").php - 100000 * (1 + 0.0712 * 200 / 365)) < 30 && p("mp2").t
 ok(Math.abs(p("hysa").php - 100000 * (1 + 0.035 * 0.8 * 200 / 365)) < 120 && p("hysa").taxPaid > 0, "savings after 200 days: 3.5% − 20% tax, paid monthly", p("hysa").php);
 ok(v.journal.some(e => e.kind === "MATURED" && e.book === "deposits") && v.journal.filter(e => e.kind === "OPEN" && e.book === "deposits").length === 2, "time deposit matured after 180 days → interest credited, rolled into the best deposit then", JSON.stringify(v.journal.filter(e => e.book === "deposits").map(e => e.kind)));
 ok(v.total > 400000 && v.total < 400000 * 1.04, "total grows like real interest (no magic)", v.total);
+// 22 Nov 2026: each product is credited the way it really pays
+ok(T.vCredit("hysa", {name: "Maya Savings"}) === "daily" && T.vCredit("hysa", {name: "MariBank Savings"}) === "daily" && T.vCredit("hysa", {name: "UNO #UNOready"}) === "daily" && T.vCredit("hysa", {name: "CIMB GSave"}) === "monthly", "savings: Maya, MariBank, UNO credit daily; others monthly");
+ok(T.vCredit("bonds", {name: "RTB 32 (5 years)"}) === "quarterly payout" && T.vCredit("bonds", {name: "Treasury bills (1 year)"}) === "maturity" && T.vCredit("deposits", {name: "Metrobank TD"}) === "maturity" && T.vCredit("mp2", {}) === "yearly", "RTB pays every 3 months; T-bills and time deposits at maturity; MP2 yearly");
+ok(p("hysa").credit && p("hysa").creditText && p("deposits").creditText, "the app is told how each account is credited", JSON.stringify([p("hysa").credit, p("hysa").creditText]));
+{ // daily crediting compounds; an RTB coupon is paid out and does not compound
+  const env2 = env; await T.srvSetting(env2, "max_invest_paper", "null");
+  const g2 = JSON.parse(JSON.stringify(T.GUIDE_SEED));
+  const sav = g2.cats.find(c => c.key === "savings"); sav.items = [{name: "Maya Savings", rate: "4% a year", rateNum: 4, tax: "20%", withdraw: "any day", conditions: ""}];
+  const gov = g2.cats.find(c => c.key === "government"); gov.items = gov.items.filter(i => /mp2/i.test(i.name)).concat([{name: "RTB 32 (5 years)", rate: "6% a year, paid quarterly", rateNum: 6, tax: "20%", conditions: ""}]);
+  await T.srvSetting(env2, "max_invest_guide", JSON.stringify(g2));
+  const s0 = iso(Date.now() - 365 * DAY); await T.investStep(env2, s0); await T.investStep(env2, iso(Date.now()));
+  const v2 = await T.investView(env2), q = k => v2.parts.find(x => x.key === k);
+  const dailyExpect = 100000 * Math.pow(1 + 0.04 * 0.8 / 365, 365), simple = 100000 * (1 + 0.04 * 0.8);
+  ok(q("hysa").product.name === "Maya Savings" && q("hysa").credit === "daily" && Math.abs(q("hysa").php - dailyExpect) < 3 && q("hysa").php > simple, "Maya credits daily → interest earns interest: 1 year at 4% (after tax) = " + q("hysa").php, q("hysa").php + " vs " + Math.round(dailyExpect));
+  const coupons = v2.journal.filter(e => e.book === "bonds" && /coupon/.test(e.text));
+  ok(/RTB/.test(q("bonds").product.name) && coupons.length === 4 && q("bonds").paidOut > 4700 && q("bonds").paidOut < 4900 && Math.abs(q("bonds").php - (100000 + 100000 * 0.06 * 0.8)) < 25, "RTB: 4 coupons in a year, paid out (₱1,200 each after tax), not compounded", JSON.stringify([coupons.length, q("bonds").paidOut, q("bonds").php]));
+}
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

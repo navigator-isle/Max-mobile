@@ -1,0 +1,123 @@
+// 22 Nov 2026 (Mark): one-glance dashboards and simpler notes.
+// Left: Paper trading (₱250,000 is now … + each category) → Overview / Positions by category / Journal (5 → 10 → all, dividends) / Strategy;
+// Investments (virtual value + % per account, best rate) → overview, how each is credited, rates kept; Notes = a folder that opens the notes.
+// Right: Websites / Apps = errors per item, tap one → overview (websites: visitors day / week / month; apps: status); Security = errors only.
+// Notes: no paperclip, Home button, one "Add note" button, menus in words, no tags, note ⋯ = attachment / share / print / delete, attachments read by Max.
+if (!process.env.SHOT_DIR) process.env.SHOT_DIR = (await import("node:os")).tmpdir();
+import http from "node:http"; import fs from "node:fs"; import path from "node:path"; import { createRequire } from "node:module";
+const require = createRequire(process.env.PW_REQUIRE || import.meta.url); const { chromium, devices } = require("playwright");
+const [, , pagePath] = process.argv, dir = path.dirname(pagePath), FX = path.join(path.dirname(new URL(import.meta.url).pathname), "fixtures", "dash");
+let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
+let health = { ok: true, version: "max-worker-2026-11-18n", google: "linked (calendar, tasks, gmail)", database: "bound", paperTrading: "running — crypto checked " + new Date().toISOString().slice(0, 10), guard: "last check, 0 problem(s)", lastTrigger: { at: new Date().toISOString() }, emails: "last 2026-11-22T09:45Z “Max paper trading” sent; 3/3 recent sends OK" };
+const attSeen = [];
+const sP = http.createServer(async (q, r) => { const u = q.url.split("?")[0], J = (o, s = 200) => { r.writeHead(s, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" }); r.end(typeof o === "string" ? o : JSON.stringify(o)); };
+  if (q.method === "OPTIONS") return J("{}");
+  if (u === "/api/home/paper") return J(fs.readFileSync(path.join(FX, "paper.json"), "utf8"));
+  if (u === "/api/home/guide") return J(fs.readFileSync(path.join(FX, "guide.json"), "utf8"));
+  if (u === "/api/home/status") return J(fs.readFileSync(path.join(FX, "status.json"), "utf8"));
+  if (u === "/health") return J(health);
+  if (u === "/api/attachment") { const c = []; for await (const x of q) c.push(x); const b = JSON.parse(Buffer.concat(c).toString()); attSeen.push(b.name);
+    return J({ attachment: { kind: "document", title: "Ballast log", topic: "Ship", summary: "Ballast water exchange record PLANKTONMARK for voyage 12.", points: ["Exchange done 200 nm from land"], dates: [], amounts: [], text: Buffer.from(b.data, "base64").toString("utf8"), tags: [] } }); }
+  if (u === "/api/link") return J({ attachment: { kind: "web page", title: "IMO BWM page", summary: "BWM Convention overview LINKMARK.", points: [], dates: [], amounts: [], text: "D-2 standard" } });
+  if (u.startsWith("/api/")) return J({});
+  const f = u.endsWith("sw.js") ? "sw.js" : u.endsWith("sheetjs.js") ? "sheetjs.js" : "index.html"; r.writeHead(200, { "Content-Type": f.endsWith(".js") ? "text/javascript" : "text/html" }); r.end(fs.readFileSync(path.join(dir, f))); }).listen(8093);
+const B = "http://127.0.0.1:8093";
+const b = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), args: ["--no-sandbox"] });
+const ctx = await b.newContext({ ...devices["Pixel 7"] });
+const notes = JSON.stringify([{ id: "n1", title: "Ballast water", category: "Maritime › BWM", tags: ["bwm", "ballast"], body: "<p><b>D-2 standard</b></p><p>Ships must meet the D-2 standard.</p>", createdAt: 1, updatedAt: Date.now(), deleted: false }]);
+await ctx.addInitScript(([base, n]) => { window.__spoken = []; Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { speak(u) { window.__spoken.push(u.text); u.onend && setTimeout(() => u.onend(), 5); }, cancel() {}, getVoices() { return []; } } }); window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+  if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); localStorage.setItem("jarvis_api_base_v2", base); localStorage.setItem("max_pass", "pw"); localStorage.setItem("max_notes_migrated_v1", "1"); localStorage.setItem("max_notes_v3", n); localStorage.setItem("max_tree_open", JSON.stringify(["Maritime", "Maritime › BWM"])); } }, [B, notes]);
+const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message)); p.on("dialog", d => d.accept());
+await p.goto(B + "/"); await p.waitForTimeout(1200);
+const vis = s => p.locator(s).isVisible(), txt = s => p.locator(s).first().textContent();
+const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+// top bar
+ok(!(await vis("#attachBtn")), "no paperclip at the top");
+// left drawer
+await p.click('[data-edge="paper"]'); await p.waitForTimeout(1500);
+const tp = await txt("#tilePaper");
+ok(/₱250,000 is now/.test(tp) && /₱224,562/.test(tp) && /-10\.18%|−10\.18%/.test(tp) && ["PSE", "Forex", "Crypto", "Copy trading", "US ETF"].every(c => tp.includes(c)), "paper card: ₱250,000 is now ₱224,562 (−10.18%) and each of the 5 categories", tp);
+const tg = await txt("#tileGuide");
+ok(/Investments/.test(tg) && !/Best rates/.test(tg) && /₱400,000 is now/.test(tg) && /₱400,586/.test(tg) && /MP2/.test(tg) && /best 7\.12%/.test(tg), "investments card: virtual value and %, each account with its best rate", tg);
+ok(await p.locator("#tileNotes .tile-folder svg").count() === 1 && /Notes/.test(await txt("#tileNotes")), "notes card is a folder");
+// paper full view
+await p.click("#tilePaper"); await p.waitForTimeout(800);
+const heads = await p.locator("#dashFullBody .pv-sec > h3, #dashFullBody .pv-h h3").allTextContents();
+ok(JSON.stringify(heads) === JSON.stringify(["Overview", "Positions and sell levels", "Trading journal", "Strategy"]) && await p.locator("#dashFullBody .ptabs").count() === 0, "paper: Overview → Positions → Trading journal → Strategy (no tabs)", JSON.stringify(heads));
+const ov = await txt("#dashFullBody .pv-sec");
+ok(/₱250,000 is now/.test(ov) && /since 22 Nov 2026/.test(ov) && /Gold trend/.test(ov) && /Bitcoin trend/.test(ov), "overview: total since the start date, every category with its parts", ov.slice(0, 300));
+const posCats = await p.locator("#dashFullBody .pv-cat .pv-cat-h b").allTextContents();
+ok(posCats.length === 5 && /sell below ₱1\.515/.test(await txt("#dashFullBody .pv-cat")), "positions grouped by category, with sell levels", JSON.stringify(posCats));
+const nTj = () => p.locator("#dashFullBody .tj").count();
+ok(await nTj() === 5, "journal shows the last 5", String(await nTj()));
+await p.click("[data-pj-more]"); await p.waitForTimeout(200);
+ok(await nTj() === 10, "“Show 10” → 10 trades", String(await nTj()));
+await p.click("[data-pj-more]"); await p.waitForTimeout(200);
+ok(await nTj() === 19 && await p.locator("#dashFullBody .tj-scroll").count() === 1, "“Show all” → every trade, in a scrolling list", String(await nTj()));
+const sell = await p.locator("#dashFullBody .tj", { hasText: "ETH" }).first().textContent();
+ok(/Buy \$4,010 → Sell \$2,490/.test(sell) && /−₱1,761 \(-38\.1%\)/.test(sell), "a sell shows buy price, sell price, what was earned and %", sell);
+await p.click('[data-pj-kind="dividends"]'); await p.waitForTimeout(200);
+ok(await nTj() === 1 && /\+₱1,458/.test(await txt("#dashFullBody .tj")), "Dividends: only the dividends received", await txt("#dashFullBody .tj-list"));
+const strat = p.locator("#dashFullBody .pv-strat");
+ok(await strat.count() === 5 && !(await strat.first().evaluate(e => e.open)), "strategy: one folded section per category");
+await strat.first().locator("summary").click();
+ok(/dividend yield/.test(await strat.first().textContent()), "tap → the PSE rules");
+await p.click("#dashFullClose").catch(async () => { await p.keyboard.press("Escape"); }); await p.waitForTimeout(300);
+// investments full view
+await p.click('[data-edge="paper"]'); await p.waitForTimeout(600); await p.click("#tileGuide"); await p.waitForTimeout(800);
+const inv = await txt("#dashFullBody");
+ok(/₱400,000 virtual money/.test(inv) && /Investment value/.test(inv) && /Best rates/.test(inv) && /MP2, SSS & Pag-IBIG/.test(inv), "investments: overview, investment value, and the rate lists kept", inv.slice(0, 200));
+await p.locator("#dashFullBody .pv-strat", { hasText: "High-yield savings" }).locator("summary").click();
+ok(/Interest: credited (every day|at each month end)/.test(await p.locator("#dashFullBody .pv-strat", { hasText: "High-yield savings" }).textContent()), "each account says how its interest is credited");
+await p.click("#dashFullClose").catch(async () => { await p.keyboard.press("Escape"); }); await p.waitForTimeout(300);
+// right drawer
+await p.click('[data-edge="sites"]'); await p.waitForTimeout(1500);
+ok(/1 with errors/.test(await txt("#tileSites")) && /Hobby Isle/.test(await txt("#tileSites")) && /2 errors/.test(await txt("#tileSites")), "websites card: errors per website", await txt("#tileSites"));
+ok(/1 with errors/.test(await txt("#tileApps")) && /Passage Planner/.test(await txt("#tileApps")) && /No errors/.test(await txt("#tileApps")), "apps card: errors per app", await txt("#tileApps"));
+ok(/Security/.test(await txt("#tileStatus")) && /No errors/.test(await txt("#tileStatus")), "security card: errors only (none now)", await txt("#tileStatus"));
+await p.click("#tileSites"); await p.waitForTimeout(600); await p.click("#dashFullBody .st-item summary"); await p.waitForTimeout(200);
+const site = await txt("#dashFullBody .st-item");
+ok(/Day\s*38\s*61/.test(site) && /Week\s*244\s*402/.test(site) && /Month\s*1,021\s*1,730/.test(site) && /meta description/.test(site), "a website: overview, its errors, visitors per day / week / month", site);
+await p.click("#dashFullClose").catch(async () => { await p.keyboard.press("Escape"); }); await p.waitForTimeout(300);
+await p.click('[data-edge="sites"]'); await p.waitForTimeout(600); await p.click("#tileApps"); await p.waitForTimeout(600);
+await p.locator("#dashFullBody .st-item", { hasText: "Passage Planner" }).locator("summary").click();
+ok(/Google Play/.test(await p.locator("#dashFullBody .st-item", { hasText: "Passage Planner" }).textContent()) && /build failed/.test(await txt("#dashFullBody")), "an app: overview and status");
+await p.click("#dashFullClose").catch(async () => { await p.keyboard.press("Escape"); }); await p.waitForTimeout(300);
+health = { ...health, emails: "last 2026-11-22T09:45Z “Max weekly summary” failed: Google: insufficient permission; 0/1 recent sends OK" };
+await p.click('[data-edge="sites"]'); await p.waitForTimeout(400); await p.click("#tileStatus"); await p.waitForTimeout(300); await p.click('[data-dash="status-refresh"]'); await p.waitForTimeout(900);
+ok(/1 error/.test(await txt("#dashFullBody")) && /email didn’t go out/.test(await txt("#dashFullBody")), "security: a failed email shows as an error", (await txt("#dashFullBody")).slice(0, 200));
+await p.click("#dashFullClose").catch(async () => { await p.keyboard.press("Escape"); }); await p.waitForTimeout(300);
+// notes
+await p.click('[data-edge="paper"]'); await p.waitForTimeout(600); await p.click("#tileNotes"); await p.waitForTimeout(600);
+ok(await vis("#notesScreen") && await vis("#notesHome"), "the notes folder opens the notes, with a Home button");
+ok(await p.locator("#notesScreen .vault-dock button:visible").count() === 1 && /Add note/.test(await txt("#notesScreen .vault-dock")), "footer: only “Add note”", await txt("#notesScreen .vault-dock"));
+await p.click("#vaultMoreBtn"); await p.waitForTimeout(150);
+const menu = (await p.locator("#vaultMore button").allTextContents()).join("|");
+ok(!EMOJI.test(menu) && /New folder/.test(menu) && /Add files or a whole folder/.test(menu), "the ⋯ menu is words only", menu);
+await p.click("#vaultMoreBtn");
+await p.locator('#noteList details[data-path="Maritime"] .f-menu').first().click(); await p.waitForTimeout(150);
+ok(!EMOJI.test((await p.locator("#fsMain button").allTextContents()).join("")), "folder ⋯ menu is words only");
+await p.click("#fsClose");
+await p.locator("#noteList >> text=Ballast water").first().click(); await p.waitForTimeout(600);
+ok(await vis("#editorHome") && !(await vis("#readTags")) && /^Edit$/.test((await txt("#readToggle")).trim()), "a note: Home button, no tags, “Edit” in words");
+await p.click("#edMoreBtn"); await p.waitForTimeout(150);
+const nm = (await p.locator("#edMore button").allTextContents()).join("|");
+ok(/Add attachment/.test(nm) && /Share/.test(nm) && /Print/.test(nm) && /Delete note/.test(nm) && !EMOJI.test(nm), "note ⋯: add attachment, share, print, delete — in words", nm);
+await p.click("#edAttachBtn"); await p.waitForTimeout(150);
+ok(await vis("#noteAttSheet") && /Picture or video/.test(await txt("#noteAttSheet")) && /Folder or \.zip/.test(await txt("#noteAttSheet")), "add attachment: picture/video, file, folder or .zip, web link");
+await p.setInputFiles("#naFilesInput", { name: "ballast-log.txt", mimeType: "text/plain", buffer: Buffer.from("Ballast exchange log voyage 12") });
+await p.waitForFunction(() => document.querySelectorAll("#readAttList .att-card").length === 1, null, { timeout: 15000 }).catch(() => {});
+const card = await txt("#readAttList");
+ok(attSeen.includes("ballast-log.txt") && /ballast-log\.txt/.test(card) && /PLANKTONMARK/.test(card), "the file is read by Max and shown under the note with his summary", card);
+await p.click("#readAttAdd"); await p.fill("#naLink", "https://www.imo.org/bwm"); await p.click("#naLinkOk");
+await p.waitForFunction(() => document.querySelectorAll("#readAttList .att-card").length === 2, null, { timeout: 15000 }).catch(() => {});
+ok(/LINKMARK/.test(await txt("#readAttList")) && /Web link/.test(await txt("#readAttList")), "a web link is read and added too");
+const saved = await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).find(n => n.id === "n1").analysis.attachments);
+ok(saved.length === 2 && /Ballast exchange log/.test(saved[0].text), "attachments are saved with the note (they sync with it)");
+await p.click("#editorBack"); await p.waitForTimeout(300); await p.fill("#notesSearch", "planktonmark"); await p.waitForTimeout(400);
+ok(/Ballast water/.test(await txt("#noteList")), "searching finds the note by what is in its attachment");
+await p.click("#notesHome"); await p.waitForTimeout(300);
+ok(await vis("#maxOrb"), "Home goes back to the home screen");
+ok(errs.length === 0, "no script errors", errs.join(" | "));
+await ctx.close(); await b.close(); sP.close();
+console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);

@@ -18,7 +18,8 @@ const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push
 await p.goto("http://127.0.0.1:8095/"); await p.waitForTimeout(1200);
 const notesCount = () => p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3") || "[]").filter(n => !n.deleted).length);
 await p.click("#maxOrb", { button: "right" }); await p.click("[data-go=notes]"); await p.waitForTimeout(300);
-ok(await p.locator(".vault-bar #newNote").isVisible() && await p.locator("#newFolder").isVisible() && /0 files, 0 folders/.test(await p.locator("#vaultStats").textContent()), "vault screen: toolbar (new note, new folder, sort, collapse, more) and “My vault · 0 files”");
+await p.click("#vaultMoreBtn"); const menuOk = await p.locator("#newFolder").isVisible() && await p.locator("#sortNotes").isVisible() && await p.locator("#collapseAll").isVisible(); await p.click("#vaultMoreBtn");
+ok(await p.locator(".vault-dock #newNote").isVisible() && menuOk && /0 files, 0 folders/.test(await p.locator("#vaultStats").textContent()), "notes screen: one “Add note” button; new folder, sort and close-all in the ⋯ menu (22 Nov 2026)");
 // import
 await p.click("#vaultMoreBtn"); await p.setInputFiles("#vaultInput", ZIP); await p.waitForTimeout(800);
 ok(/Import 7 notes in 9 folders\?/.test(await p.locator("#homeAnswer").textContent()) && await notesCount() === 0, "asks before importing: 7 notes in 9 folders", await p.locator("#homeAnswer").textContent());
@@ -37,7 +38,7 @@ ok(await p.locator("#readBody ol > li").count() === 10 && await p.locator("#read
 await p.locator("#readBody .wikilink", { hasText: "AMOS" }).click(); await p.waitForTimeout(300);
 ok((await p.locator("#readTitle").textContent()) === "AMOS" && /☐ Weekly update/.test(await p.locator("#readBody").textContent()) && /☑ Monthly report/.test(await p.locator("#readBody").textContent()), "[[AMOS]] link opens that note; tasks show as ☐ / ☑");
 await p.click("#editorBack"); await p.locator(".tree-note", { hasText: "SOLAS" }).click(); await p.waitForTimeout(200);
-ok(/#convention/.test(await p.locator("#readTags").textContent()) && await p.locator("#readBody ul ul li", { hasText: "Lifeboat drills monthly" }).count() === 1, "tags from the note's properties, nested bullets");
+ok(!(await p.locator("#readTags").isVisible()) && (await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).find(n => /SOLAS/.test(n.title)).tags.includes("convention"))) && await p.locator("#readBody ul ul li", { hasText: "Lifeboat drills monthly" }).count() === 1, "tags kept in the note but not shown (22 Nov 2026), nested bullets");
 await p.click("#editorBack"); await p.locator(".tree-note", { hasText: "MARPOL" }).click(); await p.waitForTimeout(200);
 ok(await p.locator("#readBody table tr").count() === 3 && await p.locator("#readBody th").count() === 2, "tables come through");
 await p.click("#editorBack"); await p.locator(".tree-note", { hasText: "Sea Service" }).click(); await p.waitForTimeout(200);
@@ -54,7 +55,7 @@ ok(/7 of them replace notes you already have/.test(await p.locator("#homeAnswer"
 await p.locator("#dispBody button", { hasText: "Yes" }).first().click(); await p.waitForTimeout(500);
 ok(await notesCount() === 7, "…and doesn't create duplicates", await notesCount());
 // new folder + note inside it
-await p.click("#newFolder"); await p.fill("#newFolderName", "Work › Second Officer"); await p.press("#newFolderName", "Enter"); await p.waitForTimeout(200);
+await p.click("#vaultMoreBtn"); await p.click("#newFolder"); await p.fill("#newFolderName", "Work › Second Officer"); await p.press("#newFolderName", "Enter"); await p.waitForTimeout(200);
 ok(await p.locator('.tree-folder[data-path="Work › Second Officer"]').count() === 1 && /10 folders/.test(await p.locator("#vaultStats").textContent()), "new folder appears in the tree");
 await p.click("#newNote"); ok(await p.inputValue("#editorCategory") === "Work › Second Officer" && await p.locator("#editorBody").isVisible(), "✎ makes a new note inside the selected folder");
 await p.click("#editorBack");

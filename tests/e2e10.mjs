@@ -89,8 +89,8 @@ ok(await p.locator("#dispBody video.att-img").count() === 1, "video preview show
 await say("discard it");
 
 // link through the 📎 sheet
-await p.click("#attachBtn");
-ok(await vis("#attachSheet"), "📎 opens: file, or paste a link");
+await p.evaluate(() => { document.getElementById("attachSheet").hidden = false; });   // 22 Nov 2026: the 📎 button left the top bar (Mark); the sheet itself stays
+ok(await vis("#attachSheet"), "the file / link sheet: file, or paste a link");
 await p.fill("#linkInput", "https://www.imo.org/en/bwm"); await p.click("#linkGo");
 await p.waitForFunction(() => document.getElementById("dispSub").textContent.includes("not in your notes yet"), null, { timeout: 15000 }).catch(() => {});
 ok(last().kind === "web page" && /D-2 standard applies/.test(last().content) && (await p.locator(".att-link").textContent()).includes("imo.org/en/bwm"), "pasted link: page read, address shown");

@@ -91,4 +91,5 @@ run "Phone: home panels (paper trading, investment guide, money plan)" tests/e2e
 run "Phone: notes Max researches (create, update, undo)" tests/e2e42.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: offline note search + offline brain" tests/e2e43.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: old Office files, folder menu, folder/zip import" tests/e2e44.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: one-glance dashboards, simpler notes, note attachments" tests/e2e45.mjs "$PWD/index.html"
 echo; [ $fails -eq 0 ] && echo "ALL TESTS PASSED" || { echo "$fails test group(s) failed"; exit 1; }

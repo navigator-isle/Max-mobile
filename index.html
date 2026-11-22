@@ -481,6 +481,30 @@ body.on-home.has-dash .edge-tabs{display:flex}
 #folderSheet .quick-sheet{max-height:88vh;overflow-y:auto}
 #editorFolderPick{width:100%;margin-bottom:6px;font:inherit;padding:8px;border-radius:10px}
 .imp-row{display:flex;gap:8px;font-size:14px;padding:3px 0;border-bottom:1px solid rgba(127,127,127,.15)}.imp-row .s{width:1.4em;flex:none}
+.tile-total{display:flex;align-items:baseline;gap:8px;margin:2px 0 6px}.tile-total b{font-size:1.35rem}
+.tile-rows{display:flex;flex-direction:column;gap:3px}.tile-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;font-size:.82rem;align-items:baseline}.tile-row.two{grid-template-columns:1fr auto}.tile-row span:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}.tile-best{font-size:.72rem}
+.tile-notes{display:flex;align-items:center}.tile-folder{display:flex;align-items:center;gap:14px;color:#f2c14e}.tile-folder b{color:#e8f3ff;font-size:1.05rem}
+.err-badge,.ok-badge{font-size:.72rem;padding:1px 8px;border-radius:999px;white-space:nowrap}.err-badge{background:#ff5d6c22;color:#ff8f99;border:1px solid #ff5d6c66}.ok-badge{background:#36d39922;color:#6fe3b4;border:1px solid #36d39966}
+.pv-sec{margin:0 0 18px}.pv-sec>h3,.pv-h h3{margin:0 0 8px;font-size:1rem;letter-spacing:.02em}.pv-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pv-total{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}.pv-total b{font-size:1.7rem;line-height:1.15}
+.pv-tbl{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}.pv-tbl th{text-align:left;font-weight:500;color:#8fa6bd;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;padding:4px 4px;border-bottom:1px solid #294861}
+.pv-tbl td{padding:6px 4px;border-bottom:1px solid #1b3247;vertical-align:top}.pv-tbl td:nth-child(n+2),.pv-tbl th:nth-child(n+2){text-align:right}.pv-pos td:nth-child(2){font-size:.78rem}
+.pv-sub-row td{color:#9db3c8;font-size:.78rem;padding-top:2px}.pv-sub-row td:first-child{padding-left:14px}
+.pv-cat{margin:0 0 12px;padding:10px;border:1px solid #1f3a52;border-radius:12px;background:#0c1d30}.pv-cat-h{display:flex;justify-content:space-between;margin-bottom:4px}.pv-wait{margin-top:6px;color:#f2c14e}
+.pv-chips{display:flex;gap:6px}.pv-chips button{font:inherit;font-size:.75rem;padding:3px 10px;border-radius:999px;border:1px solid #294861;background:transparent;color:inherit}.pv-chips button.on{background:#1d3b57;border-color:#4fa3ff}
+.tj{padding:8px 0;border-bottom:1px solid #1b3247}.tj-main{display:grid;grid-template-columns:auto auto 1fr auto;gap:8px;align-items:baseline}.tj-val{text-align:right;font-variant-numeric:tabular-nums;font-size:.86rem}.tj-sub{margin:2px 0 0 0}
+.tj-side{font-size:.66rem;font-weight:700;padding:1px 6px;border-radius:6px;background:#1d3b57}.tj-side.BUY{background:#1d4d3a;color:#7fe0b0}.tj-side.SELL{background:#4d1d27;color:#ff9aa6}.tj-side.DIVIDEND{background:#4d421d;color:#f2d27e}
+.tj-more summary{cursor:pointer;margin-top:2px}.tj-scroll{max-height:60vh;overflow-y:auto;padding-right:4px}
+.pv-strat{border:1px solid #1f3a52;border-radius:12px;padding:8px 10px;margin:0 0 8px;background:#0c1d30}.pv-strat>summary{display:flex;justify-content:space-between;gap:8px;cursor:pointer;list-style:none}.pv-strat>summary::-webkit-details-marker{display:none}.pv-strat[open]>summary{margin-bottom:6px}.pv-strat>summary>b::before{content:'▸';display:inline-block;width:1em;color:#8fa6bd;transition:transform .15s}.pv-strat[open]>summary>b::before{transform:rotate(90deg)}
+.st-k{margin:8px 0 2px;font-size:.72rem;color:#8fa6bd;text-transform:uppercase;letter-spacing:.04em}
+#attachBtn{display:none!important}
+.notes-top{display:flex;align-items:center;gap:10px}.notes-title{flex:1;min-width:0}.home-btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:.85rem;padding:8px 12px;border-radius:12px;border:1px solid #294861;background:#0f2236;color:inherit}
+.menu-btn{font:inherit;font-size:1.3rem;line-height:1;padding:6px 12px;border-radius:12px;border:1px solid #294861;background:#0f2236;color:inherit}
+.notes-menu{display:flex;flex-direction:column;gap:6px;margin:8px 0;padding:10px;border:1px solid #294861;border-radius:14px;background:#0b1a2b}.notes-menu[hidden]{display:none}
+.vault-dock{display:flex;justify-content:center;padding:10px 0}.add-note-btn{font:inherit;font-weight:600;padding:12px 28px;border-radius:999px;border:0;background:#4fd1c5;color:#062033;min-width:60%}
+.read-att{margin-top:22px;padding-top:12px;border-top:1px solid #294861}.read-att-h{display:flex;justify-content:space-between;align-items:center;gap:8px}.read-att-h h2{font-size:1rem;margin:0}
+.att-card{border:1px solid #1f3a52;border-radius:12px;padding:10px;margin:10px 0;background:#0c1d30}.att-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.att-kind{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#8fa6bd}
+.att-media{display:block;max-width:100%;max-height:320px;border-radius:10px;margin:8px 0}.att-acts{display:flex;gap:8px;margin-top:6px}.link-row-att{display:flex;gap:8px}.link-row-att input{flex:1;min-width:0}
 </style></head>
 <body>
 <div id="movedNote" hidden style="background:#3a2a05;color:#ffe9a8;padding:8px 12px;font:13px system-ui;text-align:center">Max now lives on Cloudflare: <a style="color:#ffd76a" href="https://max-app-axv.pages.dev/">max-app-axv.pages.dev</a> — open it and add it to your home screen.</div>
@@ -527,7 +551,7 @@ body.on-home.has-dash .edge-tabs{display:flex}
 <div class="app-shell">
   <header class="topbar">
     <div class="brand">MAX</div>
-    <div style="display:flex;align-items:center;gap:8px"><div class="top-status" id="globalStatus">Local mode</div><button id="attachBtn" class="icon-btn" aria-label="Send Max a file or photo" title="Send Max a file or photo">📎</button><button id="openConnection" class="icon-btn" aria-label="Settings" title="Settings">⚙</button></div>
+    <div style="display:flex;align-items:center;gap:8px"><div class="top-status" id="globalStatus">Local mode</div><button id="attachBtn" hidden class="icon-btn" aria-label="Send Max a file or photo" title="Send Max a file or photo">📎</button><button id="openConnection" class="icon-btn" aria-label="Settings" title="Settings">⚙</button></div>
     <input id="attachInput" type="file" accept="image/*,video/*,audio/*,application/pdf,.pdf,.zip,application/zip,.txt,.md,.csv,.json,.html,.htm,.heic,.heif,.docx,.xlsx,.xlsm,.pptx,.doc,.dot,.xls,.xlsb,.ods,.ppt,.pps,.mp3,.m4a,.wav,.ogg,.aac,.amr,.mp4,.mov,.webm,.3gp" hidden>
   </header>
 
@@ -566,14 +590,14 @@ body.on-home.has-dash .edge-tabs{display:flex}
   <aside id="drawerL" class="drawer left" aria-label="Trading, Investments, Notes">
     <div class="drawer-hint">Swipe back to hide · tap a card for details</div>
     <div id="tilePaper" class="tile" role="button" tabindex="0" aria-label="Paper trading — open the full view"><div class="tile-top"><span>📈 Paper trading</span></div><div class="muted small">Loading…</div></div>
-    <div id="tileGuide" class="tile" role="button" tabindex="0" aria-label="Investment rates — open the full view"><div class="tile-top"><span>💰 Best rates</span></div><div class="muted small">Loading…</div></div>
-    <div id="tileNotes" class="tile" role="button" tabindex="0" aria-label="Notes — open the full view"><div class="tile-top"><span>🗂 Notes</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileGuide" class="tile" role="button" tabindex="0" aria-label="Investments — open the full view"><div class="tile-top"><span>💰 Investments</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileNotes" class="tile tile-notes" role="button" tabindex="0" aria-label="Open my notes"><div class="tile-top"><span>🗂 Notes</span></div><div class="muted small">Loading…</div></div>
   </aside>
   <aside id="drawerR" class="drawer right" aria-label="Websites, Apps, Status">
     <div class="drawer-hint">Swipe back to hide · tap a card for details</div>
     <div id="tileSites" class="tile" role="button" tabindex="0" aria-label="Websites status — open the full view"><div class="tile-top"><span>🌐 Websites</span></div><div class="muted small">Loading…</div></div>
     <div id="tileApps" class="tile" role="button" tabindex="0" aria-label="Apps status — open the full view"><div class="tile-top"><span>📱 Apps</span></div><div class="muted small">Loading…</div></div>
-    <div id="tileStatus" class="tile" role="button" tabindex="0" aria-label="Max status — open the full view"><div class="tile-top"><span>🩺 Status</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileStatus" class="tile" role="button" tabindex="0" aria-label="Security — open the full view"><div class="tile-top"><span>🛡 Security</span></div><div class="muted small">Loading…</div></div>
   </aside>
   <div id="dashFull" class="dash-full" hidden role="dialog" aria-modal="true" aria-labelledby="dashFullTitle">
     <div class="dash-full-head"><h2 id="dashFullTitle">Dashboard</h2><span style="display:flex;gap:8px;align-items:center"><button id="dashFullInfo" class="info-i" aria-label="What is this? Show the explanation" aria-expanded="false">i</button><button id="dashFullClose" class="home-mic" aria-label="Close">✕ Close</button></span></div>
@@ -618,69 +642,72 @@ body.on-home.has-dash .edge-tabs{display:flex}
   </main>
 
   <main id="notesScreen" class="section-screen vault">
-    <div class="notes-header vault-head">
-      <div><h1>My vault</h1><p id="notesCount">Max checks these first</p></div>
+    <div class="notes-header vault-head notes-top">
+      <button id="notesHome" class="home-btn" aria-label="Home"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span>Home</span></button>
+      <div class="notes-title"><h1>My notes</h1><p id="notesCount">Max checks these first</p></div>
+      <button id="vaultMoreBtn" class="menu-btn" title="More" aria-label="More notes actions" aria-expanded="false">⋯</button>
+    </div>
+    <div id="vaultMore" class="vault-more notes-menu" hidden>
+      <button id="newFolder" class="pill">New folder</button>
+      <button id="importRootBtn" class="pill">Add files or a whole folder</button>
+      <button id="sortNotes" class="pill">Sort</button>
+      <button id="collapseAll" class="pill">Close all folders</button>
+      <button id="organizeBtn" class="pill">Organize with Max</button>
+      <button id="offlineBrainBtn" class="pill">Offline brain</button>
+      <button id="importVault" class="pill">Import Obsidian vault</button>
+      <button id="exportVault" class="pill">Export vault for Obsidian</button>
+      <button id="exportAll" class="pill">Export all as one file</button>
+      <button id="restoreBackup" class="pill">Restore from a Max backup</button>
+      <button id="codeBackupBtn" class="pill">Download all of Max’s code</button>
     </div>
     <label class="search-box"><span aria-hidden="true">⌕</span><input id="notesSearch" placeholder="Search notes…" aria-label="Search notes"></label>
     <div id="organizeBanner" class="banner" hidden></div>
     <div id="savedBanner" class="saved-banner" role="status" aria-live="polite" hidden></div>
-    <div id="newFolderRow" class="tree-new" hidden><span aria-hidden="true">🗀</span><input id="newFolderName" placeholder="New folder name" aria-label="New folder name" enterkeyhint="done"><button id="newFolderOk" class="pill">Add</button></div>
+    <div id="newFolderRow" class="tree-new" hidden><input id="newFolderName" placeholder="New folder name" aria-label="New folder name" enterkeyhint="done"><button id="newFolderOk" class="pill">Add</button></div>
     <div id="noteList" class="vault-tree note-list-page" role="tree" aria-label="Notes and folders"></div>
-    <div class="vault-dock">
-    <div id="vaultMore" class="vault-more" hidden>
-      <button id="importVault" class="pill">⤓ Import Obsidian vault (.zip or .md files)</button>
-      <button id="exportVault" class="pill">⤒ Export vault (.zip for Obsidian)</button>
-      <button id="exportAll" class="pill">Export all as one file</button>
-      <button id="organizeBtn" class="pill">Organize with Max</button>
-      <button id="restoreBackup" class="pill">⟲ Restore from a Max backup (.json)</button>
-      <button id="codeBackupBtn" class="pill">⬇ Download all of Max's code (.zip)</button>
-      <button id="offlineBrainBtn" class="pill">🧠 Offline brain (answers without internet)</button>
-      <button id="importRootBtn" class="pill">📥 Add files or a whole folder (e.g. a manual)</button>
-    </div>
-    <div class="vault-bar" role="toolbar" aria-label="Vault actions">
-      <button id="newNote" title="New note" aria-label="New note">✎</button>
-      <button id="newFolder" title="New folder" aria-label="New folder">🗀<sup>+</sup></button>
-      <button id="sortNotes" title="Sort" aria-label="Change sort order">⇅</button>
-      <button id="collapseAll" title="Collapse all folders" aria-label="Collapse all folders">⌃⌄</button>
-      <button id="vaultMoreBtn" title="More" aria-label="More vault actions">⋯</button>
-    </div>
-    <div class="vault-foot"><b>My vault</b><span id="vaultStats"></span></div>
-    </div>
+    <div class="vault-dock"><button id="newNote" class="add-note-btn">Add note</button><span id="vaultStats" hidden></span></div>
     <input id="backupInput" type="file" accept=".json,application/json" hidden>
     <input id="vaultInput" type="file" accept=".zip,.md,text/markdown,application/zip" multiple hidden>
   </main>
 
   <main id="editorScreen" class="section-screen">
     <div class="ed-bar">
-      <button id="editorBack" class="ed-btn" title="Back to notes" aria-label="Back to notes">←</button>
+      <button id="editorHome" class="ed-btn home-btn" aria-label="Home"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button>
+      <button id="editorBack" class="ed-btn" title="Back to notes" aria-label="Back to notes">Back</button>
       <div class="ed-head"><h1 id="editorPageHeading">New note</h1><p id="editorBadge">Write it your way</p></div>
-      <button id="readToggle" class="ed-btn read-toggle" title="Switch between reading and editing" aria-label="Edit this note">✎ Edit</button>
-      <button id="fmtBtn" class="ed-btn ed-edit-only" title="Formatting" aria-label="Formatting" aria-expanded="false">Aa</button>
-      <button id="insertBtn" class="ed-btn ed-edit-only" title="Insert picture, video or link" aria-label="Insert" aria-expanded="false">＋</button>
+      <button id="readToggle" class="ed-btn read-toggle" title="Switch between reading and editing" aria-label="Edit this note">Edit</button>
+      <button id="fmtBtn" class="ed-btn ed-edit-only" title="Formatting" aria-label="Formatting" aria-expanded="false">Format</button>
+      <button id="insertBtn" class="ed-btn ed-edit-only" title="Insert picture, video or link" aria-label="Insert" aria-expanded="false">Insert</button>
       <button id="edMoreBtn" class="ed-btn" title="More" aria-label="More note actions" aria-expanded="false">⋯</button>
       <button id="editorSave" class="ed-btn ed-save save-note-button" title="Save note">Save</button>
     </div>
     <div id="insertMenu" class="ed-menu" hidden>
-      <button id="insPhoto">📷 Picture</button><button id="insVideo">🎬 Video</button><button id="insLink">🔗 Link</button><button id="insRule">― Divider</button>
+      <button id="insPhoto">Picture</button><button id="insVideo">Video</button><button id="insLink">Link</button><button id="insRule">Divider</button><button id="insAttach">Attachment</button>
     </div>
     <div id="edMore" class="ed-menu" hidden>
-      <button id="editorDictate">🎙 Dictate</button><button id="editorAnalyze">✦ Analyze with Max</button><button id="exportMd">⤒ Obsidian .md</button><button id="exportPdf">⤒ PDF</button><button id="editorDelete" class="danger-btn">🗑 Delete note</button>
+      <button id="edAttachBtn">Add attachment</button><button id="noteShare">Share</button><button id="exportPdf">Print</button><button id="editorDictate">Dictate</button><button id="editorAnalyze">Analyze with Max</button><button id="exportMd">Export for Obsidian</button><button id="editorDelete" class="danger-btn">Delete note</button>
     </div>
     <input id="mediaInput" type="file" hidden>
     <article id="noteRead" class="note-read" hidden>
       <div id="readPath" class="read-path"></div>
       <h1 id="readTitle" class="read-title"></h1>
-      <div id="readTags" class="read-tags"></div>
+      <div id="readTags" class="read-tags" hidden></div>
       <div id="readCheck" class="read-check" hidden></div>
       <div id="readBody" class="read-body"></div>
+      <section id="readAtt" class="read-att"><div class="read-att-h"><h2>Attachments</h2><button id="readAttAdd" class="pill">Add attachment</button></div><div id="readAttList"></div></section>
     </article>
+    <div id="noteAttSheet" class="quick-menu" hidden><div class="quick-sheet att-sheet"><h2>Add to this note</h2>
+      <button id="naPics" class="pill">Picture or video</button><button id="naFiles" class="pill">File (PDF, Word, Excel…)</button><button id="naFolder" class="pill">Folder or .zip</button>
+      <div class="link-row-att"><input id="naLink" class="field" placeholder="Web link (https://…)" inputmode="url" enterkeyhint="go"><button id="naLinkOk" class="pill">Add link</button></div>
+      <p class="muted small">Max reads each one and keeps it with this note, so his answers use it too.</p><button id="naClose" class="pill">Close</button></div></div>
+    <input id="naPicsInput" type="file" accept="image/*,video/*" multiple hidden><input id="naFilesInput" type="file" multiple hidden><input id="naFolderInput" type="file" multiple webkitdirectory hidden>
     <section class="notes-editor full-editor">
       <input id="editorTitle" placeholder="Title" aria-label="Note title">
-      <details class="meta-fold"><summary id="metaSummary">📁 Unsorted</summary>
+      <details class="meta-fold"><summary id="metaSummary">Folder: Unsorted</summary>
         <div class="editor-meta">
           <select id="editorFolderPick" aria-label="Choose a folder"></select>
           <input id="editorCategory" list="topicList" placeholder="Folder, e.g. Maritime › IMO › Conventions (or SMS / CSM SMS)" aria-label="Folder" value="Unsorted">
-          <input id="editorTags" placeholder="Tags, separated by commas" aria-label="Tags">
+          <input id="editorTags" hidden aria-hidden="true" tabindex="-1">
         </div>
       </details>
       <div id="fmtBar" class="format-toolbar" role="toolbar" aria-label="Text formatting" hidden>
@@ -714,17 +741,17 @@ body.on-home.has-dash .edge-tabs{display:flex}
   <div class="quick-sheet att-sheet">
     <h2 id="fsTitle">Folder</h2><p id="fsInfo" class="muted small"></p>
     <div id="fsMain" class="fs-col">
-      <button id="fsNewNote" class="pill">✎ New note in this folder</button>
-      <button id="fsNewSub" class="pill">🗀 New folder inside</button>
-      <button id="fsImport" class="pill pill-ok">📥 Add files or a whole folder</button>
-      <button id="fsRename" class="pill">✏️ Rename or move</button>
-      <button id="fsDelete" class="pill">🗑 Delete folder</button>
+      <button id="fsNewNote" class="pill">New note in this folder</button>
+      <button id="fsNewSub" class="pill">New folder inside</button>
+      <button id="fsImport" class="pill pill-ok">Add files or a whole folder</button>
+      <button id="fsRename" class="pill">Rename or move</button>
+      <button id="fsDelete" class="pill">Delete folder</button>
     </div>
     <div id="fsAsk" class="fs-col" hidden><label id="fsAskLabel" class="muted small" for="fsInput"></label><input id="fsInput" class="field" enterkeyhint="done"><button id="fsOk" class="pill pill-ok">OK</button></div>
     <div id="fsDel" class="fs-col" hidden><p id="fsDelText"></p><button id="fsDelUp" class="pill"></button><button id="fsDelAll" class="pill"></button></div>
     <div id="fsImp" class="fs-col" hidden>
-      <button id="fsPickFolder" class="pill pill-ok">🗂 Pick a folder</button>
-      <button id="fsPickFiles" class="pill">📄 Pick files or a .zip</button>
+      <button id="fsPickFolder" class="pill pill-ok">Pick a folder</button>
+      <button id="fsPickFiles" class="pill">Pick files or a .zip</button>
       <p class="muted small">Max reads every PDF, Word, Excel, PowerPoint, picture and video inside, and keeps the same folders. If “Pick a folder” doesn’t work on your phone: in My Files, long-press the folder → Compress (.zip), then use “Pick files or a .zip”.</p>
     </div>
     <button id="fsClose" class="pill">Close</button>
@@ -1411,7 +1438,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const badgeFor=n=>n.source==='research'?['RESEARCH ✓','badge badge-res']:n.source==='attachment'?['FROM FILE','badge badge-res']:['MY NOTE','badge badge-note'];
  function matchesQuery(n,q){
   if(!q)return true;
-  const hay=(n.title+' '+plain(n.body)+' '+n.category+' '+(n.tags||[]).join(' ')+' '+(n.analysis?.summary||'')).toLowerCase();
+  const hay=(n.title+' '+plain(n.body)+' '+n.category+' '+(n.tags||[]).join(' ')+' '+(n.analysis?.summary||'')+' '+noteAtts(n).map(a=>a.name+' '+a.summary+' '+(a.points||[]).join(' ')+' '+(a.text||'')).join(' ')).toLowerCase();
   return q.split(/\s+/).filter(Boolean).every(w=>hay.includes(w));
  }
  // ---------- Obsidian-style vault: folders from topics ("Work › AMOS"), any depth ----------
@@ -1493,7 +1520,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function fsShow(part){for(const id of ['fsMain','fsAsk','fsDel','fsImp'])$(id).hidden=id!==part}
  function openFolderSheet(path){
   fsPath=path;selFolder=path;const c=folderCount(path);
-  $('fsTitle').textContent=path?'🗀 '+splitPath(path).at(-1):'📥 Add to your notes';$('fsInfo').textContent=path?path+' · '+c+' note'+(c===1?'':'s'):'Files go into new folders at the top of your notes.';
+  $('fsTitle').textContent=path?splitPath(path).at(-1):'Add to your notes';$('fsInfo').textContent=path?path+' · '+c+' note'+(c===1?'':'s'):'Files go into new folders at the top of your notes.';
   fsShow(path?'fsMain':'fsImp');$('folderSheet').hidden=false;
  }
  function fsAsk(label,value,onOk){$('fsAskLabel').textContent=label;$('fsInput').value=value;fsShow('fsAsk');$('fsOk').onclick=()=>onOk($('fsInput').value);$('fsInput').onkeydown=e=>{if(e.key==='Enter')onOk($('fsInput').value)};setTimeout(()=>$('fsInput').focus(),50)}
@@ -1506,7 +1533,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('fsDelete').onclick=()=>{const c=folderCount(fsPath),parent=splitPath(fsPath).slice(0,-1).join(' › ')||'the top level';
   if(!c){folderDelete(fsPath,false);fsDone('Folder deleted.');return}
   $('fsDelText').textContent='“'+splitPath(fsPath).at(-1)+'” has '+c+' note'+(c===1?'':'s')+'. What should happen to '+(c===1?'it':'them')+'?';
-  $('fsDelUp').textContent='Delete the folder, keep the notes (move them to '+parent+')';$('fsDelAll').textContent='🗑 Delete the folder AND its '+c+' note'+(c===1?'':'s');
+  $('fsDelUp').textContent='Delete the folder, keep the notes (move them to '+parent+')';$('fsDelAll').textContent='Delete the folder AND its '+c+' note'+(c===1?'':'s');
   $('fsDelUp').onclick=()=>{const n=folderDelete(fsPath,false);fsDone('Folder deleted; '+n+' note'+(n===1?'':'s')+' moved to '+parent+'.')};
   $('fsDelAll').onclick=()=>{const n=folderDelete(fsPath,true);fsDone('Folder and '+n+' note'+(n===1?'':'s')+' deleted.')};
   fsShow('fsDel')};
@@ -1527,15 +1554,72 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  document.querySelector('.meta-fold').addEventListener('toggle',e=>{if(e.target.open)fillFolderPick()});
  $('sortNotes').onclick=()=>{const v=jget(TREE_SORT,'name')==='name'?'modified':'name';jset(TREE_SORT,v);renderList();status(v==='name'?'Sorted A to Z.':'Newest changes first.')};
  $('collapseAll').onclick=()=>{jset(TREE_OPEN,[]);renderList()};
- $('vaultMoreBtn').onclick=()=>{$('vaultMore').hidden=!$('vaultMore').hidden};
+ $('vaultMoreBtn').onclick=()=>{$('vaultMore').hidden=!$('vaultMore').hidden;$('vaultMoreBtn').setAttribute('aria-expanded',String(!$('vaultMore').hidden))};
+ $('vaultMore').addEventListener('click',e=>{if(e.target.closest('button'))$('vaultMore').hidden=true});
+ $('notesHome').onclick=()=>setSection('home');
+ $('editorHome').onclick=()=>{if(dirty&&!confirm('You have unsaved changes. Leave without saving?'))return;setSection('home')};
+ // ---------- attachments inside a note (22 Nov 2026, Mark): pictures, videos, files, folders, web links — shown under the note and read by Max ----------
+ const attKind=(m,name)=>m==='link'?'Web link':/^image\//.test(m)?'Picture':/^video\//.test(m)?'Video':/^audio\//.test(m)?'Recording':m==='application/pdf'?'PDF':/\.(docx?|dot)$/i.test(name)?'Word':/\.(xlsx?|xlsm|xlsb|ods|csv)$/i.test(name)?'Excel':/\.(pptx?|pps)$/i.test(name)?'PowerPoint':'File';
+ const noteAtts=n=>Array.isArray(n?.analysis?.attachments)?n.analysis.attachments:[];
+ function saveNoteAtts(id,list){const all=loadAll(),n=all.find(x=>x.id===id);if(!n)return null;
+  let L=list.map(a=>({...a}));const size=()=>JSON.stringify(L).length;
+  for(const lim of [4000,2000,800,0]){if(size()<50000)break;L=L.map(a=>({...a,text:String(a.text||'').slice(0,lim)}))}
+  n.analysis={...(n.analysis||{}),attachments:L};n.updatedAt=Date.now();putNotes(all);return n}
+ async function renderNoteAtts(){
+  const n=getNotes().find(x=>x.id===activeNoteId),box=$('readAttList');if(!box)return;box.replaceChildren();const L=noteAtts(n);
+  $('readAtt').classList.toggle('empty',!L.length);
+  if(!L.length){const p=document.createElement('p');p.className='muted small';p.textContent='No attachments yet.';box.append(p);return}
+  for(const a of L){const card=document.createElement('div');card.className='att-card';
+   const head=document.createElement('div');head.className='att-head';const k=document.createElement('span');k.className='att-kind';k.textContent=attKind(a.mime,a.name);const nm=document.createElement('b');nm.textContent=a.name||a.url||'Attachment';head.append(k,nm);card.append(head);
+   if(a.mediaId&&/^(image|video)\//.test(a.mime||'')){const blob=await mediaBlob(a.mediaId).catch(()=>null);if(blob){const el=document.createElement(/^video/.test(a.mime)?'video':'img');el.className='att-media';el.src=URL.createObjectURL(blob);if(el.tagName==='VIDEO'){el.controls=true;el.playsInline=true;el.preload='metadata'}else el.alt=a.summary||a.name||'Picture';card.append(el)}}
+   if(a.summary){const s=document.createElement('p');s.className='small';s.textContent=a.summary;card.append(s)}
+   if((a.points||[]).length){const ul=document.createElement('ul');ul.className='dash-list small';a.points.slice(0,6).forEach(x=>{const li=document.createElement('li');li.textContent=x;ul.append(li)});card.append(ul)}
+   const acts=document.createElement('div');acts.className='att-acts';
+   const open=document.createElement('button');open.className='small-btn';open.textContent='Open';open.onclick=async()=>{if(a.url){window.open(a.url,'_blank','noopener');return}const blob=a.mediaId?await mediaBlob(a.mediaId).catch(()=>null):null;if(!blob){status('This file is still on your other phone — it shows here once it reaches Max’s database.');return}const u=URL.createObjectURL(blob),x=document.createElement('a');x.href=u;x.download=a.name||'file';x.target='_blank';document.body.append(x);x.click();x.remove()};
+   const del=document.createElement('button');del.className='small-btn';del.textContent='Remove';del.onclick=()=>{if(!confirm('Remove “'+(a.name||'this attachment')+'” from the note?'))return;const n2=getNotes().find(x=>x.id===activeNoteId);saveNoteAtts(activeNoteId,noteAtts(n2).filter(x=>x.id!==a.id));renderNoteAtts()};
+   acts.append(open,del);card.append(acts);box.append(card)}
+ }
+ async function addNoteFiles(entries){
+  const id=activeNoteId;if(!id){status('Save the note first.');return}
+  if(isOffline()||!workerBase()){const m='Max needs internet to read attachments. Add them again when you’re online.';status(m);speak(m);return}
+  const list=[];
+  for(const e of entries){if(/\.zip$/i.test(e.file.name)){try{const z=await unzip(await e.file.arrayBuffer());for(const nm of Object.keys(z).filter(x=>!x.endsWith('/')&&!IMP_SKIP.test(x)))list.push({file:new File([await z[nm].bytes()],nm.split('/').pop(),{type:typeOf(nm)}),rel:nm})}catch{status('That .zip seems damaged.')}}else if(!IMP_SKIP.test(e.rel||e.file.name))list.push(e)}
+  let ok=0;const bad=[];
+  for(const [i,e] of list.entries()){const f=e.file;status('Reading '+(i+1)+' of '+list.length+': '+f.name+'…');
+   try{const {att,mime,localText}=await maxReadFile(f);
+    const mediaId='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    let blob=f;if(/^image\//.test(mime)&&mime!=='image/heic'){try{blob=await shrinkForNote(f)}catch{}}
+    let kept=false;if(blob.size<=25e6){await mediaPut({id:mediaId,blob,mime:blob.type||f.type||mime,name:f.name,synced:false,at:Date.now()});mediaUpload(mediaId);kept=true}
+    const n=getNotes().find(x=>x.id===id);
+    saveNoteAtts(id,[...noteAtts(n),{id:mediaId,name:e.rel&&e.rel!==f.name?e.rel:f.name,mime:mime==='office'?(f.type||'application/octet-stream'):mime,size:f.size,mediaId:kept?mediaId:null,summary:att.summary||'',points:(att.points||[]).slice(0,8),text:String(localText||att.text||'').slice(0,4000),at:Date.now()}]);ok++;
+    if(screen==='editor'&&activeNoteId===id)renderNoteAtts();
+   }catch(err){bad.push(f.name+' ('+String(err.message||err).slice(0,60)+')')}}
+  const m='Added '+ok+' attachment'+(ok===1?'':'s')+' to the note'+(bad.length?'. Couldn’t read: '+bad.slice(0,3).join(', '):'')+'.';status(m);setSub('',m);speak(m);
+ }
+ async function addNoteLink(raw){const url=(String(raw||'').trim().match(/https?:\/\/\S+/)||[])[0]||(/^[\w-]+(\.[\w-]+)+/.test(String(raw).trim())?'https://'+String(raw).trim():'');
+  if(!url){status('Type a web address that starts with https://');return}
+  if(isOffline()){status('Max needs internet to read the link.');return}
+  status('Reading '+url+'…');
+  try{const {r,data}=await postJson('/api/link',{url,topics:allTopics()},180000);if(!r.ok)throw new Error(data.error||('HTTP '+r.status));const a=data.attachment||{};
+   const n=getNotes().find(x=>x.id===activeNoteId);saveNoteAtts(activeNoteId,[...noteAtts(n),{id:'l'+Date.now().toString(36),name:a.title||url,url,mime:'link',summary:a.summary||'',points:(a.points||[]).slice(0,8),text:String(a.text||'').slice(0,4000),at:Date.now()}]);
+   renderNoteAtts();status('Link added to the note.')}catch(e){status('I couldn’t read that link. '+e.message)}}
+ const openAttSheet=()=>{if(!activeNoteId){const n=saveCurrent();if(!n)return}closeEdMenus();$('naLink').value='';$('noteAttSheet').hidden=false};
+ $('readAttAdd').onclick=openAttSheet;$('edAttachBtn').onclick=openAttSheet;$('insAttach').onclick=openAttSheet;
+ $('naClose').onclick=()=>{$('noteAttSheet').hidden=true};$('noteAttSheet').addEventListener('click',e=>{if(e.target===$('noteAttSheet'))$('noteAttSheet').hidden=true});
+ for(const [b,i] of [['naPics','naPicsInput'],['naFiles','naFilesInput'],['naFolder','naFolderInput']]){$(b).onclick=()=>{$(i).value='';$(i).click()};
+  $(i).onchange=()=>{const e=[...$(i).files].map(f=>({file:f,rel:f.webkitRelativePath||f.name}));$('noteAttSheet').hidden=true;if(e.length)addNoteFiles(e)}}
+ $('naLinkOk').onclick=()=>{const v=$('naLink').value;$('noteAttSheet').hidden=true;addNoteLink(v)};$('naLink').onkeydown=e=>{if(e.key==='Enter')$('naLinkOk').click()};
+ $('noteShare').onclick=async()=>{closeEdMenus();const n=currentNote()||saveCurrent();if(!n)return;const text=(n.title||'')+'\n\n'+plain(n.body||'')+(noteAtts(n).length?'\n\nAttachments: '+noteAtts(n).map(a=>a.name+(a.url?' ('+a.url+')':'')).join(', '):'');
+  try{if(navigator.share){await navigator.share({title:n.title||'Note',text:text.slice(0,20000)});return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(text);status('Note copied — paste it anywhere to share.')}catch{status('Sharing isn’t available here.')}};
  // reading view (like Obsidian's) — tap ✎ Edit to change the note
  function setReading(on){
   $('editorScreen').classList.toggle('reading',!!on);$('noteRead').hidden=!on;
-  $('readToggle').textContent=on?'✎ Edit':'📖 Read';$('readToggle').setAttribute('aria-label',on?'Edit this note':'Read this note');
+  $('readToggle').textContent=on?'Edit':'Read';$('readToggle').setAttribute('aria-label',on?'Edit this note':'Read this note');
   if(on){
    const path=splitPath($('editorCategory').value).filter(x=>x!=='Unsorted');
    $('readPath').textContent=path.join(' / ');$('readTags').replaceChildren(...$('editorTags').value.split(',').map(t=>t.trim()).filter(Boolean).map(t=>{const x=document.createElement('span');x.textContent='#'+t;return x}));$('readTitle').textContent=$('editorTitle').value||'Untitled note';
-   const body=$('readBody');body.replaceChildren(safeFragment(cleanNoteHtml($('editorBody'))));wikiLinks(body);linkify(body);hydrateMedia(body,false);showNoteCheck(activeNoteId);
+   const body=$('readBody');body.replaceChildren(safeFragment(cleanNoteHtml($('editorBody'))));wikiLinks(body);linkify(body);hydrateMedia(body,false);showNoteCheck(activeNoteId);renderNoteAtts();
    $('fmtBar').hidden=true;closeEdMenus();$('linkPop').hidden=true;$('linkRow').hidden=true;
   }
  }
@@ -1806,7 +1890,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('insPhoto').onclick=()=>pickMedia('image');$('insVideo').onclick=()=>pickMedia('video');
  $('insLink').onclick=()=>{closeEdMenus();askLink()};
  $('insRule').onclick=()=>{closeEdMenus();restoreRange();$('editorBody').focus();document.execCommand('insertHorizontalRule');dirty=true};
- function metaSummary(){const c=splitPath($('editorCategory').value).join(' › ')||'Unsorted',t=$('editorTags').value.split(',').map(x=>x.trim()).filter(Boolean);$('metaSummary').textContent='📁 '+c+(t.length?'  ·  '+t.map(x=>'#'+x).join(' '):'  ·  tap to change folder or tags')}
+ function metaSummary(){const c=splitPath($('editorCategory').value).join(' › ')||'Unsorted';$('metaSummary').textContent='Folder: '+c+'  ·  tap to change'}
  ['editorCategory','editorTags'].forEach(id=>$(id).addEventListener('input',metaSummary));
  // ---------- the Maritime structure (added once; more folders can be added any time) ----------
  const MARITIME_TREE=['Maritime › IMO › Conventions','Maritime › IMO › Codes','Maritime › IMO › Resolutions & Circulars','Maritime › IMO › Amendments & Updates','Maritime › ILO › Conventions',
@@ -1994,7 +2078,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function printNote(n){
   const f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0;right:0;bottom:0';
-  f.srcdoc='<!doctype html><meta charset="utf-8"><title>'+escHtml(n.title)+'</title><style>body{font:15px/1.6 system-ui,sans-serif;color:#111;margin:32px}h1{font-size:24px}small{color:#555}</style><h1>'+escHtml(n.title)+'</h1><small>'+escHtml(n.category)+(n.tags?.length?' · '+escHtml(n.tags.join(', ')):'')+'</small><hr>'+n.body+(n.analysis?.summary?'<h3>Max’s summary</h3><p>'+escHtml(n.analysis.summary)+'</p>':'');
+  f.srcdoc='<!doctype html><meta charset="utf-8"><title>'+escHtml(n.title)+'</title><style>body{font:15px/1.6 system-ui,sans-serif;color:#111;margin:32px}h1{font-size:24px}small{color:#555}</style><h1>'+escHtml(n.title)+'</h1><small>'+escHtml(n.category)+'</small><hr>'+n.body+(noteAtts(n).length?'<h3>Attachments</h3><ul>'+noteAtts(n).map(a=>'<li><b>'+escHtml(a.name||a.url||'')+'</b>'+(a.summary?' — '+escHtml(a.summary):'')+'</li>').join('')+'</ul>':'')+(n.analysis?.summary?'<h3>Max’s summary</h3><p>'+escHtml(n.analysis.summary)+'</p>':'');
   f.onload=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch{}setTimeout(()=>f.remove(),60000)};
   document.body.append(f);
  }
@@ -2175,7 +2259,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const notes=getNotes().filter(n=>!n.deleted&&n.category!==SKILL_CAT);
   const key=notes.length+':'+notes.reduce((m,n)=>Math.max(m,n.updatedAt||0),0);if(SEC.key===key)return SEC;
   const secs=[];
-  for(const n of notes){const html=String(n.body||'')+(n.analysis?.summary?'<p><b>Max’s summary</b></p><p>'+escHtml(n.analysis.summary)+'</p>':'');
+  for(const n of notes){const html=String(n.body||'')+(n.analysis?.summary?'<p><b>Max’s summary</b></p><p>'+escHtml(n.analysis.summary)+'</p>':'')+noteAtts(n).map(a=>'<p><b>Attachment: '+escHtml(a.name||a.url||'')+'</b></p><p>'+escHtml([a.summary,...(a.points||[]),a.text].filter(Boolean).join('\n'))+'</p>').join('');
    const parts=html.split(/(?=<p><(?:b|strong)>)|(?=<hr\b)|(?=<h[1-4]\b)/i);let cur=null;
    const push=()=>{if(cur&&cur.text.trim())secs.push(cur)};
    for(const h of parts){const head=(/^<p><(?:b|strong)>(.*?)<\/(?:b|strong)>/i.exec(h)||/^<h[1-4][^>]*>(.*?)<\/h/i.exec(h)||[])[1];const tx=plain(h).trim();if(!tx)continue;
@@ -4151,12 +4235,6 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    v.parts.map(p=>'<details class="rate-row"><summary><span class="rate-name"><b>'+dashE(p.name)+'</b>'+(p.product?'<br><span class="muted small">'+dashE(p.product.name)+' · '+dashE(p.product.rateText||'')+(p.product.until?' · until '+dashE(p.product.until):'')+'</span>':'')+'</span><span class="rate-pa">'+dashPeso(p.php)+'</span><span class="rate-mo '+dashCls(p.pct)+'">+'+(+p.pct).toFixed(2)+'%</span></summary>'+
     '<div class="small">'+dashE(p.rule)+'</div><div class="muted small">About '+dashPeso(p.perYear||0)+' a year after tax · tax so far '+dashPeso(p.taxPaid)+(p.fees?' · fees '+dashPeso(p.fees):'')+'</div></details>').join('')+
    ((v.journal||[]).length?'<details class="dash-sub"><summary>What Max did ('+v.journal.length+')</summary><ul class="dash-list">'+v.journal.slice(0,15).map(e=>'<li>'+dashE(e.d+' '+e.kind+': '+e.text)+'</li>').join('')+'</ul></details>':'')+'<div class="muted small">Pretend money — nothing real is moved. Examples, not licensed advice.</div></div>'}
- function ratesFull(g){const m=g.market||{};
-  return virtualHtml(g.virtual)+'<div class="muted small">Per ₱100,000: % a year and about how much it earns <b>per month</b> after tax. Highest first. Tap a row for the conditions.</div>'+
-   rateGroups(g).map(x=>'<section class="rate-group" data-group="'+x.key+'"><div class="rate-head"><b>'+dashE(x.title)+'</b><span class="muted small">'+dashE(x.sub)+'</span></div><div class="rate-cols muted small"><span>Name</span><span>% a year</span><span>₱/month</span></div>'+x.items.map(rateRow).join('')+'</section>').join('')+
-   '<div class="muted small">Inflation '+dashE(m.inflation||'')+' · BSP rate '+dashE(m.bsp||'')+' · PDIC '+dashE(m.pdic||'')+' · checked '+dashE(g.checked||'')+' by '+dashE(g.by||'Max')+'. Promos usually last weeks, not a year. Not licensed financial advice.</div>'+
-   '<details class="dash-sub"><summary>My money plan (30% emergency money)</summary>'+moneyPlan(g)+'</details>'+
-   '<div class="dash-actions"><button class="small-btn" data-dash="guide-refresh">Update now</button></div>'}
  let paperTab='overview';
  function paperOverview(d){
   const pos=(d.books||[]).flatMap(b=>(b.positions||[]).map(p=>({...p,book:b}))),J=(d.journal||[]).filter(e=>e.kind==='BUY'||e.kind==='SELL'||e.kind==='DIVIDEND').slice(0,3),wait=(d.books||[]).flatMap(b=>(b.pending||[]).map(o=>(o.side||'')+' '+o.sym));
@@ -4183,17 +4261,115 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    (risk?'<div class="small">If every open trade hit its stop today: about <b class="down">−'+dashPeso(risk)+'</b>.</div>':'')+'</div>'+
    '<div class="st-row"><h3>Each part</h3><ul class="dash-list">'+(d.books||[]).map(b=>'<li><b>'+dashE(b.name)+'</b> — '+dashE(b.tested||'')+'</li>').join('')+'</ul></div>'+
    (yrs.length?'<div class="st-row"><h3>Year by year in the test</h3><div class="small">'+yrs.map(([k,v])=>k+': <span class="'+dashCls(v)+'">'+(v>0?'+':'')+v+'%</span>').join(' · ')+'</div></div>':'')}
- function paperFull(d){const a=paperAlloc(d),tab=paperTab;
-  return '<div class="big-total"><span class="muted small">'+dashPeso(a.start)+' paper money'+(a.parts.length===5?' (5 × ₱50,000)':'')+' is now</span><b>'+dashPeso(a.total)+'</b><span class="'+dashCls(a.pct)+'">'+dashPct(a.pct)+' since '+dashE(d.planSince||d.opened||'start')+'</span></div>'+allocBar(a.parts)+
-   '<div class="alloc-list">'+a.parts.map(p=>'<div class="alloc-item"><span class="dot" style="background:'+p.color+'"></span><span class="alloc-name">'+dashE(p.label)+' <span class="muted small">'+Math.round(p.w*100)+'%</span></span><span>'+dashPeso(p.now)+'</span><span class="'+dashCls(p.pct)+'">'+dashPct(p.pct)+'</span></div>').join('')+'</div>'+
-   '<div class="ptabs" role="tablist">'+[['overview','⭐ Overview'],['journal','📒 Journal'],['outcome','🎯 Possible outcome'],['books','📊 Positions']].map(([k,l])=>'<button data-ptab="'+k+'" class="'+(tab===k?'on':'')+'" role="tab" aria-selected="'+(tab===k)+'">'+l+'</button>').join('')+'</div>'+
-   (tab==='overview'?paperOverview(d):tab==='journal'?paperJournal(d):tab==='outcome'?paperOutcome(d):paperHtml(d))}
- function tilePaper(d){const a=paperAlloc(d);
-  return '<div class="tile-top"><span>📈 Paper trading</span></div><div class="tile-label muted small">'+dashPeso(a.start)+' is now</div><div class="tile-big">'+dashPeso(a.total)+'</div><div class="tile-pct '+dashCls(a.pct)+'">'+dashPct(a.pct)+'</div>'+allocBar(a.parts)+
-   '<div class="tile-legend">'+a.parts.map(p=>'<span><i style="background:'+p.color+'"></i>'+dashE(p.label.replace(' dividend','').replace(' trend','').replace(' swing',''))+' '+Math.round(p.w*100)+'%</span>').join('')+'</div>'}
- function tileGuide(g){const G=rateGroups(g),top=k=>G.find(x=>x.key===k)?.items[0],vt=g.virtual?'<div class="tile-label muted small">Virtual ₱400k → <b>'+dashPeso(g.virtual.total)+'</b></div>':'';const rows=[['MP2',top('gov')],['Best savings',top('hysa')],['Time deposit',top('td')]].filter(r=>r[1]);
-  return '<div class="tile-top"><span>💰 Best rates</span></div>'+vt+'<div class="tile-label muted small">per ₱100k · % a year · ₱/month</div>'+rows.map(([l,i])=>'<div class="tile-rate"><span class="tile-rl"><span class="muted">'+dashE(l)+'</span><br>'+dashE(l==='MP2'?'Pag-IBIG MP2':i.name.replace(/\s*\(.*\)/g,''))+'</span><b>'+(+i.rateNum).toFixed(2)+'%</b><span class="muted small">'+dashPeso(perMonth(i))+'/mo</span></div>').join('')}
  let dashStatusData=null,dashStatusAt=0;
+ // ---------- 22 Nov 2026 (Mark): one-glance dashboards ----------
+ // Paper trading: Overview → Positions (by category, with sell levels) → Trading journal (last 5, then 10, then all) → Strategy (per category, folded)
+ const STRAT={
+  pse:[['PSE dividend top-10','Buy the 10 PSE stocks with the highest cash-dividend yield (at least 3%, at least ₱5M traded a day, price at least ₱1). Equal money in each, bought at the next opening.','Re-check every 3 months: sell a stock only if it falls out of the top 20 payers.','Safety stop: sell if a stock closes 25% below its highest close since buying.','Dividends are kept as cash (after 10% tax).']],
+  forex:[['Gold trend (₱30,000)','Hold gold (PAXG) while its price is above the 200-day average; move to cash when it closes below.','Checked every morning; the sell level is the 200-day average.'],['Currencies: carry + trend (₱20,000)','9 major currencies against the US dollar: hold the ones that pay more interest and are rising, short the weak ones.','Re-balanced once a month.']],
+  crypto:[['Crypto swing (₱35,000)','Short swing trades in the 26 most-traded coins, only while Bitcoin is above its 50-day average.','Each trade has a stop-loss set when it is opened; a small fixed part of the money is risked per trade.','Checked every morning.'],['Bitcoin trend (₱15,000)','Hold Bitcoin while it is above its 100-day average (up to 40% of this part), cash when below.','Checked every morning.']],
+  copy:[['10 steady traders','Each month pick the 10 steadiest Hyperliquid traders: at least 4 of the last 6 months green, last 90 days positive, account at least $100,000; ranked by average month ÷ its swings.','Equal money on each, same size per trade as the trader (no extra leverage).','Stop copying a trader whose slice falls 20% from its best, or who drops out of the top 10 at the monthly pick.']],
+  us:[['US ETFs','S&P 500 (SPY) while it is above its 10-month average, plus the top 4 of a small set of ETFs by recent strength.','Re-checked once a month; anything that drops out is sold.']]};
+ let pjN=5,pjKind='trades',wantJournal=false;
+ const toJournal=()=>{if(!wantJournal)return;const h=document.querySelector('#dashFullBody .pv-h');if(h){h.scrollIntoView({block:'start'});wantJournal=false}};
+ const niceD=(s,yr)=>{const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(String(s||''));return m?(+m[3])+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1]+(yr?' '+m[1]:''):String(s||'')};
+ const pxFmt=(v,ccy)=>v==null||isNaN(v)?'–':(ccy==='PHP'?'₱':'$')+(+v).toLocaleString('en-US',{maximumFractionDigits:+v<1?6:+v<10?4:2});
+ const catName=(d,k)=>((d.cats||[]).find(c=>c.key===k)?.name||CATC[k]?.label||k).replace(/\s*\(.*\)/,'');
+ const bookCat=(d,key)=>(d.books||[]).find(b=>b.key===key)?.cat;
+ function tilePaper(d){const a=paperAlloc(d);
+  return '<div class="tile-top"><span>📈 Paper trading</span></div><div class="tile-label muted small">'+dashPeso(a.start)+' is now</div><div class="tile-total"><b>'+dashPeso(a.total)+'</b><span class="'+dashCls(a.pct)+'">'+dashPct(a.pct)+'</span></div>'+
+   '<div class="tile-rows">'+a.parts.map(p=>'<div class="tile-row"><span>'+dashE(p.label)+'</span><span>'+dashPeso(p.now)+'</span><span class="'+dashCls(p.pct)+'">'+dashPct(p.pct)+'</span></div>').join('')+'</div>'}
+ function pvOverview(d){const a=paperAlloc(d);
+  return '<section class="pv-sec"><h3>Overview</h3><div class="pv-total"><span class="muted small">'+dashPeso(a.start)+' is now</span><b>'+dashPeso(a.total)+'</b><span class="'+dashCls(a.pct)+'">'+dashPct(a.pct)+' since '+dashE(niceD(d.planSince||d.opened||'start',1))+'</span></div>'+
+   '<table class="pv-tbl"><thead><tr><th>Category</th><th>Start</th><th>Now</th><th>Change</th></tr></thead><tbody>'+
+   (d.cats||[]).map(c=>{const bs=(d.books||[]).filter(b=>b.cat===c.key);
+    return '<tr class="pv-cat-row"><td>'+dashE(catName(d,c.key))+'</td><td>'+dashPeso(c.startPhp)+'</td><td>'+dashPeso(c.php)+'</td><td class="'+dashCls(c.pct)+'">'+dashPct(c.pct)+'</td></tr>'+
+     (bs.length>1?bs.map(b=>'<tr class="pv-sub-row"><td>'+dashE((PART[b.key]||{}).label||b.name)+'</td><td>'+dashPeso(b.startPhp)+'</td><td>'+dashPeso(b.valuePhp)+'</td><td class="'+dashCls(b.sinceNow)+'">'+dashPct(b.sinceNow)+'</td></tr>').join(''):'')}).join('')+
+   '</tbody></table><div class="muted small">'+(d.pricedAt&&!isNaN(new Date(d.pricedAt))?'Prices at '+new Date(d.pricedAt).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'Prices from the last check')+((d.errors||[]).length?' · last problem: '+dashE(d.errors[d.errors.length-1].job+' — '+d.errors[d.errors.length-1].error)+' (Max retries next hour)':'')+'</div></section>'}
+ function pvPositions(d){
+  const rowsFor=b=>(b.positions||[]).map(p=>{const ccy=b.ccy==='PHP'?'PHP':'USD';
+   if(p.weightPct!=null||p.kind==='copy'||p.kind==='etf'||p.kind==='fx')return '<tr><td><b>'+dashE(p.sym)+'</b>'+(p.side==='short'?' <span class="muted small">short</span>':'')+'</td><td>'+Math.abs(p.weightPct||0)+'% · '+dashPeso(p.valuePhp)+'</td><td class="'+dashCls(p.chgPct)+'">'+dashPct(p.chgPct||0)+'</td><td class="muted small">'+(b.key==='copy_steady'?'stop if −20% from best':'monthly re-check')+'</td></tr>';
+   return '<tr><td><b>'+dashE(p.sym)+'</b></td><td>'+(+p.qty).toLocaleString('en-US',{maximumFractionDigits:6})+' @ '+pxFmt(p.ep,ccy)+'<br><span class="muted">now '+pxFmt(p.last,ccy)+'</span></td><td class="'+dashCls(p.chgPct)+'">'+dashPct(p.chgPct||0)+'</td><td>'+(p.sell?'sell below '+pxFmt(p.sell,ccy):p.stop?'stop '+pxFmt(p.stop,ccy):'–')+'</td></tr>'}).join('');
+  return '<section class="pv-sec"><h3>Positions and sell levels</h3>'+(d.cats||[]).map(c=>{const bs=(d.books||[]).filter(b=>b.cat===c.key),n=bs.reduce((s,b)=>s+(b.positions||[]).length,0),wait=bs.flatMap(b=>b.pending||[]);
+   const paused=bs.find(b=>b.key==='crypto_swing'&&b.market&&b.market.ok===false);
+   return '<div class="pv-cat"><div class="pv-cat-h"><b>'+dashE(catName(d,c.key))+'</b><span class="muted small">'+(n?n+' open':'all cash')+'</span></div>'+
+    (n?'<table class="pv-tbl pv-pos"><thead><tr><th>Name</th><th>Holding</th><th>Change</th><th>Sell level</th></tr></thead><tbody>'+bs.map(rowsFor).join('')+'</tbody></table>':'<div class="muted small">'+(paused?'Waiting in cash: Bitcoin is below its 50-day average, so new crypto trades are paused.':'Waiting in cash until the rules give a buy.')+'</div>')+
+    (wait.length?'<div class="small pv-wait">Waiting orders: '+wait.map(o=>dashE((o.side||'').toUpperCase()+' '+o.sym)).join(', ')+'</div>':'')+'</div>'}).join('')+
+   ((d.risk?.ifAllStopsHitPhp)?'<div class="muted small">If every stop were hit today: about −'+dashPeso(d.risk.ifAllStopsHitPhp)+'.</div>':'')+'</section>'}
+ function tjRow(d,e){const ccy=e.ccy==='PHP'?'PHP':'USD',cat=bookCat(d,e.book),cn=cat?catName(d,cat):((PART[e.book]||{}).label||'');
+  let val='',sub='';
+  if(e.kind==='BUY'){val=e.php!=null?dashPeso(e.php):'';sub=(e.px!=null?'Buy price '+pxFmt(e.px,ccy):'')+(e.qty?' × '+(+e.qty).toLocaleString('en-US',{maximumFractionDigits:6}):'')+(e.fee?' · fee '+dashPeso(e.fee):'')}
+  else if(e.kind==='SELL'){const cost=e.php!=null&&e.pnlPhp!=null?e.php-e.pnlPhp:null,pct=cost>0?e.pnlPhp/cost*100:null;
+   const ep=e.ep!=null?e.ep:(String(e.text||'').match(/bought [₱$]([\d,.]+)/)||[])[1]?.replace(/,/g,'');
+   val=e.pnlPhp!=null?'<span class="'+dashCls(e.pnlPhp)+'">'+(e.pnlPhp>=0?'+':'−')+dashPeso(Math.abs(e.pnlPhp))+(pct!=null?' ('+(pct>=0?'+':'')+pct.toFixed(1)+'%)':'')+'</span>':'';
+   sub=(ep!=null?'Buy '+pxFmt(ep,ccy)+' → ':'')+(e.px!=null?'Sell '+pxFmt(e.px,ccy):'')+(e.php!=null?' · received '+dashPeso(e.php):'')}
+  else if(e.kind==='DIVIDEND'){val='<span class="up">+'+dashPeso(e.php||0)+'</span>';sub=String(e.text||'').replace(/^[A-Z0-9]+ /,'')}
+  const more=[e.copy&&['How to copy',e.copy],e.sellPlan&&['Sell plan',e.sellPlan],e.why&&['Why',e.why]].filter(Boolean);
+  return '<div class="tj"><div class="tj-main"><span class="tj-side '+dashE(e.kind)+'">'+dashE(e.kind==='DIVIDEND'?'DIV':e.kind)+'</span><b>'+dashE(shortSymC(e.sym))+'</b><span class="muted small">'+dashE(cn)+' · '+dashE(niceD(e.d))+'</span><span class="tj-val">'+val+'</span></div>'+
+   (sub?'<div class="tj-sub muted small">'+dashE(sub)+'</div>':'')+(more.length?'<details class="tj-more"><summary class="muted small">Details</summary>'+more.map(([k,v])=>'<div class="small"><b>'+k+':</b> '+dashE(v)+'</div>').join('')+'</details>':'')+'</div>'}
+ const shortSymC=s=>/^0x[0-9a-f]{20,}$/i.test(String(s||''))?String(s).slice(0,8)+'…':String(s||'');
+ function pvJournal(d){
+  const all=(d.journal||[]).filter(e=>pjKind==='dividends'?e.kind==='DIVIDEND':(e.kind==='BUY'||e.kind==='SELL'||e.kind==='DIVIDEND'));
+  const show=pjN>=9999?all:all.slice(0,pjN),nDiv=(d.journal||[]).filter(e=>e.kind==='DIVIDEND').length;
+  return '<section class="pv-sec"><div class="pv-h"><h3>Trading journal</h3><span class="pv-chips"><button data-pj-kind="trades" class="'+(pjKind==='trades'?'on':'')+'">Trades</button><button data-pj-kind="dividends" class="'+(pjKind==='dividends'?'on':'')+'">Dividends'+(nDiv?' ('+nDiv+')':'')+'</button></span></div>'+
+   (show.length?'<div class="tj-list'+(pjN>=9999?' tj-scroll':'')+'">'+show.map(e=>tjRow(d,e)).join('')+'</div>':'<div class="small muted">'+(pjKind==='dividends'?'No dividends received yet.':'No trades yet — Max trades only when the tested rules say so.')+'</div>')+
+   (all.length>show.length?'<button class="small-btn" data-pj-more="'+(pjN<10?10:9999)+'">'+(pjN<10?'Show 10':'Show all '+all.length)+'</button>':pjN>5&&all.length>5?'<button class="small-btn" data-pj-more="5">Show less</button>':'')+'</section>'}
+ function pvStrategy(d){
+  return '<section class="pv-sec"><h3>Strategy</h3>'+(d.cats||[]).map(c=>{const bs=(d.books||[]).filter(b=>b.cat===c.key);
+   return '<details class="pv-strat"><summary><b>'+dashE(catName(d,c.key))+'</b><span class="muted small">'+dashPeso(c.startPhp)+'</span></summary>'+(STRAT[c.key]||[]).map(([h,...L])=>'<div class="small"><b>'+dashE(h)+'</b></div><ul class="dash-list">'+L.map(x=>'<li>'+dashE(x)+'</li>').join('')+'</ul>').join('')+
+    bs.filter(b=>b.tested).map(b=>'<div class="muted small">Tested ('+dashE((PART[b.key]||{}).label||b.name)+'): '+dashE(b.tested)+'</div>').join('')+'</details>'}).join('')+'<div class="muted small">Paper trading only — pretend money, not advice. Past results are not a promise.</div></section>'}
+ function paperFull(d){
+  if(!Array.isArray(d.cats))return paperHtml(d);
+  return pvOverview(d)+pvPositions(d)+pvJournal(d)+pvStrategy(d)+'<div class="dash-actions"><button class="small-btn" data-dash="paper-refresh">Refresh prices</button></div>'}
+ // Investments: the 4 virtual accounts first (value and %), each with the best rate in its group; the full rate lists stay below
+ const VGROUP={mp2:'gov',hysa:'hysa',bonds:'bonds',deposits:'td'};
+ const VSHORT={mp2:'MP2',hysa:'Savings',bonds:'Bonds',deposits:'Time deposit'};
+ function tileGuide(g){const v=g.virtual,G=rateGroups(g),best=k=>G.find(x=>x.key===VGROUP[k])?.items[0];
+  if(!v||!(v.parts||[]).length){const rows=[['MP2','gov'],['Savings','hysa'],['Time deposit','td']].map(([l,k])=>[l,G.find(x=>x.key===k)?.items[0]]).filter(r=>r[1]);   // before the virtual accounts start: the best rates
+   return '<div class="tile-top"><span>💰 Investments</span></div><div class="tile-label muted small">Best rates now · per ₱100k a month</div><div class="tile-rows">'+rows.map(([l,i])=>'<div class="tile-row"><span>'+dashE(l)+'<br><span class="muted tile-best">'+dashE(i.name.replace(/\s*\(.*\)|\s*—.*/g,''))+'</span></span><span>'+(+i.rateNum).toFixed(2)+'%</span><span class="muted">'+dashPeso(perMonth(i))+'</span></div>').join('')+'</div><div class="muted small">Virtual accounts start at Max’s next daily check.</div>'}
+  return '<div class="tile-top"><span>💰 Investments</span></div><div class="tile-label muted small">'+dashPeso(v.start||400000)+' is now</div><div class="tile-total"><b>'+dashPeso(v.total)+'</b><span class="'+dashCls(v.pct)+'">'+(v.pct>=0?'+':'')+(+v.pct).toFixed(2)+'%</span></div>'+
+   '<div class="tile-rows">'+v.parts.map(p=>{const b=best(p.key);return '<div class="tile-row"><span>'+dashE(VSHORT[p.key]||p.name)+(b?'<br><span class="muted tile-best">best '+(+b.rateNum).toFixed(2)+'%</span>':'')+'</span><span>'+dashPeso(p.php)+'</span><span class="'+dashCls(p.pct)+'">+'+(+p.pct).toFixed(2)+'%</span></div>'}).join('')+'</div>'}
+ function ratesFull(g){const v=g.virtual,m=g.market||{},G=rateGroups(g);
+  const acc=v&&(v.parts||[]).length?'<section class="pv-sec"><h3>Overview</h3><div class="pv-total"><span class="muted small">'+dashPeso(v.start||400000)+' virtual money (4 × ₱100,000) is now</span><b>'+dashPeso(v.total)+'</b><span class="'+dashCls(v.pct)+'">'+(v.pct>=0?'+':'')+(+v.pct).toFixed(2)+'% since '+dashE(niceD(v.opened||'',1))+'</span></div>'+
+   '<table class="pv-tbl"><thead><tr><th>Account</th><th>Value</th><th>Change</th><th>Best rate now</th></tr></thead><tbody>'+v.parts.map(p=>{const b=G.find(x=>x.key===VGROUP[p.key])?.items[0];return '<tr><td>'+dashE(VSHORT[p.key]||p.name)+'</td><td>'+dashPeso(p.php)+'</td><td class="'+dashCls(p.pct)+'">+'+(+p.pct).toFixed(2)+'%</td><td class="small">'+(b?(+b.rateNum).toFixed(2)+'% '+dashE(b.name.replace(/\s*\(.*\)|\s*—.*/g,'')):'–')+'</td></tr>'}).join('')+'</tbody></table></section>'+
+   '<section class="pv-sec"><h3>Investment value</h3>'+v.parts.map(p=>'<details class="pv-strat"><summary><b>'+dashE(p.name)+'</b><span>'+dashPeso(p.php)+'</span></summary>'+
+    (p.product?'<div class="small"><b>'+dashE(p.product.name)+'</b> · '+dashE(p.product.rateText||'')+(p.product.until?' · until '+dashE(p.product.until):'')+'</div>':'')+
+    '<div class="small">Interest: '+dashE(p.creditText||'')+'</div><div class="small">Earned so far: '+dashPeso(p.earned||0)+' after tax'+(p.paidOut?' (of which '+dashPeso(p.paidOut)+' already paid out)':'')+(p.accrued?' · '+dashPeso(p.accrued)+' waiting to be credited':'')+' · about '+dashPeso(p.perYear||0)+' a year</div>'+
+    '<div class="muted small">Tax so far '+dashPeso(p.taxPaid||0)+(p.fees?' · fees '+dashPeso(p.fees):'')+'</div><div class="muted small">'+dashE(p.rule)+'</div></details>').join('')+
+    ((v.journal||[]).length?'<details class="pv-strat"><summary><b>What Max did</b><span class="muted small">'+v.journal.length+'</span></summary><ul class="dash-list">'+v.journal.slice(0,20).map(e=>'<li class="small">'+dashE(e.d+' — '+e.text)+'</li>').join('')+'</ul></details>':'')+'<div class="muted small">Pretend money — nothing real is moved. Examples, not licensed advice.</div></section>':
+   '<div class="small muted">The 4 virtual accounts start at Max’s next daily check.</div>';
+  return acc+'<section class="pv-sec"><h3>Best rates</h3><div class="muted small">Per ₱100,000: % a year and about how much it earns per month after tax. Tap a row for the conditions.</div>'+
+   G.map(x=>'<details class="pv-strat rate-group" data-group="'+x.key+'"'+(x.key==='gov'||x.key==='hysa'?' open':'')+'><summary><b>'+dashE(x.title)+'</b><span class="muted small">'+(x.items[0]?'best '+(+x.items[0].rateNum).toFixed(2)+'%':'')+'</span></summary><div class="rate-cols muted small"><span>Name</span><span>% a year</span><span>₱/month</span></div>'+x.items.map(rateRow).join('')+'</details>').join('')+
+   '<div class="muted small">Inflation '+dashE(m.inflation||'')+' · BSP rate '+dashE(m.bsp||'')+' · PDIC '+dashE(m.pdic||'')+' · checked '+dashE(g.checked||'')+'. Promos usually last weeks. Not licensed financial advice.</div></section>'+
+   '<details class="pv-strat"><summary><b>My money plan</b></summary>'+moneyPlan(g)+'</details>'+
+   '<div class="dash-actions"><button class="small-btn" data-dash="guide-refresh">Update now</button></div>'}
+ // Websites and apps: errors first; tap one for its overview (websites: visitors per day / week / month; apps: status)
+ const siteProblems=s=>[...(s.up===false?['site is down']:[]),...(s.errors||[]),...(s.security?.issues||[]),...(s.seo?.issues||[]),...((s.affiliate||{}).brokenRedirects?[(s.affiliate.brokenRedirects)+' affiliate link(s) broken']:[]),...((s.affiliate||{}).amazonWithoutTag?[s.affiliate.amazonWithoutTag+' Amazon link(s) without your tag']:[])];
+ const appProblems=a=>[...(a.up===false?['app is down']:[]),...((a.play||{}).error?[a.play.error]:[]),...(/crash/i.test(String((a.play||{}).crashes||''))&&!/^0|no /i.test(String(a.play.crashes))?[String(a.play.crashes)]:[]),...(a.errors||[])];
+ const errBadge=n=>n?'<span class="err-badge">'+n+' error'+(n>1?'s':'')+'</span>':'<span class="ok-badge">No errors</span>';
+ function siteFull(s){const P=siteProblems(s),an=s.analytics||{},r=x=>x?'<td>'+(x.visitors||0).toLocaleString('en-US')+'</td><td>'+(x.views||0).toLocaleString('en-US')+'</td>':'<td>–</td><td>–</td>';
+  return '<details class="pv-strat st-item"><summary><b>'+dashE(s.name)+'</b>'+errBadge(P.length)+'</summary>'+
+   '<div class="small">'+(s.up===false?'<span class="down">Down</span>':'Up'+(s.ms?' · '+s.ms+' ms':''))+' · '+dashE(s.url||'')+(s.at?' · checked '+new Date(s.at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</div>'+
+   (P.length?'<ul class="dash-list">'+P.slice(0,10).map(x=>'<li class="small down">'+dashE(x)+'</li>').join('')+'</ul>':'')+
+   '<div class="st-k">Analytics</div>'+(an.notConnected?'<div class="small muted">Not connected — '+dashE(an.notConnected)+'</div>':an.error?'<div class="small down">'+dashE(an.error)+'</div>':
+    '<table class="pv-tbl"><thead><tr><th></th><th>Visitors</th><th>Page views</th></tr></thead><tbody><tr><td>Day</td>'+r(an.today)+'</tr><tr><td>Week</td>'+r(an.week)+'</tr><tr><td>Month</td>'+r(an.month)+'</tr></tbody></table>')+'</details>'}
+ function appFull(a){const P=appProblems(a),p=a.play||{};
+  return '<details class="pv-strat st-item"><summary><b>'+dashE(a.name)+'</b>'+errBadge(P.length)+'</summary>'+
+   '<div class="small">'+(a.up===false?'<span class="down">Down</span>':a.up?'Up'+(a.ms?' · '+a.ms+' ms':''):'')+(a.version?' · version '+dashE(a.version):'')+'</div>'+
+   (P.length?'<ul class="dash-list">'+P.slice(0,8).map(x=>'<li class="small down">'+dashE(x)+'</li>').join('')+'</ul>':'')+
+   '<div class="st-k">Status</div><table class="pv-tbl"><tbody>'+
+   (a.url?'<tr><td>Link</td><td class="small">'+dashE(a.url)+'</td></tr>':'')+
+   (a.play?'<tr><td>Google Play</td><td class="small">'+(p.notConnected?dashE(p.notConnected):p.error?dashE(p.error):(p.tracks||[]).map(t=>dashE(t.track)+': '+(t.releases||[]).map(r=>dashE(((r.versions||[]).join(',')+' '+(r.status||'')).trim())).join('; ')).join(' · ')||'–')+'</td></tr><tr><td>Reviews</td><td class="small">'+(p.reviews?.count?p.reviews.count+' recent · '+p.reviews.average+'★':'none yet')+'</td></tr><tr><td>Crashes</td><td class="small">'+dashE(p.crashes||'–')+'</td></tr>':'')+
+   '</tbody></table></details>'}
+ const statusFull=k=>d=>{const L=d[k]||[],P=L.map(k==='sites'?siteProblems:appProblems),bad=P.filter(x=>x.length).length;
+  return '<section class="pv-sec"><h3>Overview</h3><div class="pv-total"><b>'+(L.length?(bad?bad+' of '+L.length+' with errors':'No errors'):'No report yet')+'</b><span class="muted small">'+dashE(d.note||'Max checks every day.')+'</span></div>'+
+   (L.length?L.map(k==='sites'?siteFull:appFull).join(''):'')+'</section>'};
+ const statusTile=k=>d=>{const L=d[k]||[],P=L.map(k==='sites'?siteProblems:appProblems),S=(d.summary||{})[k]||[];
+  const items=L.length?L.map((x,i)=>({name:x.name,n:P[i].length})):S.map(x=>({name:x.name,n:x.ok?0:(x.problems||[]).length||1}));
+  return '<div class="tile-top"><span>'+(k==='sites'?'🌐 Websites':'📱 Apps')+'</span></div>'+(items.length?'<div class="tile-total"><b>'+(items.some(x=>x.n)?items.filter(x=>x.n).length+' with errors':'No errors')+'</b></div><div class="tile-rows">'+items.slice(0,5).map(x=>'<div class="tile-row two"><span>'+dashE(x.name)+'</span>'+errBadge(x.n)+'</div>').join('')+'</div>':'<div class="muted small">Max checks every day — first report on its way.</div>')};
+ // Notes: a folder; a tap opens the notes
+ const tileNotes=d=>'<div class="tile-folder"><svg aria-hidden="true" width="44" height="36" viewBox="0 0 24 20"><path d="M2 3.5A1.5 1.5 0 0 1 3.5 2h5l2 2.2h10A1.5 1.5 0 0 1 22 5.7V16.5A1.5 1.5 0 0 1 20.5 18h-17A1.5 1.5 0 0 1 2 16.5z" fill="currentColor"/></svg><span><b>Notes</b><br><span class="muted small">'+d.count.toLocaleString('en-US')+' notes</span></span></div>';
+
  async function loadStatus(force){
   if(!force&&dashStatusData&&Date.now()-dashStatusAt<10*60e3)return dashStatusData;
   const {r,data}=await fetchJson(workerBase()+'/api/home/status',{method:'GET'},30000);
@@ -4203,21 +4379,6 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  const okMark=ok=>ok?'<span class="up">✓</span>':'<span class="down">!</span>';
  const issueList=a=>(a||[]).length?'<ul class="dash-list">'+a.slice(0,8).map(x=>'<li>'+dashE(x)+'</li>').join('')+'</ul>':'<div class="small up">No problems found.</div>';
- function siteFull(s){const c=s.content||{},af=s.affiliate||{},an=s.analytics||{},sp=s.speed||{};
-  return '<div class="st-row"><h3>'+dashE(s.name)+' '+(s.up?'<span class="up small">UP '+(s.ms||'')+' ms</span>':'<span class="down small">DOWN</span>')+'</h3><div class="muted small">'+dashE(s.url)+' · checked '+(s.at?new Date(s.at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+(s.score!==undefined?' · security & SEO score '+s.score+'/100':'')+'</div>'+
-   '<div class="st-k">Analytics</div>'+(an.notConnected?'<div class="small">Not connected — '+dashE(an.notConnected)+'</div>':an.error?'<div class="small down">'+dashE(an.error)+'</div>':'<div class="small">Today '+(an.today?.visitors||0)+' visitors / '+(an.today?.views||0)+' views · 7 days '+(an.week?.visitors||0)+' visitors'+((an.topPages||[]).length?' · top: '+an.topPages.slice(0,3).map(p=>dashE(p.path)+' ('+p.views+')').join(', '):'')+'</div>')+
-   '<div class="st-k">Affiliate</div><div class="small">'+(af.pagesChecked?af.links+' shop links on '+af.pagesChecked+' pages'+(af.redirectLinks?' ('+af.redirectLinks+' through your /go/ links)':'')+(af.tag?' · tag '+dashE(af.tag)+' ✓':'')+(af.brokenRedirects?' · <span class="down">'+af.brokenRedirects+' /go/ link(s) broken</span>':'')+' · stores: '+Object.entries(af.stores||{}).map(([k,v])=>k+' '+v).join(', ')+(af.amazonWithoutTag?' · <span class="down">'+af.amazonWithoutTag+' Amazon links without your tag</span>':'')+(af.disclosurePages<af.pagesChecked?' · <span class="down">disclosure missing on '+(af.pagesChecked-af.disclosurePages)+' page(s)</span>':' · disclosure ✓'):'not checked yet')+'</div>'+
-   '<div class="st-k">Content</div><div class="small">'+(c.pages!==undefined?c.pages+' pages in the sitemap · newest update '+dashE(c.newest||'unknown')+' · '+c.changed30d+' new/updated in the last 30 days':'No sitemap found')+'</div>'+issueList(s.contentIssues)+
-   '<div class="st-k">SEO</div>'+issueList(s.seo?.issues)+'<div class="st-k">Security</div>'+issueList(s.security?.issues)+'<div class="st-k">Errors</div>'+issueList(s.errors)+
-   '<div class="st-k">Speed (phone, Google PageSpeed)</div><div class="small">'+(sp.error?dashE(sp.error):'Performance '+(sp.performance??'–')+' · SEO '+(sp.seo??'–')+' · accessibility '+(sp.accessibility??'–')+(sp.lcp?' · main content shows in '+dashE(sp.lcp):''))+'</div></div>'}
- function appFull(a){const p=a.play||{},sp=a.speed||{};
-  return '<div class="st-row"><h3>'+dashE(a.name)+' '+(a.up===false?'<span class="down small">DOWN</span>':a.up?'<span class="up small">UP '+(a.ms||'')+' ms</span>':'')+'</h3><div class="muted small">'+dashE(a.url||'')+'</div>'+
-   (a.version?'<div class="small">Version '+dashE(a.version)+(a.serverNow?' · server '+dashE(a.serverNow):'')+'</div>':'')+
-   (a.play?'<div class="st-k">Google Play</div><div class="small">'+(p.notConnected?dashE(p.notConnected):p.error?'<span class="down">'+dashE(p.error)+'</span>':(p.tracks||[]).map(t=>dashE(t.track)+': '+(t.releases||[]).map(r=>dashE((r.name||'')+' '+(r.versions||[]).join(',')+' '+r.status)).join('; ')).join(' · '))+'</div>'+
-    (p.reviews?'<div class="small">Reviews: '+(p.reviews.count?p.reviews.count+' recent, average '+p.reviews.average+'★':'none yet')+'</div>'+issueList(p.reviews.latest).replace('No problems found.',''):'')+'<div class="muted small">Crashes: '+dashE(p.crashes||'–')+'</div>':'')+
-   '<div class="st-k">Speed (phone)</div><div class="small">'+(sp.error?dashE(sp.error):'Performance '+(sp.performance??'–')+' · accessibility '+(sp.accessibility??'–')+' · best practices '+(sp.bestPractices??'–'))+'</div>'+(a.code?'<div class="muted small">'+dashE(a.code)+'</div>':'')+'</div>'}
- const statusFull=k=>d=>((d[k]||[]).length?(d[k]).map(k==='sites'?siteFull:appFull).join(''):'<div class="small">'+dashE(d.note||'No report yet.')+'</div>')+'<div class="muted small">Max checks every day. Ask “Max, check my websites” for a deeper report.</div>';
- const statusTile=k=>d=>{const S=(d.summary||{})[k]||[];return '<div class="tile-top"><span>'+(k==='sites'?'🌐 Websites':'📱 Apps')+'</span></div>'+(S.length?'<div class="tile-big">'+S.filter(x=>x.ok).length+'/'+S.length+'</div><div class="tile-label muted small">all good</div>'+S.slice(0,4).map(x=>'<div class="tile-line">'+okMark(x.ok)+' '+dashE(x.name)+(x.problems&&x.problems.length?' — '+dashE(x.problems.join(', ')):x.version?' · '+dashE(x.version):'')+'</div>').join(''):'<div class="muted small">Max checks every day — first report on its way.</div>')};
  function dashSummaryPaper(d){const a=paperAlloc(d);return dashPeso(a.start)+' → '+dashPeso(a.total)+' ('+dashPct(a.pct)+')'}
  function dashSummaryGuide(g){const G=rateGroups(g),m=G.find(x=>x.key==='gov')?.items[0],s=G.find(x=>x.key==='hysa')?.items[0];return [m&&m.name.replace(/\s*\(.*\)/,'')+' '+(+m.rateNum).toFixed(2)+'% ('+dashPeso(perMonth(m))+'/month per ₱100k)',s&&'best savings '+s.name.replace(/\s*\(.*\)|\s*—.*/g,'')+' '+(+s.rateNum).toFixed(2)+'%'].filter(Boolean).join(', ')}
  let dashOpen=null;
@@ -4227,11 +4388,6 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const day=Date.now()-864e5,top={};for(const n of N){const c=String(n.category||'No folder').split(/\s*›\s*/)[0]||'No folder';top[c]=(top[c]||0)+1}
   return {count:N.length,today:N.filter(n=>(n.updatedAt||0)>day).length,folders:Object.entries(top).sort((x,y)=>y[1]-x[1]),recent:[...N].sort((x,y)=>(y.updatedAt||0)-(x.updatedAt||0)).slice(0,8).map(n=>({title:n.title,category:n.category,at:n.updatedAt}))};
  }
- const tileNotes=d=>'<div class="tile-top"><span>🗂 Notes</span></div><div class="tile-big">'+d.count.toLocaleString('en-US')+'</div><div class="tile-label muted small">notes · '+d.today+' updated in the last 24 hours</div>'+d.folders.slice(0,3).map(([k,n])=>'<div class="tile-line">'+dashE(k)+' · '+n+'</div>').join('');
- const notesFull=d=>'<div class="big-total"><span class="muted small">Your second brain</span><b>'+d.count.toLocaleString('en-US')+' notes</b><span class="muted small">'+d.today+' updated in the last 24 hours (Max refreshes the data notes by himself)</span></div>'+
-  '<div class="st-row"><h3>Folders</h3>'+d.folders.slice(0,12).map(([k,n])=>'<div class="ov-row"><span></span><span>'+dashE(k)+'</span><span class="muted small">'+n+'</span></div>').join('')+'</div>'+
-  '<div class="st-row"><h3>Latest updates</h3>'+(d.recent.length?d.recent.map(n=>'<div class="ov-row"><span></span><span class="small">'+dashE(n.title||'Untitled')+'<br><span class="muted small">'+dashE(n.category||'')+'</span></span><span class="muted small">'+(n.at?new Date(n.at).toLocaleDateString([], {month:'short',day:'numeric'}):'')+'</span></div>').join(''):'<div class="small">No notes on this phone yet.</div>')+'</div>'+
-  '<div class="dash-actions"><button class="small-btn" data-dash="open-notes">Open my notes</button></div>';
  let healthAt=0;
  async function loadHealth(force){
   if(!force&&dashData.status&&Date.now()-healthAt<5*60e3)return dashData.status;
@@ -4243,23 +4399,25 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(g&&+g[1]>0){if(Array.isArray(h.guardProblems)&&h.guardProblems.length)h.guardProblems.forEach(x=>a.push('Guard: '+x));else a.push('Guard found '+g[1]+' problem'+(+g[1]>1?'s':'')+' — say “check everything now” for the list')}
   const pf=String(h.paperTrading||'').match(/failed: ([^)]*)\)/);if(pf)a.push('Paper trading: the last step failed ('+pf[1]+') — Max retries');
   if(h.lastTrigger&&h.lastTrigger.at&&Date.now()-Date.parse(h.lastTrigger.at)>2.5*3600e3)a.push('Max’s hourly clock has not run for over 2 hours');
+  if(cryptoStale(h))a.push('Crypto prices are more than 2 days old — Max keeps retrying other sources');
+  if(/failed|no message id/.test(String(h.emails||'')))a.push('The last email didn’t go out: '+String(h.emails).replace(/^last [^“]*/,''));
   if(h.google!==undefined&&!/^linked/.test(String(h.google)))a.push('Google (calendar, Gmail) is not linked');
   if(h.database&&!/^(bound|ready)/.test(String(h.database)))a.push('The database is not connected');
   return a}
  const hShort=s=>String(s||'–').replace(/max-worker-\d{4}-\d\d-/,'').replace(/(\d{4}-\d\d-\d\dT\d\d:\d\d)(?::[\d.]+)?Z/g,(m,x)=>new Date(x+':00Z').toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}));
- const tileStatus=h=>{const a=healthAlerts(h);return '<div class="tile-top"><span>🩺 Status</span></div><div class="tile-big '+(a.length?'down':'up')+'">'+(a.length?a.length+' alert'+(a.length>1?'s':''):'All OK')+'</div><div class="tile-label muted small">server '+dashE(hShort(h.version))+' · last run '+dashE(h.lastTrigger&&h.lastTrigger.at?hShort(h.lastTrigger.at):'–')+'</div>'+a.slice(0,2).map(x=>'<div class="tile-line">'+dashE(x)+'</div>').join('')};
- const healthFull=h=>{const a=healthAlerts(h),row=(k,v,ok)=>'<div class="ov-row"><span>'+(ok===undefined?'':ok?'<span class="up">✓</span>':'<span class="down">!</span>')+'</span><span>'+dashE(k)+'</span><span class="muted small" style="text-align:right;max-width:58vw">'+dashE(hShort(v))+'</span></div>';
-  return '<div class="st-row"><h3>'+(a.length?a.length+' thing'+(a.length>1?'s':'')+' to look at':'All OK')+'</h3>'+(a.length?'<ul class="dash-list">'+a.map(x=>'<li>'+dashE(x)+'</li>').join('')+'</ul>':'<div class="small up">Nothing needs you right now.</div>')+'</div>'+
-   '<div class="st-row"><h3>Connections</h3>'+row('Google (calendar, tasks, Gmail)',h.google,/^linked/.test(String(h.google)))+row('Google Play',h.play,/^connected/.test(String(h.play)))+row('Database',h.database,/^(bound|ready)/.test(String(h.database)))+row('GitHub',h.github,/^connected/.test(String(h.github)))+row('Website analytics',h.analytics,/^connected/.test(String(h.analytics)))+row('Brain',h.brain,true)+'</div>'+
-   '<div class="st-row"><h3>Daily jobs</h3>'+row('Paper trading',h.paperTrading,!/failed/.test(String(h.paperTrading)))+row('Websites and apps check',h.statusReport)+row('Notes data',h.notesData)+row('Guard',h.guard,!/[1-9]\d* problem/.test(String(h.guard)))+row('Hourly clock',h.lastTrigger&&h.lastTrigger.at)+((h.paperErrors||[]).length?'<details class="small"><summary class="muted">Latest notes from the trading steps</summary>'+h.paperErrors.map(x=>'<div>'+dashE(hShort(x))+'</div>').join('')+'</details>':'')+'</div>'+
-   '<div class="st-row"><h3>Version</h3>'+row('Server',h.version)+row('Notes loaded',h.tradingNotes)+'</div>'+
-   '<div class="dash-actions"><button class="small-btn" data-dash="status-refresh">Check again</button></div>'};
+ const tileStatus=h=>{const a=healthAlerts(h);return '<div class="tile-top"><span>🛡 Security</span></div><div class="tile-total"><b class="'+(a.length?'down':'up')+'">'+(a.length?a.length+' error'+(a.length>1?'s':''):'No errors')+'</b></div>'+(a.length?'<div class="tile-rows">'+a.slice(0,3).map(x=>'<div class="tile-line down small">'+dashE(x)+'</div>').join('')+'</div>':'')};
+ const healthFull=h=>{const a=healthAlerts(h),row=(k,ok)=>'<tr><td>'+dashE(k)+'</td><td>'+(ok?'<span class="ok-badge">OK</span>':'<span class="err-badge">Error</span>')+'</td></tr>';
+  return '<section class="pv-sec"><h3>Overview</h3><div class="pv-total"><b class="'+(a.length?'down':'up')+'">'+(a.length?a.length+' error'+(a.length>1?'s':''):'No errors')+'</b><span class="muted small">'+(a.length?'Max retries by himself; the ones that need you say so.':'Nothing needs you right now.')+'</span></div>'+
+   (a.length?'<ul class="dash-list">'+a.map(x=>'<li class="small down">'+dashE(x)+'</li>').join('')+'</ul>':'')+
+   '<table class="pv-tbl"><tbody>'+row('Google (calendar, Gmail)',/^linked/.test(String(h.google)))+row('Database',/^(bound|ready)/.test(String(h.database)))+row('Paper trading',!/failed/.test(String(h.paperTrading))&&!cryptoStale(h))+row('Emails',!/failed|no message id/.test(String(h.emails||'')))+row('Guard',!/[1-9]\d* problem/.test(String(h.guard)))+row('Hourly clock',!(h.lastTrigger&&h.lastTrigger.at&&Date.now()-Date.parse(h.lastTrigger.at)>2.5*3600e3))+'</tbody></table>'+
+   '<div class="muted small">Server '+dashE(hShort(h.version))+'</div></section><div class="dash-actions"><button class="small-btn" data-dash="status-refresh">Check again</button></div>'};
+ const cryptoStale=h=>{const m=String(h.paperTrading||'').match(/crypto checked (\d{4}-\d\d-\d\d)/);return m&&Date.now()-Date.parse(m[1]+'T00:00:00Z')>2.5*864e5};
  // the six dashboards: where each card lives, how it loads, its short card and its full overview
  const dashData={};
  const DASH={
   paper:{name:'📈 Paper trading',title:'📈 Paper trading',tid:'tilePaper',side:'L',load:f=>loadPaper(f),tile:d=>tilePaper(d),full:d=>paperFull(d),cache:'max_cache_paper',
    info:'Paper trading uses pretend money (₱250,000 = 5 × ₱50,000: PSE, Forex, Crypto, Copy trading, US ETFs) so you can watch tested plans before using real money. Max checks each one every day, and emails you each buy and sell with how to copy it. “Sell below” is the price where Max will sell: a stop-loss that only moves up, or the long average for Bitcoin and gold. Possible outcome comes from the 2014–2026 test of this mix; it is not a promise and not advice.'},
-  guide:{name:'💰 Best rates',title:'💰 Investment rates',tid:'tileGuide',side:'L',load:f=>loadGuide(f),tile:d=>tileGuide(d),full:d=>ratesFull(d),cache:'max_cache_guide',
+  guide:{name:'💰 Investments',title:'💰 Investments',tid:'tileGuide',side:'L',load:f=>loadGuide(f),tile:d=>tileGuide(d),full:d=>ratesFull(d),cache:'max_cache_guide',
    info:'Max checks Philippine rates every day: government (MP2, bonds), savings banks, time deposits, funds, dividend stocks and promos. “₱/month” is what ₱100,000 would earn in a month after tax. Promos last weeks, not a year, so read the conditions. These are examples to compare, not licensed financial advice.'},
   notes:{name:'🗂 Notes',title:'🗂 Notes',tid:'tileNotes',side:'L',load:()=>loadNotesSum(),tile:d=>tileNotes(d),full:d=>notesFull(d),cache:null,
    info:'Your second brain. Trading and Investments notes have a “Latest data” box that Max refreshes by himself; your own text in a note is kept. The count is the notes saved on this phone.'},
@@ -4267,7 +4425,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    info:'Max checks each website once a day: is it up and fast, SEO and security problems, affiliate links (including your /go/ Amazon links and tag), new content and visitors. Visitors need a Cloudflare analytics key that only you can add.'},
   apps:{name:'📱 Apps',title:'📱 Apps',tid:'tileApps',side:'R',load:f=>loadStatus(f),tile:d=>statusTile('apps')(d),full:d=>statusFull('apps')(d),cache:'max_cache_status',
    info:'Max checks each app once a day: is it up, its speed on a phone, its version, and on Google Play the releases and newest reviews.'},
-  status:{name:'🩺 Status',title:'🩺 Max status',tid:'tileStatus',side:'R',load:f=>loadHealth(f),tile:d=>tileStatus(d),full:d=>healthFull(d),cache:'max_cache_health',
+  status:{name:'🛡 Security',title:'🛡 Security',tid:'tileStatus',side:'R',load:f=>loadHealth(f),tile:d=>tileStatus(d),full:d=>healthFull(d),cache:'max_cache_health',
    info:'This is Max’s own health: what is connected, whether today’s jobs ran, and what the Guard found. An alert means Max will retry or needs you; “check everything now” runs the Guard again.'}};
  async function renderDash(which,force){
   if(!workerBase())return;document.body.classList.add('has-dash');
@@ -4277,7 +4435,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!d){t.innerHTML='<div class="tile-top"><span>'+D.name+'</span></div><div class="muted small">'+dashE(offline)+'</div>';continue}
    dashData[k]=d;t.innerHTML=D.tile(d)+(offline?'<div class="muted small">saved copy</div>':'');
    if(k==='status'){const b=document.querySelector('[data-edge="status"]');if(b)b.classList.toggle('alert',healthAlerts(d).length>0)}
-   if(dashOpen===k)$('dashFullBody').innerHTML=(offline?'<div class="muted small">'+dashE(offline)+'</div>':'')+D.full(d)}
+   if(dashOpen===k){$('dashFullBody').innerHTML=(offline?'<div class="muted small">'+dashE(offline)+'</div>':'')+D.full(d);if(k==='paper')toJournal()}}
  }
  let drawerOpen=null;
  function closeDrawer(){['drawerL','drawerR'].forEach(i=>$(i)&&$(i).classList.remove('open'));if($('drawerShade'))$('drawerShade').hidden=true;drawerOpen=null}
@@ -4286,10 +4444,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(focus&&DASH[focus]){const t=$(DASH[focus].tid);if(t)try{t.scrollIntoView({block:'nearest'})}catch{}}}
  function showFull(k){if(!DASH[k])k='paper';closeDrawer();dashOpen=k;const o=$('dashFull'),D=DASH[k];$('dashFullTitle').textContent=D.title;$('dashFullInfoBox').textContent=D.info;$('dashFullInfoBox').hidden=true;$('dashFullInfo').setAttribute('aria-expanded','false');
   $('dashFullBody').innerHTML='<div class="muted small">Loading…</div>';o.hidden=false;document.body.classList.add('dash-full-open');
-  const d=dashData[k]||(k==='paper'?dashPaperData:k==='guide'?dashGuideData:k==='sites'||k==='apps'?dashStatusData:null);if(d)$('dashFullBody').innerHTML=D.full(d);renderDash(k)}
+  const d=dashData[k]||(k==='paper'?dashPaperData:k==='guide'?dashGuideData:k==='sites'||k==='apps'?dashStatusData:null);if(d){$('dashFullBody').innerHTML=D.full(d);if(k==='paper')toJournal()}renderDash(k)}
  function closeFull(){dashOpen=null;$('dashFull').hidden=true;document.body.classList.remove('dash-full-open')}
  function initDash(){
-  Object.keys(DASH).forEach(k=>{const t=$(DASH[k].tid);if(!t)return;t.addEventListener('click',()=>showFull(k));t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t.click()}})});
+  Object.keys(DASH).forEach(k=>{const t=$(DASH[k].tid);if(!t)return;t.addEventListener('click',()=>{if(k==='notes'){closeDrawer();setSection('notes');return}showFull(k)});t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();t.click()}})});
   document.querySelectorAll('[data-edge]').forEach(b=>b.addEventListener('click',()=>openDrawer(DASH[b.dataset.edge].side,b.dataset.edge)));
   $('drawerShade').addEventListener('click',closeDrawer);
   $('dashFullInfo').addEventListener('click',()=>{const b=$('dashFullInfoBox');b.hidden=!b.hidden;$('dashFullInfo').setAttribute('aria-expanded',String(!b.hidden))});
@@ -4304,6 +4462,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    openDrawer(dx>0?'L':'R')},{passive:true});
   $('dashFullClose').addEventListener('click',closeFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(dashOpen)closeFull();else if(drawerOpen)closeDrawer()}});
   $('dashFull').addEventListener('click',async e=>{const pt=e.target.closest('[data-ptab]');if(pt){paperTab=pt.dataset.ptab;if(dashPaperData)$('dashFullBody').innerHTML=paperFull(dashPaperData);return}
+   const pk=e.target.closest('[data-pj-kind],[data-pj-more]');if(pk){if(pk.dataset.pjKind){pjKind=pk.dataset.pjKind;pjN=5}else pjN=+pk.dataset.pjMore;const d=dashData.paper||dashPaperData;if(d){const y=$('dashFullBody').scrollTop;$('dashFullBody').innerHTML=paperFull(d);$('dashFullBody').scrollTop=y}return}
    const t=e.target.closest('[data-dash]');if(!t)return;e.preventDefault();
    if(t.dataset.dash==='open-notes'){closeFull();setSection('notes');return}
    if(t.dataset.dash==='status-refresh'){t.disabled=true;t.textContent='Checking…';await renderDash('status',true);return}
@@ -4313,8 +4472,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   renderDash();setInterval(()=>{if(document.visibilityState==='visible'&&screen==='home')renderDash(dashOpen==='guide'?'guide':'paper')},5*60e3);
  }
  window.maxRenderDash=renderDash;window.maxOpenDrawer=openDrawer;window.maxCloseDrawer=closeDrawer;
- function openDash(which){closeConnection();closeMenu();setSection('home');if(which==='journal'){paperTab='journal';which='paper'}
-  if(which==='status'||which==='notes'){showFull(which);return which==='status'?'Here is my status.':'Here is your notes summary.'}
+ function openDash(which){closeConnection();closeMenu();setSection('home');if(which==='journal'){which='paper';pjN=10;pjKind='trades';wantJournal=true}
+  if(which==='notes'){setSection('notes');return 'Here are your notes.'}
+  if(which==='status'){showFull(which);return 'Here is the security overview.'}
   if(which==='sites'||which==='apps'){showFull(which);const s=dashStatusData?.summary?.[which]||[];return s.length?(which==='sites'?'Websites':'Apps')+': '+s.filter(x=>x.ok).length+' of '+s.length+' all good'+(s.some(x=>!x.ok)?' — needs attention: '+s.filter(x=>!x.ok).map(x=>x.name+(x.problems&&x.problems.length?' ('+x.problems.join(', ')+')':'')).join('; '):'')+'. The full report is on your screen.':'Here is the '+(which==='sites'?'websites':'apps')+' status.'}
   showFull(which==='paper'?'paper':'guide');
   if(which==='paper'){const p=dashPaperData;return p?'Paper trading: your '+dashPeso(paperAlloc(p).start)+' is now '+dashPeso(paperAlloc(p).total)+' ('+dashPct(paperAlloc(p).pct)+' since '+(p.planSince||p.opened||'the start')+'). The full view is on your screen.':'Here is your paper trading.'}
@@ -4750,7 +4910,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const vecDecode=b=>{const s=atob(b),v=new Float32Array(s.length);let m=0;for(let i=0;i<s.length;i++){let x=s.charCodeAt(i);if(x>127)x-=256;v[i]=x;m+=x*x}m=Math.sqrt(m)||1;for(let i=0;i<v.length;i++)v[i]/=m;return v};
  const dot=(a,b)=>{let s=0;for(let i=0;i<Math.min(a.length,b.length);i++)s+=a[i]*b[i];return s};
  const noteHash=n=>{const t=(n.title||'')+'|'+(n.category||'')+'|'+plain(n.body).slice(0,3000);let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return String(h)};
- const vecText=n=>(n.title||'')+'\n'+(n.category||'')+'\n'+(n.tags||[]).join(', ')+'\n'+plain(n.body).slice(0,3000);
+ const vecText=n=>(n.title||'')+'\n'+(n.category||'')+'\n'+(n.tags||[]).join(', ')+'\n'+plain(n.body).slice(0,3000)+noteAtts(n).map(a=>'\nAttachment '+a.name+': '+a.summary).join('').slice(0,1500);
  // Long notes (SOLAS, COLREG…): also one vector per section, so a question about Rule 19 or Annex VI finds the right part
  function vecChunks(n){const html=String(n.body||'');if(plain(html).length<=3200)return [];
   const parts=html.split(/(?=<p><(?:b|strong)>)|(?=<hr\b)|(?=<h[1-4]\b)/i).map(h=>plain(h).trim()).filter(Boolean),out=[];let cur='';

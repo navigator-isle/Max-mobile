@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18n";
+const WORKER_VERSION = "max-worker-2026-11-18o";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -454,11 +454,13 @@ async function relevantNotes(db, question) {
   const words = keywords(question);
   if (!words.length) return [];
   const ws = words.slice(0, 8), pat = w => "%" + w.replace(/[%_]/g, "") + "%";
-  const where = ws.map(() => "(LOWER(title) LIKE ? OR LOWER(body) LIKE ? OR LOWER(tags) LIKE ?)").join(" OR ");
+  const where = ws.map(() => "(LOWER(title) LIKE ? OR LOWER(body) LIKE ? OR LOWER(tags) LIKE ? OR LOWER(COALESCE(analysis, '')) LIKE ?)").join(" OR ");
   const score = ws.map(() => "(CASE WHEN LOWER(title) LIKE ? THEN 6 ELSE 0 END + CASE WHEN LOWER(tags) LIKE ? THEN 3 ELSE 0 END + CASE WHEN LOWER(body) LIKE ? THEN 1 ELSE 0 END)").join(" + ");
   const binds = [...ws.flatMap(w => [pat(w), pat(w), pat(w)]), ...ws.flatMap(w => [pat(w), pat(w), pat(w)])];   // 8 words × 6 = 48 values (D1 limit 100)
-  const rows = (await db.prepare(`SELECT *, (${score}) AS sc FROM max_notes WHERE deleted = 0 AND (${where}) ORDER BY sc DESC, updated_at DESC LIMIT 40`).bind(...ws.flatMap(w => [pat(w), pat(w), pat(w)]), ...ws.flatMap(w => [pat(w), pat(w), pat(w)])).all()).results || [];
-  return rows.map(rowToNote).map(n => {
+  const rows = (await db.prepare(`SELECT *, (${score}) AS sc FROM max_notes WHERE deleted = 0 AND (${where}) ORDER BY sc DESC, updated_at DESC LIMIT 40`).bind(...ws.flatMap(w => [pat(w), pat(w), pat(w)]), ...ws.flatMap(w => [pat(w), pat(w), pat(w), pat(w)])).all()).results || [];
+  // 22 Nov 2026: a note's attachments (pictures, files, links Max read) count as part of the note
+  const attText = n => (Array.isArray(n.analysis?.attachments) ? n.analysis.attachments : []).map(a => `Attachment “${a.name || a.url || ""}”: ${[a.summary, ...(a.points || []), a.text].filter(Boolean).join(" ")}`).join("\n");
+  return rows.map(rowToNote).map(n => { const at = attText(n); return at ? {...n, body: n.body + "<h3>Attachments</h3><p>" + at.replace(/[<>&]/g, " ").slice(0, 6000) + "</p>"} : n; }).map(n => {
     const hay = (n.title + " " + plainText(n.body) + " " + n.tags.join(" ")).toLowerCase();
     return {n, score: words.reduce((s, w) => s + (hay.includes(w) ? 1 : 0), 0) + (words.some(w => n.title.toLowerCase().includes(w)) ? 1 : 0)};
   }).sort((a, b) => b.score - a.score).slice(0, 3).map(x => x.n);
@@ -935,6 +937,7 @@ async function siteStats(env, host, todayFrom, weekFrom, to) {
   const query = `{viewer{accounts(filter:{accountTag:${gqlStr(acc)}}){
     today: rumPageloadEventsAdaptiveGroups(limit:1, filter:${f(todayFrom)}){count sum{visits}}
     week: rumPageloadEventsAdaptiveGroups(limit:1, filter:${f(weekFrom)}){count sum{visits}}
+    month: rumPageloadEventsAdaptiveGroups(limit:1, filter:${f(new Date(Date.parse(to) - 30 * 864e5).toISOString())}){count sum{visits}}
     pages: rumPageloadEventsAdaptiveGroups(limit:5, filter:${f(todayFrom)}, orderBy:[count_DESC]){count dimensions{requestPath}}
     countries: rumPageloadEventsAdaptiveGroups(limit:3, filter:${f(weekFrom)}, orderBy:[count_DESC]){count dimensions{countryName}}
   }}}`;
@@ -943,7 +946,7 @@ async function siteStats(env, host, todayFrom, weekFrom, to) {
   if (!res.ok || (data.errors && data.errors.length)) throw new Error("Cloudflare analytics: " + String((data.errors && data.errors[0] && data.errors[0].message) || res.status).slice(0, 200));
   const a = data?.data?.viewer?.accounts?.[0] || {};
   const one = g => ({visitors: g?.[0]?.sum?.visits || 0, views: g?.[0]?.count || 0});
-  return {host, today: one(a.today), week: one(a.week),
+  return {host, today: one(a.today), week: one(a.week), month: one(a.month),
     topPages: (a.pages || []).map(x => ({path: x.dimensions?.requestPath || "/", views: x.count})),
     countries: (a.countries || []).map(x => ({country: x.dimensions?.countryName || "?", views: x.count}))};
 }
@@ -1791,16 +1794,18 @@ async function guardBackup(env) {
   const out = {ok: true, notes: notes.length, memories: memories.length, settings: settings.length, bytes: data.length, at: Date.now()};
   if (!env.MAX_OWNER_EMAIL || !(await googleRow(env))) throw new Error("Gmail isn't connected, so there is nowhere private to send it");
   const to = String(env.MAX_OWNER_EMAIL).trim(), day = new Date().toISOString().slice(0, 10), bound = "maxbackup" + Math.random().toString(36).slice(2);
-  const code = await codeBackup(env);
-  out.code = code ? code.files + " files" : "not attached";
+  let code = await codeBackup(env);
+  // 22 Nov 2026: notes + code went over Gmail's limit (37 MB). The notes always go; the code zip only when it fits (the code is on GitHub too).
+  if (code && (data.length + code.bytes.length) * 1.37 > 29e6) { out.codeSkipped = "too big for one email with the notes — the code is on GitHub"; code = null; }
+  out.code = code ? code.files + " files" : (out.codeSkipped ? "not attached (" + out.codeSkipped + ")" : "not attached");
   const body = `Max's weekly backup — ${notes.length} notes, ${memories.length} memories, ${settings.length} settings (${Math.round(data.length / 1024)} KB).\n\nKeep this email. To restore: save the attached file, then in Max open Notes → ⋯ → "Restore from a Max backup" and choose it. Nothing newer is overwritten.\nPasswords, keys and sign-ins are never included.` +
-    (code ? `\n\nAlso attached: max-code-${day}.zip — all of Max's code (${code.files} files, built ${String(code.built).slice(0, 10)}). If GitHub or anything else goes away, this zip plus DEPLOY.md inside it rebuilds Max on Cloudflare.` : "");
+    (out.codeSkipped ? "\n\nThe code zip is not attached this time (" + out.codeSkipped + ")." : "") + (code ? `\n\nAlso attached: max-code-${day}.zip — all of Max's code (${code.files} files, built ${String(code.built).slice(0, 10)}). If GitHub or anything else goes away, this zip plus DEPLOY.md inside it rebuilds Max on Cloudflare.` : "");
   const raw = ["To: " + to, "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent("Max backup " + day + " — " + notes.length + " notes"))) + "?=", "MIME-Version: 1.0", `Content-Type: multipart/mixed; boundary="${bound}"`, "",
     "--" + bound, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", body, "",
     "--" + bound, `Content-Type: application/json; name="max-backup-${day}.json"`, `Content-Disposition: attachment; filename="max-backup-${day}.json"`, "Content-Transfer-Encoding: base64", "", b64lines(data),
     ...(code ? ["--" + bound, `Content-Type: application/zip; name="max-code-${day}.zip"`, `Content-Disposition: attachment; filename="max-code-${day}.zip"`, "Content-Transfer-Encoding: base64", "", b64bytes(code.bytes)] : []),
     "--" + bound + "--", ""].join("\r\n");
-  if (raw.length > 30e6) throw new Error("the backup is too big for one email (" + Math.round(raw.length / 1e6) + " MB)");
+  if (raw.length > 30e6) throw new Error("the notes alone are too big for one email (" + Math.round(raw.length / 1e6) + " MB)");
   await gmailSend(env, raw);
   await srvSetting(env, "max_srv_guard_backup", JSON.stringify(out)).catch(() => {});
   return out;
@@ -3670,6 +3675,18 @@ const VBOOK = {
   bonds: {name: "Government bonds (RTB / T-bills)", rule: "Buy the best government bond open to retail buyers today (an open RTB, else 1-year T-bills). Interest after 20% tax. Held to maturity — selling early can lose money when rates rise; at maturity the money goes into the best open bond then."},
   deposits: {name: "Time deposits", rule: "Lock ₱100,000 in the best time deposit that accepts ₱100,000 for its term. Interest after 20% tax at maturity. No early break (banks cut the rate); at maturity the money goes into the best time deposit then."}};
 const VTAX = t => t === "free" ? 0 : t === "10%" ? 0.10 : 0.20;
+// How each product really pays (checked 22 Nov 2026): Maya, MariBank/SeaBank and UNO savings credit interest every day (it then earns too);
+// other savings monthly; RTBs pay a coupon every 3 months to your account (it does NOT earn more); T-bills and time deposits at maturity
+// (unless the product says monthly payout); MP2 once a year (compounded option).
+function vCredit(key, p) {
+  const s = `${p?.name || ""} ${p?.rateText || p?.rate || ""} ${p?.conditions || ""}`;
+  if (key === "mp2") return "yearly";
+  if (key === "hysa") return /\bmaya\b|maribank|seabank|\buno\b/i.test(s) ? "daily" : "monthly";
+  if (key === "bonds") return /t-?bill|treasury bill/i.test(s) ? "maturity" : "quarterly payout";
+  if (key === "deposits") return /monthly (payout|interest)|interest paid monthly/i.test(s) ? "monthly payout" : "maturity";
+  return "monthly";
+}
+const CREDIT_WORDS = {daily: "credited every day (it earns interest too)", monthly: "credited at each month end", "quarterly payout": "paid out every 3 months (does not earn more)", "monthly payout": "paid out every month (does not earn more)", maturity: "paid at maturity", yearly: "added once a year (31 Dec)"};
 function vCap(i) {                  // the most money a product pays its rate on (from its conditions), or null
   const m = /(?:max(?:imum)?|cap(?:ped)?|first|nothing above|up to)\s*₱\s*([\d,.]+)\s*(k|m|million)?/i.exec(`${i.conditions || ""} ${i.rate || ""}`); if (!m) return null;
   let v = parseFloat(m[1].replace(/,/g, "")); const u = (m[2] || "").toLowerCase(); if (u === "k") v *= 1e3; else if (u) v *= 1e6; return v;
@@ -3701,21 +3718,34 @@ async function investStep(env, today) {
     }
     const open = (p, why) => { const term = key === "hysa" ? null : key === "mp2" ? 5 * 365 : key === "bonds" ? (/rtb|retail treasury/i.test(p.name) ? 5 * 365 : 365) : vTermDays(p);
       B.product = {name: p.name, rateNum: +p.rateNum, tax: p.tax, rateText: p.rate, since: today, until: term ? pAdd(today, term) : null, url: p.url || ""};
+      B.product.credit = vCredit(key, {...p, rateText: p.rate});
       J({book: key, kind: "OPEN", d: today, php: Math.round(B.principal), text: `Put ${peso(B.principal)} in ${p.name} at ${p.rate}${B.product.until ? " until " + B.product.until : ""} — about ${peso(B.principal * p.rateNum / 100 * (1 - VTAX(p.tax)))} a year after tax`, why,
         copy: key === "mp2" ? "Open MP2 in Virtual Pag-IBIG (₱500 minimum), choose the 5-year compounded option." : key === "bonds" ? `Buy through your bank or GCash GBonds when it is offered (${p.conditions || "check minimums"}).` : `Open it in the bank's app (${p.conditions || "check conditions"}).`}); };
     if (!B.product) { open(best, cfg.rule); out.push(key + ": opened"); }
     // interest day by day since the last run (after tax), paid monthly for savings, at maturity for locked ones, yearly for MP2
     for (let d = pAdd(B.last, 1); d <= today; d = pAdd(d, 1)) {
-      const P = B.product, gross = (B.principal + (key === "hysa" ? 0 : 0)) * P.rateNum / 100 / 365, tax = gross * VTAX(P.tax);
-      B.accrued += gross - tax; B.taxPaid += tax;
+      const P = B.product, cr = P.credit || (P.credit = vCredit(key, P)), gross = B.principal * P.rateNum / 100 / 365, tax = gross * VTAX(P.tax);
+      B.accrued += gross - tax; B.taxPaid += tax; B.paidOut = B.paidOut || 0;
       const monthEnd = pAdd(d, 1).slice(8) === "01", yearEnd = d.slice(5) === "12-31", matured = P.until && d >= P.until;
-      if ((key === "hysa" && monthEnd) || (key === "mp2" && yearEnd) || ((key === "bonds" || key === "deposits") && matured)) {
+      const qEnd = cr === "quarterly payout" && P.since && d > P.since && d.slice(8) === P.since.slice(8) && ((+d.slice(0, 4) * 12 + +d.slice(5, 7)) - (+P.since.slice(0, 4) * 12 + +P.since.slice(5, 7))) % 3 === 0;
+      if (matured) {                                   // end of term: interest + any coupons already paid go back to work
+        B.principal += B.accrued + B.paidOut; B.credited += B.accrued;
+        J({book: key, kind: "MATURED", d, php: Math.round(B.accrued), text: `${P.name} matured: ${peso(B.accrued)} interest after tax${B.paidOut ? " (plus " + peso(B.paidOut) + " coupons paid earlier)" : ""} → ${peso(B.principal)}`});
+        B.accrued = 0; B.paidOut = 0;
+        const nb = vPick(g, key); if (nb) open(nb, `${P.name} matured on ${P.until}. ${cfg.rule}`);
+      } else if (cr === "daily") { B.principal += B.accrued; B.credited += B.accrued; B.accrued = 0;
+        if (monthEnd) J({book: key, kind: "INTEREST", d, php: Math.round(B.principal - (B.monthStart || B.principal)), text: `${P.name}: interest credited every day this month → ${peso(B.principal)}`});
+        if (monthEnd) B.monthStart = B.principal;
+      } else if ((cr === "monthly" && monthEnd) || (cr === "yearly" && yearEnd)) {
         B.principal += B.accrued; B.credited += B.accrued;
-        J({book: key, kind: matured ? "MATURED" : "INTEREST", d, php: Math.round(B.accrued), text: `${P.name}: ${peso(B.accrued)} interest after tax credited (${matured ? "matured" : key === "mp2" ? "yearly dividend, estimate" : "monthly"}) → ${peso(B.principal)}`});
+        J({book: key, kind: "INTEREST", d, php: Math.round(B.accrued), text: `${P.name}: ${peso(B.accrued)} interest after tax ${cr === "yearly" ? "added (yearly dividend, estimate)" : "credited (month end)"} → ${peso(B.principal)}`});
         B.accrued = 0;
-        if (matured) { const nb = vPick(g, key); if (nb) open(nb, `${P.name} matured on ${P.until}. ${cfg.rule}`); }
+      } else if ((cr === "monthly payout" && monthEnd) || qEnd) {
+        B.paidOut += B.accrued; B.credited += B.accrued;
+        J({book: key, kind: "INTEREST", d, php: Math.round(B.accrued), text: `${P.name}: ${peso(B.accrued)} ${qEnd ? "coupon (every 3 months)" : "interest"} paid out after tax — it sits in your account and does not earn more`});
+        B.accrued = 0;
       }
-      B.hist.push([d, Math.round(B.principal + B.accrued)]);
+      B.hist.push([d, Math.round(B.principal + B.accrued + B.paidOut)]);
     }
     if (B.hist.length > 800) B.hist.splice(0, B.hist.length - 800);
     B.last = today;
@@ -3748,8 +3778,10 @@ async function investStep(env, today) {
   return "invest: " + out.join(", ");
 }
 function investTotals(V) {
-  const parts = Object.entries(VBOOK).map(([k, c]) => { const B = V.books[k]; const php = B ? B.principal + B.accrued : 100000;
+  const parts = Object.entries(VBOOK).map(([k, c]) => { const B = V.books[k]; const php = B ? B.principal + B.accrued + (B.paidOut || 0) : 100000;
+    const cr = B?.product ? (B.product.credit || vCredit(k, B.product)) : null;
     return {key: k, name: c.name, php: Math.round(php), pct: +((php / 100000 - 1) * 100).toFixed(3), product: B?.product || null, taxPaid: Math.round(B?.taxPaid || 0), fees: B?.fees || 0, rule: c.rule,
+      credit: cr, creditText: cr ? CREDIT_WORDS[cr] : null, earned: B ? Math.round(php - 100000 + (B.fees || 0)) : 0, paidOut: Math.round(B?.paidOut || 0), accrued: Math.round(B?.accrued || 0),
       perYear: B?.product ? Math.round(B.principal * B.product.rateNum / 100 * (1 - VTAX(B.product.tax))) : null, hist: (B?.hist || []).slice(-90)}; });
   const total = parts.reduce((s, p) => s + p.php, 0);
   return {parts, total, start: 400000, pct: +((total / 400000 - 1) * 100).toFixed(3)};
@@ -3988,7 +4020,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
