@@ -14,14 +14,16 @@ tags: [hkc, ship-recycling, imo, convention]
 - Entry-into-force conditions: 15 States · 40% of world tonnage · recycling capacity ≥3% of their tonnage
 - Bangladesh and Liberia ratified 26 Jun 2023 → conditions met
 - In force 26 Jun 2025 (24 months after the conditions were met) · IMO lists 24 Parties covering about 57% of world tonnage
-- New ship = building contract on/after 26 Jun 2025, or (no contract) keel laid on/after 26 Dec 2025, or delivery on/after 26 Dec 2027
-- MEPC 80 (2023): amendments to Appendices 1 and 2 adding cybutryne (matching the AFS Convention)
+- Annex Reg 1: existing ship = a ship that is not a new ship. New ship = building contract on/after entry into force (26 Jun 2025), or (no contract) keel laid or similar stage on/after 6 months after (26 Dec 2025), or delivery on/after 30 months after (26 Dec 2027)
+- Entry-into-force conditions at June 2023: about 45.9% of world tonnage and 3.31% recycling capacity
+- Cybutryne: Appendix 1 follows AFS Convention Annex 1 as in force (AFS amended by MEPC.331(76)) · the 2023 IHM Guidelines MEPC.379(80) (adopted MEPC 80, Jul 2023) add cybutryne to the Appendix 1 list for the IHM, with limits of 1,000 mg/kg dry paint (hull sample) or 200 mg/kg (wet paint sample)
+- Older IHM guidelines: MEPC.179(59), MEPC.197(62), MEPC.269(68) → replaced by MEPC.379(80) (class societies accept earlier-reviewed Part I with updates)
 
 **Applies to**
 - Ships flying a Party flag and ships in Party ports
 - Ship Recycling Facilities under a Party's jurisdiction
 - Survey and certificate requirements: ships ≥500 GT on international voyages
-- Not covered: warships, naval auxiliaries, State ships on non-commercial service, ships <500 GT, ships operating only in own waters (Party should still act consistently)
+- Not covered: warships, naval auxiliaries, State ships on non-commercial service, ships <500 GT, ships operating throughout their life only in waters of the State whose flag they fly (Party should still act consistently, as far as reasonable and practicable) — Art 3
 
 **Articles (21)**
 - Art 1 General obligations · Art 2 Definitions · Art 3 Application
@@ -39,7 +41,7 @@ tags: [hkc, ship-recycling, imo, convention]
 
 **Annex Ch 1 — General**
 - Reg 1 Definitions (hazardous material, IHM, SRF, ship recycling, competent authority)
-- Reg 2 General applicability · Reg 3 Relationship with other standards, recommendations and guidance
+- Reg 2 General applicability · Reg 3 Relationship with other standards, recommendations and guidance (take into account relevant ILO and Basel Convention standards)
 
 **Annex Ch 2 — Requirements for Ships**
 
@@ -101,9 +103,10 @@ tags: [hkc, ship-recycling, imo, convention]
 
 **EU Ship Recycling Regulation (EU 1257/2013) — on top of HKC**
 - EU-flag ships ≥500 GT: recycle only at yards on the European List (EU-approved)
-- IHM required: EU ships and non-EU ships calling at EU ports (since 31 Dec 2020)
-- Stricter than HKC on yards (e.g., impermeable floors, no beaching in practice) · EU IHM includes PFOS and HBCDD
-- HKC certificate does not replace EU SRR compliance
+- Large commercial seagoing EU-flag ships (≥500 GT): recycle only at yards on the European List (from 2019)
+- IHM required: EU ships and non-EU ships calling at EU ports or anchorages (since 31 Dec 2020); non-EU ships carry a Statement of Compliance
+- Stricter than HKC on yards (e.g., impermeable floors, no beaching in practice) · EU Annex I prohibits PFOS as well · EU IHM list (Annex II) includes HBCDD, which HKC does not require
+- HKC certificate does not automatically replace EU SRR compliance (EU SRR is based on HKC; check with flag and class)
 
 **Key Point**
 - Onboard: keep IHM Part I updated with every new or changed equipment · ask for Material Declarations (MD) and Supplier Declarations of Conformity (SDoC) from suppliers
@@ -112,6 +115,9 @@ tags: [hkc, ship-recycling, imo, convention]
 - Before sale for recycling: final survey + IRRC (3 months) + yard with DASR
 
 **Sources (checked 10 Nov 2026; articles, regulations and appendices re-checked against the treaty text 23 Nov 2026)**
+- IMO — Recycling of ships and HKC (guidelines list): https://www.imo.org/en/MediaCentre/HotTopics/Pages/Recycling-of-ships-and-Hong-Kong-Convention.aspx
+- EMSA — ship recycling (EU SRR): https://www.emsa.europa.eu/sustainable-shipping/ship-recycling.html
+- ABS — HKC and IHM Part I (MEPC.379(80), cybutryne): https://ww2.eagle.org/content/dam/eagle/regulatory-news/2023/ABS%20Regulatory%20News%20-%20Ship%20Recycling.pdf
 - Treaty text (NUS CIL): https://cil.nus.edu.sg/wp-content/uploads/2019/02/2009-HK-Convention-For-Safe-and-Environmentally-Sound-Ship-Recycling.pdf
 - IMO — HKC entry into force: https://www.imo.org/en/MediaCentre/PressBriefings/Pages/Hong-Kong-Convention-entry-into-force.aspx
 - Britannia P&I — Hong Kong Convention (Aug 2025): https://britanniapandi.com/wp-content/uploads/2025/08/Hong-Kong-Convention.pdf
