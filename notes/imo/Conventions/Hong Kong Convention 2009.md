@@ -9,6 +9,8 @@ tags: [hkc, ship-recycling, imo, convention]
 - Yard: Ship Recycling Facility (SRF) authorized by its State · Ship Recycling Facility Plan (SRFP) · ship-specific Ship Recycling Plan (SRP)
 - Convention (21 Articles) + Annex (Regulations, Ch 1–4) + 7 Appendices + IMO guidelines
 
+![[diagram:hkc-flow|Steps for a ship: IHM Part I in service (initial and renewal surveys), IHM Parts II and III before recycling, Ship Recycling Plan from the authorized yard, final survey, then the Ready for Recycling Certificate (Regs 5, 9, 10, 11, 16). Drawn from the Convention text.]]
+
 **History**
 - Adopted 15 May 2009, Hong Kong diplomatic conference
 - Entry-into-force conditions: 15 States · 40% of world tonnage · recycling capacity ≥3% of their tonnage

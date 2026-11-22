@@ -48,6 +48,8 @@ tags: [clc, fund, iopc, oil-pollution, liability, compensation, tanker, imo, con
 **Supplementary Fund 2003 — Tier 3**
 - Maximum payable for any one incident: **750 million SDR**, including amounts paid under the 1992 CLC and Fund
 
+![[diagram:clc-fund-tiers|Three tiers per incident in million SDR: CLC owner limit up to 89.77, Fund 1992 total 203, Supplementary Fund 2003 total 750. Bar lengths are to scale.]]
+
 **Key Point**
 - Tankers carrying more than 2,000 tons of oil in bulk as cargo must have CLC insurance; the CLC covers the tanker's bunker oil as well as cargo oil
 - Three tiers per incident: CLC owner limit (max 89.77 million SDR) → Fund 1992 (203 million SDR total) → Supplementary Fund (750 million SDR total)

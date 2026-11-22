@@ -20,6 +20,8 @@ function toHtml(md) {
     }
     close(0);
     const t = raw.trim(); if (!t) continue;
+    const dg = /^!\[\[diagram:([a-z0-9-]+)(?:\|([^\]]*))?\]\]$/.exec(t);
+    if (dg) { out += `<figure class="note-diagram" data-diagram="${dg[1]}"><figcaption>${inline(dg[2] || "Diagram")}</figcaption></figure>`; continue; }
     if (t === "---") out += "<hr>";
     else if (/^\*\*[^*]+\*\*$/.test(t)) out += "<p><b>" + inline(t.slice(2, -2)) + "</b></p>";
     else out += "<p>" + inline(t) + "</p>";
@@ -37,6 +39,11 @@ for (const [dir, cat] of [["", "Maritime â€º IMO"], ["Conventions", "Maritime â€
   }
 }
 const W = path.join(ROOT, "worker.js"), src = fs.readFileSync(W, "utf8"), line = "const IMO_NOTES = " + JSON.stringify(notes) + ";";
+// Diagrams (notes/diagrams.mjs) go into the app (index.html) so the notes can show them.
+const { DIAGRAMS } = await import("./diagrams.mjs");
+{ const I = path.join(ROOT, "index.html"), h = fs.readFileSync(I, "utf8"), re = /const DIAGRAMS=\{.*\};\/\*diagrams-end\*\//;
+  if (!re.test(h)) throw new Error("index.html has no DIAGRAMS placeholder");
+  const nh = h.replace(re, () => "const DIAGRAMS=" + JSON.stringify(DIAGRAMS) + ";/*diagrams-end*/"); if (nh !== h) fs.writeFileSync(I, nh); }
 const next = /^const IMO_NOTES = .*;$/m.test(src) ? src.replace(/^const IMO_NOTES = .*;$/m, () => line) : src.replace(/^(const SEED_NOTES = .*;)$/m, (all) => all + "\n// IMO conventions and codes (Obsidian notes in notes/imo, made by notes/imo-to-js.mjs).\n" + line);
 fs.writeFileSync(W, next);
 console.log(notes.length + " IMO notes, " + line.length + " bytes");

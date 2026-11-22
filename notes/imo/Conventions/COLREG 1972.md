@@ -129,6 +129,8 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
   - (e) except where it has been determined that risk of collision does not exist, every vessel which hears apparently forward of her beam the fog signal of another vessel, or which cannot avoid a close-quarters situation with another vessel forward of her beam, shall reduce her speed to the minimum at which she can be kept on her course; she shall if necessary take all her way off and in any event navigate with extreme caution until danger of collision is over
   - There is no stand-on/give-way role between vessels not in sight of one another — each vessel acts under Rule 19
 
+![[diagram:colreg-situations|Rule 13 overtaking (more than 22.5 degrees abaft the beam, the overtaking vessel keeps clear), Rule 14 head-on (both alter to starboard, pass port to port), Rule 15 crossing (the vessel with the other on her starboard side gives way).]]
+
 **Part C — Lights and shapes (Rules 20–31)**
 - Rule 20 Application: in all weathers; lights from sunset to sunrise (no other lights unless they cannot be mistaken for the prescribed lights and do not impair them); prescribed lights, if carried, also from sunrise to sunset in restricted visibility, and may be shown in all other circumstances when considered necessary; shapes by day; lights and shapes must comply with Annex I
 - Rule 21 Definitions:
@@ -164,6 +166,8 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
 - Rule 29 **Pilot vessels** on pilotage duty: two all-round lights in a vertical line, **white over red**; sidelights and sternlight when underway; anchor lights/shape when at anchor
 - Rule 30 **Anchored vessels and vessels aground**: all-round white light or one ball in the fore part, and an all-round white light at or near the stern lower than the forward one (a vessel of less than 50 m may show only one all-round white light); working lights may be used; vessels of **100 m or more must** illuminate their decks; aground: anchor lights plus two all-round red lights in a vertical line (shapes: three balls in a vertical line); vessels under 12 m aground need not show the red lights or balls; vessels under 7 m at anchor not in or near a narrow channel, fairway, anchorage or where other vessels normally navigate need not show anchor lights
 - Rule 31 **Seaplanes and WIG craft** that cannot show lights and shapes with the characteristics or positions prescribed show lights and shapes as closely similar as possible
+
+![[diagram:colreg-light-arcs|Rule 21 light arcs: masthead light white 225 degrees, sidelights green starboard and red port 112.5 degrees each, sternlight white 135 degrees.]]
 
 **Part D — Sound and light signals (Rules 32–37)**
 - Rule 32 Definitions: **short blast** about 1 second · **prolonged blast** 4–6 seconds

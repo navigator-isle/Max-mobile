@@ -20,6 +20,8 @@ tags: [nairobi, wreck-removal, wrc, imo, convention, liability]
 - Ship = seagoing vessel of any type: hydrofoils, air-cushion vehicles, submersibles, floating craft and platforms — except platforms engaged in seabed mineral exploration, exploitation or production
 - Not covered (Art 4): measures under the 1969 Intervention Convention and its 1973 Protocol · warships and government non-commercial ships, unless the State decides otherwise
 
+![[diagram:wrc-convention-area|Convention area: the exclusive economic zone (up to 200 nm from the baselines if no EEZ is declared). The territory and territorial sea are covered only if the State opts in (Art 3(2)), and then only Arts 7 to 9 apply. Drawn from the Convention text.]]
+
 **Key definitions (Art 1)**
 - Wreck: after a maritime casualty — a sunken or stranded ship · any part of a ship · any object lost from a ship that is adrift or stranded · a ship about to sink or strand if effective assistance is not already being given
 - Hazard: a condition or threat that impedes navigation, or may reasonably cause major harmful consequences to the marine environment, the coastline or related interests of one or more States
