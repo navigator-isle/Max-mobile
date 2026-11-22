@@ -22,7 +22,7 @@
   // Free backup brain (Cloudflare Workers AI) — used only when Gemini's daily limit is used up.
   "ai": { "binding": "AI" },
   // Hourly at :45 — emails you new paper-trading updates (only if you keep trading emails on).
-  "triggers": { "crons": ["45 * * * *"] },
+  "triggers": { "crons": ["45 * * * *", "*/20 * * * *"] },
   "observability": { "enabled": true },
   // Max's phone app (built into ./site by build.mjs). Files are served directly; /api/* and /health go to worker.js.
   // _src/ holds a private copy of Max's code for backups — the Worker answers those paths itself and never serves them.

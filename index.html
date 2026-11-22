@@ -588,11 +588,12 @@ body.on-home.has-dash .edge-tabs{display:flex}
   </main>
 
   <div id="drawerShade" class="drawer-shade" hidden></div>
-  <aside id="drawerL" class="drawer left" aria-label="Trading, Investments, Notes">
+  <aside id="drawerL" class="drawer left" aria-label="Trading, Investments, Notes, Brain">
     <div class="drawer-hint">Swipe back to hide · tap a card for details</div>
     <div id="tilePaper" class="tile" role="button" tabindex="0" aria-label="Paper trading — open the full view"><div class="tile-top"><span>📈 Paper trading</span></div><div class="muted small">Loading…</div></div>
     <div id="tileGuide" class="tile" role="button" tabindex="0" aria-label="Investments — open the full view"><div class="tile-top"><span>💰 Investments</span></div><div class="muted small">Loading…</div></div>
     <div id="tileNotes" class="tile tile-notes" role="button" tabindex="0" aria-label="Open my notes"><div class="tile-top"><span>🗂 Notes</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileBrain" class="tile" role="button" tabindex="0" aria-label="Max’s brain — open the full view"><div class="tile-top"><span>🧠 Max’s brain</span></div><div class="muted small">Loading…</div></div>
   </aside>
   <aside id="drawerR" class="drawer right" aria-label="Websites, Apps, Status">
     <div class="drawer-hint">Swipe back to hide · tap a card for details</div>
@@ -655,6 +656,7 @@ body.on-home.has-dash .edge-tabs{display:flex}
       <button id="collapseAll" class="pill">Close all folders</button>
       <button id="organizeBtn" class="pill">Organize with Max</button>
       <button id="offlineBrainBtn" class="pill">Offline brain</button>
+      <button id="maxBrainBtn" class="pill">🧠 Max’s brain (study)</button>
       <button id="importVault" class="pill">Import Obsidian vault</button>
       <button id="exportVault" class="pill">Export vault for Obsidian</button>
       <button id="exportAll" class="pill">Export all as one file</button>
@@ -3389,6 +3391,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return 'Discarded. Nothing was saved.';
  }
  $('attachBtn').onclick=()=>{$('attachSheet').hidden=false;$('linkInput').value=''};
+ $('maxBrainBtn').onclick=()=>{$('vaultMore').hidden=true;showFull('brain')};
  $('offlineBrainBtn').onclick=async()=>{$('vaultMore').hidden=true;const s=await offlineBrainSetup(false);setSub('',s);speak(s)};
  $('attachPick').onclick=()=>{$('attachSheet').hidden=true;$('attachInput').click()};
  $('attachClose').onclick=()=>{$('attachSheet').hidden=true};
@@ -4436,6 +4439,29 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const day=Date.now()-864e5,top={};for(const n of N){const c=String(n.category||'No folder').split(/\s*›\s*/)[0]||'No folder';top[c]=(top[c]||0)+1}
   return {count:N.length,today:N.filter(n=>(n.updatedAt||0)>day).length,folders:Object.entries(top).sort((x,y)=>y[1]-x[1]),recent:[...N].sort((x,y)=>(y.updatedAt||0)-(x.updatedAt||0)).slice(0,8).map(n=>({title:n.title,category:n.category,at:n.updatedAt}))};
  }
+ // Max's brain (23 Nov 2026): what he has studied, his exam score, what to check, and a Study now button
+ let brainAt=0;
+ async function loadBrain(force){
+  if(!force&&dashData.brain&&Date.now()-brainAt<2*60e3)return dashData.brain;
+  const {r,data}=await fetchJson(workerBase()+'/api/brain/status',{method:'GET'},20000);
+  if(r.status===404)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
+  if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  brainAt=Date.now();jset('max_cache_brain',data);return data;
+ }
+ const tileBrain=d=>'<div class="tile-top"><span>🧠 Max’s brain</span></div><div class="tile-big">'+d.studied+'/'+d.total+'</div><div class="tile-label muted small">notes studied'+(d.exam&&d.exam.score!=null?' · exam '+d.exam.score+'%':'')+'</div>'+(d.checks.length?'<div class="tile-line down">'+d.checks.length+' for you to check</div>':d.left?'<div class="tile-line muted small">studying… '+d.left+' left</div>':'<div class="tile-line up">✓ knows all of them</div>');
+ const brainFull=d=>{const pct=d.total?Math.round(d.studied/d.total*100):0,calls=Object.entries(d.usage.calls||{}).map(([k,v])=>dashE(k)+' '+v).join(' · ')||'none yet today';
+  return '<section class="pv-sec"><h3>Overview</h3><div class="pv-total"><b class="'+(d.left?'':'up')+'">'+d.studied+' of '+d.total+' notes studied</b><span class="muted small">Maritime: '+d.maritime.studied+' of '+d.maritime.total+(d.left?' · Max studies by himself, day and night, a few notes every 20 minutes':' · all learned')+'</span></div>'+
+   '<div style="height:8px;border-radius:6px;background:#26303f;margin:8px 0"><div style="height:8px;border-radius:6px;background:#3fb97a;width:'+pct+'%"></div></div>'+
+   '<table class="pv-tbl"><tbody><tr><td>Exam (Max tests himself)</td><td>'+(d.exam.score!=null?d.exam.score+'% · '+d.exam.count+' question'+(d.exam.count===1?'':'s'):'not yet')+'</td></tr>'+
+   '<tr><td>Connections between notes</td><td>'+d.links+'</td></tr><tr><td>Memory map</td><td>'+(d.mapChars?Math.round(d.mapChars/100)/10+' k characters, in every answer':'not built yet')+'</td></tr>'+
+   '<tr><td>Last studied</td><td>'+(d.last?new Date(d.last).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'–')+'</td></tr>'+
+   '<tr><td>Free AIs working today</td><td>'+calls+'</td></tr><tr><td>Gemini used for study</td><td>'+d.usage.gemini+' of '+d.usage.geminiCap+' (chat keeps the rest)</td></tr></tbody></table></section>'+
+   (d.checks.length?'<section class="pv-sec"><h3>Please check ('+d.checks.length+')</h3><div class="muted small">Max thinks these may be wrong but a second AI and an official source did not both agree, so he did NOT change your notes.</div>'+
+    d.checks.map(x=>'<div class="st-row"><b>'+dashE(x.title)+'</b><div class="small">“'+dashE(x.quote)+'”</div><div class="small muted">'+dashE(x.why)+'</div>'+(x.suggest?'<div class="small up">Suggested: '+dashE(x.suggest)+'</div>':'')+(x.source?'<div class="small muted">'+dashE(x.source)+'</div>':'')+
+     '<div class="dash-actions">'+(x.suggest?'<button class="small-btn" data-brain="apply" data-id="'+dashE(x.id)+'" data-i="'+x.i+'">Change it</button>':'')+'<button class="small-btn" data-brain="dismiss" data-id="'+dashE(x.id)+'" data-i="'+x.i+'">Leave it</button></div></div>').join('')+'</section>':'')+
+   (d.fixed.length?'<section class="pv-sec"><h3>Fixed by Max ('+d.fixed.length+')</h3><div class="muted small">Two different AIs and an official source agreed. The old version of the note is kept.</div>'+d.fixed.map(x=>'<div class="st-row"><b>'+dashE(x.title)+'</b><div class="small">“'+dashE(x.quote)+'” → “'+dashE(x.fixed||x.suggest||'')+'”</div>'+(x.source?'<div class="small muted">'+dashE(x.source)+'</div>':'')+'</div>').join('')+'</section>':'')+
+   (d.exam.gaps.length?'<section class="pv-sec"><h3>Max could not answer</h3>'+d.exam.gaps.map(x=>'<div class="small">'+dashE(x.title)+' — '+dashE(x.q||'')+'</div>').join('')+'<div class="muted small">He studies these notes again.</div></section>':'')+
+   '<div class="dash-actions"><button class="small-btn" data-brain="study">Study now</button></div><div class="muted small">AIs in use: '+(d.providers.length?d.providers.map(dashE).join(', '):'none')+'. More free AIs can be added later for faster study.</div>'};
  let healthAt=0;
  async function loadHealth(force){
   if(!force&&dashData.status&&Date.now()-healthAt<5*60e3)return dashData.status;
@@ -4473,6 +4499,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    info:'Max checks each website once a day: is it up and fast, SEO and security problems, affiliate links (including your /go/ Amazon links and tag), new content and visitors. Visitors need a Cloudflare analytics key that only you can add.'},
   apps:{name:'📱 Apps',title:'📱 Apps',tid:'tileApps',side:'R',load:f=>loadStatus(f),tile:d=>statusTile('apps')(d),full:d=>statusFull('apps')(d),cache:'max_cache_status',
    info:'Max checks each app once a day: is it up, its speed on a phone, its version, and on Google Play the releases and newest reviews.'},
+  brain:{name:'🧠 Max’s brain',title:'🧠 Max’s brain',tid:'tileBrain',side:'L',load:f=>loadBrain(f),tile:d=>tileBrain(d),full:d=>brainFull(d),cache:'max_cache_brain',
+   info:'Max studies every note you wrote (maritime first): a short summary, the exact facts, and which other notes it connects to. He keeps a map of everything he knows, tests himself with exam questions, and answers from your notes. If he thinks a note is wrong, he changes it only when a second AI and an official web source agree (old version kept); otherwise it waits here for you.'},
   status:{name:'🛡 Security',title:'🛡 Security',tid:'tileStatus',side:'R',load:f=>loadHealth(f),tile:d=>tileStatus(d),full:d=>healthFull(d),cache:'max_cache_health',
    info:'This is Max’s own health: what is connected, whether today’s jobs ran, and what the Guard found. An alert means Max will retry or needs you; “check everything now” runs the Guard again.'}};
  async function renderDash(which,force){
@@ -4516,6 +4544,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(t.dataset.dash==='status-refresh'){t.disabled=true;t.textContent='Checking…';await renderDash('status',true);return}
    if(t.dataset.dash==='paper-refresh'){t.disabled=true;t.textContent='Refreshing…';await renderDash('paper',true)}
    if(t.dataset.dash==='guide-refresh'){t.disabled=true;t.textContent='Max is checking the latest rates and promos…';try{const {r,data}=await postJson('/api/home/guide/refresh',{},180000);toast(r.ok?(data.updated?.length?'Updated: '+data.updated.join(', '):'Checked — no changes found'):(data.error||'Could not update'))}catch(err){toast(err.message)}await renderDash('guide',true)}});
+  $('dashFull').addEventListener('click',async e=>{const b=e.target.closest('[data-brain]');if(!b)return;e.preventDefault();const a=b.dataset.brain;b.disabled=true;
+   try{if(a==='study'){b.textContent='Max is studying…';const {r,data}=await postJson('/api/brain/study-now',{},120000);if(!r.ok)throw new Error(data.error||'HTTP '+r.status);toast('Studied '+data.studied+' note'+(data.studied===1?'':'s')+(data.left?' · '+data.left+' left':' · all learned'))}
+    else{const {r,data}=await postJson('/api/brain/resolve',{id:b.dataset.id,i:+b.dataset.i,action:a},20000);if(!r.ok)throw new Error(data.error||'HTTP '+r.status);toast(a==='apply'?'Changed in the note (old version kept)':'Left as it is')}}
+   catch(err){toast(err.message)}
+   await renderDash('brain',true)});
   $('dashFull').addEventListener('change',e=>{const k=e.target?.dataset?.mp;if(!k)return;const P=moneyProfile();P[k]=k==='risk'?e.target.value:Math.max(0,+e.target.value||0);jset(MONEY_KEY,P);const sub=e.target.closest('details');if(dashGuideData){$('dashFullBody').innerHTML=ratesFull(dashGuideData);const d=$('dashFullBody').querySelector('.dash-sub');if(d&&sub)d.open=true;const dd=$('dashFullBody').querySelector('.dash-plan details');if(dd)dd.open=true}});
   renderDash();setInterval(()=>{if(document.visibilityState==='visible'&&screen==='home')renderDash(dashOpen==='guide'?'guide':'paper')},5*60e3);
  }

@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18r";
+const WORKER_VERSION = "max-worker-2026-11-18s";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -469,6 +469,237 @@ async function relevantNotes(db, question) {
     return {n, score: words.reduce((s, w) => s + (hay.includes(w) ? 1 : 0), 0) + (words.some(w => n.title.toLowerCase().includes(w)) ? 1 : 0)};
   }).sort((a, b) => b.score - a.score).slice(0, 5).map(x => x.n);   // 22 Nov 2026: 5 notes (was 3) — notes are Max's main source
 }
+// ================= MAX'S BRAIN (23 Nov 2026, Mark) =================
+// Max studies every note (a short digest: summary, exact facts, key terms, which other notes it connects to), keeps a compact MAP of
+// everything he knows, links notes to each other ("neurons"), tests himself with exam questions, and fixes mistakes in the notes only
+// when a SECOND AI plus an official web source agree (old version kept → Undo). Many free AIs take turns so no single quota runs out.
+const BRAIN_SKIP = /^(Trading|Investments?|Max)\b/i;          // auto-written data notes are not "studied"
+const BRAIN_PART = 12000, BRAIN_BATCH = 12000, BRAIN_GEMINI_CAP = 40;
+let brainRot = 0, brainUse = null;
+async function brainDb(env) {
+  const db = env.MAX_MEMORY; await ensureSchema(db);
+  await db.prepare("CREATE TABLE IF NOT EXISTS max_brain (note_id TEXT PRIMARY KEY, title TEXT, folder TEXT, hash TEXT, parts INTEGER, part INTEGER, summary TEXT, facts TEXT, terms TEXT, refs TEXT, links TEXT, suspects TEXT, studied_at INTEGER, model TEXT, exam TEXT)").run();
+  return db;
+}
+const jparse = (s, d) => { try { const v = JSON.parse(s); return v ?? d; } catch { return d; } };
+function brainNoteText(n) {
+  const att = (Array.isArray(n.analysis?.attachments) ? n.analysis.attachments : []).map(a => `Attachment “${a.name || a.url || ""}”: ${[a.summary, ...(a.points || []), a.text].filter(Boolean).join(" ")}`).join("\n");
+  return plainText(n.body) + (att ? "\n" + att : "");
+}
+async function oaiRun(base, key, model, req, extra) {
+  const body = {model, messages: req.messages, max_tokens: req.maxTokens, temperature: req.temperature, ...(req.wantJson ? {response_format: {type: "json_object"}} : {})};
+  const go = () => fetch(base + "/chat/completions", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + key, ...(extra || {})}, body: JSON.stringify(body), signal: AbortSignal.timeout(40000)});
+  let res = await go();
+  if (res.status === 400 && req.wantJson) { delete body.response_format; res = await go(); }
+  const d = await res.json().catch(() => ({}));
+  const text = d.choices?.[0]?.message?.content;
+  if (res.ok && text) return {text, model};
+  return {fail: res.status};
+}
+const modelCache = {};
+async function pickModel(name, base, key, prefer, onlyFree) {
+  const c = modelCache[name]; if (c && c.at > Date.now() - 6 * 3600e3) return c.model;
+  let model = null;
+  try {
+    const r = await fetch(base + "/models", {headers: {Authorization: "Bearer " + key}, signal: AbortSignal.timeout(15000)}); const d = await r.json();
+    const ids = (d.data || []).map(m => String(m.id || "")).filter(id => id && (!onlyFree || /:free$/.test(id)));
+    for (const re of prefer) { model = ids.find(id => re.test(id)); if (model) break; }
+    model = model || ids[0] || null;
+  } catch {}
+  modelCache[name] = {at: Date.now(), model}; return model;
+}
+// Every free AI Max can use for studying. A provider appears only when its key is set (Gemini, Groq, Cloudflare already are).
+function brainProviders(env) {
+  const P = [], skipped = n => backupSkip.get("p:" + n) > Date.now(), rest = (n, ms) => backupSkip.set("p:" + n, Date.now() + ms);
+  if (env.GROQ_API_KEY) P.push({name: "groq", run: async req => {
+    for (const m of GROQ_MODELS) { if (backupSkip.get(m) > Date.now()) continue; const r = await oaiRun("https://api.groq.com/openai/v1", env.GROQ_API_KEY, m, req).catch(() => ({fail: 0}));
+      if (r.text) return r; backupSkip.set(m, Date.now() + (r.fail === 429 ? 10 * 60e3 : 30 * 60e3)); if ([401, 403].includes(r.fail)) break; } return null; }});
+  if (env.AI && typeof env.AI.run === "function") P.push({name: "cloudflare", run: async req => {
+    for (const m of WAI_MODELS) { if (backupSkip.get(m) > Date.now()) continue;
+      try { const r = await env.AI.run(m, {messages: req.messages, max_tokens: Math.min(req.maxTokens, 4096), temperature: req.temperature}); const t = typeof r === "string" ? r : r?.response ?? r?.choices?.[0]?.message?.content ?? ""; if (t) return {text: typeof t === "string" ? t : JSON.stringify(t), model: m}; backupSkip.set(m, Date.now() + 30 * 60e3); }
+      catch (e) { backupSkip.set(m, Date.now() + (/capacity|3040|429|neurons|limit/i.test(String(e?.message)) ? 15 * 60e3 : 60 * 60e3)); } } return null; }});
+  const extra = [["openrouter", "https://openrouter.ai/api/v1", env.OPENROUTER_API_KEY, [/deepseek/i, /gpt-oss-120b/i, /llama-3\.3-70b/i, /qwen/i], true],
+    ["cerebras", "https://api.cerebras.ai/v1", env.CEREBRAS_API_KEY, [/gpt-oss-120b/i, /qwen/i, /llama/i], false],
+    ["mistral", "https://api.mistral.ai/v1", env.MISTRAL_API_KEY, [/mistral-small/i, /mistral-large/i], false]];
+  for (const [name, base, key, prefer, free] of extra) if (key) P.push({name, run: async req => {
+    const m = await pickModel(name, base, key, prefer, free); if (!m) { rest(name, 30 * 60e3); return null; }
+    const r = await oaiRun(base, key, m, req, name === "openrouter" ? {"HTTP-Referer": "https://max-app-axv.pages.dev", "X-Title": "Max"} : null).catch(() => ({fail: 0}));
+    if (r.text) return r; rest(name, r.fail === 429 ? 10 * 60e3 : 30 * 60e3); return null; }});
+  if (env.GEMINI_API_KEY) P.push({name: "gemini", gem: true, run: async req => {
+    const g = await gemini(env, {contents: [{role: "user", parts: [{text: req.messages.at(-1).content}]}], systemInstruction: {parts: [{text: req.messages[0].content}]}, generationConfig: {temperature: req.temperature, maxOutputTokens: req.maxTokens, responseMimeType: "application/json"}}).catch(() => null);
+    const t = g && g.ok ? (g.data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("") : ""; return t ? {text: t, model: g.model} : null; }});
+  return P.filter(p => !skipped(p.name));
+}
+async function brainUsage(env) {
+  const day = new Date().toISOString().slice(0, 10);
+  if (!brainUse || brainUse.day !== day) { const s = jparse(await srvSetting(env, "max_brain_usage"), {}); brainUse = s.day === day ? s : {day, calls: {}, fails: {}, gem: 0}; }
+  return brainUse;
+}
+// One study question: the free AIs take turns (so the quota is spread); Gemini is last and capped per day so chat keeps its quota.
+async function brainAsk(env, system, prompt, tokens = 4096) {
+  const use = await brainUsage(env), req = {messages: [{role: "system", content: system + "\nReply with one valid JSON object only — no code fences, no text around it."}, {role: "user", content: prompt}], wantJson: true, maxTokens: tokens, temperature: 0.2};
+  let P = brainProviders(env); if (use.gem >= BRAIN_GEMINI_CAP) P = P.filter(p => !p.gem);
+  if (!P.length) return {error: "no free AI is available right now"};
+  const start = brainRot++ % P.length;
+  for (let i = 0; i < P.length; i++) {
+    const p = P[(start + i) % P.length]; let r = null;
+    try { r = await p.run(req); } catch { r = null; }
+    if (r && r.text) { use.calls[p.name] = (use.calls[p.name] || 0) + 1; if (p.gem) use.gem++; let t = String(r.text).replace(/<think>[\s\S]*?<\/think>/g, "").replace(/```(?:json)?/g, ""); const m = t.match(/\{[\s\S]*\}/);
+      try { return {data: JSON.parse(m ? m[0] : t), model: p.name + ":" + String(r.model || "").replace(/^.*\//, "")}; } catch { use.fails[p.name] = (use.fails[p.name] || 0) + 1; continue; } }
+    use.fails[p.name] = (use.fails[p.name] || 0) + 1;
+  }
+  return {error: "no free AI answered"};
+}
+async function brainFlush(env) { if (brainUse) await srvSetting(env, "max_brain_usage", JSON.stringify(brainUse)).catch(() => {}); }
+const cl = (a, n, len) => (Array.isArray(a) ? a : []).map(x => cleanText(typeof x === "string" ? x : JSON.stringify(x), len)).filter(Boolean).slice(0, n);
+// ---- study ----
+async function brainStudy(env, opts = {}) {
+  const db = await brainDb(env), t0 = Date.now(), maxUnits = opts.maxUnits || 3, ms = opts.ms || 22000;
+  const notes = (await listNotes(db)).filter(n => !n.deleted && !BRAIN_SKIP.test(n.category || "") && brainNoteText(n).length > 40);
+  const rows = new Map(((await db.prepare("SELECT * FROM max_brain").all()).results || []).map(r => [r.note_id, r]));
+  const live = new Set(notes.map(n => n.id)); for (const id of rows.keys()) if (!live.has(id)) await db.prepare("DELETE FROM max_brain WHERE note_id = ?").bind(id).run();
+  const todo = [];
+  for (const n of notes) {
+    const text = brainNoteText(n), hash = (await sha256hex(n.title + "\n" + text)).slice(0, 16), r = rows.get(n.id), parts = Math.max(1, Math.ceil(text.length / BRAIN_PART));
+    if (r && r.hash === hash && r.part >= r.parts) continue;
+    todo.push({n, text, hash, parts, part: r && r.hash === hash ? r.part : 0, r: r && r.hash === hash ? r : null, pri: (/^Maritime/i.test(n.category || "") ? 0 : 2) + (rows.has(n.id) ? 1 : 0)});
+  }
+  todo.sort((a, b) => a.pri - b.pri);
+  let units = 0, studied = 0, errors = [];
+  while (todo.length && units < maxUnits && Date.now() - t0 < ms) {
+    const batch = []; let size = 0;
+    while (todo.length && batch.length < 5) { const it = todo[0]; const len = it.parts > 1 ? BRAIN_PART : it.text.length; if (batch.length && (it.parts > 1 || size + len > BRAIN_BATCH)) break; batch.push(todo.shift()); size += len; if (it.parts > 1) break; }
+    const body = batch.map(it => `### id: ${it.n.id} | ${it.n.title} | ${it.n.category}${it.parts > 1 ? ` | part ${it.part + 1} of ${it.parts}` : ""}\n${it.text.slice(it.part * BRAIN_PART, it.part * BRAIN_PART + BRAIN_PART)}`).join("\n\n");
+    const r = await brainAsk(env, "You study maritime and ship-officer notes for Mark Jun so that his assistant Max knows them by heart. Use ONLY the note text; never invent.",
+      `For each note below return its digest as JSON:\n{"notes":[{"id":"<the id>","summary":"max 50 words","facts":["max 12 short exact facts — numbers, dates, limits, definitions, names, copied exactly"],"terms":["max 10 key terms or abbreviations"],"refs":["max 10 names of OTHER conventions, codes, regulations or topics this note relies on, e.g. SOLAS Chapter V"],"suspects":[{"quote":"exact words copied from the note, max 160 characters","why":"why it looks wrong or out of date","suggest":"what it should say"}]}]}\n"suspects" only when you are quite sure a statement is factually wrong or outdated (a wrong number, date, chapter or regulation). Normally it is [].\n\nNOTES:\n${body}`);
+    units++;
+    if (!r.data || !Array.isArray(r.data.notes)) { errors.push(r.error || "unreadable answer"); break; }
+    for (const it of batch) {
+      const d = r.data.notes.find(x => String(x.id) === it.n.id) || (batch.length === 1 ? r.data.notes[0] : null); if (!d) continue;
+      const old = it.r ? {facts: jparse(it.r.facts, []), terms: jparse(it.r.terms, []), refs: jparse(it.r.refs, []), suspects: jparse(it.r.suspects, []), summary: it.r.summary} : {facts: [], terms: [], refs: [], suspects: [], summary: ""};
+      const sus = cl(d.suspects, 4, 600).length ? (Array.isArray(d.suspects) ? d.suspects : []).slice(0, 4).map(s => ({quote: cleanText(String(s?.quote || ""), 200), why: cleanText(String(s?.why || ""), 300), suggest: cleanText(String(s?.suggest || ""), 300), state: "new", by: r.model, at: Date.now()})).filter(s => s.quote.length >= 6) : [];
+      const m = {summary: it.part ? old.summary : cleanText(String(d.summary || ""), 500), facts: [...old.facts, ...cl(d.facts, 12, 300)].slice(0, 60), terms: [...new Set([...old.terms, ...cl(d.terms, 10, 60)])].slice(0, 30), refs: [...new Set([...old.refs, ...cl(d.refs, 10, 80)])].slice(0, 30), suspects: [...old.suspects, ...sus].slice(0, 10)};
+      const part = it.part + 1;
+      await db.prepare("INSERT INTO max_brain (note_id, title, folder, hash, parts, part, summary, facts, terms, refs, links, suspects, studied_at, model, exam) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(note_id) DO UPDATE SET title=excluded.title, folder=excluded.folder, hash=excluded.hash, parts=excluded.parts, part=excluded.part, summary=excluded.summary, facts=excluded.facts, terms=excluded.terms, refs=excluded.refs, suspects=excluded.suspects, studied_at=excluded.studied_at, model=excluded.model")
+        .bind(it.n.id, cleanText(it.n.title, 200), cleanText(it.n.category || "", 200), it.hash, it.parts, part, m.summary, JSON.stringify(m.facts), JSON.stringify(m.terms), JSON.stringify(m.refs), it.r ? it.r.links : "[]", JSON.stringify(m.suspects), Date.now(), r.model, it.r ? it.r.exam : null).run();
+      if (part < it.parts) { it.part = part; it.r = {...(it.r || {}), facts: JSON.stringify(m.facts), terms: JSON.stringify(m.terms), refs: JSON.stringify(m.refs), suspects: JSON.stringify(m.suspects), summary: m.summary, links: it.r?.links || "[]", exam: it.r?.exam || null}; todo.unshift(it); }
+      else studied++;
+    }
+  }
+  if (units) { await brainLink(db); await brainBuildMap(env, db); }
+  await brainFlush(env);
+  return {units, studied, left: todo.length, errors: errors.slice(0, 3)};
+}
+// ---- neurons: which notes connect to which ----
+async function brainLink(db) {
+  const rows = (await db.prepare("SELECT note_id, title, refs, terms, links FROM max_brain WHERE part >= parts").all()).results || [];
+  const keys = rows.map(r => ({id: r.note_id, title: String(r.title || "").toLowerCase(), acr: [...String(r.title || "").matchAll(/\b[A-Z][A-Z0-9]{2,9}\b/g)].map(m => m[0])}));
+  const edges = new Map(rows.map(r => [r.note_id, new Set()]));
+  for (const r of rows) {
+    const mine = [...jparse(r.refs, []), ...jparse(r.terms, [])].map(String);
+    for (const k of keys) { if (k.id === r.note_id) continue;
+      const hit = mine.some(x => { const xl = x.toLowerCase(); return (k.title.length >= 5 && xl.includes(k.title)) || k.acr.some(a => new RegExp("\\b" + a + "\\b").test(x)); });
+      if (hit) { edges.get(r.note_id).add(k.id); edges.get(k.id)?.add(r.note_id); } }
+  }
+  for (const r of rows) { const l = JSON.stringify([...edges.get(r.note_id)].slice(0, 8)); if (l !== r.links) await db.prepare("UPDATE max_brain SET links = ? WHERE note_id = ?").bind(l, r.note_id).run(); }
+}
+// ---- the memory map Max always carries ----
+async function brainBuildMap(env, db) {
+  const rows = (await db.prepare("SELECT title, folder, summary FROM max_brain WHERE part >= parts ORDER BY folder, title").all()).results || [];
+  for (const words of [14, 8, 0]) {
+    const by = {}; for (const r of rows) (by[r.folder || "Unsorted"] ||= []).push("• " + r.title + (words ? ": " + String(r.summary || "").split(/\s+/).slice(0, words).join(" ") : ""));
+    const text = Object.entries(by).map(([f, l]) => f + "\n" + l.join("\n")).join("\n\n");
+    if (text.length <= 7000 || !words) { await srvSetting(env, "max_brain_map", text.slice(0, 7500)); return text.length; }
+  }
+}
+// What Max recalls for a question: the map, plus the notes linked to the best matches (digest + exact facts).
+async function brainRecall(env, notesUsed) {
+  if (!env.MAX_MEMORY) return {map: "", related: ""};
+  const db = await brainDb(env), map = (await srvSetting(env, "max_brain_map")) || "";
+  const ids = notesUsed.slice(0, 3).map(n => n.id).filter(Boolean); let related = "";
+  if (ids.length) {
+    const rows = (await db.prepare(`SELECT links FROM max_brain WHERE note_id IN (${ids.map(() => "?").join(",")})`).bind(...ids).all()).results || [];
+    const want = [...new Set(rows.flatMap(r => jparse(r.links, [])))].filter(i => !ids.includes(i)).slice(0, 3);
+    if (want.length) {
+      const rel = (await db.prepare(`SELECT title, folder, summary, facts FROM max_brain WHERE note_id IN (${want.map(() => "?").join(",")})`).bind(...want).all()).results || [];
+      related = rel.map(r => `[${r.title} · ${r.folder}] ${r.summary}\nFacts: ${jparse(r.facts, []).slice(0, 8).join("; ")}`).join("\n\n").slice(0, 3500);
+    }
+  }
+  return {map, related};
+}
+// ---- self-exam ----
+async function brainExam(env, count = 1) {
+  const db = await brainDb(env), rows = ((await db.prepare("SELECT * FROM max_brain WHERE part >= parts").all()).results || []);
+  const order = rows.map(r => ({r, e: jparse(r.exam, null)})).sort((a, b) => ((a.e?.at || 0) - (b.e?.at || 0)) || ((/^Maritime/i.test(b.r.folder) ? 1 : 0) - (/^Maritime/i.test(a.r.folder) ? 1 : 0)));
+  let done = 0;
+  for (const {r} of order.slice(0, count)) {
+    const n = (await db.prepare("SELECT * FROM max_notes WHERE id = ? AND deleted = 0").bind(r.note_id).first()); if (!n) continue;
+    const note = rowToNote(n), text = brainNoteText(note).slice(0, 6000);
+    const q = await brainAsk(env, "You write exam questions from a study note.", `Write ONE exam question about a specific fact in this note (a number, date, limit, definition or name) and the exact correct answer, using ONLY the note.\nJSON: {"q":"...","a":"..."}\n\nNOTE "${note.title}":\n${text}`, 600);
+    if (!q.data || !q.data.q || !q.data.a) continue;
+    const used = await relevantNotes(db, String(q.data.q)), rec = await brainRecall(env, used);
+    const ctx = used.map(x => `[${x.title}]\n` + noteExcerptSrv(x.body, String(q.data.q), 2500)).join("\n\n") + (rec.related ? "\n\n" + rec.related : "");
+    const ans = await brainAsk(env, "You are Max. Answer ONLY from Mark's notes below. If the answer is not in them, say NOT FOUND.", `NOTES:\n${ctx || "(none)"}\n\nQuestion: ${q.data.q}\nJSON: {"answer":"..."}`, 600);
+    const mine = String(ans.data?.answer || "NOT FOUND");
+    const g = await brainAsk(env, "You are a strict but fair examiner.", `Question: ${q.data.q}\nCorrect answer: ${q.data.a}\nMax's answer: ${mine}\nScore 1 if Max's answer has the same facts, 0.5 if partly right, 0 if wrong or NOT FOUND.\nJSON: {"score":0|0.5|1,"why":"short"}`, 300);
+    const score = [0, 0.5, 1].includes(+g.data?.score) ? +g.data.score : null; if (score === null) continue;
+    const exam = {score, at: Date.now(), q: cleanText(String(q.data.q), 300), a: cleanText(String(q.data.a), 300), said: cleanText(mine, 300), why: cleanText(String(g.data?.why || ""), 200), gap: score === 0};
+    const redo = score === 0 && !(jparse(r.exam, {}).restudied > Date.now() - 7 * 864e5);
+    if (redo) exam.restudied = Date.now();
+    await db.prepare("UPDATE max_brain SET exam = ?" + (redo ? ", hash = ''" : "") + " WHERE note_id = ?").bind(JSON.stringify(exam), r.note_id).run(); done++;
+  }
+  await brainFlush(env); return done;
+}
+// ---- corrections: a 2nd AI + an official web source must agree; the old version is kept (Undo) ----
+async function brainVerify(env, maxN = 1) {
+  const db = await brainDb(env), rows = ((await db.prepare("SELECT * FROM max_brain WHERE suspects LIKE '%\"state\":\"new\"%' LIMIT 6").all()).results || []);
+  let handled = 0;
+  for (const r of rows) {
+    const sus = jparse(r.suspects, []), nrow = await db.prepare("SELECT * FROM max_notes WHERE id = ? AND deleted = 0").bind(r.note_id).first(); if (!nrow) continue; const n = rowToNote(nrow);
+    for (const s of sus) {
+      if (s.state !== "new" || handled >= maxN) continue;
+      const a = await agentAsk(env, "notes", `You are ${expertFor(n.category)}. Another AI flagged this statement in Mark Jun's note "${n.title}" as possibly wrong or out of date.\nStatement: "${s.quote}"\nWhy flagged: ${s.why}\nSuggested: ${s.suggest}\nToday is ${new Date().toISOString().slice(0, 10)}. Search the official, current source (IMO, flag State, USCG/eCFR, MARINA, class society…) and decide. Reply with JSON only: {"verdict":"wrong"|"correct"|"unsure","correct":"the exact replacement for the quoted words, same style, or empty","source":"URL of the official page"}`, {search: true});
+      if (a.error) { handled = maxN; break; }
+      handled++; const v = String(a.data?.verdict || "unsure"), fix = cleanText(String(a.data?.correct || ""), 300), srcOk = (a.sources || []).length > 0;
+      s.at = Date.now(); s.source = cleanText(String(a.data?.source || a.sources?.[0]?.url || ""), 300); s.checkedBy = a.model || "";
+      if (v === "correct") s.state = "dropped";
+      else if (v === "wrong" && fix && srcOk && brainFamily(s.by) !== brainFamily(a.model)) {
+        const f = applyNoteFixes(n.body, [{find: s.quote, replace: fix}]);
+        if (f.done.length) {
+          await noteVersionSave(db, n.id, n.body, "before Max's brain fix"); const now = Date.now() + 1;
+          await db.prepare("UPDATE max_notes SET body = ?, updated_at = ? WHERE id = ?").bind(f.html, now, n.id).run();
+          const checks = await setting(env, "max_srv_notecheck", {}); checks[n.id] = {...(checks[n.id] || {}), at: now + 1, title: cleanText(n.title, 120), folder: cleanText(n.category || "", 120), verdict: "wrong — fixed", fixed: {at: Date.now(), changes: f.done}, summary: "Max's brain: " + s.why, issues: [{claim: s.quote, problem: s.why, correct: fix, source: s.source}], sources: (a.sources || []).slice(0, 5), expert: "Max's brain"};
+          await srvSetting(env, "max_srv_notecheck", JSON.stringify(checks));
+          await logAct(env, {dept: "notes", kind: "fixed note", text: `Max's brain corrected "${cleanText(n.title, 80)}": ${f.done.map(x => x.from + " → " + x.to).join(" | ").slice(0, 200)} (old version kept)`, detail: s.source, source: "brain"});
+          s.state = "fixed"; s.fixed = fix;
+        } else { s.state = "check"; s.suggest = fix || s.suggest; }
+      } else s.state = "check", s.suggest = fix || s.suggest;
+    }
+    await db.prepare("UPDATE max_brain SET suspects = ? WHERE note_id = ?").bind(JSON.stringify(sus), r.note_id).run();
+  }
+  return handled;
+}
+const brainFamily = m => /gemini/i.test(String(m)) ? "gemini" : /cloudflare|workers-ai|@cf/i.test(String(m)) ? "cloudflare" : /groq/i.test(String(m)) ? "groq" : String(m || "?").split(":")[0];
+async function brainCron(env, when) {
+  if (!env.MAX_MEMORY) return "no database";
+  const manilaHour = (new Date(when || Date.now()).getUTCHours() + 8) % 24, night = manilaHour < 6;
+  const s = await brainStudy(env, {maxUnits: night ? 8 : 3, ms: night ? 40000 : 22000});
+  let v = 0, e = 0; try { v = await brainVerify(env, night ? 2 : 1); } catch {} try { e = await brainExam(env, night ? 2 : 1); } catch {}
+  return `studied ${s.studied} (units ${s.units}, left ${s.left})${v ? ", checked " + v + " suspect(s)" : ""}${e ? ", exam " + e : ""}`;
+}
+async function brainStatus(env) {
+  const db = await brainDb(env), notes = (await listNotes(db)).filter(n => !n.deleted && !BRAIN_SKIP.test(n.category || "") && brainNoteText(n).length > 40);
+  const rows = (await db.prepare("SELECT * FROM max_brain").all()).results || [], done = rows.filter(r => r.part >= r.parts), use = await brainUsage(env);
+  const exams = done.map(r => jparse(r.exam, null)).filter(e => e && typeof e.score === "number");
+  const items = [];
+  for (const r of rows) jparse(r.suspects, []).forEach((s, i) => { if (["check", "fixed"].includes(s.state)) items.push({id: r.note_id, i, title: r.title, ...s}); });
+  return {total: notes.length, studied: done.length, left: Math.max(0, notes.length - done.length), maritime: {total: notes.filter(n => /^Maritime/i.test(n.category || "")).length, studied: done.filter(r => /^Maritime/i.test(r.folder || "")).length},
+    exam: {count: exams.length, score: exams.length ? Math.round(exams.reduce((a, e) => a + e.score, 0) / exams.length * 100) : null, gaps: done.filter(r => jparse(r.exam, {}).gap).map(r => ({title: r.title, q: jparse(r.exam, {}).q})).slice(0, 8)},
+    links: Math.round(done.reduce((a, r) => a + jparse(r.links, []).length, 0) / 2), checks: items.filter(x => x.state === "check").slice(0, 20), fixed: items.filter(x => x.state === "fixed").slice(0, 20),
+    usage: {day: use.day, calls: use.calls, fails: use.fails, gemini: use.gem, geminiCap: BRAIN_GEMINI_CAP}, providers: brainProviders(env).map(p => p.name), last: done.reduce((m, r) => Math.max(m, r.studied_at || 0), 0) || null,
+    mapChars: ((await srvSetting(env, "max_brain_map")) || "").length};
+}
+// ================= end of Max's brain =================
 // ---------- conversation log (Max remembers every conversation) ----------
 async function recentTalk(db, limit) {
   const rows = (await db.prepare("SELECT * FROM max_talk ORDER BY id DESC LIMIT ?").bind(limit).all()).results || [];
@@ -4037,14 +4268,14 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
     if (env.MAX_MEMORY) ctx.waitUntil(ensureSchema(env.MAX_MEMORY).then(() => seedNotes(env)).then(() => seedTradingNotesV2(env)).catch(e => console.log("seed failed:", e.message)));
     if (env.MAX_MEMORY) ctx.waitUntil(srvSetting(env, "max_srv_last_cron", JSON.stringify({cron: event?.cron || "?", at: new Date().toISOString()})).catch(() => {}));
     // The 10-minute trigger only runs reports he asked for "now" (one agent per run, so each stays within Cloudflare's limits).
-    if (event && event.cron && event.cron !== "45 * * * *") { ctx.waitUntil(agentsCatchup(env, 1, event.scheduledTime).then(r => { if (r) console.log("catch-up:", r); }).catch(e => console.log("catch-up failed:", e.message))); return; }
+    if (event && event.cron && event.cron !== "45 * * * *") { if (env.MAX_MEMORY) ctx.waitUntil(brainCron(env, event.scheduledTime).then(r => console.log("brain:", r)).catch(e => console.log("brain failed:", e.message))); ctx.waitUntil(agentsCatchup(env, 1, event.scheduledTime).then(r => { if (r) console.log("catch-up:", r); }).catch(e => console.log("catch-up failed:", e.message))); return; }
     ctx.waitUntil(agentsCatchup(env, 4, event && event.scheduledTime).then(r => { if (r) console.log("catch-up:", r); }).catch(e => console.log("catch-up failed:", e.message)));
     ctx.waitUntil(agentsCron(env, event && event.scheduledTime).then(r => { if (r !== "nothing due") console.log("agents:", r); }).catch(e => console.log("agents failed:", e.message)));
     ctx.waitUntil(guardDaily(env, event && event.scheduledTime).then(r => { if (r !== "not now") console.log("guard:", r); }).catch(async e => { console.log("guard failed:", e.message); await logAct(env, {dept: "guard", kind: "guard check", text: "The daily guard check failed", detail: e.message, ok: false, source: "schedule"}); }));
@@ -4220,7 +4451,7 @@ export default {
       const db = body.useCloudMemory === true && !!env.MAX_MEMORY && auth.ok && (passcodeSet(env) || auth.enforced) ? env.MAX_MEMORY : null;
       const calendarOn = !!(await googleRow(env));
       // Long-term memory: notes first, then saved facts, then earlier conversations.
-      let savedMemory = null, cloudMemories = [], notesUsed = [], pastTalk = [], recent = [], memoryNote = "";
+      let brainMem = {map: "", related: ""}, savedMemory = null, cloudMemories = [], notesUsed = [], pastTalk = [], recent = [], memoryNote = "";
       if (db) {
         try {
           await ensureSchema(db);
@@ -4228,6 +4459,7 @@ export default {
           if (toRemember) savedMemory = await addMemory(db, toRemember, "chat");
           cloudMemories = (await listMemories(db, false)).slice(0, 80);
           notesUsed = await relevantNotes(db, message);
+          try { brainMem = await brainRecall(env, notesUsed); } catch {}
           recent = await recentTalk(db, 12);
           pastTalk = recent.length ? await relatedTalk(db, message, recent[0].id) : [];
         } catch (e) { memoryNote = "\nLong-term memory could not be read for this request (database error), so do not claim to remember anything."; }
@@ -4264,6 +4496,8 @@ export default {
       const pastText = pastTalk.map(r => `${when(r.created_at)} ${r.role === "user" ? "User" : "Max"}: ${cleanText(r.text, 400)}`).join("\n");
       if (savedMemory) memoryNote += `\nThe user just asked you to remember something. It WAS saved to long-term memory: "${savedMemory.text}". Confirm briefly.`;
       if (notesText) memoryNote += "\nUSER'S NOTES (core memory — check these first; personal notes, not verified facts):\n" + notesText;
+      if (brainMem.related) memoryNote += "\nLINKED NOTES (connected in Max's brain to the notes above — use them too):\n" + brainMem.related;
+      if (brainMem.map) memoryNote += "\nMAX'S BRAIN MAP (everything Max has studied from Mark's notes, by folder: note title and what it covers. Use it to know what his notes cover. If the question is about something NOT on this map, say it is not in his notes yet and offer \"create a note about …\"):\n" + brainMem.map;
       if (pastText) memoryNote += "\nEarlier conversations that may relate:\n" + pastText;
       const voice = body.voice === true;
       // He is not a native English speaker, and voice recognition often mishears him: work out what he meant.
@@ -4470,6 +4704,30 @@ CONFIDENCE: <high, medium or low, and why in a few words>`;
       if (!draftMode && bodyLen < plainText(old).length * 0.6) return json({error: "The new version came out much shorter than your note, so I didn't use it. Try asking for the change in smaller steps."}, 422, origin, env);
       if (plainText(html).length < 200) return json({error: "I couldn't write enough about that. Try a more specific topic."}, 422, origin, env);
       return json({html, title: title || (draftMode ? cleanText(topic, 80) : oldTitle), folder, changes: cleanText((/CHANGES:\s*(.+)/i.exec(head) || [])[1] || "", 400), sources, searched: sources.length > 0}, 200, origin, env);
+    }
+    if (url.pathname === "/api/brain/status" && request.method === "GET") {
+      if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
+      return json(await brainStatus(env), 200, origin, env);
+    }
+    if (url.pathname === "/api/brain/study-now" && request.method === "POST") {
+      if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
+      const s = await brainStudy(env, {maxUnits: 4, ms: 24000}); let v = 0; try { v = await brainVerify(env, 1); } catch {}
+      return json({...s, checked: v, status: await brainStatus(env)}, 200, origin, env);
+    }
+    if (url.pathname === "/api/brain/resolve" && request.method === "POST") {
+      const db = env.MAX_MEMORY && auth.ok ? await brainDb(env) : null; if (!db) return json({error: "Not signed in."}, 401, origin, env);
+      let body; try { body = await request.json(); } catch { return json({error: "Invalid JSON body."}, 400, origin, env); }
+      const id = safeId(body.id), r = id ? await db.prepare("SELECT * FROM max_brain WHERE note_id = ?").bind(id).first() : null; if (!r) return json({error: "Which note?"}, 404, origin, env);
+      const sus = jparse(r.suspects, []), s = sus[+body.i]; if (!s) return json({error: "Which item?"}, 404, origin, env);
+      if (body.action === "apply") {
+        const n = await db.prepare("SELECT * FROM max_notes WHERE id = ? AND deleted = 0").bind(id).first(); if (!n) return json({error: "Note not found."}, 404, origin, env);
+        const f = applyNoteFixes(n.body, [{find: s.quote, replace: cleanText(String(body.text || s.suggest || ""), 400)}]);
+        if (!f.done.length) return json({error: "I could not find those exact words in the note any more."}, 409, origin, env);
+        await noteVersionSave(db, id, n.body, "before your OK on Max's brain suggestion"); const now = Date.now();
+        await db.prepare("UPDATE max_notes SET body = ?, updated_at = ? WHERE id = ?").bind(f.html, now, id).run(); s.state = "fixed"; s.fixed = f.done[0].to;
+      } else s.state = "dropped";
+      await db.prepare("UPDATE max_brain SET suspects = ? WHERE note_id = ?").bind(JSON.stringify(sus), id).run();
+      return json({ok: true, state: s.state}, 200, origin, env);
     }
     if (url.pathname === "/api/notes/undo-fix" && request.method === "POST") {
       const db = env.MAX_MEMORY && auth.ok ? env.MAX_MEMORY : null; if (!db) return json({error: "Not signed in."}, 401, origin, env);
