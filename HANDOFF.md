@@ -120,3 +120,10 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Emails ONLY: paper trades (paperEmails, after each hourly step with new BUY/SELL/DIVIDEND/ORDER/REBALANCE/PLAN entries), Guard errors (guardDaily 22:45 UTC, only new problems), best-rate changes (investAlert after refreshGuide, 01:45 UTC daily), virtual-investment OPEN/SWITCH/MATURED.
 - Off: Sunday summary (agentsCron no longer calls sundaySummary), weekly auto reports (WEEKLY_AUTO loop removed — also saves AI quota), report emails (emailReport returns "not emailed"), Sunday backup email (guardDaily backup:false; a backup can still be asked for via /api/guard/run {backup:true}).
 - Claude's weekly backup check was removed at Mark's request; Max runs on his own.
+
+## Schedule fix (Mark, 22 Nov 2026 — server 18r)
+- Cause: chat JSON had ONE `action`; 3 alarms in one message → only the first ran, and the AI's friendly reply said "done". "Delete all" had no action; delete_event was one-at-a-time and (singleEvents) removed just one day of a repeating alarm.
+- Now: model may return `actions[]` (worker `cleanActions`, max 12; `parseModelJson` keeps `actions`); app runs each in order, reply "I did N of M" (add_event short form via `shortAdd`), `lastCreated.batch` so one "undo" removes all.
+- `delete_events` (details find/on/range/all; local rule for "delete all my alarms/schedule/events"): /api/calendar/find?limit=250 → groups by `series` → one confirm → DELETE `?series=1` (server resolves recurringEventId) → server re-reads (`verified`) → app re-lists and reports leftovers; undo recreates as single events.
+- Guard: if the AI claims done (deleted/saved/added…) on a schedule request but ran no action, the app replaces the reply with "I did not change your calendar".
+- Test: e2e46.

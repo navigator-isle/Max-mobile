@@ -2571,6 +2571,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   }
   if(pendingPick&&Date.now()-pendingPick.at<5*60e3){const m=n.match(/\b(\d{1,2}|first|second|third|fourth|fifth|last)\b/);if(m&&wc<=6){const w={first:1,second:2,third:3,fourth:4,fifth:5,last:pendingPick.list.length};return {type:'choose_pick',query:String(+m[1]||w[m[1]])}}if(has(/^(no|cancel|never ?mind|none)\b/))return {type:'confirm_no'}}
   if(has(/^(undo|undo that|undo it|reverse (that|it)|put (it|them) back|ibalik)( please)?$/)&&(lastChange||lastMailOp))return {type:'undo_last'};
+  if(has(/^(please )?(max )?(delete|remove|clear|cancel|burahin)( ?all| every|\s+lahat)( of)?( my| the| ang)?\s*(alarms?|reminders?|schedules?|events?|calendar|appointments?)( please)?$/)&&!has(/\b(e-?mails?|inbox|notes?)\b/))return {type:'delete_events',details:{all:true,find:has(/alarms?/)?'alarms':''}};
   // calendar changes go to the brain (it works out the new time), but never to "show my schedule"
   if(has(/\b(move|reschedule|rename|postpone|push back|bring forward|change|edit|update|cancel|delete|remove|ilipat|burahin|ikansela)\b/)&&has(/\b(meeting|appointment|event|calendar|schedule|reminder|alarm|call|flight|class|dentist|doctor|check-?up|interview)s?\b/)&&!has(/\b(e-?mails?|inbox|notes?)\b/))return null;
   // ---- email organizing ----
@@ -3586,6 +3587,43 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    return events.length===1?await go(events[0]):pickFrom(events,'events',go);
   }catch(e){return e.plain?e.message:'I couldn’t check your calendar. '+e.message}
  }
+ // Delete several / all events or alarms at once (whole repeating series), then check the calendar again.
+ async function deleteEvents(d){
+  d=d||{};
+  const find=String(d.find||'').trim(),alarmsOnly=/^(alarms?|⏰)$/i.test(find),routines=/^(routines?|🔁)$/i.test(find);
+  try{
+   const q=new URLSearchParams({limit:'250'});
+   if(find&&!alarmsOnly&&!routines)q.set('q',find.replace(/\b(my|the|all|events?|reminders?)\b/gi,' ').replace(/\s+/g,' ').trim());
+   let from=new Date(),to=new Date();from.setHours(0,0,0,0);
+   if(/^\d{4}-\d\d-\d\d$/.test(d.on||'')){from=new Date(d.on+'T00:00:00');to=new Date(d.on+'T23:59:59')}
+   else if(d.range==='today'){to=new Date(from);to.setHours(23,59,59)}
+   else if(d.range==='tomorrow'){from.setDate(from.getDate()+1);to=new Date(from);to.setHours(23,59,59)}
+   else if(d.range==='week'){to=new Date(from);to.setDate(to.getDate()+7)}
+   else{to=new Date(from);to.setDate(to.getDate()+120)}
+   q.set('from',from.toISOString());q.set('to',to.toISOString());
+   const {r,data}=await fetchJson(workerBase()+'/api/calendar/find?'+q,{},25000);
+   if(data&&data.needGoogle)return needGoogleMsg;
+   if(!r.ok)return 'I couldn’t read your calendar, so nothing was deleted. '+(data.error||'');
+   let evs=(data.events||[]).filter(e=>!alarmsOnly||/^⏰/.test(e.title)).filter(e=>!routines||/^🔁/.test(e.title));
+   const groups=new Map();for(const e of evs){const k=e.series||e.id;if(!groups.has(k))groups.set(k,{key:k,first:e,count:0,series:!!e.series});groups.get(k).count++}
+   const list=[...groups.values()];
+   if(!list.length)return 'I couldn’t find any '+(alarmsOnly?'alarms':'events')+(d.on||d.range?' for that time':'')+'. Nothing was deleted.';
+   const line=g=>g.first.title+' '+(g.series?'(repeats, starting '+evWhen(g.first)+')':evWhen(g.first));
+   return askConfirm('I found '+list.length+' '+(alarmsOnly?'alarm':'event')+(list.length===1?'':'s')+': '+list.slice(0,5).map(line).join('; ')+(list.length>5?' and '+(list.length-5)+' more':'')+'. Delete all of them'+(list.some(g=>g.series)?', including every repeat':'')+'?',async()=>{
+    let gone=0,bad=[];
+    for(const g of list){
+     try{const {r:rr,data:dd}=await fetchJson(workerBase()+'/api/calendar/event?id='+encodeURIComponent(g.first.id)+(g.series?'&series=1':''),{method:'DELETE'},20000);
+      if(rr.ok&&dd.verified!==false)gone++;else bad.push(g.first.title)}catch{bad.push(g.first.title)}
+    }
+    // look again: is anything left?
+    let left=0;try{const {r:r2,data:d2}=await fetchJson(workerBase()+'/api/calendar/find?'+q,{},25000);if(r2.ok){const keys=new Set(list.map(g=>g.key));left=(d2.events||[]).filter(e=>keys.has(e.series||e.id)).length}}catch{}
+    lastChange={kind:'deleted_many',events:list.map(g=>g.first),at:Date.now()};
+    showDisplay('Deleted','',[{badge:'CALENDAR',title:gone+' deleted',lines:list.slice(0,8).map(line)}]);
+    if(!gone)return 'I couldn’t delete them, so nothing was changed. Please try again.';
+    return 'Deleted '+gone+' of '+list.length+'. I checked your calendar again: '+(left?left+' still there, so it may take a moment. Say “delete all” again.':'none of them are left.')+(bad.length?' These did not delete: '+bad.slice(0,4).join(', ')+'.':'')+' Say “undo” to put them back (repeating ones come back as one time only).';
+   },list.slice(0,8).map(g=>({badge:'DELETE',badgeClass:'badge-web',title:g.first.title,lines:[g.series?'repeats · '+evWhen(g.first):evWhen(g.first)]})),'Delete these '+list.length+'?');
+  }catch(e){return e.plain?e.message:'I couldn’t check your calendar, so nothing was deleted. '+e.message}
+ }
  // ----- email organizing -----
  const MAIL_OPS={trash:'move to trash',archive:'archive',read:'mark as read',unread:'mark as unread',star:'star',unstar:'unstar',important:'mark as important',unimportant:'mark as not important',label:'label',unlabel:'remove the label from'};
  async function modifyEmail(d){
@@ -3636,6 +3674,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(ch.kind==='edit'){const b=ch.before;
    const {r,data}=await fetchJson(workerBase()+'/api/calendar/event',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:b.id,title:b.title,start:b.allDay?b.start:localIso(b.start),end:b.allDay?b.end:localIso(b.end),allDay:b.allDay,...(b.reminders?{reminders:b.reminders.length?b.reminders:[10]}:{}),tz:tzName()})},20000);
    return r.ok?'Undone — “'+b.title+'” is back to '+evWhen(b)+'.':'I couldn’t undo it. '+(data.error||'');}
+  if(ch.kind==='deleted_many'){let ok=0;for(const e of ch.events){try{const {r}=await postJson('/api/calendar/event',{title:e.title,start:e.allDay?e.start:localIso(e.start),end:e.allDay?e.end:localIso(e.end),allDay:e.allDay,durationMinutes:e.allDay?undefined:Math.max(5,Math.round((new Date(e.end)-new Date(e.start))/60000)),reminders:e.reminders&&e.reminders.length?e.reminders:undefined,reminderMinutes:e.reminders&&e.reminders.length?e.reminders[0]:10,location:e.location||'',notes:e.notes||'',tz:tzName()},20000);if(r.ok)ok++}catch{}}return 'Put back '+ok+' of '+ch.events.length+'.'}
   const e=ch.event;
   const {r,data}=await postJson('/api/calendar/event',{title:e.title,start:e.allDay?e.start:localIso(e.start),end:e.allDay?e.end:localIso(e.end),allDay:e.allDay,durationMinutes:e.allDay?undefined:Math.max(5,Math.round((new Date(e.end)-new Date(e.start))/60000)),reminders:e.reminders&&e.reminders.length?e.reminders:undefined,reminderMinutes:e.reminders&&e.reminders.length?e.reminders[0]:10,location:e.location||'',notes:e.notes||'',tz:tzName()},20000);
   return r.ok?'Put back — “'+e.title+'” '+evWhen(e)+'.':'I couldn’t put it back. '+(data.error||'');
@@ -4094,7 +4133,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const OUTBOX='max_outbox',OFF_RESULTS='max_offline_results';
  const isOffline=()=>navigator.onLine===false||cloud.state==='offline';
  // Commands that need the internet. Asked offline, they wait in the outbox and run as soon as Max is back online.
- const QUEUE_TYPES=new Set(['add_event','add_task','edit_event','delete_event','research','check_watch','verify_note','read_email','draft_email','modify_email','read_link','project_request','list_requests','check_projects','project_stats','play_overview','play_update','play_notes','play_reviews','coach_checkin','convert_currency','market_chart','organize_notes','new_routine_cal']);
+ const QUEUE_TYPES=new Set(['add_event','add_task','edit_event','delete_event','delete_events','research','check_watch','verify_note','read_email','draft_email','modify_email','read_link','project_request','list_requests','check_projects','project_stats','play_overview','play_update','play_notes','play_reviews','coach_checkin','convert_currency','market_chart','organize_notes','new_routine_cal']);
  // Commands that answer from Max's saved copy while offline.
  const CACHED_TYPES=new Set(['list_schedule','market_quote','show_watchlist','check_email','briefing']);
  const outbox=()=>jget(OUTBOX,[]);
@@ -5147,7 +5186,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return dateOnly?dayName:dayName+' at '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
  }
  const needGoogleMsg='Your Google Calendar isn’t connected yet. Hold the circle, open Settings, and sign in with Google — then ask me again.';
- async function addEvent(d){
+ let shortAdd=false;
+ async function addEvent(d,short){
   if(!d||!d.title)return 'What should I call it?';
   if(!d.start)return 'When should I set “'+d.title+'”? Tell me the day and time.';
   const rr=repeatRule(d.repeat);
@@ -5156,6 +5196,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!r.ok)return 'I couldn’t add it to your calendar. '+(data.error||'');
   lastCreated={kind:'event',id:data.event.id,title:data.event.title,at:Date.now()};
   const rm=data.event.reminderMinutes;
+  if(short||shortAdd)return '✓ “'+data.event.title+'” '+fmtWhen(data.event.start,data.event.allDay)+(rr?', repeating '+repeatText(rr):'');
   return 'Done — “'+data.event.title+'” '+fmtWhen(data.event.start,data.event.allDay)+(rr?', repeating '+repeatText(rr):'')+'. '+(data.event.allDay?'':rm===0?'Your phone will notify you at that time. ':'Your phone will remind you '+rm+' minutes before. ')+'Say “undo” if that’s wrong.';
  }
  async function addTask(d){
@@ -5193,6 +5234,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function undoLast(){
   if(!lastCreated||Date.now()-lastCreated.at>30*60e3)return 'There’s nothing recent for me to undo.';
   const it=lastCreated;
+  if(it.batch&&it.batch.length>1){let ok=0;for(const b of it.batch){try{const {r}=await fetchJson(workerBase()+(b.kind==='event'?'/api/calendar/event?id=':'/api/tasks?id=')+encodeURIComponent(b.id),{method:'DELETE'},20000);if(r.ok)ok++}catch{}}lastCreated=null;return 'Removed '+ok+' of '+it.batch.length+' things I just added.'}
   const {r,data}=await fetchJson(workerBase()+(it.kind==='event'?'/api/calendar/event?id=':'/api/tasks?id=')+encodeURIComponent(it.id),{method:'DELETE'},20000);
   if(!r.ok)return 'I couldn’t remove it. '+(data.error||'');
   lastCreated=null;
@@ -5503,7 +5545,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(/^(site_audit|seo_ideas|content_draft|project_stats|log_sale|sales_summary)$/.test(t))return 'web';
   if(/^(trading_|market_|show_watchlist|watchlist_|price_alert|list_alerts|convert_currency|set_currencies)/.test(t))return 'trading';
   if(/^(learn_this|make_skill|improve_skill|walk_through|check_conflicts|show_notes|open_note|new_note|read_note|organize_notes|export_notes|import_vault|export_vault|research|show_research|edit_research|approve_research|reject_research|save_answer|verify_note|library_report|find_duplicates|new_skill|show_skills|forget_skill|read_link|attach_file|save_attachment|discard_attachment|watch_topic|unwatch_topic|check_watch|research_inbox)$/.test(t))return 'notes';
-  if(/^(add_event|edit_event|delete_event|add_task|list_schedule|briefing|deadlines|check_email|read_email|draft_email|send_email|cancel_email|modify_email|whatsapp_draft|new_routine|start_routine|show_routines|delete_routine)$/.test(t))return 'schedule';
+  if(/^(add_event|edit_event|delete_event|delete_events|add_task|list_schedule|briefing|deadlines|check_email|read_email|draft_email|send_email|cancel_email|modify_email|whatsapp_draft|new_routine|start_routine|show_routines|delete_routine)$/.test(t))return 'schedule';
   if(/^coach_/.test(t))return 'training';
   if(/^(play_music|music_control)$/.test(t))return 'music';
   if(/^deal_/.test(t))return 'shopping';
@@ -5795,6 +5837,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    case 'choose_pick':return await choosePick(+a.query);
    case 'edit_event':return await editEvent(a.details||{find:a.query});
    case 'delete_event':return await deleteEvent(a.details||{find:a.query});
+   case 'delete_events':return await deleteEvents(a.details||{find:a.query});
    case 'modify_email':return await modifyEmail(a.details||{target:a.query});
    case 'read_note':{
     const n=a.query?findNote(a.query)||rankNotes(a.query,1)[0]:(screen==='editor'&&currentNote())||(lastNote.id&&getNotes().find(x=>x.id===lastNote.id));
@@ -5915,10 +5958,26 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    countUsage(data.model);
    let reply=data.reply||data.response||data.text||'I could not generate a response.';
    if(coachActive()){activeCoach.at=Date.now();coachAppend(activeCoach.id,data.coachNotes)}
-   if(data.action&&data.action.type){
-    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft','play_music','music_control','activity','guard_report','guard_run','backup_now','hear_fix','listen_lang','show_hearing','agent_report','music_fav'].includes(data.action.type)?'':reply);
+   const multi=Array.isArray(data.actions)&&data.actions.length>1?data.actions.filter(x=>x&&x.type):null;
+   if(multi){
+    // several instructions in one message: do every one, then list what was really done
+    const lines=[],made=[];let okN=0;shortAdd=true;
+    for(const a of multi){
+     let said='';try{said=await doAction(a,q)}catch(e){said='I couldn’t do that one. '+(e.message||'')}
+     if(a.type==='add_event'||a.type==='add_task'){if(lastCreated&&lastCreated.at>Date.now()-5000)made.push({kind:lastCreated.kind,id:lastCreated.id,title:lastCreated.title})}
+     const bad=/^(sorry|i couldn’t|i couldn't|i can’t|i can't|couldn’t|could not|what |when |which )/i.test(String(said||''));if(!bad)okN++;
+     lines.push((bad?'✗ ':'')+String(said||'').replace(/ Say “undo” if that’s wrong\./,''));
+    }
+    shortAdd=false;
+    if(made.length>1&&lastCreated)lastCreated={...lastCreated,batch:made,at:Date.now()};
+    reply='I did '+okN+' of '+multi.length+':\n'+lines.join('\n')+(made.length>1?'\nSay “undo” to remove all '+made.length+'.':'');
+   }else if(data.action&&data.action.type){
+    const said=await doAction(data.action,q,['show_notes','open_note','research','edit_research','approve_research','reject_research','organize_notes','export_notes','save_answer','show_research','new_note','add_event','add_task','list_schedule','undo_last','delete_events','read_note','open_project','check_projects','show_projects','list_passage_plans','project_request','list_requests','merge_request','project_stats','log_sale','sales_summary','display','projects_overview','attach_file','save_attachment','discard_attachment','read_link','briefing','deadlines','show_crew','watch_topic','unwatch_topic','check_watch','research_inbox','verify_note','library_report','find_duplicates','new_skill','show_skills','forget_skill','check_email','read_email','draft_email','send_email','cancel_email','edit_event','delete_event','modify_email','market_quote','show_watchlist','market_chart','watchlist_add','watchlist_remove','price_alert','list_alerts','convert_currency','set_currencies','new_routine','start_routine','routine_step','show_routines','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_overview','play_update','play_notes','play_reviews','play_build','build_status','trading_status','trading_emails','site_audit','seo_ideas','content_draft','learn_this','make_skill','improve_skill','walk_through','walk_step','check_conflicts','weather','set_weather_place','set_personality','usage','whatsapp_draft','play_music','music_control','activity','guard_report','guard_run','backup_now','hear_fix','listen_lang','show_hearing','agent_report','music_fav'].includes(data.action.type)?'':reply);
     if(said)reply=said;
     learn(norm(q),data.action); // next time this phrase works instantly
+   }else if(/\b(alarm|schedule|reminder|calendar|event|meeting|appointment)s?\b/i.test(q)&&/\b(set|add|create|delete|remove|clear|cancel|schedule|remind|burahin)\b/i.test(q)&&/\b(deleted|removed|cleared|cancell?ed|saved|added|i(’|')ve set|i set|scheduled|all set|done)\b/i.test(reply)){
+    // the AI said it did something but ran nothing: never let that stand
+    reply='I did not change your calendar — nothing was run, even though my first answer sounded like it. Please say it again, for example “delete all my alarms” or “alarm 6:30 am planting”.';
    }
    talkHistory.push({role:'user',text:q},{role:'model',text:reply});
    showNoteRefs(data.notesUsed);showDesk(data.dept);showBrain(data.brain,data.check);if(data.model)showModelChip('AI: '+modelLabel(data.model)+(data.modelRole==='backup'?' · backup':data.modelRole==='main'?' · main':''),data.modelRole,data.modelRole==='backup'?'The main AI was busy or out of free quota, so a backup AI answered':'Max’s main AI answered');if(data.check&&data.check.by)countUsage(data.check.by);

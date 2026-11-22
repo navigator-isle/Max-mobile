@@ -61,6 +61,7 @@ run "Phone: Office, video & links" tests/e2e10.mjs "$PWD/index.html" "$TMP/worke
 run "Phone: crew & skills"  tests/e2e11.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: Gmail"         tests/e2e12.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: change & organize" tests/e2e13.mjs "$PWD/index.html" "$TMP/worker.mjs"
+run "Phone: several instructions, delete all, no false done" tests/e2e46.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: markets"       tests/e2e14.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: routines, coaches, passage" tests/e2e15.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: Google Play"   tests/e2e16.mjs "$PWD/index.html" "$TMP/worker.mjs"
