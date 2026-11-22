@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18s";
+const WORKER_VERSION = "max-worker-2026-11-18t";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -679,13 +679,54 @@ async function brainVerify(env, maxN = 1) {
   }
   return handled;
 }
+// ---- deep review (23 Nov 2026, Mark): research every note on the web and ADD a detailed section at its end. Never edits his own text. ----
+const DEEP_MARK = "Added by Max — deep review";
+const escH = t => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+async function deepState(env) { const st = await setting(env, "max_deepreview", null) || {}; return {on: st.on !== false, done: st.done || {}, started: st.started || Date.now()}; }
+async function deepReviewRun(env, maxN = 1) {
+  const st = await deepState(env); if (!st.on) return 0;
+  const db = await brainDb(env), today = new Date().toISOString().slice(0, 10);
+  const notes = (await listNotes(db)).filter(n => !n.deleted && !BRAIN_SKIP.test(n.category || "") && plainText(n.body).length > 40);
+  const due = notes.filter(n => !st.done[n.id] && !String(n.body).includes(DEEP_MARK))
+    .sort((a, b) => ((/^Maritime/i.test(b.category || "") ? 1 : 0) - (/^Maritime/i.test(a.category || "") ? 1 : 0)) || (a.updatedAt - b.updatedAt));
+  let did = 0;
+  for (const n of due) {
+    if (did >= maxN) break;
+    const text = plainText(n.body).slice(0, 9000);
+    const r = await agentAsk(env, "review", `You are ${expertFor(n.category)}. Mark Jun, a ship officer, wants his study note below made SUPER DETAILED. Search the web (official sources first: IMO, flag States, USCG/eCFR, ILO, class societies, MARINA, manufacturers) and write ONLY what is missing from the note — never repeat it and never contradict it without saying so.\nAdd: the exact requirements with regulation / chapter / rule / paragraph numbers; numbers, limits, intervals and dates; the latest amendments with their entry-into-force dates; what it means in practice on board (who does what, records to keep, drills and checklists); common Port State Control / audit deficiencies; links to related conventions and codes. Be detailed and concrete. Never invent a number, date or reference; if unsure write "check". Today is ${today}.\nIf the note is already complete and current, set "nothing_to_add" to true.\nNOTE "${n.title}" (${n.category}):\n${text}\n\nReply with JSON only: {"nothing_to_add":false,"sections":[{"heading":"short bold heading","bullets":["detailed bullet with the real numbers","..."]}],"sources":[{"title":"site — page","url":"https://..."}]}`, {search: true, temp: 0.3});
+    if (r.error) break;    // brain out for today → try again next time
+    if (!r.data) { st.tries = st.tries || {}; st.tries[n.id] = (st.tries[n.id] || 0) + 1; if (st.tries[n.id] >= 3) st.done[n.id] = {at: Date.now(), title: cleanText(n.title, 120), why: "the research answer could not be read — left alone"}; did++; continue; }
+    const d = r.data || {}, secs = (Array.isArray(d.sections) ? d.sections : []).map(x => ({h: cleanText(String(x?.heading || ""), 120), b: (Array.isArray(x?.bullets) ? x.bullets : []).map(y => cleanText(String(y), 700)).filter(Boolean).slice(0, 14)})).filter(x => x.h && x.b.length).slice(0, 8);
+    const said = new Map((Array.isArray(d.sources) ? d.sources : []).map(x => [String(x?.url || ""), cleanText(String(x?.title || ""), 120)])),
+      src = (r.sources || []).filter(x => /^https:\/\//.test(x.url)).map(x => ({title: said.get(x.url) || x.title || x.url, url: x.url})).filter((x, i, a) => a.findIndex(y => y.url === x.url) === i).slice(0, 8);   // only sources the web search really found
+    const mark = (why, extra) => { st.done[n.id] = {at: Date.now(), title: cleanText(n.title, 120), why, ...(extra || {})}; };
+    if (d.nothing_to_add === true || !secs.length) { mark("nothing to add"); did++; continue; }
+    if (!src.length) { mark("no web source found — left alone"); did++; continue; }
+    const html = `<hr><p><b>${DEEP_MARK} ${today}</b></p>` + secs.map(x => `<p><b>${escH(x.h)}</b></p><ul>${x.b.map(y => `<li>${escH(y)}</li>`).join("")}</ul>`).join("")
+      + `<p><b>Sources (checked ${today})</b></p><ul>${src.map(x => `<li>${escH(x.title || x.url)} — ${escH(x.url)}</li>`).join("")}</ul>`;
+    await noteVersionSave(db, n.id, n.body, "before deep review"); const now = Date.now() + 1;
+    await db.prepare("UPDATE max_notes SET body = ?, updated_at = ? WHERE id = ?").bind(String(n.body) + html.slice(0, 40000), now, n.id).run();
+    const checks = await setting(env, "max_srv_notecheck", {}); checks[n.id] = {...(checks[n.id] || {}), at: now + 1, title: cleanText(n.title, 120), folder: cleanText(n.category || "", 120), verdict: "added — deep review", fixed: {at: Date.now(), changes: [{from: "(your text is untouched)", to: `Max added ${secs.length} research section${secs.length > 1 ? "s" : ""} at the end of the note`}]}, summary: "Deep review: " + secs.map(x => x.h).join("; ").slice(0, 300), issues: [], sources: src.slice(0, 5), expert: "Deep review"};
+    await srvSetting(env, "max_srv_notecheck", JSON.stringify(checks));
+    await logAct(env, {dept: "notes", kind: "deep review", text: `Researched "${cleanText(n.title, 80)}" and added ${secs.length} section${secs.length > 1 ? "s" : ""} (old version kept)`, detail: src.map(x => x.url).join(" ").slice(0, 280), source: "brain"});
+    mark("added " + secs.length + " sections", {sections: secs.length, sources: src.length}); did++;
+  }
+  const keys = Object.keys(st.done); if (keys.length > 1500) for (const k of keys.slice(0, keys.length - 1500)) delete st.done[k];
+  await srvSetting(env, "max_deepreview", JSON.stringify(st)); return did;
+}
 const brainFamily = m => /gemini/i.test(String(m)) ? "gemini" : /cloudflare|workers-ai|@cf/i.test(String(m)) ? "cloudflare" : /groq/i.test(String(m)) ? "groq" : String(m || "?").split(":")[0];
 async function brainCron(env, when) {
   if (!env.MAX_MEMORY) return "no database";
   const manilaHour = (new Date(when || Date.now()).getUTCHours() + 8) % 24, night = manilaHour < 6;
+  if (!(await srvSetting(env, "max_brain_rescan_v1"))) { const db = await brainDb(env); await db.prepare("UPDATE max_brain SET hash = ''").run(); await srvSetting(env, "max_brain_rescan_v1", "done"); }   // Mark: "scan my notes again"
   const s = await brainStudy(env, {maxUnits: night ? 8 : 3, ms: night ? 40000 : 22000});
-  let v = 0, e = 0; try { v = await brainVerify(env, night ? 2 : 1); } catch {} try { e = await brainExam(env, night ? 2 : 1); } catch {}
-  return `studied ${s.studied} (units ${s.units}, left ${s.left})${v ? ", checked " + v + " suspect(s)" : ""}${e ? ", exam " + e : ""}`;
+  let v = 0, e = 0, dr = 0; try { v = await brainVerify(env, night ? 2 : 1); } catch {} try { dr = await deepReviewRun(env, night ? 2 : 1); } catch {} try { e = await brainExam(env, night ? 2 : 1); } catch {}
+  return `studied ${s.studied} (units ${s.units}, left ${s.left})${v ? ", checked " + v + " suspect(s)" : ""}${e ? ", exam " + e : ""}${dr ? ", deep review " + dr : ""}`;
+}
+async function deepStatus(env, notes) {
+  const st = await deepState(env), done = notes.filter(n => st.done[n.id] || String(n.body).includes(DEEP_MARK)), vals = Object.values(st.done);
+  return {on: st.on, total: notes.length, done: done.length, added: vals.filter(x => x.sections).length, nothing: vals.filter(x => /nothing/.test(x.why || "")).length, skipped: vals.filter(x => /no web source/.test(x.why || "")).length,
+    last: vals.reduce((m, x) => Math.max(m, x.at || 0), 0) || null, recent: vals.filter(x => x.sections).sort((a, b) => b.at - a.at).slice(0, 5).map(x => ({title: x.title, sections: x.sections}))};
 }
 async function brainStatus(env) {
   const db = await brainDb(env), notes = (await listNotes(db)).filter(n => !n.deleted && !BRAIN_SKIP.test(n.category || "") && brainNoteText(n).length > 40);
@@ -697,7 +738,7 @@ async function brainStatus(env) {
     exam: {count: exams.length, score: exams.length ? Math.round(exams.reduce((a, e) => a + e.score, 0) / exams.length * 100) : null, gaps: done.filter(r => jparse(r.exam, {}).gap).map(r => ({title: r.title, q: jparse(r.exam, {}).q})).slice(0, 8)},
     links: Math.round(done.reduce((a, r) => a + jparse(r.links, []).length, 0) / 2), checks: items.filter(x => x.state === "check").slice(0, 20), fixed: items.filter(x => x.state === "fixed").slice(0, 20),
     usage: {day: use.day, calls: use.calls, fails: use.fails, gemini: use.gem, geminiCap: BRAIN_GEMINI_CAP}, providers: brainProviders(env).map(p => p.name), last: done.reduce((m, r) => Math.max(m, r.studied_at || 0), 0) || null,
-    mapChars: ((await srvSetting(env, "max_brain_map")) || "").length};
+    mapChars: ((await srvSetting(env, "max_brain_map")) || "").length, deep: await deepStatus(env, notes)};
 }
 // ================= end of Max's brain =================
 // ---------- conversation log (Max remembers every conversation) ----------
@@ -2187,7 +2228,7 @@ const AGENT = Object.fromEntries(AGENT_LIST.map(a => [a.id, a]));
 const WEEKLY_AUTO = ["web", "apps", "security", "trading", "investments"];
 const SUMMARY_SLOT = {day: 0, hour: 10};
 // Background brain use per day: notes first, trading second, a small share for the rest.
-const BUDGET = {notes: 40, trading: 20, investments: 34, research: 8, web: 4, apps: 3, security: 3, business: 3, music: 2, schedule: 2, email: 2, shopping: 3};
+const BUDGET = {review: 30, notes: 40, trading: 20, investments: 34, research: 8, web: 4, apps: 3, security: 3, business: 3, music: 2, schedule: 2, email: 2, shopping: 3};
 async function budgetOk(env, id, n = 1) {
   if (!env.MAX_MEMORY) return true;
   const day = new Date().toISOString().slice(0, 10);
@@ -4304,7 +4345,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {deepReviewRun, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -4749,6 +4790,14 @@ CONFIDENCE: <high, medium or low, and why in a few words>`;
       if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
       const s = await brainStudy(env, {maxUnits: 4, ms: 24000}); let v = 0; try { v = await brainVerify(env, 1); } catch {}
       return json({...s, checked: v, status: await brainStatus(env)}, 200, origin, env);
+    }
+    if (url.pathname === "/api/brain/deep" && request.method === "POST") {
+      if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
+      let body = {}; try { body = await request.json(); } catch {}
+      const st = await deepState(env);
+      if (body.action === "pause" || body.action === "start") { st.on = body.action === "start"; await srvSetting(env, "max_deepreview", JSON.stringify(st)); }
+      let did = 0; if (body.action === "now") { st.on = true; await srvSetting(env, "max_deepreview", JSON.stringify(st)); did = await deepReviewRun(env, 2); }
+      return json({ok: true, reviewed: did, status: await brainStatus(env)}, 200, origin, env);
     }
     if (url.pathname === "/api/brain/resolve" && request.method === "POST") {
       const db = env.MAX_MEMORY && auth.ok ? await brainDb(env) : null; if (!db) return json({error: "Not signed in."}, 401, origin, env);

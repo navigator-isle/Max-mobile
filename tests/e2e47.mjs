@@ -34,9 +34,10 @@ const reqs = [];
 let status = { total: 3, studied: 2, left: 1, maritime: { total: 3, studied: 2 }, exam: { count: 4, score: 88, gaps: [{ title: "MARPOL", q: "What is Annex I?" }] }, links: 5,
   checks: [{ id: "n1", i: 0, title: "SOLAS", quote: "drills every 6 months", why: "SOLAS requires monthly drills", suggest: "drills every month", source: "https://www.imo.org/solas", state: "check" }],
   fixed: [{ id: "n2", i: 0, title: "COLREG", quote: "Rule 5 look-out", fixed: "Rule 5 lookout", source: "https://www.imo.org/colreg", state: "fixed" }],
-  usage: { day: "2026-11-23", calls: { groq: 4, gemini: 2 }, fails: {}, gemini: 2, geminiCap: 40 }, providers: ["groq", "cloudflare", "gemini"], last: Date.now() - 3600e3, mapChars: 2400 };
+  deep: { on: true, total: 10, done: 4, added: 3, nothing: 1, skipped: 0, last: Date.now(), recent: [{ title: "SOLAS", sections: 3 }] }, usage: { day: "2026-11-23", calls: { groq: 4, gemini: 2 }, fails: {}, gemini: 2, geminiCap: 40 }, providers: ["groq", "cloudflare", "gemini"], last: Date.now() - 3600e3, mapChars: 2400 };
 await p.route("**/api/brain/**", async r => { const u = r.request().url(), m = r.request().method(); reqs.push(m + " " + u.split("/api/")[1] + " " + (r.request().postData() || ""));
   if (u.includes("/status")) return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(status) });
+  if (u.includes("/brain/deep")) { const a = JSON.parse(r.request().postData() || "{}").action; status = { ...status, deep: { ...status.deep, on: a === "pause" ? false : true, done: a === "now" ? 6 : status.deep.done } }; return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ ok: true, reviewed: 2, status }) }); }
   if (u.includes("/study-now")) { status = { ...status, studied: 3, left: 0 }; return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ units: 1, studied: 1, left: 0, checked: 0, status }) }); }
   status = { ...status, checks: [] }; return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ ok: true }) }); });
 await p.goto(ORIGIN + "/"); await p.waitForTimeout(1500);
@@ -52,6 +53,12 @@ body = await p.locator("#dashFullBody").textContent(); ok(!/Please check \(/.tes
 await p.click('[data-brain="study"]'); await p.waitForTimeout(1200);
 ok(reqs.some(x => /POST brain\/study-now/.test(x)), "“Study now” runs a study burst", reqs.join(" | "));
 body = await p.locator("#dashFullBody").textContent(); ok(/3 of 3 notes studied/.test(body), "…and the card now shows 3 of 3", body.slice(0, 200));
+ok(/Deep review/.test(body) && /4 of 10 notes researched/.test(body) && /SOLAS \(\+3\)/.test(body), "deep review: progress and the latest researched notes are shown", body.slice(0, 400));
+await p.click('[data-brain="deep-now"]'); await p.waitForTimeout(900);
+ok(reqs.some(x => /POST brain\/deep .*"action":"now"/.test(x)), "“Review 2 notes now” is sent", reqs.join(" | "));
+body = await p.locator("#dashFullBody").textContent(); ok(/6 of 10 notes researched/.test(body), "…and the count moves to 6 of 10", body.slice(0, 300));
+await p.click('[data-brain="deep-pause"]'); await p.waitForTimeout(900); body = await p.locator("#dashFullBody").textContent();
+ok(/Paused\./.test(body) && /Start/.test(body), "Pause works and the button becomes Start", body.slice(0, 300));
 await p.evaluate(() => window.maxCloseDrawer && 0); await p.click("#dashFullClose"); await p.waitForTimeout(300);
 ok(errs.length === 0, "no script errors", errs.join("|"));
 await b.close(); sW.close(); sP.close(); console.log(pass + " passed, " + fail + " failed"); process.exit(fail ? 1 : 0);
