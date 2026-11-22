@@ -505,6 +505,7 @@ body.on-home.has-dash .edge-tabs{display:flex}
 .read-att{margin-top:22px;padding-top:12px;border-top:1px solid #294861}.read-att-h{display:flex;justify-content:space-between;align-items:center;gap:8px}.read-att-h h2{font-size:1rem;margin:0}
 .att-card{border:1px solid #1f3a52;border-radius:12px;padding:10px;margin:10px 0;background:#0c1d30}.att-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.att-kind{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#8fa6bd}
 .att-media{display:block;max-width:100%;max-height:320px;border-radius:10px;margin:8px 0}.att-acts{display:flex;gap:8px;margin-top:6px}.link-row-att{display:flex;gap:8px}.link-row-att input{flex:1;min-width:0}
+.model-chip{opacity:.85}.model-chip.backup{border-color:#f2c14e;color:#f2d27e}.model-chip.offline{border-color:#8fa6bd}
 </style></head>
 <body>
 <div id="movedNote" hidden style="background:#3a2a05;color:#ffe9a8;padding:8px 12px;font:13px system-ui;text-align:center">Max now lives on Cloudflare: <a style="color:#ffd76a" href="https://max-app-axv.pages.dev/">max-app-axv.pages.dev</a> — open it and add it to your home screen.</div>
@@ -1352,6 +1353,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   box.prepend(tag);box.hidden=false;
  }
  // How hard Max thought, and whether a second AI checked the answer.
+ // 22 Nov 2026 (Mark): show which AI answered, so he can see when a backup AI is working
+ function modelLabel(m){m=String(m||'');if(!m)return '';
+  const g=m.match(/^gemini-([\d.]+)-(flash-lite|flash|pro)/i);if(g)return 'Gemini '+g[1]+' '+({'flash-lite':'Flash-Lite',flash:'Flash',pro:'Pro'}[g[2].toLowerCase()]);
+  if(/^groq:/.test(m)){const x=m.replace(/^groq:/,'').split('/').pop();return x.replace(/^gpt-oss-(\d+)b$/i,'GPT-OSS $1B').replace(/^qwen([\d.]+)-(\d+)b$/i,'Qwen $1 $2B')+' (Groq)'}
+  if(/^workers-ai:/.test(m)){const x=m.split('/').pop().replace(/-it$|-instruct$/,'');return x.replace(/-a\d+b/,'').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())+' (Cloudflare)'}
+  if(/^claude/.test(m))return 'Claude';
+  return m}
+ function showModelChip(text,role,title){const box=$('noteRefs');if(!box||!text)return;const t=document.createElement('span');t.className='desk-chip model-chip'+(role?' '+role:'');t.textContent=text;t.title=title||text;box.append(t);box.hidden=false}
  function showBrain(b,c){
   const box=$('noteRefs');
   const chip=(text,title,cls,onClick)=>{const t=document.createElement(onClick?'button':'span');t.className='desk-chip'+(cls?' '+cls:'');t.textContent=text;t.title=title;if(onClick)t.onclick=onClick;box.append(t);box.hidden=false};
@@ -5894,7 +5903,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   }catch(e){console.error('Command failed',e)}
   const base=workerBase();
   if(!base){showAnswer('I heard you say: '+q+'. My AI connection is not set up yet. Please connect the Cloudflare Worker in the existing connection settings.',finish);return}
-  if(navigator.onLine===false){const o=await offlineAnswer(q);if(!o.fromNotes)o.text=(o.ai?o.text+' ':'')+queuedReply(q,null)+(o.ai?'':' Meanwhile your notes and commands still work.');talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
+  if(navigator.onLine===false){const o=await offlineAnswer(q);if(!o.fromNotes)o.text=(o.ai?o.text+' ':'')+queuedReply(q,null)+(o.ai?'':' Meanwhile your notes and commands still work.');talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showModelChip(o.ai?'AI: '+(obState()?.ready?'Gemma 4 on your phone':'Chrome AI on your phone')+' · offline':'From your notes · offline, no AI','offline');showAnswer(o.text,finish);return}
   try{
    const {r,data}=await fetchJson(base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({message:q,history:talkHistory.slice(-10),useCloudMemory:cloud.memory,voice:!!voice,allowActions:true,screen:screenName(),notes:await notesContextSmart(q),projects:projects().map(p=>p.name),skills:relevantSkills(q),personality:personality(),lastDept:deskHint(),...(voice&&heardFor(q)?{heard:heardFor(q)}:{}),...(coachActive()?{coach:{name:COACHES[activeCoach.id].name,brief:COACHES[activeCoach.id].brief,file:coachFileText(activeCoach.id)}}:{}),
@@ -5912,12 +5921,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     learn(norm(q),data.action); // next time this phrase works instantly
    }
    talkHistory.push({role:'user',text:q},{role:'model',text:reply});
-   showNoteRefs(data.notesUsed);showDesk(data.dept);showBrain(data.brain,data.check);if(data.check&&data.check.by)countUsage(data.check.by);
+   showNoteRefs(data.notesUsed);showDesk(data.dept);showBrain(data.brain,data.check);if(data.model)showModelChip('AI: '+modelLabel(data.model)+(data.modelRole==='backup'?' · backup':data.modelRole==='main'?' · main':''),data.modelRole,data.modelRole==='backup'?'The main AI was busy or out of free quota, so a backup AI answered':'Max’s main AI answered');if(data.check&&data.check.by)countUsage(data.check.by);
    showAnswer(reply,finish);
    if(remembered)setTimeout(()=>{$('memoryBadge').textContent='✓ Noted in memory';$('memoryBadge').hidden=false;setTimeout(()=>$('memoryBadge').hidden=true,5000)},200);
   }catch(err){
    $('maxOrb').classList.remove('processing');
-   if(err.offline){cloud.state='offline';cloud.memory=false;const o=await offlineAnswer(q);if(!o.fromNotes)o.text=(o.ai?o.text+' ':'')+queuedReply(q,null)+(o.ai?'':' Meanwhile your notes and commands still work.');refreshConnectionLabel();talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showAnswer(o.text,finish);return}
+   if(err.offline){cloud.state='offline';cloud.memory=false;const o=await offlineAnswer(q);if(!o.fromNotes)o.text=(o.ai?o.text+' ':'')+queuedReply(q,null)+(o.ai?'':' Meanwhile your notes and commands still work.');refreshConnectionLabel();talkHistory.push({role:'user',text:q},{role:'model',text:o.text});showNoteRefs(o.refs);showModelChip(o.ai?'AI: '+(obState()?.ready?'Gemma 4 on your phone':'Chrome AI on your phone')+' · offline':'From your notes · offline, no AI','offline');showAnswer(o.text,finish);return}
    endConversation(null);showAnswer('I could not reach my AI service. '+err.message,finish)}
   });
  }

@@ -77,7 +77,7 @@ ok(/no fake reviews, no invented personal experiences/.test(JSON.stringify(gem.a
 for (const t of ["draft an email to ana about the meeting", "write a note about engine oil"]) { await say(t); ok(!/Here’s a draft for Hobby Isle/.test(await answer()), "“" + t + "” is not a website post", await answer()); await say("no"); }
 // The brain's router: the answer shows which desk handled it, and a follow-up stays with that desk.
 const lastChat = () => gem.filter(g => g.systemInstruction).at(-1);
-const chip = () => p.evaluate(() => [...document.querySelectorAll("#noteRefs .desk-chip")].map(x => x.textContent).join("|"));
+const chip = () => p.evaluate(() => [...document.querySelectorAll("#noteRefs .desk-chip:not(.model-chip)")].map(x => x.textContent).join("|"));
 await say("what does a doji candlestick mean");
 ok(/Trading desk/.test(await chip()) && /SPECIALIST ON DUTY: Trading desk/.test(JSON.stringify(lastChat())), "a trading question is answered by the 📈 Trading desk, and the phone shows it", await chip());
 await say("why does it matter");

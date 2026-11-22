@@ -9,7 +9,7 @@ const require = createRequire(process.env.PW_REQUIRE || import.meta.url); const 
 const [, , pagePath] = process.argv, dir = path.dirname(pagePath), FX = path.join(path.dirname(new URL(import.meta.url).pathname), "fixtures", "dash");
 let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
 let health = { ok: true, version: "max-worker-2026-11-18n", google: "linked (calendar, tasks, gmail)", database: "bound", paperTrading: "running — crypto checked " + new Date().toISOString().slice(0, 10), guard: "last check, 0 problem(s)", lastTrigger: { at: new Date().toISOString() }, emails: "last 2026-11-22T09:45Z “Max paper trading” sent; 3/3 recent sends OK" };
-const attSeen = [];
+const attSeen = []; let chatModel = "gemini-3.5-flash";
 const sP = http.createServer(async (q, r) => { const u = q.url.split("?")[0], J = (o, s = 200) => { r.writeHead(s, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" }); r.end(typeof o === "string" ? o : JSON.stringify(o)); };
   if (q.method === "OPTIONS") return J("{}");
   if (u === "/api/home/paper") return J(fs.readFileSync(path.join(FX, "paper.json"), "utf8"));
@@ -19,6 +19,7 @@ const sP = http.createServer(async (q, r) => { const u = q.url.split("?")[0], J 
   if (u === "/api/attachment") { const c = []; for await (const x of q) c.push(x); const b = JSON.parse(Buffer.concat(c).toString()); attSeen.push(b.name);
     return J({ attachment: { kind: "document", title: "Ballast log", topic: "Ship", summary: "Ballast water exchange record PLANKTONMARK for voyage 12.", points: ["Exchange done 200 nm from land"], dates: [], amounts: [], text: Buffer.from(b.data, "base64").toString("utf8"), tags: [] } }); }
   if (u === "/api/link") return J({ attachment: { kind: "web page", title: "IMO BWM page", summary: "BWM Convention overview LINKMARK.", points: [], dates: [], amounts: [], text: "D-2 standard" } });
+  if (u === "/api/chat") return J({ reply: "From your note Ballast water: ships must meet the D-2 standard.", model: chatModel, modelRole: chatModel === "gemini-3.5-flash" ? "main" : "backup", notesUsed: ["Ballast water"] });
   if (u.startsWith("/api/")) return J({});
   const f = u.endsWith("sw.js") ? "sw.js" : u.endsWith("sheetjs.js") ? "sheetjs.js" : "index.html"; r.writeHead(200, { "Content-Type": f.endsWith(".js") ? "text/javascript" : "text/html" }); r.end(fs.readFileSync(path.join(dir, f))); }).listen(8093);
 const B = "http://127.0.0.1:8093";
@@ -118,6 +119,14 @@ await p.click("#editorBack"); await p.waitForTimeout(300); await p.fill("#notesS
 ok(/Ballast water/.test(await txt("#noteList")), "searching finds the note by what is in its attachment");
 await p.click("#notesHome"); await p.waitForTimeout(300);
 ok(await vis("#maxOrb"), "Home goes back to the home screen");
+// which AI answered
+const ask = async q => { await p.fill("#typeInput", q); await p.click("#typeSend"); await p.waitForTimeout(900); return (await p.locator("#noteRefs .model-chip").allTextContents()).join("|"); };
+let chip = await ask("what is the D-2 standard");
+ok(chip === "AI: Gemini 3.5 Flash · main", "under the answer: which AI answered (main)", chip);
+chatModel = "groq:openai/gpt-oss-120b"; chip = await ask("and the D-1 standard");
+ok(chip === "AI: GPT-OSS 120B (Groq) · backup" && await p.locator("#noteRefs .model-chip.backup").count() === 1, "when a backup AI answers, it says so (highlighted)", chip);
+chatModel = "workers-ai:@cf/google/gemma-4-26b-a4b-it"; chip = await ask("ballast exchange");
+ok(/^AI: Gemma 4 26b \(Cloudflare\) · backup$/i.test(chip), "Cloudflare's free backup AI is named too", chip);
 ok(errs.length === 0, "no script errors", errs.join(" | "));
 await ctx.close(); await b.close(); sP.close();
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
