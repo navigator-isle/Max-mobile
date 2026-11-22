@@ -44,6 +44,7 @@ run "Backup price sources (crypto, dollar rate, PSE)" tests/test-worker30.mjs "$
 run "Paper trading: 5 × ₱50,000 (forex, copy, US ETF)" tests/test-worker31.mjs "$TMP/worker.mjs"
 run "Virtual investments: 4 × ₱100,000" tests/test-worker32.mjs "$TMP/worker.mjs"
 run "Notes Max researches: drafts, edits, self-fixes with undo" tests/test-worker33.mjs "$TMP/worker.mjs"
+run "Crypto 429 retries + backups, email send log" tests/test-worker34.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"

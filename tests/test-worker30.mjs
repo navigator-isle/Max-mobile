@@ -42,8 +42,8 @@ globalThis.fetch = async (u, init = {}) => {
 const mod = await import(process.argv[2]), T = mod.__test;
 const today = iso(Date.now());
 // ---------- crypto ----------
-ok(T.CRYPTO_SOURCES.length === 6 && T.CRYPTO_SOURCES[0] === "binance", "crypto: main source + 5 backups", T.CRYPTO_SOURCES.join());
-for (const src of T.CRYPTO_SOURCES) {
+ok(T.CRYPTO_SOURCES.length === 8 && T.CRYPTO_SOURCES[0] === "binance", "crypto: main source + 7 backups (22 Nov 2026: + MEXC, CryptoCompare)", T.CRYPTO_SOURCES.join());
+for (const src of T.CRYPTO_SOURCES.slice(0, 6)) {
   const k = await T.cryptoCandles({n: 0, max: 99}, src, "BTC", 160);
   const last = k.closed[k.closed.length - 1];
   ok(k.closed.length >= 150 && last[0] < today && last[1] === btc[168].c && k.live === btc[169].c && last[2] > 0, `${src}: daily closes read right (today's open candle is the live price, not a closed day)`, JSON.stringify([k.closed.length, last, k.live]));
@@ -55,9 +55,9 @@ ok(S.cryptoSrc === "kucoin" && /binance: .*okx: .*coinbase: .*kraken: /.test(S.c
 M.calls = []; M.down = /binance|okx|coinbase/;
 try { await T.paperCryptoStep(S, {n: 0, max: 200}, Date.now()); } catch {}
 ok(/kucoin/.test(M.calls[0]) && S.cryptoSrc === "kucoin", "next time the source that worked is tried first (no time wasted on blocked ones)", M.calls[0]);
-M.down = /binance|okx|coinbase|kraken|kucoin|gateio/; S.cryptoSrc = null;
+M.down = /binance|okx|coinbase|kraken|kucoin|gateio|mexc|cryptocompare/; S.cryptoSrc = null;
 err = null; try { await T.paperCryptoStep(S, {n: 0, max: 200}, Date.now()); } catch (e) { err = e; }
-ok(err && /no crypto price source answered/.test(err.message) && (err.message.match(/answered 403/g) || []).length === 6, "only if all 6 fail does the crypto step fail (and says why for each)", err && err.message);
+ok(err && /no crypto price source answered/.test(err.message) && (err.message.match(/answered 403/g) || []).length === 8, "only if all 8 fail does the crypto step fail (and says why for each)", err && err.message);
 M.down = /binance/; S.cryptoSrc = null;
 try { await T.paperCryptoStep(S, {n: 0, max: 200}, Date.now()); } catch {}
 ok(S.cryptoSrc === "okx", "normal day (only Binance blocked) → OKX, as before", S.cryptoSrc);

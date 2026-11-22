@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18m";
+const WORKER_VERSION = "max-worker-2026-11-18n";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -811,6 +811,7 @@ async function gapi(env, url, opts = {}) {
     if (!res.ok) throw new Error("Google: " + (data?.error?.message || res.status));
     return data;
   }
+  throw new Error("Google: the sign-in was refused twice (401) — Mark may need to link Google again");   // 22 Nov 2026: used to return nothing, which looked like success
 }
 const CAL = "https://www.googleapis.com/calendar/v3/calendars/primary/events", TASKS = "https://tasks.googleapis.com/tasks/v1/lists/@default/tasks";
 const isoLocal = s => /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d)?$/.test(String(s || "")) ? (String(s).length === 16 ? s + ":00" : s) : "";
@@ -1584,7 +1585,7 @@ async function traderNotify(env) {
   const to = String(env.MAX_OWNER_EMAIL).trim();
   if (!/^[^\s@<>]+@[^\s@<>]+$/.test(to)) return "bad owner email";
   const raw = ["To: " + to, "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent(subject))) + "?=", "MIME-Version: 1.0", "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", lines.join("\n")].join("\r\n");
-  await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})});
+  await gmailSend(env, raw);
   await srvSetting(env, "max_srv_trader_last", Math.max(...fresh.map(e => e.id)));
   return "sent " + fresh.length;
 }
@@ -1800,7 +1801,7 @@ async function guardBackup(env) {
     ...(code ? ["--" + bound, `Content-Type: application/zip; name="max-code-${day}.zip"`, `Content-Disposition: attachment; filename="max-code-${day}.zip"`, "Content-Transfer-Encoding: base64", "", b64bytes(code.bytes)] : []),
     "--" + bound + "--", ""].join("\r\n");
   if (raw.length > 30e6) throw new Error("the backup is too big for one email (" + Math.round(raw.length / 1e6) + " MB)");
-  await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})});
+  await gmailSend(env, raw);
   await srvSetting(env, "max_srv_guard_backup", JSON.stringify(out)).catch(() => {});
   return out;
 }
@@ -1818,7 +1819,7 @@ async function guardEmail(env, report, weekly) {
   lines.push("", "Ask Max \"is everything OK?\" for the full report.");
   const subject = report.problems.length ? "⚠ Max Guard: " + report.problems[0].slice(0, 70) + (report.problems.length > 1 ? " (+" + (report.problems.length - 1) + " more)" : "") : "✓ Max Guard: all clear this week";
   const raw = ["To: " + String(env.MAX_OWNER_EMAIL).trim(), "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent(subject))) + "?=", "MIME-Version: 1.0", "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", lines.join("\n")].join("\r\n");
-  await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})});
+  await gmailSend(env, raw);
   return "emailed";
 }
 // The hourly cron calls this; it only does the work once a day, at 22:45 UTC (6:45 am in Manila).
@@ -1964,7 +1965,7 @@ async function emailReport(env, rep) {
   const {subject, text, html} = renderReport(rep), b = "maxrep" + Math.random().toString(36).slice(2);
   const raw = ["To: " + String(env.MAX_OWNER_EMAIL).trim(), "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent(subject))) + "?=", "MIME-Version: 1.0", `Content-Type: multipart/alternative; boundary="${b}"`, "",
     "--" + b, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "", b64lines(text), "--" + b, "Content-Type: text/html; charset=UTF-8", "Content-Transfer-Encoding: base64", "", b64lines(html), "--" + b + "--", ""].join("\r\n");
-  await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})});
+  await gmailSend(env, raw);
   return "emailed";
 }
 let repReady = false;
@@ -2599,12 +2600,17 @@ const usd = v => "$" + (+v).toLocaleString("en-US", {minimumFractionDigits: 2, m
 const sgn = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2) + "%";
 const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
 const pstdev = a => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
+const pSleep = ms => new Promise(r => setTimeout(r, ms));
 async function pFetch(ctx, url, init = {}) {
-  if (ctx.n >= ctx.max) throw new Error("step budget used up (will continue next hour)");
-  ctx.n++;
-  const r = await fetch(url, {...init, headers: {"User-Agent": UA, ...(init.headers || {})}});
-  if (!r.ok) throw new Error(new URL(url).host + " answered " + r.status);
-  return r;
+  // 22 Nov 2026: exchanges answer 429 ("too many requests") to Cloudflare's shared addresses — wait and ask again (twice) instead of giving up
+  for (let tryN = 0; ; tryN++) {
+    if (ctx.n >= ctx.max) throw new Error("step budget used up (will continue next hour)");
+    ctx.n++;
+    const r = await fetch(url, {...init, headers: {"User-Agent": UA, ...(init.headers || {})}});
+    if (r.status === 429 && tryN < 2) { const ra = +r.headers.get("retry-after"); await pSleep(Math.min(8000, ra > 0 ? ra * 1000 : (ctx.wait ?? 1500) * (tryN + 1))); continue; }
+    if (!r.ok) throw new Error(new URL(url).host + " answered " + r.status);
+    return r;
+  }
 }
 async function bnKlines(ctx, sym, limit) {
   const d = await (await pFetch(ctx, `https://data-api.binance.vision/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=${limit}`)).json();
@@ -2952,7 +2958,7 @@ function cryptoSwing(S, U, upto, live, now) {
       const val = pos.qty * p * (1 - cost); B.cash += val; B.positions.splice(B.positions.indexOf(pos), 1);
       const pnl = val - pos.qty * pos.ep * (1 + cost), R = pnl / (pos.qty * pos.risk);
       B.trades.push({sym: pos.sym, entry: pos.entry, exit: when, ep: pos.ep, xp: p, pnl: +pnl.toFixed(2), R: +R.toFixed(2)});
-      pj(S, {book: "crypto_swing", kind: "SELL", sym: pos.sym, d: when, qty: pos.qty, px: p, ccy: "USDT", php: Math.round(val * fx), pnl: +pnl.toFixed(2), pnlPhp: Math.round(pnl * fx),
+      pj(S, {book: "crypto_swing", kind: "SELL", sym: pos.sym, d: when, qty: pos.qty, px: p, ep: pos.ep, ccy: "USDT", php: Math.round(val * fx), pnl: +pnl.toFixed(2), pnlPhp: Math.round(pnl * fx),
         text: `SELL ${g6(pos.qty)} ${pos.sym} @ $${g6(p)} (bought $${g6(pos.ep)} on ${pos.entry}) → ${pnl >= 0 ? "+" : "−"}${usd(Math.abs(pnl))} = ${pnl >= 0 ? "+" : "−"}${peso(Math.abs(pnl * fx))} (${R >= 0 ? "+" : ""}${R.toFixed(2)}× the amount risked)`,
         why: pos.sym + " " + o.why + (pnl > 0 ? " — profit locked in." : " — the loss is kept small, as planned."), copy: `If you copied this trade, sell your ${pos.sym} now.`});
     }
@@ -3034,6 +3040,10 @@ async function cryptoCandles(ctx, src, sym, limit) {
   else if (src === "kucoin") { const start = Math.floor(Date.now() / 1000) - (limit + 2) * 86400;
     const d = await (await pFetch(ctx, `https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=${sym}-USDT&startAt=${start}`)).json();
     if (d.code !== "200000" || !Array.isArray(d.data)) throw new Error("kucoin: " + cleanText(String(d.msg || "no data"), 60)); rows = d.data.map(r => [pD(+r[0] * 1000), +r[2], +r[6]]).reverse(); }   // [time, open, close, high, low, volume, turnover]
+  else if (src === "mexc") { const d = await (await pFetch(ctx, `https://api.mexc.com/api/v3/klines?symbol=${sym}USDT&interval=1d&limit=${Math.min(1000, limit + 1)}`)).json();
+    if (!Array.isArray(d)) throw new Error("mexc: " + cleanText(String(d.msg || "no data"), 60)); rows = d.map(r => [pD(+r[0]), +r[4], +r[7]]); }                                // [open time, open, high, low, close, volume, close time, quote volume]
+  else if (src === "cryptocompare") { const d = await (await pFetch(ctx, `https://min-api.cryptocompare.com/data/v2/histoday?fsym=${sym}&tsym=USD&limit=${Math.min(2000, limit)}`)).json();
+    if (d.Response !== "Success" || !Array.isArray(d.Data?.Data)) throw new Error("cryptocompare: " + cleanText(String(d.Message || "no data"), 60)); rows = d.Data.Data.map(r => [pD(r.time * 1000), +r.close, +r.volumeto]); }
   else if (src === "gate") { const d = await (await pFetch(ctx, `https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=${sym}_USDT&interval=1d&limit=${Math.min(1000, limit + 1)}`)).json();
     if (!Array.isArray(d)) throw new Error("gate: " + cleanText(String(d.message || d.label || "no data"), 60)); rows = d.map(r => [pD(+r[0] * 1000), +r[2], +r[1]]); }                 // [time, quote volume, close, high, low, open, ...]
   else throw new Error("unknown price source " + src);
@@ -3042,8 +3052,8 @@ async function cryptoCandles(ctx, src, sym, limit) {
   return {closed: rows.filter(r => r[0] < today), live: last ? last[1] : null};
 }
 // Main source + 5 backups, tried in order (the one that worked last time goes first, so a blocked source costs nothing).
-const CRYPTO_SOURCES = ["binance", "okx", "coinbase", "kraken", "kucoin", "gate"];
-const CRYPTO_NAMES = {binance: "Binance", okx: "OKX", coinbase: "Coinbase", kraken: "Kraken", kucoin: "KuCoin", gate: "Gate.io"};
+const CRYPTO_SOURCES = ["binance", "okx", "coinbase", "kraken", "kucoin", "gate", "mexc", "cryptocompare"];
+const CRYPTO_NAMES = {binance: "Binance", okx: "OKX", coinbase: "Coinbase", kraken: "Kraken", kucoin: "KuCoin", gate: "Gate.io", mexc: "MEXC", cryptocompare: "CryptoCompare"};
 async function paperCryptoStep(S, ctx, now) {
   let src = null, btc = null; const tried = [];
   const order = [...new Set([...(S.cryptoSrc && CRYPTO_SOURCES.includes(S.cryptoSrc) ? [S.cryptoSrc] : []), ...CRYPTO_SOURCES])];
@@ -3062,11 +3072,21 @@ async function paperCryptoStep(S, ctx, now) {
     S.fxSet = true; S.usdphp0 = S.usdphp;
   }
   const U = {BTC: btc.closed}, live = {BTC: btc.live};
+  // one coin at a time, a short pause between asks; if the main source refuses a coin, the backups are asked for that coin only
+  const backups = [...order.filter(x => x !== src && !(ctx.skip || []).includes(x))], dead = new Set();
+  const coin = async (c, n, min, needed) => {
+    try { await pSleep(ctx.gap ?? 150); const k = await cryptoCandles(ctx, src, c, n); if (k.closed.length >= min) return k; throw new Error(src + ": too little data"); }
+    catch (e) { if (/budget/.test(e.message) || !needed) throw e; let last = e;
+      for (const b of backups) { if (dead.has(b)) continue;
+        try { const k = await cryptoCandles(ctx, b, c, n); if (k.closed.length >= min) return k; }
+        catch (e2) { if (/budget/.test(e2.message)) throw e2; last = e2; if (/answered (403|429)/.test(e2.message)) dead.add(b); } }
+      throw last; } };
   for (const c of pool) { if (c === "BTC") continue;
-    try { const k = await cryptoCandles(ctx, src, c, 60); if (k.closed.length >= 21) { U[c] = k.closed; live[c] = k.live; } }
-    catch (e) { if (/budget/.test(e.message)) throw e; if (S.books.crypto_swing.positions.some(p => p.sym === c)) throw new Error("no price for " + c + ", which Max holds (" + cleanText(String(e.message), 50) + ")"); }   // a coin this source doesn't list is skipped
+    const held = S.books.crypto_swing.positions.some(p => p.sym === c);       // backups only for coins Max holds (a coin a source doesn't list is just skipped)
+    try { const k = await coin(c, 60, 21, held); U[c] = k.closed; live[c] = k.live; }
+    catch (e) { if (/budget/.test(e.message)) throw e; if (S.books.crypto_swing.positions.some(p => p.sym === c)) throw new Error("no price for " + c + ", which Max holds (" + cleanText(String(e.message), 50) + ")"); }   // a coin no source lists is skipped
   }
-  const g = await cryptoCandles(ctx, src, "PAXG", 240), gold = g.closed, upto = pAdd(pD(Date.now()), -1); live.PAXG = g.live;
+  const g = await coin("PAXG", 240, 201, true), gold = g.closed, upto = pAdd(pD(Date.now()), -1); live.PAXG = g.live;
   for (const [k, v] of Object.entries(tick)) if (v.last > 0) live[k] = v.last;
   cryptoSwing(S, U, upto, live, now);
   trendBook(S, "btc_trend", U.BTC, upto, live, now, {sym: "BTC", sma: 100, target: 0.40, calm: "In 2011–2026 this rule avoided most of Bitcoin's big crashes (worst drop −35% instead of −92%)."});
@@ -3126,7 +3146,7 @@ async function pseStep(env, S, ctx, today) {
         const val = pos.shares * p * (1 - PSE_SLIP), net = val - pseFee(val, true), pnl = net - pos.cost + (pos.divs || 0);
         B.cash += net; B.positions.splice(B.positions.indexOf(pos), 1);
         B.trades.push({sym: o.sym, entry: pos.entry, exit: d, ep: pos.ep, xp: p, pnl: +pnl.toFixed(2), divs: +(pos.divs || 0).toFixed(2)});
-        pj(S, {book: "pse_dividend", kind: "SELL", sym: o.sym, d, qty: pos.shares, px: p, ccy: "PHP", php: Math.round(net), pnl: +pnl.toFixed(2), pnlPhp: Math.round(pnl),
+        pj(S, {book: "pse_dividend", kind: "SELL", sym: o.sym, d, qty: pos.shares, px: p, ep: pos.ep, ccy: "PHP", php: Math.round(net), pnl: +pnl.toFixed(2), pnlPhp: Math.round(pnl),
           text: `SELL ${pos.shares.toLocaleString("en-US")} ${o.sym} @ ₱${g6(p)} at the opening (bought ₱${g6(pos.ep)} on ${pos.entry}) → ${pnl >= 0 ? "+" : "−"}${peso(Math.abs(pnl))} incl. ${peso(pos.divs || 0)} dividends`, why: o.why, copy: `If you copied, sell your ${o.sym} shares at the opening.`});
       } else if (!buy(o.sym, p, Math.min(o.php, B.cash), d, o.why, o.yield)) {
         (B.topup = B.topup || []).push({sym: o.sym, yield: o.yield || 0, why: o.why});
@@ -3253,12 +3273,23 @@ function paperEmailText(S, entries, weekly) {
     "Open Max → tap the Paper trading tile → Journal for every trade. Say “Max, turn off trading emails” to stop these.");
   return L.join("\n");
 }
+// Every email Max sends goes through here (22 Nov 2026): the last 15 sends are kept — time, subject start, result, Gmail id — so /health shows whether emails really leave.
+async function gmailSend(env, raw) {
+  let subj = ""; try { const m = /\r\nSubject: =\?UTF-8\?B\?([^?]+)\?=/.exec("\r\n" + raw.slice(0, 4000)); subj = m ? decodeURIComponent(escape(atob(m[1]))) : ""; } catch {}
+  const log = async (r, id) => { try { const L = (await setting(env, "max_srv_email_log", null)) || []; L.push({at: Date.now(), subj: cleanText(subj, 50), r, id: String(id || "").slice(0, 8)}); await srvSetting(env, "max_srv_email_log", JSON.stringify(L.slice(-15))); } catch {} };
+  let res;
+  try { res = await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})}); }
+  catch (e) { await log("failed: " + cleanText(String(e.message), 100)); throw e; }
+  await log(res && res.id ? "sent" : "no message id from Gmail", res && res.id);
+  if (!(res && res.id)) throw new Error("Gmail did not accept the email (no message id)");
+  return res;
+}
 async function paperSendEmail(env, subject, text, gate = "max_srv_trader_email") {
   if (!env.MAX_OWNER_EMAIL || !(await googleRow(env, true))) return "not emailed (Gmail isn't connected)";
   if ((await srvSetting(env, gate)) === "off") return "emails off";
   const to = String(env.MAX_OWNER_EMAIL).trim(); if (!/^[^\s@<>]+@[^\s@<>]+$/.test(to)) return "bad owner email";
   const raw = ["To: " + to, "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent(subject))) + "?=", "MIME-Version: 1.0", "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "", b64lines(text)].join("\r\n");
-  await gapi(env, GMAIL + "/messages/send", {method: "POST", body: JSON.stringify({raw: b64url(raw)})});
+  await gmailSend(env, raw);
   return "emailed";
 }
 async function paperEmails(env, S, today, dow) {
@@ -3372,7 +3403,7 @@ async function paperView(env) {
     const risk = books.flatMap(b => b.positions).reduce((s, p) => s + (p.riskPhp || 0), 0);
     return {v: 2, engine: "Max's server (daily, even when your phone is off)", opened: S.opened, asOf: S.lastStep ? new Date(S.lastStep.at).toISOString() : null, pricedAt: new Date().toISOString(), usdphp: fx,
       plan: Object.fromEntries(Object.entries(PBOOK).map(([k, c]) => [k, c.w])), cats: T.cats, planSince: S.planSince || S.opened, totalPhp: T.total, startPhp: PAPER_START, combinedSince: T.pct, books,
-      journal: S.journal.slice(-80).reverse(), risk: {ifAllStopsHitPhp: risk}, tested: PTESTED, planYears: PLAN_YEARS, bench: S.bench, steps: S.step, lastStep: S.lastStep || null, errors: (S.errors || []).slice(-3), priceErrors: errors.slice(0, 5),
+      journal: S.journal.slice(-400).reverse(), risk: {ifAllStopsHitPhp: risk}, tested: PTESTED, planYears: PLAN_YEARS, bench: S.bench, steps: S.step, lastStep: S.lastStep || null, errors: (S.errors || []).slice(-3), priceErrors: errors.slice(0, 5),
       events: S.journal.slice(-8).map(e => `${e.d || ""} ${e.kind}: ${e.text}`)};
   });
 }
@@ -3957,7 +3988,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {shortSym, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -3996,6 +4027,8 @@ export default {
         notesData: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const r = await setting(env, "max_srv_notes_live", null), i = await srvSetting(env, "max_srv_inv_notes"); return (r ? "trading data notes cursor " + r.cursor + (r.fx ? ", forex " + r.fx : "") : "not started") + "; investment notes " + (i || "not built yet"); } catch { return "unknown"; } })(),
         tradingNotes: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const v = await srvSetting(env, "max_srv_tn2"); return v ? v.replace(TN2, "layout 9 Nov 2026") : "not loaded yet"; } catch { return "unknown"; } })(),
         coreNotes: await (async () => { try { if (!env.MAX_MEMORY) return "no database"; const out = []; for (const x of SEED_NOTES) { const k = "max_srv_seed_" + x.id.replace(/[^a-z0-9]/gi, "_").slice(0, 30) + (x.v > 1 ? "_v" + x.v : ""); out.push(x.title + (await srvSetting(env, k) ? " ✓" : " waiting")); } return out.join("; "); } catch { return "unknown"; } })(),
+        emails: await (async () => { try { const L = env.MAX_MEMORY ? (await setting(env, "max_srv_email_log", null)) || [] : []; if (!L.length) return "no email sent since 22 Nov 2026 (logging started then)";
+          const last = L[L.length - 1], bad = L.filter(x => x.r !== "sent").length; return `last ${new Date(last.at).toISOString().slice(0, 16)}Z “${last.subj}” ${last.r}; ${L.length - bad}/${L.length} recent sends OK`; } catch (e) { return "unknown"; } })(),
         reportsNow: await (async () => { try { const d = env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_catchup") || "{}") : {}; return Object.entries(d).map(([k, v]) => k + ": " + v.status).join("; ") || "waiting to start"; } catch { return "unknown"; } })(),
         deepChain: modelChain(env, true), checker: env.GROQ_API_KEY ? "groq:openai/gpt-oss-120b" : env.AI ? "workers-ai:llama-3.3-70b" : "none (add GROQ_API_KEY)",
         guard: await (async () => { try { const r = env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_guard_report") || "null") : null; return r ? "last check " + new Date(r.at).toISOString().slice(0, 16) + "Z, " + r.problems.length + " problem(s)" : "no check yet (daily at 22:45 UTC)"; } catch { return "unknown"; } })(), brain: (env.ANTHROPIC_API_KEY ? (cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE) + " (Gemini as backup)" : "gemini") + (env.GROQ_API_KEY || env.AI ? " · free backups: " + [env.GROQ_API_KEY ? "groq" : "", env.AI ? "workers-ai" : ""].filter(Boolean).join(", ") : ""), version:WORKER_VERSION,
