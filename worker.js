@@ -1953,6 +1953,40 @@ async function guardSites(env) {
   } catch {}
   return list;
 }
+const HOBBY_HEALTH = "https://hobbyisle.com/api/health";
+// One item of "problems" / "warnings": a text, or an object with the error text and a "fix".
+function hobbyItem(x) {
+  if (x == null) return null;
+  if (typeof x === "string") return {text: cleanText(x, 300), fix: ""};
+  if (typeof x !== "object") return {text: cleanText(String(x), 300), fix: ""};
+  const text = x.error || x.problem || x.message || x.text || x.title || x.issue || x.description || x.name || x.id || x.check || x.code || JSON.stringify(x);
+  return {text: cleanText(typeof text === "string" ? text : JSON.stringify(text), 300), fix: cleanText(String(x.fix || x.solution || x.how_to_fix || x.howToFix || x.remedy || ""), 400)};
+}
+const hobbyLine = (kind, it) => `Hobby Isle ${kind}: ${it.text}` + (it.fix ? `\n     Solution: ${it.fix}` : "");
+async function hobbyHealth(env, report, problems, t0) {
+  const day = new Date(t0).toISOString().slice(0, 10), yest = new Date(t0 - 864e5).toISOString().slice(0, 10);
+  const home = report.sites.find(x => /hobbyisle\.com/i.test(x.url || ""));
+  if (!home) { try { const {r} = await timedFetch("https://hobbyisle.com/", {redirect: "follow"}, 12000); if (r.status >= 400) problems.push(`Hobby Isle (hobbyisle.com) does not load — it answered ${r.status}`); }
+    catch (e) { problems.push(`Hobby Isle (hobbyisle.com) does not load (${cleanText(String(e.message || e), 80)})`); } }
+  let d = null, why = "";
+  try { const {r} = await timedFetch(HOBBY_HEALTH, {redirect: "follow", headers: {"Accept": "application/json"}}, 12000);
+    if (r.status >= 400) why = "answered " + r.status; else { try { d = await r.json(); } catch { why = "did not answer with a readable health report"; } } }
+  catch (e) { why = cleanText(String(e.message || e), 80); }
+  const mem = JSON.parse((await srvSetting(env, "max_srv_hobby_warn").catch(() => null)) || "{}"), now = {};
+  let state = "ok";
+  if (!d) { state = "unreachable"; problems.push(`Hobby Isle's health page (${HOBBY_HEALTH}) does not load: ${why}\n     Solution: open the page in your browser; if it is also broken, redeploy Hobby Isle or check its Cloudflare deployment`); }
+  else {
+    const list = v => (Array.isArray(v) ? v : v ? [v] : []).map(hobbyItem).filter(Boolean);
+    if (d.ok === false) { state = "error"; const items = list(d.problems); if (!items.length) problems.push("Hobby Isle's health page says ok = false" + (d.message ? ": " + cleanText(String(d.message), 200) : "") + " (it listed no problems)");
+      for (const it of items.slice(0, 12)) problems.push(hobbyLine("error", it)); }
+    // warnings only count when they show up 3 days in a row
+    for (const it of list(d.warnings).slice(0, 20)) { const k = it.text.toLowerCase().slice(0, 160), m = mem[k];
+      const days = m && m.last === day ? m.days : m && m.last === yest ? m.days + 1 : 1; now[k] = {days, last: day, text: it.text, fix: it.fix};
+      if (days >= 3) problems.push(hobbyLine("warning (3+ days in a row)", it)); }
+  }
+  if (d) await srvSetting(env, "max_srv_hobby_warn", JSON.stringify(now)).catch(() => {});
+  report.hobby = {state, at: t0, warnings: Object.values(now).map(x => ({text: x.text, days: x.days}))};
+}
 async function guardRun(env, opts = {}) {
   const t0 = Date.now(), problems = [], report = {at: t0, sites: [], builds: [], max: [], problems, backup: null};
   const last = JSON.parse((env.MAX_MEMORY && await srvSetting(env, "max_srv_guard_report").catch(() => null)) || "null");
@@ -1976,6 +2010,8 @@ async function guardRun(env, opts = {}) {
     } catch (e) { row.up = false; row.error = cleanText(String(e.message || e), 100); problems.push(`${s.name} could not be reached (${row.error})`); }
     report.sites.push(row);
   }
+  // 1b) Hobby Isle's own health page (23 Nov 2026, Mark): /api/health says ok true/false, "problems" (each with a "fix") and warnings.
+  try { await hobbyHealth(env, report, problems, opts.when || t0); } catch (e) { problems.push("Hobby Isle's health page could not be checked (" + cleanText(String(e.message || e), 80) + ")"); }
   // 2) Builds: any GitHub workflow that failed in the last day, in each of his repositories.
   if (env.GITHUB_TOKEN) for (const repo of allowedRepos(env)) {
     try {
@@ -2067,7 +2103,7 @@ async function guardEmail(env, report, weekly) {
   lines.push("Max: " + report.max.join(" · "));
   if (report.backup?.ok) lines.push("", "Backup: " + report.backup.notes + " notes and " + report.backup.memories + " memories were sent in a separate email.");
   lines.push("", "Ask Max \"is everything OK?\" for the full report.");
-  const subject = report.problems.length ? "⚠ Max Guard: " + report.problems[0].slice(0, 70) + (report.problems.length > 1 ? " (+" + (report.problems.length - 1) + " more)" : "") : "✓ Max Guard: all clear this week";
+  const subject = report.problems.length ? "⚠ Max Guard: " + report.problems[0].split("\n")[0].slice(0, 70) + (report.problems.length > 1 ? " (+" + (report.problems.length - 1) + " more)" : "") : "✓ Max Guard: all clear this week";
   const raw = ["To: " + String(env.MAX_OWNER_EMAIL).trim(), "Subject: =?UTF-8?B?" + btoa(unescape(encodeURIComponent(subject))) + "?=", "MIME-Version: 1.0", "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", lines.join("\n")].join("\r\n");
   await gmailSend(env, raw);
   return "emailed";
@@ -2080,7 +2116,7 @@ async function guardDaily(env, when) {
   if ((await srvSetting(env, "max_srv_guard_day")) === day) return "already ran today";
   await srvSetting(env, "max_srv_guard_day", day);
   // 22 Nov 2026 (Mark): no backup email any more — the notes live in Max's database and on the phone; "Export all" in Notes makes a copy any time
-  const report = await guardRun(env, {backup: false, source: "schedule"});
+  const report = await guardRun(env, {backup: false, source: "schedule", when: d.getTime()});
   const sent = await guardEmail(env, report, false).catch(e => "email failed: " + e.message);   // "all clear" goes in the Sunday summary
   return report.problems.length + " problems, " + sent;
 }

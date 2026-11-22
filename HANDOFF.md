@@ -136,3 +136,8 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Exam: question from the note → answered from the SAME retrieval Max uses in chat → graded by another AI call; score 0 resets the hash once per 7 days (re-study).
 - Corrections (`brainVerify`): a suspect from study → `agentAsk` with web search; auto-fix only if verdict wrong + replacement + a web source + a DIFFERENT AI family than the one that flagged (`brainFamily`); else state `check` ("Please check" list). Fixes use `noteVersionSave` and `max_srv_notecheck[id].fixed`, so the existing Undo (`/api/notes/undo-fix`) works.
 - App: DASH.brain (left drawer tile `#tileBrain`, full view `brainFull`, Notes ⋯ → `#maxBrainBtn`). Tests: test-worker36, e2e47.
+
+## Guard + Hobby Isle health (Mark, 23 Nov 2026)
+- `hobbyHealth` (called inside `guardRun`): GET https://hobbyisle.com/api/health (read-only). Not loading / status ≥400 / unreadable → problem "health page does not load"; `ok:false` → one problem per item of `problems` ("Hobby Isle error: <text>" + "Solution: <fix>"; item may be a string or an object with error|problem|message|text|title… and fix|solution); also hobbyisle.com itself (reuses the Guard site row when Hobby Isle is in the project list). `warnings` counted in setting `max_srv_hobby_warn` (consecutive days); reported as "warning (3+ days in a row)" from day 3. Email rules unchanged: only NEW problems are emailed (a continuing error is not re-sent daily); no email when OK. `guardDaily` passes `when` so the day count follows the scheduled day.
+- I could not read the live /api/health (robots.txt blocks my fetch tool), so the item format is handled tolerantly; check the first real email.
+- Test: test-worker37.

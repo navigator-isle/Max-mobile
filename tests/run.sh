@@ -47,6 +47,7 @@ run "Notes Max researches: drafts, edits, self-fixes with undo" tests/test-worke
 run "Crypto 429 retries + backups, email send log" tests/test-worker34.mjs "$TMP/worker.mjs"
 run "Which AI answered (main/backup) + notes first" tests/test-worker35.mjs "$TMP/worker.mjs"
 run "Max brain: study, map, neurons, exam, safe corrections" tests/test-worker36.mjs "$TMP/worker.mjs"
+run "Guard + Hobby Isle health page" tests/test-worker37.mjs "$TMP/worker.mjs"
 run "Paper trader engine"  tests/test-trader.mjs
 run "Command phrasings"    tests/intents.mjs "$PWD/index.html"
 run "Phone: startup & sync" tests/e2e.mjs  "$PWD/index.html" "$TMP/worker.mjs" "$PWD/tests/fixtures/worker_old.mjs"
