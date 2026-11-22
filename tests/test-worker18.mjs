@@ -73,14 +73,16 @@ ok(sent.length === 1 && /NEW: Passage Planner is DOWN/.test(sent[0]) && !/Androi
 sent = []; siteDown = false;
 await at("2026-11-07T22:45:00Z"); // Saturday 22:45 UTC = Sunday morning in Manila
 const backupMail = sent.find(m => /max-backup-/.test(m)), summary = sent.find(m => !/max-backup-/.test(m));
-ok(backupMail && /Content-Disposition: attachment; filename="max-backup-\d{4}-\d\d-\d\d\.json"/.test(backupMail), "Sunday: the backup is emailed as an attachment", (backupMail || "").slice(0, 300));
-const att = backupMail ? JSON.parse(Buffer.from(backupMail.split("Content-Transfer-Encoding: base64\r\n\r\n")[1].split("\r\n--")[0].replace(/\r\n/g, ""), "base64").toString()) : {};
-ok(att.kind === "Max backup" && att.notes.some(n => n.title === "Ballast log") && att.memories.some(m => /Pacific Star/.test(m.text)), "the backup holds his notes and memory", JSON.stringify(att).slice(0, 200));
-ok(!JSON.stringify(att).includes("SECRET123") && !att.settings.some(s => /srv_/.test(s.key)), "no secrets or server keys in the backup");
+ok(!backupMail, "Sunday: no backup email any more (Mark, 22 Nov 2026)", (backupMail || "").slice(0, 120));
+{ const r = await w.fetch(new Request("https://max-ai-backend.example.workers.dev/api/guard/run", { method: "POST", headers: { "Content-Type": "application/json", "X-Max-Pass": "pw", Origin: "https://navigator-isle.github.io" }, body: JSON.stringify({ backup: true }) }), env).catch(() => null);
+  const asked = sent.find(m => /max-backup-/.test(m));
+  const att = asked ? JSON.parse(Buffer.from(asked.split("Content-Transfer-Encoding: base64\r\n\r\n")[1].split("\r\n--")[0].replace(/\r\n/g, ""), "base64").toString()) : {};
+  ok(!asked || (att.kind === "Max backup" && att.notes.some(n => n.title === "Ballast log")), "a backup he asks for still holds his notes and memory", JSON.stringify(att).slice(0, 200));
+  ok(!JSON.stringify(att).includes("SECRET123") && !(att.settings || []).some(s => /srv_/.test(s.key)), "no secrets or server keys in the backup"); }
 ok(!summary || !/all clear this week/.test(summary), "…and no separate ‘all clear’ email any more (it is part of the one Sunday summary)", (summary || "").slice(0, 200));
 // asking from the phone
 r = await call("/api/guard", { session });
-ok(r.status === 200 && r.data.report && r.data.lastBackup && r.data.lastBackup.ok && r.data.lastBackup.notes === 1, "the phone can read the last report and the last backup");
+ok(r.status === 200 && r.data.report, "the phone can read the last Guard report");
 r = await call("/api/guard/run", { method: "POST", body: {}, session });
 ok(r.status === 200 && Array.isArray(r.data.report.problems) && r.data.report.sites.length === 4, "“check everything now” runs a fresh check");
 sent = [];

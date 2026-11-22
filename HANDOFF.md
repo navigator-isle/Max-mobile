@@ -115,3 +115,8 @@ Read this first in any new chat or session. Short on purpose; details are in SET
 - Sell journal entries carry `ep` (buy price); /api/home/paper sends the last 400 journal entries.
 - App: paper view = pvOverview / pvPositions / pvJournal (pjN 5→10→all, pjKind trades|dividends) / pvStrategy (STRAT text); ratesFull = overview + investment value + rate groups (details) + money plan; siteFull/appFull = details per item with errors first; Security card = healthAlerts only (adds crypto older than 2.5 days and failed emails). Notes tile opens the notes.
 - Notes screen: Home buttons (#notesHome, #editorHome), ⋯ menu (#vaultMore) in words, one “Add note” (#newNote); tags hidden (kept in data); note ⋯: Add attachment / Share / Print / …; attachments live in `n.analysis.attachments` (synced; ≤50 KB, text trimmed) with files in the media store; server `relevantNotes` searches `analysis` and adds attachment text to the note it hands the brain.
+
+## Email plan (Mark, 22 Nov 2026 — server 18p)
+- Emails ONLY: paper trades (paperEmails, after each hourly step with new BUY/SELL/DIVIDEND/ORDER/REBALANCE/PLAN entries), Guard errors (guardDaily 22:45 UTC, only new problems), best-rate changes (investAlert after refreshGuide, 01:45 UTC daily), virtual-investment OPEN/SWITCH/MATURED.
+- Off: Sunday summary (agentsCron no longer calls sundaySummary), weekly auto reports (WEEKLY_AUTO loop removed — also saves AI quota), report emails (emailReport returns "not emailed"), Sunday backup email (guardDaily backup:false; a backup can still be asked for via /api/guard/run {backup:true}).
+- Claude's weekly backup check was removed at Mark's request; Max runs on his own.

@@ -53,7 +53,8 @@ globalThis.fetch = async (u, o = {}) => {
   if (url.startsWith("https://raw.githubusercontent.com/navigator-isle/Max-mobile/trader-data/events.json")) return ok200([]);
   return new Response("{}", { status: 404 });
 };
-const { default: w } = await import(process.argv[2]);
+const { default: w, __test: TT } = await import(process.argv[2]);
+const repText = r => TT.renderReport(r.data.report).text;   // 22 Nov 2026: reports are no longer emailed — check the report text itself
 const sqlite = new DatabaseSync(":memory:"), APP = "https://navigator-isle.github.io";
 const env = { GEMINI_API_KEY: "k", ALLOWED_ORIGIN: APP, MAX_PASSCODE: "pw", MAX_MEMORY: new D1(sqlite), GOOGLE_CLIENT_ID: "cid", GOOGLE_CLIENT_SECRET: "cs", MAX_OWNER_EMAIL: "mark@example.com",
   GITHUB_TOKEN: "ghp_x", NETLIFY_TOKEN: "nfp_x", MAX_GITHUB_REPOS: "navigator-isle/Max-mobile,navigator-isle/hobbyisle,navigator-isle/navigator-isle.github.io,navigator-isle/passage-planner-android" };
@@ -90,12 +91,12 @@ const run = async id => { sent = []; const x = await call("/api/agents/run", { m
 for (const id of ["notes", "research", "web", "apps", "security", "trading", "investments", "business", "music", "schedule", "email"]) {
   r = await run(id);
   const mail = sent[0] || "";
-  ok(r.status === 200 && r.data.report.status.length && r.data.report.emailed === "emailed" && /multipart\/alternative/.test(mail) && /Subject: =\?UTF-8\?B\?/.test(mail), `${id}: weekly report written and emailed (text + formatted)`, JSON.stringify(r.data?.report?.emailed || r.data).slice(0, 200));
+  ok(r.status === 200 && r.data.report.status.length && /^not emailed/.test(r.data.report.emailed) && !mail, `${id}: report written, shown on the screen, not emailed (Mark, 22 Nov 2026)`, JSON.stringify(r.data?.report?.emailed || r.data).slice(0, 200));
 }
 r = await run("notes");
 const notesFacts = prompts.filter(t => /writing your weekly report/.test(t) && /Notes & Attachments/.test(t)).at(-1);
 ok(/"unsorted": \[\s*"Shopping list"/.test(notesFacts) && /possibleDuplicates[\s\S]*SOLAS drills/.test(notesFacts) && /notesNeedingUpdate[\s\S]*MARPOL Annex VI/.test(notesFacts), "notes report: unsorted notes, duplicates, and notes the fact-checker found outdated", notesFacts?.slice(0, 400));
-const txt = Buffer.from(sent[0].split("Content-Transfer-Encoding: base64\r\n\r\n")[1].split("\r\n--")[0].replace(/\r\n/g, ""), "base64").toString();
+const txt = repText(r);
 ok(/STATUS\n• /.test(txt) && /WHAT NEEDS IMPROVEMENT/.test(txt) && /WHAT'S MISSING/.test(txt) && /SUGGESTIONS/.test(txt), "every report is complete and bulleted: status, done, problems, improvements, missing, suggestions, next week", txt.slice(0, 300));
 r = await run("web");
 const webFacts = prompts.filter(t => /Websites agent/.test(t)).at(-1);
@@ -106,7 +107,7 @@ const appFacts = prompts.filter(t => /Apps agent/.test(t)).at(-1);
 ok(/sulit-o-hindi/.test(appFacts) && /Build script returned non-zero/.test(appFacts) && /Android build \(/.test(appFacts) && /Fix notes toolbar/.test(appFacts), "apps: Netlify deploys (with the error), GitHub changes and failed builds per app", appFacts?.slice(0, 300));
 r = await run("trading");
 ok(r.data.report.tables[0].title === "₱250,000 paper account (5 × ₱50,000)" && r.data.report.tables[0].rows.length === 13 && /PSE dividend/.test(r.data.report.tables[0].rows[0][0]), "trading: the ₱250,000 account table (7 parts, 5 categories, total) and this week's trades", JSON.stringify(r.data.report.tables.map(t => t.title)));
-ok(/Pretend money only/.test(Buffer.from(sent[0].split("Content-Transfer-Encoding: base64\r\n\r\n")[1].split("\r\n--")[0].replace(/\r\n/g, ""), "base64").toString()), "trading report says pretend money / not advice");
+ok(/Pretend money only/.test(repText(r)), "trading report says pretend money / not advice");
 // investments: week-on-week changes
 mp2Rate = "7.10%"; r = await run("investments");
 const mp2 = r.data.report.tables.find(t => t.title === "Pag-IBIG MP2");
@@ -127,19 +128,19 @@ ok(ghPut && ghPut.branch === "trader-data" && ghPut.sha === "abc123" && ideas.cr
 sent = [];
 await w.scheduled({ scheduledTime: Date.parse("2026-11-08T04:45:00Z") }, env, { waitUntil: p => p }); await new Promise(res => setTimeout(res, 500));
 const subj = sent.map(m => Buffer.from((m.match(/Subject: =\?UTF-8\?B\?([^?]+)\?=/) || [])[1] || "", "base64").toString());
-ok(subj.length === 0, "Sunday 12:45 pm Manila → the Trading report is written by itself but NOT emailed (few emails: one Sunday summary)", JSON.stringify(subj));
+ok(subj.length === 0, "Sunday 12:45 pm Manila → no report email", JSON.stringify(subj));
 sent = []; await w.scheduled({ scheduledTime: Date.parse("2026-11-08T07:45:00Z") }, env, { waitUntil: p => p }); await new Promise(res => setTimeout(res, 300));
 ok(sent.length === 0, "the Music agent no longer reports by itself on Sunday (only when asked)", String(sent.length));
 sent = []; await w.scheduled({ scheduledTime: Date.parse("2026-11-08T10:45:00Z") }, env, { waitUntil: p => p }); await new Promise(res => setTimeout(res, 500));
 const sub2 = sent.map(m => Buffer.from((m.match(/Subject: =\?UTF-8\?B\?([^?]+)\?=/) || [])[1] || "", "base64").toString());
 const body2 = sent[0] ? Buffer.from(sent[0].split("\r\n\r\n").slice(1).join("").replace(/\r\n/g, ""), "base64").toString() : "";
-ok(sub2.length === 1 && /^Max weekly summary: ₱/.test(sub2[0]) && /1\) TRADING/.test(body2) && /2\) INVESTMENTS/.test(body2) && /3\) WEBSITES/.test(body2) && /4\) APPS/.test(body2) && /5\) SECURITY/.test(body2), "Sunday 6:45 pm Manila → ONE summary email: trading, investments, websites, apps, security", JSON.stringify(sub2) + body2.slice(0, 200));
+ok(sub2.length === 0, "Sunday 6:45 pm Manila → no weekly summary email any more (Mark, 22 Nov 2026)", JSON.stringify(sub2));
 sent = []; await w.scheduled({ scheduledTime: Date.parse("2026-11-08T04:45:30Z") }, env, { waitUntil: p => p }); await new Promise(res => setTimeout(res, 300));
 ok(sent.length === 0, "…only once");
 // brain out → still a report, with the plain facts
 gemDown = true; sent = [];
 r = await run("schedule");
-ok(r.status === 200 && /plain facts/.test(r.data.report.status[0]) && /PSC inspection/.test(r.data.report.facts) && sent.length === 1, "if the brain is out of free quota, the report still goes out with the plain facts", JSON.stringify(r.data.report.status));
+ok(r.status === 200 && /plain facts/.test(r.data.report.status[0]) && /PSC inspection/.test(r.data.report.facts) && sent.length === 0, "if the brain is out of free quota, the report still shows the plain facts", JSON.stringify(r.data.report.status));
 gemDown = false;
 // "now": the 10-minute trigger sends every agent's report once, one per run (only inside the one-time window)
 sent = []; const cron10 = () => w.scheduled({ cron: "*/10 * * * *", scheduledTime: Date.now() }, env, { waitUntil: p => (globalThis.__c = p) }).then(() => globalThis.__c);
