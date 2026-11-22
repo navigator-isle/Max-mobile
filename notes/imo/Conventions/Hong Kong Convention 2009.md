@@ -102,7 +102,6 @@ tags: [hkc, ship-recycling, imo, convention]
 - MEPC.222(64) Survey and certification · MEPC.223(64) Inspection of ships (PSC)
 
 **EU Ship Recycling Regulation (EU 1257/2013) — on top of HKC**
-- EU-flag ships ≥500 GT: recycle only at yards on the European List (EU-approved)
 - Large commercial seagoing EU-flag ships (≥500 GT): recycle only at yards on the European List (from 2019)
 - IHM required: EU ships and non-EU ships calling at EU ports or anchorages (since 31 Dec 2020); non-EU ships carry a Statement of Compliance
 - Stricter than HKC on yards (e.g., impermeable floors, no beaching in practice) · EU Annex I prohibits PFOS as well · EU IHM list (Annex II) includes HBCDD, which HKC does not require
