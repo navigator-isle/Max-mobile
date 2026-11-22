@@ -656,7 +656,7 @@ body.on-home.has-dash .edge-tabs{display:flex}
       <button id="collapseAll" class="pill">Close all folders</button>
       <button id="organizeBtn" class="pill">Organize with Max</button>
       <button id="offlineBrainBtn" class="pill">Offline brain</button>
-      <button id="maxBrainBtn" class="pill">🧠 Max’s brain (study)</button>
+      <button id="maxBrainBtn" class="pill">Max’s brain (study)</button>
       <button id="importVault" class="pill">Import Obsidian vault</button>
       <button id="exportVault" class="pill">Export vault for Obsidian</button>
       <button id="exportAll" class="pill">Export all as one file</button>
@@ -4446,6 +4446,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const {r,data}=await fetchJson(workerBase()+'/api/brain/status',{method:'GET'},20000);
   if(r.status===404)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
   if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  if(!data||typeof data.total!=='number'||!Array.isArray(data.checks))throw new Error('Max’s brain needs the newest server (⚙ → Update Max’s server).');
   brainAt=Date.now();jset('max_cache_brain',data);return data;
  }
  const tileBrain=d=>'<div class="tile-top"><span>🧠 Max’s brain</span></div><div class="tile-big">'+d.studied+'/'+d.total+'</div><div class="tile-label muted small">notes studied'+(d.exam&&d.exam.score!=null?' · exam '+d.exam.score+'%':'')+'</div>'+(d.checks.length?'<div class="tile-line down">'+d.checks.length+' for you to check</div>':d.left?'<div class="tile-line muted small">studying… '+d.left+' left</div>':'<div class="tile-line up">✓ knows all of them</div>');
