@@ -777,3 +777,35 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["igf-dates"] = svg(400, 232, s);
 }
+
+// 42. III Code structure
+{
+  let s = frame(400, 262);
+  s += txt(200, 26, "III Code: four parts", { a: "middle", b: true, s: 12 });
+  const box = (y, h, title, sub, c) => {
+    let o = `<rect x="14" y="${y}" width="372" height="${h}" rx="6" fill="${c}" fill-opacity="0.1" stroke="${c}"/>`;
+    o += txt(24, y + 16, title, { b: true, s: 10.5, c });
+    sub.forEach((t, i) => { o += txt(24, y + 31 + i * 13, t, { s: 9 }); });
+    return o;
+  };
+  s += box(38, 44, "Part 1: Common areas (paras 1-14)", ["Objective, strategy, scope, initial actions, information, records, improvement"], A);
+  s += box(90, 58, "Part 2: Flag States (paras 15-44)", ["Implementation, delegation of authority, enforcement,", "surveyors, investigations, evaluation and review"], G);
+  s += box(156, 44, "Part 3: Coastal States (paras 45-51)", ["Implementation, enforcement, evaluation and review"], Y);
+  s += box(208, 44, "Part 4: Port States (paras 52-63)", ["Implementation, enforcement, evaluation and review"], R);
+  DIAGRAMS["iii-structure"] = svg(400, 262, s);
+}
+
+// 43. III Code key dates
+{
+  let s = frame(400, 232);
+  s += txt(200, 26, "III Code and audit scheme: key dates", { a: "middle", b: true, s: 12 });
+  const rows = [["Sep 2006", "Voluntary audits begin (to Dec 2015)", L], ["4 Dec 2013", "A.1070(28) adopts the III Code", A], ["4 Apr 2014", "MEPC.246(66) adopted (MARPOL)", T], ["22 May 2014", "MSC.366(93): new SOLAS chapter XIII", T], ["1 Jan 2016", "Audits and III Code mandatory", G], ["3 Dec 2025", "A.1211(34) adopted (new audit framework)", Y], ["30 Jun 2026", "A.1211(34) replaces A.1067(28)", R]];
+  rows.forEach(([d, t, c], i) => {
+    const y = 40 + i * 27;
+    s += `<circle cx="34" cy="${y + 10}" r="5" fill="${c}"/>`;
+    if (i < 6) s += line(34, y + 15, 34, y + 31, L, 1);
+    s += txt(48, y + 14, d, { b: true, s: 10, c });
+    s += txt(128, y + 14, t, { s: 9 });
+  });
+  DIAGRAMS["iii-dates"] = svg(400, 232, s);
+}
