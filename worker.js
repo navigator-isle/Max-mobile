@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-23b";
+const WORKER_VERSION = "max-worker-2026-11-23c";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -536,9 +536,10 @@ async function brainUsage(env) {
   return brainUse;
 }
 // One study question: the free AIs take turns (so the quota is spread); Gemini is last and capped per day so chat keeps its quota.
-async function brainAsk(env, system, prompt, tokens = 4096) {
+async function brainAsk(env, system, prompt, tokens = 4096, avoid = "") {
   const use = await brainUsage(env), req = {messages: [{role: "system", content: system + "\nReply with one valid JSON object only — no code fences, no text around it."}, {role: "user", content: prompt}], wantJson: true, maxTokens: tokens, temperature: 0.2};
   let P = brainProviders(env); if (use.gem >= BRAIN_GEMINI_CAP) P = P.filter(p => !p.gem);
+  if (avoid) P = P.filter(p => !(p.gem && /gemini/i.test(avoid)) && !(avoid.toLowerCase().startsWith(p.name)));   // a check must come from a different AI than the one that answered
   if (!P.length) return {error: "no free AI is available right now"};
   const start = brainRot++ % P.length;
   for (let i = 0; i < P.length; i++) {
@@ -2219,7 +2220,76 @@ async function improveWeekly(env, when) {
 async function improveStatus(env) {
   const reg = await sget(env, NC_KEY, {items: []}), audits = await sget(env, AUDIT_KEY, []), deck = await sget(env, DECK_KEY, []);
   return {nc: {open: reg.items.filter(x => x.status !== "closed").sort((a, b) => b.days - a.days).slice(0, 12), closed: reg.items.filter(x => x.status === "closed").slice(-8).reverse(), repeats: reg.items.filter(x => (x.repeats || 0) > 0).length},
-    audit: audits.slice(-1)[0] || null, deck: deck.slice(-7).reverse(), exam: await sget(env, EXAM_KEY, null), rules: (await sget(env, RULES_KEY, [])).slice(-12).reverse(), ssc: await sget(env, SSC_KEY, null), claudeGrader: !!env.ANTHROPIC_API_KEY};
+    audit: audits.slice(-1)[0] || null, deck: deck.slice(-7).reverse(), exam: await sget(env, EXAM_KEY, null), calls: callsScore((await callsLoad(env)).items), twoAi: await sget(env, TWOAI_KEY, {checks: 0, agree: 0, disagree: 0, recent: []}), rules: (await sget(env, RULES_KEY, [])).slice(-12).reverse(), ssc: await sget(env, SSC_KEY, null), claudeGrader: !!env.ANTHROPIC_API_KEY};
+}
+// ---- decision journal with a score (23 Nov 2026, Mark) ----
+// Every paper trade and every best-rate pick is written down with what Max expects, then scored when the result is known.
+// After enough results Max can say how far to trust himself in each area. (Deals are not scored: a store price has no later "right or wrong".)
+const CALLS_KEY = "max_calls_v1", CALL_MIN = 10;
+const CALL_AREAS = {pse: "Philippine stocks", crypto: "Crypto", forex: "Forex and gold", copy: "Copy trading", us: "US ETFs", rate: "Best rates"};
+async function callsLoad(env) { const c = await sget(env, CALLS_KEY, {items: []}); if (!Array.isArray(c.items)) c.items = []; return c; }
+async function callsSync(env, S) {
+  const reg = await callsLoad(env), ids = new Map(reg.items.map(x => [x.id, x])); let changed = false;
+  for (const [k, B] of Object.entries(S?.books || {})) {
+    const cat = PBOOK[k]?.cat; if (!cat || RB.has(k)) continue;
+    for (const p of B.positions || []) { const id = `${k}|${p.sym}|${p.entry}`; if (p.entry && !ids.has(id)) { const c = {id, area: cat, book: k, subject: p.sym, at: String(p.entry), px: p.ep, expect: "price is higher when it is sold", state: "open"}; reg.items.push(c); ids.set(id, c); changed = true; } }
+    for (const t of B.trades || []) {
+      if (!t.entry || !t.sym || !Number.isFinite(t.pnl)) continue;
+      const id = `${k}|${t.sym}|${t.entry}`; let c = ids.get(id);
+      if (!c) { c = {id, area: cat, book: k, subject: t.sym, at: String(t.entry), px: t.ep, expect: "price is higher when it is sold", state: "open", retro: true}; reg.items.push(c); ids.set(id, c); }
+      if (c.state !== "scored") { c.state = "scored"; c.right = t.pnl > 0; c.pnl = t.pnl; c.scoredAt = String(t.exit || ""); changed = true; }
+    }
+  }
+  if (changed) { reg.items = reg.items.slice(-600); await srvSetting(env, CALLS_KEY, JSON.stringify(reg)); }
+  return reg;
+}
+// Best-rate picks: a rate that newly enters the top 3 or goes up is a call that it will still be paid in 30 days.
+async function callsRates(env, before, g, when) {
+  if (!(before?.cats || []).some(c => (c.items || []).length)) return 0;
+  const reg = await callsLoad(env), day = new Date(when || Date.now()).toISOString().slice(0, 10), due = new Date(Date.parse(day) + 30 * 864e5).toISOString().slice(0, 10); let n = 0;
+  for (const c of g.cats || []) {
+    const old = (before.cats || []).find(x => x.key === c.key)?.items || [];
+    for (const i of (c.items || []).slice(0, 3)) {
+      const o = old.find(x => x.name.toLowerCase() === i.name.toLowerCase()), fresh = !o || (Number.isFinite(i.rateNum) && i.rateNum > o.rateNum);
+      const id = `rate|${c.key}|${i.name}|${i.rateNum}`;
+      if (fresh && Number.isFinite(i.rateNum) && !reg.items.some(x => x.id === id)) { reg.items.push({id, area: "rate", cat: c.key, subject: i.name, rateNum: i.rateNum, at: day, due, expect: `${i.name} still pays at least ${i.rateNum}% in 30 days`, state: "open"}); n++; }
+    }
+  }
+  for (const x of reg.items) if (x.area === "rate" && x.state === "open" && x.due <= day) {
+    const now = (g.cats || []).find(c => c.key === x.cat)?.items?.find(i => i.name.toLowerCase() === x.subject.toLowerCase());
+    x.state = "scored"; x.scoredAt = day; x.right = !!(now && Number.isFinite(now.rateNum) && now.rateNum >= x.rateNum * 0.98); n++;
+  }
+  if (n) await srvSetting(env, CALLS_KEY, JSON.stringify({items: reg.items.slice(-600)}));
+  return n;
+}
+function callsScore(items) {
+  const out = {};
+  for (const x of items) { const a = out[x.area] ||= {area: x.area, name: CALL_AREAS[x.area] || x.area, open: 0, n: 0, right: 0, pnl: 0}; if (x.state === "scored") { a.n++; if (x.right) a.right++; if (Number.isFinite(x.pnl)) a.pnl += x.pnl; } else a.open++; }
+  return Object.values(out).map(a => { a.pct = a.n ? Math.round(a.right / a.n * 100) : null; a.pnl = +a.pnl.toFixed(2);
+    a.label = a.n < CALL_MIN ? `too early (${a.n} of ${CALL_MIN} results)` : a.pct >= 60 ? "usable" : a.pct >= 45 ? "weak signal" : "poor, treat as noise"; return a; });
+}
+async function callsPrompt(env) {
+  try { const s = callsScore((await callsLoad(env)).items).filter(a => a.n >= CALL_MIN);
+    return s.length ? "\nYOUR TRACK RECORD (scored results of your own past recommendations). When he asks for a recommendation in one of these areas, say how far it can be trusted:\n- " + s.map(a => `${a.name}: right ${a.pct}% of ${a.n} (${a.label})`).join("\n- ") : ""; } catch { return ""; }
+}
+// ---- two-AI check on high-stakes answers (23 Nov 2026, Mark) ----
+// Regulations, money and anything irreversible: a second AI answers on its own, then the two answers are compared. A disagreement is shown, never hidden.
+const HIGH_STAKES = /\b(solas|marpol|stcw|mlc|isps|ism code|imo|convention|regulations?|cfr|deadline|penalt(?:y|ies)|fines?|legal|illegal|certificates?|survey|detention|invest(?:ing|ment)?|stocks?|crypto|loans?|interest rate|insurance|tax(?:es)?|mp2|uitf|how much (?:should|can)|should i (?:buy|sell|pay|invest|send|delete|cancel)|delete|erase|transfer|wire|cancel)\b|[₱$]\s?\d/i;
+const TWOAI_KEY = "max_twoai_v1";
+async function twoAiCheck(env, question, answer, notesText, usedModel = "gemini") {
+  const q = cleanText(question, 600), a = cleanText(answer, 1500);
+  const second = await brainAsk(env, "You answer one question independently and carefully. Use the NOTES if they cover it, otherwise your own knowledge. Reply {\"answer\":\"at most 120 words\",\"key_facts\":[\"each exact number, date, rule or recommendation you rely on\"]}.", `QUESTION: ${q}\nNOTES:\n${cleanText(notesText || "(none)", 3000)}`, 900, usedModel || "gemini");
+  if (!second?.data?.answer) return null;
+  const other = cleanText(String(second.data.answer), 900), by = String(second.model || "another AI").replace(/:.*$/, "");
+  const judge = await brainAsk(env, "You compare two answers to the same question. agree=false ONLY if they differ on a fact, number, date, rule or recommendation that would change what the person does. Different wording or extra detail is agree=true. Reply {\"agree\":true|false,\"differences\":[\"short, at most 3\"]}.", `QUESTION: ${q}\nANSWER A (Max): ${a}\nANSWER B (second AI): ${other}`, 500, usedModel || "gemini");
+  if (!judge?.data || typeof judge.data.agree !== "boolean") return null;
+  const diffs = cl(judge.data.differences, 3, 200), st = await sget(env, TWOAI_KEY, {checks: 0, agree: 0, disagree: 0, recent: []});
+  st.checks++; judge.data.agree ? st.agree++ : st.disagree++;
+  if (!judge.data.agree) st.recent = [...st.recent, {at: Date.now(), q: cleanText(question, 120), differences: diffs}].slice(-8);
+  await srvSetting(env, TWOAI_KEY, JSON.stringify(st)).catch(() => {});
+  const reply = judge.data.agree ? answer + `\n\n✓ A second AI (${by}) answered on its own and agrees.`
+    : `I'm not sure about this one. A second AI and I answered on our own and did not agree, so I won't pick one for you.\n\n**What I said:** ${answer}\n\n**Second AI (${by}):** ${other}\n\n**Where we differ:** ${diffs.length ? diffs.join("; ") : "see the two answers"}\n\nCheck your notes or the official source before you act on this.`;
+  return {reply, agree: judge.data.agree, by, differences: diffs};
 }
 // ---------- Code backup (works without GitHub) ----------
 // build.mjs packs all of Max's code into site/_src/max-code.zip; it ships with the app but is never public.
@@ -3864,6 +3934,7 @@ async function backgroundStep(env, when) {
     out.push(job + " failed: " + msg);
   }
   if (["crypto", "pse", "scan", "etf", "copy", "fx"].includes(job)) { try { const m = await paperEmails(env, S, today, dow); if (m) out.push(m); } catch (e) { out.push("email failed: " + cleanText(String(e.message), 100)); } }
+  if (["crypto", "pse", "scan", "etf", "copy", "fx"].includes(job)) { try { await callsSync(env, S); } catch (e) { out.push("journal failed: " + cleanText(String(e.message), 80)); } }
   await paperSave(env, S);
   return out.join("; ") || "nothing to do";
 }
@@ -4298,6 +4369,7 @@ async function refreshGuide(env, opts = {}) {
   out.checked = new Date().toISOString().slice(0, 10); out.by = "Max's investment agent";
   if (done.length) { await srvSetting(env, "max_invest_guide", JSON.stringify({checked: out.checked, by: out.by, market: out.market, cats: out.cats}));
     try { await investNotesSync(env, out); } catch (e) { console.log("investment notes:", e.message); }
+    try { await callsRates(env, cur, out); } catch (e) { console.log("rate journal:", e.message); }
     if (!opts.noEmail) { try { out.alert = await investAlert(env, cur, out); } catch (e) { out.alert = "alert failed: " + e.message; } } }
   return {guide: out, updated: done, alert: out.alert};
 }
@@ -4512,7 +4584,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {ncIntake, deckLogDay, weeklyAudit, examGrade, stopStartContinue, improveDaily, improveWeekly, improveStatus, rulesPrompt, paperCryptoStep, deepCleanup, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {callsSync, callsRates, callsScore, callsPrompt, twoAiCheck, HIGH_STAKES, ncIntake, deckLogDay, weeklyAudit, examGrade, stopStartContinue, improveDaily, improveWeekly, improveStatus, rulesPrompt, paperCryptoStep, deepCleanup, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -4788,7 +4860,7 @@ export default {
         `HIS COACHING FILE (goals, facts and progress he told you before):\n${coach.file || "(empty — this is your first session: greet him, then ask at most 3 short questions to learn his situation and goal, one at a time)"}\n` +
         `When he tells you something worth keeping for this coaching (a goal, a fact about his situation, a result, a session done), add it to "coach_notes" as short dated-free lines in third person, e.g. "Goal: 10 push-ups a day by December". Otherwise "coach_notes" is empty.`;
       const system = style + `\nCurrent time: ${cleanText(body.now, 40) || when(Date.now())}${body.tz ? " (" + cleanText(body.tz, 60) + ")" : ""}.` +
-        (db ? await rulesPrompt(env) : "") + (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote + deskNote + (persona ? "\n" + persona : "");
+        (db ? await rulesPrompt(env) + await callsPrompt(env) : "") + (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote + deskNote + (persona ? "\n" + persona : "");
       const contents = [...history, {role:"user", parts:[{text:message}]}];
       const jsonMode = !!(db || actionsOn), nowText = cleanText(body.now, 40) || when(Date.now());
       // "Double-check that" / "are you sure?" → a second AI checks his last answer.
@@ -4858,6 +4930,10 @@ export default {
           }
         }
       }
+      let twoAi = null;
+      if (!check && !chosen && !body.coach && !cutOff && reply.length > 40 && HIGH_STAKES.test(message)) {
+        try { twoAi = await twoAiCheck(env, message, reply, notesText, usedModel); if (twoAi) reply = twoAi.reply; } catch {}
+      }
       { const act = chosen;
         await logChat({model: usedModel, detail: [diff.hard ? "deep thinking" : "", check ? "checked by " + check.by + ": " + check.verdict + (check.fixed ? " (fixed)" : "") : "", act ? "action: " + act.type : "", claudeNote ? "Claude failed: " + claudeNote : "", /^(groq|workers-ai):/.test(usedModel) ? "Gemini was out, a backup brain answered" : ""].filter(Boolean).join(" · ")}); }
       let autoSaved = [];
@@ -4868,7 +4944,7 @@ export default {
       // which brain answered: the first choice ("main") or a backup — the app shows it under the answer
       const modelRole = !usedModel ? "" : (c && c.text) || usedModel === modelChain(env, diff.hard)[0] ? "main" : "backup";
       return json({reply, action: chosen, ...(many.length > 1 ? {actions: many} : {}), coachNotes: body.coach ? (parsed.coach_notes || []).map(x => cleanText(String(x), 300)).filter(Boolean).slice(0, 5) : [], model:usedModel, modelRole, dept: {id: route.id, name: deskOut ? deskOut.name : "Max", icon: deskOut ? deskOut.icon : "", how: route.how},
-        brain: {mode: diff.hard ? "deep" : "fast", why: diff.why}, check, ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
+        brain: {mode: diff.hard ? "deep" : "fast", why: diff.why}, check, ...(twoAi ? {twoAi: {agree: twoAi.agree, by: twoAi.by, differences: twoAi.differences}} : {}), ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
         notesUsed: Array.isArray(parsed.used_notes) ? [...new Set(parsed.used_notes.map(t => cleanText(String(t), 200)).filter(t => knownTitles.some(k => k.toLowerCase() === t.toLowerCase())))].slice(0, 4)
           : [...fromPhone.items.map(n => n.title), ...notesUsed.map(n => n.title || "Untitled")].slice(0, 3),
         truncated: cutOff, conversationSaved: !!db}, 200, origin, env);
