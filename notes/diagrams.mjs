@@ -2569,3 +2569,22 @@ const OR = "#ff9f43";
   s += c(228, "Electric safety lamp", Y, cx - 2, 138);
   DIAGRAMS["ffe-outfit"] = svg(400, 252, s);
 }
+
+// Ship stability: position of G against M (initial stability)
+{
+  let s = frame(400, 250);
+  s += txt(200, 24, "Initial stability: where G sits against M (schematic)", { a: "middle", b: true, s: 12 });
+  const panel = (cx, gy, my, title, col, note) => {
+    let p = `<path d="M${cx - 34},70 L${cx - 28},170 Q${cx},186 ${cx + 28},170 L${cx + 34},70 Z" fill="#2a2d4a" stroke="${T}" stroke-width="1.3"/>`;
+    p += line(cx, 52, cx, 178, L, 1, "3 3");
+    p += `<circle cx="${cx}" cy="178" r="3" fill="${L}"/>` + txt(cx + 8, 190, "K", { c: L, s: 10 });
+    p += `<circle cx="${cx}" cy="${gy}" r="4.5" fill="${G}"/>` + txt(cx - 9, gy + 4, "G", { a: "end", c: G, b: true });
+    p += `<circle cx="${cx}" cy="${my}" r="4.5" fill="${Y}"/>` + txt(cx + 9, my + 4, "M", { c: Y, b: true });
+    p += txt(cx, 212, title, { a: "middle", c: col, b: true, s: 11 }) + txt(cx, 227, note, { a: "middle", c: L, s: 9.5 });
+    return p;
+  };
+  s += panel(70, 130, 96, "Stable", G, "M above G, GM +");
+  s += panel(200, 96, 96, "Neutral", Y, "M at G, GM = 0");
+  s += panel(330, 96, 130, "Unstable", R, "G above M, GM −");
+  DIAGRAMS["stab-gm"] = svg(400, 250, s);
+}
