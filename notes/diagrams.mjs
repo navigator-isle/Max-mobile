@@ -160,3 +160,96 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 232, "Time bar: 2 years · outer limit 5 years · direct action against insurer", { a: "middle", s: 9.5, c: L });
   DIAGRAMS["athens-liability"] = svg(400, 250, s);
 }
+
+// 9. HNS 2010 two tiers (compensation limits, SDR)
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "HNS 2010: two tiers of compensation", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "(per incident, million SDR)", { a: "middle", s: 9.5, c: L });
+  const x0 = 70, sc = 260 / 250;
+  s += `<rect x="${x0}" y="60" width="${100 * sc}" height="34" fill="${A}" fill-opacity="0.4" stroke="${A}"/>`;
+  s += `<rect x="${x0}" y="98" width="${115 * sc}" height="34" fill="${A}" fill-opacity="0.25" stroke="${A}"/>`;
+  s += `<rect x="${x0}" y="146" width="${250 * sc}" height="34" fill="${G}" fill-opacity="0.35" stroke="${G}"/>`;
+  s += txt(x0 + 100 * sc + 6, 82, "Tier 1 shipowner: bulk, max 100", { s: 9.5 });
+  s += txt(x0 + 115 * sc + 6, 120, "Tier 1 shipowner: packaged, max 115", { s: 9.5 });
+  s += txt(x0 + 6, 168, "Total with Tier 2 (HNS Fund): max 250", { s: 10, b: true });
+  s += txt(200, 204, "The 250 includes what the shipowner pays (Art 14(5)(a))", { a: "middle", s: 9.5, c: L });
+  s += txt(200, 218, "In force 29 Nov 2027", { a: "middle", s: 9.5, c: Y });
+  DIAGRAMS["hns-tiers"] = svg(400, 230, s);
+}
+
+// 10. LLMC limits per ton, general claims (1996 Protocol vs 2012)
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "LLMC: added limit per ton, other (property) claims", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "SDR per ton on top of the base amount", { a: "middle", s: 9.5, c: L });
+  const rows = [["2,001–30,000 GT", 400, 604], ["30,001–70,000 GT", 300, 453], ["Over 70,000 GT", 200, 302]];
+  const x0 = 130, sc = 240 / 604;
+  rows.forEach(([n, a, b], i) => {
+    const y = 62 + i * 52;
+    s += txt(x0 - 6, y + 22, n, { a: "end", s: 9.5 });
+    s += `<rect x="${x0}" y="${y}" width="${a * sc}" height="18" fill="${L}" fill-opacity="0.4" stroke="${L}"/>` + txt(x0 + a * sc + 4, y + 13, `${a}`, { s: 9.5, c: L });
+    s += `<rect x="${x0}" y="${y + 22}" width="${b * sc}" height="18" fill="${G}" fill-opacity="0.4" stroke="${G}"/>` + txt(x0 + b * sc + 4, y + 35, `${b}`, { s: 9.5, c: G });
+  });
+  s += `<rect x="130" y="224" width="10" height="10" fill="${L}" fill-opacity="0.4" stroke="${L}"/>` + txt(144, 233, "1996 Protocol", { s: 9.5 });
+  s += `<rect x="236" y="224" width="10" height="10" fill="${G}" fill-opacity="0.4" stroke="${G}"/>` + txt(250, 233, "2012 (in force 8 Jun 2015)", { s: 9.5 });
+  DIAGRAMS["llmc-per-ton"] = svg(400, 250, s);
+}
+
+// 11. Cape Town Agreement: length vs gross tonnage thresholds
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "Cape Town Agreement: length and gross tonnage", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "Fishing vessels of 24 m and over", { a: "middle", s: 9.5, c: L });
+  const pts = [[24, 300], [45, 950], [60, 2000], [75, 3000]];
+  const bx = 50, by = 190, bw = 310, bh = 125;
+  s += line(bx, by, bx + bw, by) + line(bx, by, bx, by - bh);
+  const X = m => bx + (m - 15) / 70 * bw, Yp = g => by - g / 3200 * bh;
+  let d = "";
+  pts.forEach(([m, g], i) => {
+    d += (i ? "L" : "M") + X(m).toFixed(1) + "," + Yp(g).toFixed(1);
+  });
+  s += `<path d="${d}" fill="none" stroke="${A}" stroke-width="1.6"/>`;
+  pts.forEach(([m, g]) => {
+    s += `<circle cx="${X(m)}" cy="${Yp(g)}" r="3.4" fill="${G}"/>` + txt(X(m), by + 14, `${m} m`, { a: "middle", s: 9.5 }) + txt(X(m) + 6, Yp(g) - 6, `${g.toLocaleString("en")} GT`, { s: 9.5, c: Y });
+  });
+  s += txt(200, 224, "Length (m) on the bottom, gross tonnage up the side", { a: "middle", s: 9, c: L });
+  DIAGRAMS["capetown-thresholds"] = svg(400, 230, s);
+}
+
+// 12. Tonnage 1969: K1 against volume (log scale)
+{
+  let s = frame(400, 240);
+  s += txt(200, 26, "Tonnage 1969: GT = K1 × V", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "K1 rises slowly as the ship's volume V (m³) grows", { a: "middle", s: 9.5, c: L });
+  const pts = [[100, 0.24], [1000, 0.26], [10000, 0.28], [100000, 0.30], [1000000, 0.32]];
+  const bx = 50, by = 190, bw = 310, bh = 120;
+  s += line(bx, by, bx + bw, by) + line(bx, by, bx, by - bh);
+  const X = v => bx + (Math.log10(v) - 2) / 4 * bw, Yp = k => by - (k - 0.22) / 0.12 * bh;
+  let d = "";
+  pts.forEach(([v, k], i) => { d += (i ? "L" : "M") + X(v).toFixed(1) + "," + Yp(k).toFixed(1); });
+  s += `<path d="${d}" fill="none" stroke="${A}" stroke-width="1.6"/>`;
+  pts.forEach(([v, k]) => {
+    s += `<circle cx="${X(v)}" cy="${Yp(k)}" r="3.4" fill="${G}"/>` + txt(X(v), by + 14, v.toLocaleString("en"), { a: "middle", s: 8.5 }) + txt(X(v), Yp(k) - 8, k.toFixed(4), { a: "middle", s: 9, c: Y });
+  });
+  s += txt(200, 224, "Volume V (m³), log scale · net tonnage never less than 0.30 GT", { a: "middle", s: 9, c: L });
+  DIAGRAMS["tonnage-k1"] = svg(400, 240, s);
+}
+
+// 13. AFS 2001 timeline
+{
+  let s = frame(400, 220);
+  s += txt(200, 26, "AFS 2001: key dates", { a: "middle", b: true, s: 12 });
+  s += line(40, 110, 360, 110, L, 2);
+  const ev = [[60, "5 Oct 2001", "Adopted", T, 0], [130, "1 Jan 2003", "Organotin: no new application", R, 1], [200, "1 Jan 2008", "No organotin on hulls, or a barrier coating", R, 0], [250, "17 Sep 2008", "In force", G, 1], [335, "1 Jan 2023", "Cybutryne: no application or re-application", Y, 0]];
+  ev.forEach(([x, d, t, c, up]) => {
+    s += `<circle cx="${x}" cy="110" r="5" fill="${c}"/>`;
+    const y = up ? 80 : 140, ty = up ? 62 : 158;
+    s += line(x, 110, x, y, c, 1) + txt(x, ty, d, { a: "middle", s: 9.5, b: true, c });
+    const words = t.split(" "); let l1 = words.slice(0, Math.ceil(words.length / 2)).join(" "), l2 = words.slice(Math.ceil(words.length / 2)).join(" ");
+    s += txt(x, ty + (up ? -12 : 12), up ? l2 : l1, { a: "middle", s: 8.5, c: L }) ;
+    s += txt(x, ty + (up ? -1 : 23), up ? "" : l2, { a: "middle", s: 8.5, c: L });
+    if (up) s += txt(x, ty - 22, l1, { a: "middle", s: 8.5, c: L });
+  });
+  DIAGRAMS["afs-timeline"] = svg(400, 220, s);
+}

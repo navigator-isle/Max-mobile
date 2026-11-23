@@ -67,6 +67,8 @@ tags: [tonnage, gross-tonnage, net-tonnage, itc, imo, convention]
 
 ---
 
+![[diagram:tonnage-k1|K1 against volume, as listed in the Annex]]
+
 ## Annex I — Regulations
 **Reg 2 — Definitions**
 - **Upper deck**: the uppermost complete deck exposed to weather and sea, with permanent weathertight closings, and watertight closings for side openings below it

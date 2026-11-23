@@ -31,6 +31,8 @@ tags: [cape-town, fishing-vessels, torremolinos, safety, imo, agreement]
 - Annex = integral part of the Agreement (Art 1(3))
 - Once in force, States must put it into national law; flag States make sure their vessels comply; port States may inspect foreign vessels in their ports (IMO)
 
+![[diagram:capetown-thresholds|Length and gross tonnage thresholds]]
+
 ## Where it applies
 - Protocol Art 3(3): the Annex applies to fishing vessels of **24 m in length and over**, unless a provision says otherwise
 - Art 3(4): where a chapter sets a limit above 24 m, the Administration decides which of its regulations apply to vessels of 24 m and over below that limit
