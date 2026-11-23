@@ -12,7 +12,6 @@ tags: [iamsar, imo, system, search-and-rescue, sar, icao, solas]
 | Linked to | The 1979 SAR Convention ([[SAR 1979]]) and SOLAS Chapter V ([[SOLAS 1974]]) |
 | Updated | Amendments are prepared by the ICAO/IMO Joint Working Group, endorsed by the NCSR Sub-Committee, and adopted in principle by the Maritime Safety Committee, normally every three years |
 | Latest amendments | **MSC.1/Circ.1686**, applicable **1 Jan 2026** |
-| On board | Ships must carry an up-to-date **Volume III**, in **hard copy**, under SOLAS V/21 |
 
 ![[diagram:iamsar-volumes|The three volumes and who they are for]]
 
@@ -124,10 +123,6 @@ The steps repeat until survivors are found or searching is no longer reasonable.
 ## What is coming next (IMO NCSR 12, May 2025)
 - Model Course 3.14 (SAR mission coordinator, Volume II) validated. Review of Model Course 3.15 (on-scene coordinator, Volume III) under way, validation planned for NCSR 14
 - SOLAS amendments on MSI and SAR information being sent through all recognized mobile satellite services (IV/5, V/4, V/5) are headed for adoption at MSC 111 in 2026, entry into force **1 Jan 2028**
-
-## What inspectors look at
-- That an up-to-date Volume III is on board, in hard copy
-- That the crew know the distress response and on-scene procedures, and that checklists match the 2024 GMDSS changes
 
 ## Related notes
 - [[SAR 1979]] search and rescue regions and rescue centres

@@ -15,8 +15,6 @@ tags: [meteorology, weather, imo, topic, wmo, solas, ice-patrol, beaufort]
 
 ![[diagram:meteo-solas|Who does what under SOLAS V]]
 
-> **Key Point:** Governments give ships weather warnings and forecasts. Masters must report dangers they meet to nearby ships and authorities, free of charge, and must plan the voyage with weather in mind.
-
 ## SOLAS Chapter V: weather duties
 ### Regulation 5: Meteorological services and warnings
 **Governments**
@@ -120,12 +118,6 @@ Other rules
 - **International Ice Patrol (IIP)** is run by the **US Coast Guard**. It was formed after the **Titanic** sank on 15 April 1912 and has worked since 1913, apart from wartime
 - IIP bulletins go out by SafetyNET, NAVTEX and radiofax. Ships can send iceberg reports to IIP
 - IIP's own working season is longer than the SOLAS dates: in 2022 it ran from 11 January to 7 September
-
-## What inspectors look at
-- Weather information and forecast receivers (NAVTEX, EGC, radiofax) working, and used
-- Voyage plan shows weather and sea room considered (Reg 34)
-- Danger messages sent when required, with the right content
-- Publications such as WMO Volume D up to date
 
 ## Related notes
 - [[SOLAS 1974]] full chapter structure

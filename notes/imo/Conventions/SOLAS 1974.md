@@ -26,8 +26,7 @@ tags: [solas, imo, convention, core, safety, certificates, psc]
 ## History
 - 1912 Titanic led to SOLAS **1914** (never in force, because of WWI)
 - Later versions: 1929, 1948, **1960** (the first under IMO, then IMCO)
-- **1974:** adopted 1 Nov 1974, in force 25 May 1980, with tacit acceptance of amendments
-- **1978 Protocol:** tanker safety · **1988 Protocol:** HSSC
+- **1974:** the current Convention, with tacit acceptance of amendments (protocols: see At a glance)
 
 ## Applies to
 - International voyages
