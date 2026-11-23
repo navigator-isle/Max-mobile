@@ -1540,3 +1540,42 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 150, "Dates are entry-into-force dates", { a: "middle", s: 9, c: L });
   DIAGRAMS["modu-timeline"] = svg(400, 170, s);
 }
+
+// 92-94. SPS Code
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "SPS Code: rules by persons on board", { a: "middle", b: true, s: 12 });
+  const rows = [
+    ["More than 240", "Fire: passenger ship (over 36 pax)", "LSA: passenger ship standard", R],
+    ["60 to 240", "Fire: passenger ship (up to 36 pax)", "LSA: passenger ship standard", Y],
+    ["60 or fewer", "Fire: cargo ship", "LSA: cargo ship standard", G],
+  ];
+  rows.forEach((r, i) => {
+    const y = 42 + i * 62;
+    s += `<rect x="20" y="${y}" width="360" height="54" rx="7" fill="#1d2040" stroke="${r[3]}"/>`;
+    s += txt(36, y + 21, r[0] + " persons", { b: true, s: 11, c: r[3] }) + txt(36, y + 37, r[1], { s: 9, c: L }) + txt(36, y + 49, r[2], { s: 9, c: L });
+  });
+  s += txt(200, 240, "Special personnel: more than 12, not passengers", { a: "middle", s: 9, c: L });
+  DIAGRAMS["sps-bands"] = svg(400, 260, s);
+}
+{
+  let s = frame(400, 170);
+  s += txt(200, 26, "Damage stability index by persons", { a: "middle", b: true, s: 12 });
+  s += line(40, 100, 360, 100, L);
+  s += `<line x1="40" y1="100" x2="360" y2="100" stroke="${L}"/>`;
+  s += `<circle cx="60" cy="100" r="6" fill="${G}"/><circle cx="340" cy="100" r="6" fill="${R}"/>`;
+  s += txt(60, 80, "60 or fewer", { a: "middle", s: 9.5, b: true }) + txt(60, 124, "0.8 R", { a: "middle", s: 10, c: G, b: true });
+  s += txt(340, 80, "240 or more", { a: "middle", s: 9.5, b: true }) + txt(340, 124, "R", { a: "middle", s: 10, c: R, b: true });
+  s += txt(200, 80, "between: linear interpolation", { a: "middle", s: 9.5, c: Y });
+  s += txt(200, 152, "Lower N allowed, never below N1 + N2 (MSC.408(96))", { a: "middle", s: 9, c: L });
+  DIAGRAMS["sps-rvalue"] = svg(400, 170, s);
+}
+{
+  let s = frame(400, 170);
+  s += txt(200, 26, "SPS Code milestones", { a: "middle", b: true, s: 12 });
+  s += line(30, 90, 370, 90, L);
+  const pts = [[40, "2008", "MSC.266(84)", G], [140, "2010", "MSC.299(87)", A], [240, "2016", "MSC.408(96)", A], [350, "2024", "MSC.503(105)", Y]];
+  pts.forEach(p => { s += `<circle cx="${p[0]}" cy="90" r="6" fill="${p[3]}"/>` + txt(p[0], 72, p[1], { a: "middle", s: 10, b: true }) + txt(p[0], 116, p[2], { a: "middle", s: 8.5, c: p[3] }); });
+  s += txt(200, 150, "2008 adoption · 2010 and 2016 in force on adoption · 2024 new certificate form", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["sps-timeline"] = svg(400, 170, s);
+}
