@@ -74,11 +74,12 @@ tags: [hague-visby, hamburg, rotterdam, bill-of-lading, cargo-claims, carrier-li
 - [[Salvage 1989]] salvage of ship and cargo
 - [[CSC 1972]] containers
 - [[IMDG Code]] dangerous goods
+- [[Bills of Lading]] the document the Rules apply to
 
 ## Not included (not verified against the original text)
 - The original **Hague Rules of 1924** and the 1979 SDR Protocol
 - The exact wording of the Hague-Visby Art X application test
-- Hague-Visby Art III rules 3 to 5 (bill of lading contents and evidence), notice of loss, Art IV bis, and Art IV rule 6 (dangerous goods)
+- Hague-Visby notice of loss, Art IV bis, and Art IV rule 6 (dangerous goods)
 - Hamburg Rules on seaworthiness, actual carriers, live animals, jurisdiction and arbitration
 - Rotterdam Rules on fire and the number and names of States
 - A current list of Hague-Visby parties, and Rotterdam ratifications after Dec 2019

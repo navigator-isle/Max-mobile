@@ -2361,3 +2361,29 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["draft-steps"] = svg(400, H + 2, s);
 }
+
+// 163-164. Bills of lading
+{
+  let s = frame(400, 250);
+  s += txt(200, 24, "Life of a bill of lading", { a: "middle", b: true, s: 12 });
+  const box = (x, y, w, t, c) => `<rect x="${x}" y="${y}" width="${w}" height="30" rx="6" fill="#1d2040" stroke="${c}"/>` + txt(x + w / 2, y + 19, t, { a: "middle", s: 9.5, b: true, c });
+  s += box(20, 44, 100, "Shipper", A) + box(150, 44, 100, "Carrier / master", G) + box(280, 44, 100, "Buyer or bank", Y);
+  s += arrow(120, 59, 150, 59, L) + arrow(250, 59, 280, 59, L);
+  s += txt(135, 40, "cargo", { a: "middle", s: 8, c: L }) + txt(265, 40, "bill", { a: "middle", s: 8, c: L });
+  const st = [["1", "Goods received, bill signed and issued to the shipper"], ["2", "Shipper sends the bill on, through the bank if there is one"], ["3", "At discharge the holder surrenders an original"], ["4", "The carrier delivers the cargo against it"]];
+  st.forEach((r, i) => { const y = 98 + i * 36; s += `<circle cx="34" cy="${y + 10}" r="10" fill="none" stroke="${A}"/>` + txt(34, y + 14, r[0], { a: "middle", b: true, s: 10, c: A }) + txt(56, y + 14, r[1], { s: 9.5 }); });
+  s += txt(200, 242, "Delivery without an original is the main P&I risk", { a: "middle", s: 8.5, c: R });
+  DIAGRAMS["bl-flow"] = svg(400, 252, s);
+}
+{
+  let s = frame(400, 238);
+  s += txt(200, 24, "Clean or claused?", { a: "middle", b: true, s: 12 });
+  s += `<rect x="90" y="42" width="220" height="38" rx="8" fill="#1d2040" stroke="${A}"/>` + txt(200, 58, "Is the damage apparent on", { a: "middle", s: 9.5 }) + txt(200, 72, "a reasonable look at loading?", { a: "middle", s: 9.5 });
+  s += arrow(150, 80, 100, 118, G) + arrow(250, 80, 300, 118, R);
+  s += txt(112, 100, "No", { a: "middle", s: 9, b: true, c: G }) + txt(288, 100, "Yes", { a: "middle", s: 9, b: true, c: R });
+  s += `<rect x="20" y="120" width="170" height="54" rx="8" fill="#16301f" stroke="${G}"/>` + txt(105, 140, "Issue a clean bill", { a: "middle", b: true, s: 10, c: G }) + txt(105, 156, "Damage after loading may be", { a: "middle", s: 8.5, c: L }) + txt(105, 168, "stated as a plain fact", { a: "middle", s: 8.5, c: L });
+  s += `<rect x="210" y="120" width="170" height="54" rx="8" fill="#3a1a1a" stroke="${R}"/>` + txt(295, 140, "Clause the bill", { a: "middle", b: true, s: 10, c: R }) + txt(295, 156, "Say what, and how much,", { a: "middle", s: 8.5, c: L }) + txt(295, 168, "in the bill itself", { a: "middle", s: 8.5, c: L });
+  s += txt(200, 204, "Marks, number, quantity, weight: leave out what you doubt", { a: "middle", s: 8.5, c: Y });
+  s += txt(200, 220, "or had no reasonable means of checking", { a: "middle", s: 8.5, c: Y });
+  DIAGRAMS["bl-clause"] = svg(400, 240, s);
+}
