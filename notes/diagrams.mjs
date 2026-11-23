@@ -1984,3 +1984,57 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["mlc-areas"] = svg(400, 296, s);
 }
+
+// 128-133. STCW 1978
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "STCW structure", { a: "middle", b: true, s: 12 });
+  s += `<rect x="20" y="40" width="170" height="46" rx="7" fill="#1d2040" stroke="${A}"/>` + txt(105, 60, "Convention", { a: "middle", b: true, s: 11, c: A }) + txt(105, 76, "Articles + Annex", { a: "middle", s: 9, c: L });
+  s += `<rect x="210" y="40" width="170" height="46" rx="7" fill="#1d2040" stroke="${G}"/>` + txt(295, 60, "STCW Code", { a: "middle", b: true, s: 11, c: G }) + txt(295, 76, "Part A mandatory · Part B guidance", { a: "middle", s: 8, c: L });
+  const ch = [["I", "General"], ["II", "Deck"], ["III", "Engine"], ["IV", "Radio"], ["V", "Ship types"], ["VI", "Safety, medical"], ["VII", "Alternative"], ["VIII", "Watchkeeping"]];
+  ch.forEach((c, i) => { const col = i % 2, row = Math.floor(i / 2), x = 20 + col * 190, y = 104 + row * 42; s += `<rect x="${x}" y="${y}" width="170" height="34" rx="6" fill="#1d2040" stroke="${Y}"/>` + txt(x + 10, y + 21, "Chapter " + c[0] + "  " + c[1], { s: 10 }); });
+  s += txt(200, 286, "Annex Regulations: years of service · Code: competence tables, rest, alcohol", { a: "middle", s: 8, c: L });
+  DIAGRAMS["stcw-structure"] = svg(400, 300, s);
+}
+{
+  let s = frame(400, 330);
+  s += txt(200, 26, "STCW milestones", { a: "middle", b: true, s: 12 });
+  const ev = [["7 Jul 1978", "Convention adopted", A], ["28 Apr 1984", "In force", G], ["1 Feb 1997", "1995 amendments: STCW Code", A], ["25 Jun 2010", "Manila amendments adopted", Y], ["1 Jan 2012", "Manila in force", G], ["1 Jan 2017", "Manila transition ends", R], ["1 Jan 2026", "Violence and harassment training", G], ["2029 or 2030", "Revised STCW to MSC (target)", Y]];
+  s += line(112, 44, 112, 304, L);
+  ev.forEach((e, i) => { const y = 54 + i * 32; s += `<circle cx="112" cy="${y}" r="5" fill="${e[2]}"/>` + txt(102, y + 4, e[0], { a: "end", s: 9.5, b: true, c: e[2] }) + txt(126, y + 4, e[1], { s: 9.5 }); });
+  DIAGRAMS["stcw-timeline"] = svg(400, 330, s);
+}
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "How long things last", { a: "middle", b: true, s: 12 });
+  const rows = [["Medical certificate (under 18)", 1, R], ["Medical certificate", 2, Y], ["Colour vision test", 6, "#c792ea"], ["CoC revalidation", 5, A], ["Endorsement (at most)", 5, A], ["Basic training, PSCRB, AFF", 5, G], ["Quality system evaluation", 5, "#9be564"]];
+  rows.forEach((r, i) => { const y = 42 + i * 31; s += txt(10, y + 15, r[0], { s: 9 }) + `<rect x="170" y="${y}" width="${r[1] * 28}" height="20" rx="4" fill="${r[2]}"/>` + txt(170 + r[1] * 28 + 6, y + 15, r[1] + (r[1] === 1 ? " year" : " years"), { s: 9.5, b: true }); });
+  DIAGRAMS["stcw-validity"] = svg(400, 280, s);
+}
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Deck path (3,000 GT+)", { a: "middle", b: true, s: 12 });
+  const st = [["Rating (RFPNW)", "Age 16 · 6 months", "#aab0d0"], ["Able seafarer deck", "Age 18 · 18 months, or 12 + training", A], ["Officer in charge of watch", "Age 18 · 12 months in programme, or 36 · 6 months watchkeeping", G], ["Chief mate", "12 months as OOW", Y], ["Master", "36 months as OOW, or 24 if 12 as chief mate", R]];
+  st.forEach((r, i) => { const y = 42 + i * 50, x = 14 + i * 12; s += `<rect x="${x}" y="${y}" width="${372 - i * 12}" height="42" rx="7" fill="#1d2040" stroke="${r[2]}"/>` + txt(x + 10, y + 18, r[0], { b: true, s: 10.5, c: r[2] }) + txt(x + 10, y + 33, r[1], { s: 8.5, c: L }); });
+  DIAGRAMS["stcw-deck"] = svg(400, 300, s);
+}
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Engine path (3,000 kW+)", { a: "middle", b: true, s: 12 });
+  const st = [["Rating (engine watch)", "Age 16 · 6 months", "#aab0d0"], ["Able seafarer engine", "Age 18 · 12 months, or 6 + training", A], ["Officer in charge of watch (750 kW+)", "Age 18 · 12 months in programme, or 36 (30 in engine)", G], ["Second engineer", "12 months as engineer officer", Y], ["Chief engineer", "36 months, or 24 if 12 as second engineer", R]];
+  st.forEach((r, i) => { const y = 42 + i * 50, x = 14 + i * 12; s += `<rect x="${x}" y="${y}" width="${372 - i * 12}" height="42" rx="7" fill="#1d2040" stroke="${r[2]}"/>` + txt(x + 10, y + 18, r[0], { b: true, s: 10.5, c: r[2] }) + txt(x + 10, y + 33, r[1], { s: 8.5, c: L }); });
+  DIAGRAMS["stcw-engine"] = svg(400, 300, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Rest limits (A-VIII/1)", { a: "middle", b: true, s: 12 });
+  s += txt(14, 52, "Any 24 hours", { s: 10, b: true });
+  s += `<rect x="14" y="60" width="372" height="26" rx="5" fill="#2a2d4a"/>` + `<rect x="14" y="60" width="${372 * 10 / 24}" height="26" rx="5" fill="${G}"/>` + txt(24, 78, "10 h rest at least", { s: 10, b: true, c: "#12131f" });
+  s += txt(14, 108, "At most 2 periods, one of 6 h or more. No more than 14 h between rests", { s: 8.5, c: L });
+  s += txt(14, 138, "Any 7 days", { s: 10, b: true });
+  s += `<rect x="14" y="146" width="372" height="26" rx="5" fill="#2a2d4a"/>` + `<rect x="14" y="146" width="${372 * 77 / 168}" height="26" rx="5" fill="${G}"/>` + txt(24, 164, "77 h rest at least", { s: 10, b: true, c: "#12131f" });
+  s += txt(14, 194, "Exception: 70 h, for no more than 2 weeks in a row", { s: 8.5, c: Y });
+  s += txt(14, 214, "Alcohol: 0.05% blood, 0.25 mg/l breath", { s: 9.5, c: R });
+  s += txt(14, 234, "Same 10 h and 77 h as MLC 2006", { s: 8.5, c: L });
+  DIAGRAMS["stcw-rest"] = svg(400, 250, s);
+}
