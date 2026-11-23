@@ -113,6 +113,7 @@ These chapters do not override the master's responsibilities.
 
 ## Related notes
 - [[SOLAS 1974]] chapters VI and VII in full
+- [[Cargo Gear]] testing, examination and records of the gear that lifts the cargo
 - [[CSS Code]] the annexes, the lashing calculation and the Cargo Securing Manual
 - [[IMSBC Code]], [[IMDG Code]], [[CSS Code]], [[CTU Code]], [[BLU Code]], [[Grain Code]], [[TDC Code]] each cargo code
 - [[Ship Stability]], [[Draft Survey]], [[Bills of Lading]] stability, quantity and documents
