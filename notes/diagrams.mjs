@@ -1736,3 +1736,36 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 250, "Part 2 of the Code", { a: "middle", s: 9, c: L });
   DIAGRAMS["bwms-tests"] = svg(400, 260, s);
 }
+
+// 108-110. International Code of Signals
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "International Code of Signals", { a: "middle", b: true, s: 12 });
+  const c = [["1", "Signalling instructions", "Methods, procedure signals", A], ["2", "General Signal Code", "10 sections, complements", G], ["3", "Medical Signal Code", "Requests and advice", Y], ["4", "Distress and lifesaving", "14 distress signals, radiotelephone", R]];
+  c.forEach((r, i) => {
+    const y = 42 + i * 50;
+    s += `<rect x="20" y="${y}" width="360" height="42" rx="7" fill="#1d2040" stroke="${r[3]}"/><circle cx="46" cy="${y + 21}" r="13" fill="${r[3]}"/>` + txt(46, y + 26, r[0], { a: "middle", b: true, s: 13, c: "#12131f" }) + txt(70, y + 18, r[1], { b: true, s: 10.5 }) + txt(70, y + 33, r[2], { s: 9, c: L });
+  });
+  DIAGRAMS["ics-structure"] = svg(400, 250, s);
+}
+{
+  let s = frame(400, 170);
+  s += txt(200, 26, "From 18 flags to complete signals", { a: "middle", b: true, s: 12 });
+  s += line(30, 90, 370, 90, L);
+  const p = [[40, "1857", "First code", A], [140, "1897", "Revised", A], [240, "1932", "Madrid", Y], [340, "1965", "IMCO A.80(IV)", G]];
+  p.forEach(x => { s += `<circle cx="${x[0]}" cy="90" r="6" fill="${x[3]}"/>` + txt(x[0], 72, x[1], { a: "middle", s: 10, b: true }) + txt(x[0], 116, x[2], { a: "middle", s: 8.5, c: x[3] }); });
+  s += txt(200, 150, "Dates from the preface of the US edition and A.80(IV)", { a: "middle", s: 9, c: L });
+  DIAGRAMS["ics-history"] = svg(400, 170, s);
+}
+{
+  let s = frame(400, 334);
+  s += txt(200, 26, "Key single-letter signals", { a: "middle", b: true, s: 12 });
+  const k = [["A", "Diver down, keep clear", A], ["B", "Dangerous goods", Y], ["D", "Keep clear, hard to manoeuvre", Y], ["E", "Altering course to starboard", G], ["F", "I am disabled, communicate", R], ["H", "Pilot on board", G], ["I", "Altering course to port", G], ["K", "I wish to communicate", A], ["L", "Stop instantly", R], ["O", "Man overboard", R], ["V", "I require assistance", R], ["Y", "Dragging my anchor", Y]];
+  k.forEach((r, i) => {
+    const col = i % 2, row = Math.floor(i / 2);
+    const x = 14 + col * 190, y = 42 + row * 44;
+    s += `<rect x="${x}" y="${y}" width="182" height="38" rx="6" fill="#1d2040" stroke="${r[2]}"/><rect x="${x + 6}" y="${y + 6}" width="26" height="26" rx="4" fill="${r[2]}"/>` + txt(x + 19, y + 25, r[0], { a: "middle", b: true, s: 14, c: "#12131f" }) + txt(x + 40, y + 23, r[1], { s: 8.5 });
+  });
+  s += txt(200, 322, "A selection. See the full table in the note", { a: "middle", s: 9, c: L });
+  DIAGRAMS["ics-letters"] = svg(400, 334, s);
+}
