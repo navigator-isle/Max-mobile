@@ -8,7 +8,7 @@ tags: [usa, opa-90, vgp, vida, eca, sewage, ballast-water, uscg, cfr, notice-of-
 | Topic | Law and regulation | Enforced by |
 |---|---|---|
 | Oil spill liability | [[OPA 90]], 33 U.S.C. 2701 ff., with **33 CFR 138, 153 and 155** | USCG |
-| Other discharges (ballast, graywater, bilge and more) | **Vessel General Permit 2013**, now being replaced by **VIDA** (EPA standards, USCG rules) | EPA, USCG |
+| Other discharges (graywater, bilge, scrubbers and more) | [[VGP and VIDA]] | EPA, USCG |
 | Air emissions | **MARPOL Annex VI** and the North American and US Caribbean Sea **ECAs**. Engines under **40 CFR 1042 and 1043** | EPA, USCG |
 | Sewage | Clean Water Act **section 312**. EPA standards in **40 CFR 140**. USCG design rules in **33 CFR 159** | USCG |
 | Ballast water | **33 CFR 151 subpart D** and **46 CFR 162** (type approval) | USCG |
@@ -28,20 +28,7 @@ tags: [usa, opa-90, vgp, vida, eca, sewage, ballast-water, uscg, cfr, notice-of-
 Liability, defences, limits, COFR, claims, double hull and response plans are in [[OPA 90]].
 
 ## Vessel discharges: VGP and VIDA
-
-| | 2013 Vessel General Permit (VGP) | VIDA national standards |
-|---|---|---|
-| Status | **In force now** for large commercial vessels, with the USCG ballast rules | EPA rule published **9 Oct 2024**. **Not yet in force** |
-| Applies to | Commercial vessels | Non-military, non-recreational vessels **79 ft (24 m) and longer** in US waters or the contiguous zone |
-| Excluded | | Armed Forces and recreational vessels, permanently moored craft. Smaller vessels and fishing vessels are excluded **except for ballast water** |
-| Law | Clean Water Act permit | **Vessel Incidental Discharge Act**, signed 4 Dec 2018 |
-
-**When VIDA starts:** the EPA standards take effect only when the **Coast Guard's implementing regulations** are final and enforceable. Until then the VGP 2013 and the existing USCG ballast rules, with any state and local rules, stay in force. When the USCG rules take effect, the VGP and the USCG's older NANPCA ballast rules are repealed. The 2014 small vessel permit was repealed when VIDA became law. VIDA gives the Coast Guard **two years** from the EPA publication to develop its rules. No Coast Guard rule had been confirmed published when this note was checked.
-
-**What the EPA standards cover**
-- **3 general standards:** general operation and maintenance, biofouling management, oil management
-- **20 specific discharges:** ballast tanks, bilges, boilers, cathodic protection, chain lockers, decks, desalination and purification systems, elevator pits, exhaust gas emission control systems, fire protection equipment, gas turbines, graywater systems, hulls and niche areas, inert gas systems, motor gasoline and compensating systems, non-oily machinery, pools and spas, refrigeration and air conditioning, seawater piping, sonar domes
-- Extra rules for **federally protected waters**, and a way for **states** to ask for emergency orders, no-discharge zones or reviews of the standards
+The 2013 permit, the replacement law and the 20 discharge standards are in [[VGP and VIDA]].
 
 ## Emission Control Areas (ECA)
 | Item | Rule |
@@ -139,7 +126,6 @@ One of **five** methods must be used by a vessel with ballast tanks operating in
 - [[SOLAS 1974]] the safety rules checked in a port state control exam
 
 ## Not included (not verified against the original text)
-- The **2026 status** of the Coast Guard VIDA rule. No proposed or final rule was found, and the Coast Guard's own page is dated (it expected a rule in 2022). Check before relying on this
 - **Penalties** under the Clean Water Act, APPS and the ballast rules
 - The ballast water **reporting form**, the time before arrival, the **record-keeping period**, and exemptions (151.2060 to 151.2070). Their text could not be retrieved
 - **Small vessel** and Great Lakes ballast rules, and state rules such as **California** and **Washington**
@@ -152,9 +138,6 @@ One of **five** methods must be used by a vessel with ballast tanks operating in
 - **46 CFR** manning, inspection and licensing rules
 
 ## Sources (checked 23 Nov 2026)
-- EPA, Vessel Incidental Discharge National Standards of Performance, 89 FR 82074 (9 Oct 2024): https://www.govinfo.gov/content/pkg/FR-2024-10-09/html/2024-22013.htm
-- USCG, role in implementing VIDA: https://news.uscg.mil/maritime-commons/Article/3932088/the-coast-guards-role-in-implementing-the-vessel-incidental-discharge-act
-- USCG, VIDA page (interim rules): https://www.dco.uscg.mil/Our-Organization/Assistant-Commandant-for-Prevention-Policy-CG-5P/Commercial-Regulations-standards-CG-5PS/Office-of-Operating-and-Environmental-Standards/Environmental-Standards/VIDA/
 - MARPOL Annex VI reg 14 text (EGCSA copy): https://www.egcsa.com/regulatory/marpol-annex-vi-regulation-14/
 - IMO FAQ, sulphur limits in ECAs (West P&I copy): https://www.westpandi.com/globalassets/news/imo-frequenty-asked-questions---sulphur-limits-in-emission-control-areas-from-1-january-2015.pdf
 - ABS, Emission Control Areas: https://ww2.eagle.org/en/rules-and-resources/regulatory-updates/emission-control-areas.html
