@@ -2494,3 +2494,39 @@ const OR = "#ff9f43";
   s += txt(200, 290, "Layouts differ. Follow the ship's Safety Plan", { a: "middle", s: 8, c: L });
   DIAGRAMS["lsa-plan"] = svg(400, 302, s);
 }
+
+// 171-172. LSA approval and general requirements
+{
+  const st = ["Prototype tested (LSA Code, MSC.81(70))", "Administration approves it", "Approval details marked on the item", "Production tests: same standard as the prototype", "Fitted and listed in the Record of Equipment", "Serviced, and replaced at its expiry date"];
+  const H = 40 + st.length * 34 + 8;
+  let s = frame(400, H);
+  s += txt(200, 24, "From design to ship", { a: "middle", b: true, s: 12 });
+  st.forEach((t, i) => {
+    const y = 38 + i * 34, c = i === st.length - 1 ? G : A;
+    s += `<rect x="40" y="${y}" width="320" height="26" rx="6" fill="#1d2040" stroke="${c}"/>` + txt(56, y + 17, String(i + 1), { b: true, s: 10, c }) + txt(76, y + 17, t, { s: 9.5 });
+    if (i < st.length - 1) s += arrow(200, y + 26, 200, y + 34, L);
+  });
+  DIAGRAMS["lsa-approval"] = svg(400, H + 2, s);
+}
+{
+  let s = frame(400, 220);
+  s += txt(200, 24, "Where the retro-reflective material goes", { a: "middle", b: true, s: 12 });
+  const RF = "#e8f2ff";
+  // lifejacket
+  s += `<path d="M40,62 L56,56 Q63,66 70,56 L86,62 L92,112 L76,114 L74,98 L52,98 L50,114 L34,112 Z" fill="${A}" fill-opacity=".45" stroke="${A}" stroke-width="1.6"/>`;
+  s += `<rect x="44" y="64" width="9" height="12" fill="${RF}"/><rect x="73" y="64" width="9" height="12" fill="${RF}"/>`;
+  s += txt(63, 136, "Lifejacket", { a: "middle", b: true, s: 9.5 }) + txt(63, 150, "patches, high up", { a: "middle", s: 8, c: L });
+  // lifebuoy
+  s += `<circle cx="150" cy="86" r="24" fill="none" stroke="${OR}" stroke-width="12"/>`;
+  [[150, 62], [174, 86], [150, 110], [126, 86]].forEach(p => { s += `<rect x="${p[0] - 5}" y="${p[1] - 5}" width="10" height="10" fill="${RF}"/>`; });
+  s += txt(150, 136, "Lifebuoy", { a: "middle", b: true, s: 9.5 }) + txt(150, 150, "four strips", { a: "middle", s: 8, c: L });
+  // liferaft top
+  s += `<circle cx="250" cy="86" r="34" fill="${OR}" fill-opacity=".35" stroke="${OR}" stroke-width="2"/><rect x="246" y="68" width="8" height="36" fill="${RF}"/><rect x="232" y="82" width="36" height="8" fill="${RF}"/>`;
+  s += txt(250, 136, "Liferaft", { a: "middle", b: true, s: 9.5 }) + txt(250, 150, "cross on top, pieces", { a: "middle", s: 8, c: L }) + txt(250, 162, "round the canopy", { a: "middle", s: 8, c: L });
+  // boat
+  s += `<path d="M310,92 L384,92 L376,108 L318,108 Z" fill="#2a2d4a" stroke="${T}" stroke-width="1.5"/><path d="M316,92 Q320,66 346,64 Q374,66 378,92 Z" fill="${OR}" fill-opacity=".5" stroke="${OR}" stroke-width="1.5"/>`;
+  [322, 336, 350, 364].forEach(x => { s += `<rect x="${x}" y="86" width="8" height="5" fill="${RF}"/>`; });
+  s += txt(347, 136, "Lifeboats", { a: "middle", b: true, s: 9.5 }) + txt(347, 150, "along the gunwale", { a: "middle", s: 8, c: L }) + txt(347, 162, "and on the cover", { a: "middle", s: 8, c: L });
+  s += txt(200, 200, "Positions follow IMO resolution A.658(16)", { a: "middle", s: 8.5, c: Y });
+  DIAGRAMS["lsa-retro"] = svg(400, 222, s);
+}
