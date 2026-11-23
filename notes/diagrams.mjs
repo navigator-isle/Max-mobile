@@ -1502,3 +1502,41 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 212, "Waiver or deferral may be requested (Annex)", { a: "middle", s: 9, c: L });
   DIAGRAMS["oprchns-costs"] = svg(400, 230, s);
 }
+
+// 89-91. MODU Code
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "MODU Code 2009: 14 chapters", { a: "middle", b: true, s: 12 });
+  const grp = [
+    ["Hull", "1 General · 2 Structure · 3 Stability", A],
+    ["Machinery and power", "4 Machinery · 5 Electrical · 6 Hazardous areas", Y],
+    ["Propulsion", "7 Self-propelled · 8 Unattended spaces", G],
+    ["Safety", "9 Fire · 10 Life-saving · 11 Radio and navigation", R],
+    ["Work and operation", "12 Lifting · 13 Helicopter · 14 Operations", L],
+  ];
+  grp.forEach((g, i) => {
+    const y = 42 + i * 50;
+    s += `<rect x="20" y="${y}" width="360" height="42" rx="7" fill="#1d2040" stroke="${g[2]}"/>`;
+    s += txt(200, y + 18, g[0], { a: "middle", b: true, s: 10.5 }) + txt(200, y + 34, g[1], { a: "middle", s: 9, c: L });
+  });
+  DIAGRAMS["modu-structure"] = svg(400, 300, s);
+}
+{
+  let s = frame(400, 200);
+  s += txt(200, 26, "Survey cycle (5-year certificate)", { a: "middle", b: true, s: 12 });
+  s += line(30, 100, 370, 100, L);
+  const pts = [[30, "0", "Initial", G], [98, "1", "Annual", A], [166, "2", "Interm.", Y], [234, "3", "Interm.", Y], [302, "4", "Annual", A], [370, "5", "Renewal", R]];
+  pts.forEach(p => { s += `<circle cx="${p[0]}" cy="100" r="6" fill="${p[3]}"/>` + txt(p[0], 124, p[2], { a: "middle", s: 9, c: p[3] }) + txt(p[0], 82, "Yr " + p[1], { a: "middle", s: 9, c: L }); });
+  s += txt(200, 160, "Intermediate: 2nd or 3rd anniversary (one of them)", { a: "middle", s: 9, c: L });
+  s += txt(200, 178, "Dry-dock: at least 2 in 5 years, max 36 months apart", { a: "middle", s: 9, c: Y });
+  DIAGRAMS["modu-surveys"] = svg(400, 200, s);
+}
+{
+  let s = frame(400, 170);
+  s += txt(200, 26, "Code amendments", { a: "middle", b: true, s: 12 });
+  s += line(30, 90, 370, 90, L);
+  const pts = [[30, "2012", "In force", G], [98, "2015", "MSC.359", A], [166, "2016", "MSC.384", A], [234, "2020", "MSC.407 / 435", Y], [370, "2024", "MSC.506", R]];
+  pts.forEach(p => { s += `<circle cx="${p[0]}" cy="90" r="6" fill="${p[3]}"/>` + txt(p[0], 72, p[1], { a: "middle", s: 10, b: true }) + txt(p[0], 116, p[2], { a: "middle", s: 8.5, c: p[3] }); });
+  s += txt(200, 150, "Dates are entry-into-force dates", { a: "middle", s: 9, c: L });
+  DIAGRAMS["modu-timeline"] = svg(400, 170, s);
+}
