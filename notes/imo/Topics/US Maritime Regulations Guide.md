@@ -17,12 +17,7 @@ tags: [usa, opa-90, vgp, vida, eca, sewage, ballast-water, uscg, cfr, notice-of-
 > **Key Point:** Many US rules go beyond the IMO conventions. They apply to foreign ships in US waters. A ship that follows MARPOL and BWM only can still break a US rule.
 
 ## Where the rules are written
-| Title of the CFR | Subject | Used here |
-|---|---|---|
-| **33 CFR** | Navigation and navigable waters | Parts 138 (financial responsibility), 151 (ballast and pollution), 155 (oil pollution prevention), 159 (sanitation devices), 160 (notice of arrival) |
-| **40 CFR** | Protection of environment (EPA) | Part 140 (sanitation standard), parts 1042 and 1043 (marine engines and fuel) |
-| **46 CFR** | Shipping | Part 162 (ballast water system approval) |
-| **U.S.C.** | The statutes the CFR rests on | 33 U.S.C. 2701 ff. (OPA 90) |
+The CFR titles, the Coast Guard subchapters and the part numbers used here are in [[CFR Guide]].
 
 ## Oil Pollution Act 1990 (OPA 90)
 Liability, defences, limits, COFR, claims, double hull and response plans are in [[OPA 90]].
@@ -70,6 +65,7 @@ The five methods, discharge standard, compliance dates, extensions, reporting an
 - Fire safety and life-saving appliance detentions fell again in 2025. Recognised organizations linked to detentions fell from **eight to seven**
 
 ## Related notes
+- [[CFR Guide]] how the rules are numbered and found
 - [[MARPOL 73/78]] the international base for the discharge, sewage and air rules
 - [[BWM 2004]] and [[BWMS Code]] the IMO ballast convention and system approval
 - [[CLC and Fund 1992]] the international oil spill liability scheme that OPA 90 sits beside
