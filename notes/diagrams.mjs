@@ -1280,3 +1280,44 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 224, "Oil and NLS: no discharge in Arctic waters", { a: "middle", s: 9.5, c: L });
   DIAGRAMS["polar-discharge"] = svg(400, 240, s);
 }
+
+// 73. RO structure
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "RO Code structure", { a: "middle", b: true, s: 12 });
+  const P = [["PART 1", "General", "Purpose, scope, delegation, information", A, 42, "Mandatory"], ["PART 2", "Recognition and authorization", "Requirements for the RO, 8 sections", G, 100, "Mandatory"], ["PART 3", "Oversight", "Flag State oversight programme, 7 sections", Y, 158, "Non-mandatory"]];
+  P.forEach(([a, b, c, col, y, m]) => {
+    s += `<rect x="20" y="${y}" width="360" height="50" rx="7" fill="#1d2040" stroke="${col}"/>` + txt(32, y + 20, a, { c: col, b: true, s: 10.5 }) + txt(92, y + 20, b, { b: true, s: 11 }) + txt(32, y + 38, c, { s: 9.2, c: L }) + txt(368, y + 20, m, { a: "end", s: 9, c: col });
+  });
+  s += txt(200, 234, "Appendix 1: training and qualification", { a: "middle", s: 9.5, c: L });
+  s += txt(200, 250, "Appendix 2: survey and certification tasks", { a: "middle", s: 9.5, c: L });
+  s += txt(200, 266, "Appendix 3: elements of an agreement", { a: "middle", s: 9.5, c: L });
+  DIAGRAMS["ro-structure"] = svg(400, 280, s);
+}
+
+// 74. RO flow
+{
+  let s = frame(400, 200);
+  s += txt(200, 26, "Who does what", { a: "middle", b: true, s: 12 });
+  const b = (x, y, w, t, u, c) => `<rect x="${x}" y="${y}" width="${w}" height="52" rx="6" fill="#1d2040" stroke="${c}"/>` + txt(x + w / 2, y + 22, t, { a: "middle", b: true, s: 10.5 }) + txt(x + w / 2, y + 40, u, { a: "middle", s: 9, c: L });
+  s += b(20, 50, 160, "Flag State", "Authorizes, oversees", A) + b(220, 50, 160, "Recognized Organization", "Surveys, certificates", G);
+  s += arrow(180, 68, 220, 68, A) + arrow(220, 92, 180, 92, G);
+  s += txt(200, 62, "", {});
+  s += txt(100, 130, "Written agreement (Appendix 3)", { a: "middle", s: 9.5 });
+  s += txt(300, 130, "Meets Part 2 requirements", { a: "middle", s: 9.5 });
+  s += txt(200, 168, "Ships entitled to fly the flag State's flag only (Part 2, 8.1)", { a: "middle", s: 9, c: L });
+  DIAGRAMS["ro-flow"] = svg(400, 200, s);
+}
+
+// 75. RO cycles
+{
+  let s = frame(400, 210);
+  s += txt(200, 26, "Audit and review intervals", { a: "middle", b: true, s: 12 });
+  const t = [["13 months", "Management review (max)", A], ["1 year", "VCA audits, annual", G], ["3 years", "Each site audited (min)", Y]];
+  t.forEach(([a, c2, c], i) => {
+    const x = 20 + i * 122;
+    s += `<rect x="${x}" y="48" width="114" height="92" rx="7" fill="#1d2040" stroke="${c}"/>` + txt(x + 57, 86, a, { a: "middle", b: true, s: 14 }) + txt(x + 57, 112, c2, { a: "middle", s: 9, c: L });
+  });
+  s += txt(200, 176, "Part 2: 3.10.1 · 6.3 · 6.2.3", { a: "middle", s: 9.5, c: L });
+  DIAGRAMS["ro-cycles"] = svg(400, 210, s);
+}
