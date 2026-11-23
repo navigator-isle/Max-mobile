@@ -360,3 +360,34 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += col(204, "Terminal representative", Y, [["Follows the agreed hatch", "sequence and tonnages"], ["No deviation without", "consultation"], ["Keeps weight records", ""], ["Advises on rate changes and", "the weight of each pour"], ["Keeps the ship upright", "and balanced"], ["Weight-meters accurate to", "within 1% of rated quantity"], ["Reports damage when unloading", ""]]);
   DIAGRAMS["blu-roles"] = svg(400, 280, s);
 }
+
+// 20. CSS Code Annex 13: MSL as a percentage of breaking strength
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "Maximum securing load (MSL)", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "as a percentage of breaking strength (Annex 13, Table 1)", { a: "middle", s: 9.5, c: L });
+  const rows = [["Wire rope, single use", 80], ["Steel band, single use", 70], ["Shackles, rings, deckeyes, turnbuckles (mild steel)", 50], ["Web lashing", 50], ["Chains", 50], ["Fibre rope", 33], ["Wire rope, re-useable", 30]];
+  const x0 = 24, sc = 340 / 100;
+  rows.forEach(([n, v], i) => {
+    const y = 56 + i * 31;
+    s += txt(x0, y + 8, n, { s: 9.5 });
+    s += `<rect x="${x0}" y="${y + 12}" width="${v * sc}" height="11" rx="2" fill="${v >= 70 ? G : v >= 50 ? A : Y}" fill-opacity="0.5" stroke="${v >= 70 ? G : v >= 50 ? A : Y}"/>`;
+    s += txt(x0 + v * sc + 5, y + 21, `${v}%`, { s: 9.5, b: true });
+  });
+  DIAGRAMS["css-msl"] = svg(400, 280, s);
+}
+
+// 21. CSS Code Annex 13: rule-of-thumb transverse securing (section 5)
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "Annex 13 rule of thumb (transverse, section 5)", { a: "middle", b: true, s: 12 });
+  s += `<rect x="40" y="190" width="320" height="10" fill="#2a2d4a" stroke="${T}"/>` + txt(200, 216, "Deck", { a: "middle", s: 9.5, c: L });
+  s += `<rect x="150" y="100" width="100" height="90" rx="3" fill="${A}" fill-opacity="0.25" stroke="${A}"/>` + txt(200, 148, "Cargo item", { a: "middle", s: 10.5, b: true }) + txt(200, 162, "weight in kN", { a: "middle", s: 9.5, c: L });
+  s += line(150, 104, 70, 190, Y, 2) + line(250, 104, 330, 190, Y, 2);
+  s += txt(66, 180, "MSL", { a: "end", s: 9.5, c: Y, b: true }) + txt(334, 180, "MSL", { s: 9.5, c: Y, b: true });
+  s += txt(70, 132, "Port side", { a: "middle", s: 9.5, c: L }) + txt(330, 132, "Starboard side", { a: "middle", s: 9.5, c: L });
+  s += txt(200, 56, "Total MSL of the devices on each side", { a: "middle", s: 10.5, c: G }) + txt(200, 71, "should equal the weight of the item", { a: "middle", s: 10.5, c: G });
+  s += txt(200, 236, "Assumes 1 g (9.81 m/s²) transverse · lashing angle to deck: 60° at most", { a: "middle", s: 9.5, c: L });
+  s += txt(200, 251, "Lashings above 60° do not count in the total", { a: "middle", s: 9, c: L });
+  DIAGRAMS["css-rule-of-thumb"] = svg(400, 260, s);
+}
