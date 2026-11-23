@@ -325,3 +325,38 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 234, "2022: whole Annex replaced · single window mandatory from 1 Jan 2024", { a: "middle", s: 9.5, c: Y });
   DIAGRAMS["fal-dates"] = svg(400, 250, s);
 }
+
+// 18. BLU Code: procedure flow (Sections 3-6)
+{
+  let s = frame(400, 320);
+  s += txt(200, 26, "BLU Code: from arrival to completion", { a: "middle", b: true, s: 12 });
+  const st = [
+    ["1", "Before arrival (Sec 3)", "Ship and terminal exchange information; ship confirms holds are clean", A],
+    ["2", "Before cargo handling (Sec 4)", "Master and terminal representative agree and sign the plan and complete the checklist", Y],
+    ["3", "Loading (Sec 5) or unloading (Sec 6)", "Ballast kept in step with cargo; hull stress within limits; plan changed only by a signed revised plan", G],
+    ["4", "Completion", "Both parties agree in writing; plan kept 6 months", R]];
+  st.forEach(([n, h, d, c], i) => {
+    const y = 46 + i * 66;
+    s += `<rect x="18" y="${y}" width="364" height="56" rx="6" fill="${c}" fill-opacity="0.13" stroke="${c}"/>`;
+    s += `<circle cx="40" cy="${y + 28}" r="12" fill="${c}" fill-opacity="0.35" stroke="${c}"/>` + txt(40, y + 32, n, { a: "middle", b: true, s: 11 });
+    s += txt(62, y + 22, h, { b: true, s: 10.5, c });
+    const w = d.split(" "); let a = "", b = ""; w.forEach(x => { if ((a + " " + x).length < 56) a += (a ? " " : "") + x; else b += (b ? " " : "") + x; });
+    s += txt(62, y + 36, a, { s: 9, c: L }) + (b ? txt(62, y + 48, b, { s: 9, c: L }) : "");
+    if (i < 3) s += `<path d="M195,${y + 57} h10 l-5,6z" fill="${L}"/>`;
+  });
+  DIAGRAMS["blu-flow"] = svg(400, 320, s);
+}
+
+// 19. BLU Code: master and terminal duties
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "Who does what during cargo handling", { a: "middle", b: true, s: 12 });
+  const col = (x, title, c, items) => {
+    let o = `<rect x="${x}" y="40" width="176" height="224" rx="6" fill="${c}" fill-opacity="0.1" stroke="${c}"/>` + txt(x + 88, 58, title, { a: "middle", b: true, c, s: 11 });
+    items.forEach((t, i) => { o += txt(x + 10, 80 + i * 26, "•", { c }) + txt(x + 20, 80 + i * 26, t[0], { s: 9.5 }) + (t[1] ? txt(x + 20, 91 + i * 26, t[1], { s: 9.5 }) : ""); });
+    return o;
+  };
+  s += col(20, "Master (ship)", A, [["Responsible at all times for", "safe loading or unloading"], ["Completes the checklist", "with the terminal"], ["Controls ballast and cargo", "through the officer in charge"], ["Monitors hull stresses", ""], ["Controls hot work", ""], ["Reports deviations from the", "ballast plan; keeps ship upright"], ["May stop the operation", "(resolution para 3.4)"]]);
+  s += col(204, "Terminal representative", Y, [["Follows the agreed hatch", "sequence and tonnages"], ["No deviation without", "consultation"], ["Keeps weight records", ""], ["Advises on rate changes and", "the weight of each pour"], ["Keeps the ship upright", "and balanced"], ["Weight-meters accurate to", "within 1% of rated quantity"], ["Reports damage when unloading", ""]]);
+  DIAGRAMS["blu-roles"] = svg(400, 280, s);
+}
