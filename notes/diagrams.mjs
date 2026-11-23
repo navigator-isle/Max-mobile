@@ -2530,3 +2530,42 @@ const OR = "#ff9f43";
   s += txt(200, 200, "Positions follow IMO resolution A.658(16)", { a: "middle", s: 8.5, c: Y });
   DIAGRAMS["lsa-retro"] = svg(400, 222, s);
 }
+
+// 173-174. Fire-fighting equipment
+{
+  let s = frame(400, 250);
+  s += txt(200, 24, "The fire main (schematic plan)", { a: "middle", b: true, s: 12 });
+  s += `<path d="M20,70 L330,70 Q380,110 380,130 Q380,150 330,190 L20,190 Z" fill="#232640" stroke="${T}" stroke-width="1.6"/>`;
+  s += `<rect x="24" y="74" width="92" height="112" fill="#3a2f1a" fill-opacity=".7" stroke="${Y}" stroke-width="1" stroke-dasharray="4 3"/>` + txt(70, 88, "Machinery space", { a: "middle", s: 8.5, c: Y });
+  s += `<rect x="34" y="104" width="22" height="14" rx="3" fill="${A}" stroke="${A}"/><rect x="62" y="104" width="22" height="14" rx="3" fill="${A}" stroke="${A}"/>` + txt(59, 134, "Main pumps", { a: "middle", s: 8, c: A });
+  s += `<rect x="306" y="120" width="26" height="20" rx="3" fill="${G}" fill-opacity=".7" stroke="${G}"/>` + txt(306, 154, "Emergency", { s: 8, c: G }) + txt(306, 165, "pump", { s: 8, c: G });
+  s += `<line x1="116" y1="100" x2="116" y2="160" stroke="${A}" stroke-width="3"/>` + line(84, 111, 116, 111, A, 3) + line(46, 118, 46, 124, A, 2);
+  s += line(116, 100, 300, 100, A, 3) + line(116, 160, 300, 160, A, 3) + line(300, 100, 300, 160, A, 3) + line(300, 130, 306, 130, G, 3);
+  [150, 200, 250].forEach(x => { s += `<circle cx="${x}" cy="100" r="4" fill="${R}"/><circle cx="${x}" cy="160" r="4" fill="${R}"/>`; });
+  s += `<rect x="186" y="124" width="28" height="12" rx="2" fill="${OR}" stroke="${OR}"/>` + line(200, 136, 200, 160, OR, 1.5);
+  s += `<circle cx="116" cy="100" r="5" fill="none" stroke="${Y}" stroke-width="2"/><circle cx="116" cy="160" r="5" fill="none" stroke="${Y}" stroke-width="2"/>`;
+  s += txt(200, 214, "Red dots: hydrants. Yellow rings: isolating valves outside the machinery space", { a: "middle", s: 8, c: L });
+  s += txt(200, 230, "Orange: international shore connection, usable on either side", { a: "middle", s: 8, c: OR });
+  DIAGRAMS["ffe-main"] = svg(400, 252, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 24, "Fire-fighter's outfit", { a: "middle", b: true, s: 12 });
+  const cx = 130;
+  s += `<circle cx="${cx}" cy="64" r="14" fill="#2a2d4a" stroke="${T}" stroke-width="1.6"/><path d="M${cx - 17},62 Q${cx},38 ${cx + 17},62 Z" fill="${Y}" stroke="${Y}"/>`;
+  s += `<rect x="${cx - 22}" y="80" width="44" height="64" rx="6" fill="${OR}" fill-opacity=".45" stroke="${OR}" stroke-width="1.8"/>`;
+  s += `<rect x="${cx + 14}" y="86" width="14" height="46" rx="5" fill="${A}" stroke="${A}"/>`;
+  s += `<rect x="${cx - 20}" y="144" width="16" height="56" rx="4" fill="${OR}" fill-opacity=".45" stroke="${OR}" stroke-width="1.8"/><rect x="${cx + 4}" y="144" width="16" height="56" rx="4" fill="${OR}" fill-opacity=".45" stroke="${OR}" stroke-width="1.8"/>`;
+  s += `<rect x="${cx - 24}" y="200" width="22" height="12" rx="3" fill="#111" stroke="${T}"/><rect x="${cx + 2}" y="200" width="22" height="12" rx="3" fill="#111" stroke="${T}"/>`;
+  s += `<line x1="${cx - 26}" y1="96" x2="${cx - 52}" y2="150" stroke="${L}" stroke-width="2.4"/><path d="M${cx - 62},146 L${cx - 44},150 L${cx - 50},158 Z" fill="${L}"/>`;
+  const c = (y, t, col, px, py) => line(px, py, 220, y, col, 1) + txt(226, y + 3, t, { s: 9, c: col });
+  s += c(48, "Rigid helmet", Y, cx + 12, 54);
+  s += c(88, "Breathing apparatus", A, cx + 28, 100);
+  s += c(116, "Protective clothing", OR, cx + 22, 112);
+  s += c(148, "Axe, insulated handle", L, cx - 44, 150);
+  s += `<rect x="${cx - 22}" y="138" width="44" height="5" fill="${G}"/><rect x="${cx - 8}" y="135" width="10" height="9" fill="${Y}"/>`;
+  s += c(180, "Lifeline, at least 30 m", G, cx + 22, 141);
+  s += c(206, "Non-conducting boots", T, cx + 24, 206);
+  s += c(228, "Electric safety lamp", Y, cx - 2, 138);
+  DIAGRAMS["ffe-outfit"] = svg(400, 252, s);
+}
