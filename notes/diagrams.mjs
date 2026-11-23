@@ -903,3 +903,38 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 200, "Original Code: adopted 4 Dec 2008 (MSC.268(85)), mandatory 1 Jan 2011", { a: "middle", s: 9, c: L });
   DIAGRAMS["imsbc-amendments"] = svg(400, 220, s);
 }
+
+// 49. INF Code ship classes
+{
+  let s = frame(400, 232);
+  s += txt(200, 26, "INF Code ship classes (1.1.2)", { a: "middle", b: true, s: 12 });
+  const card = (x, t, lines, c) => {
+    let o = `<rect x="${x}" y="40" width="120" height="150" rx="6" fill="${c}" fill-opacity="0.1" stroke="${c}"/>`;
+    o += txt(x + 60, 62, t, { a: "middle", b: true, s: 13, c });
+    lines.forEach((l, i) => { o += txt(x + 60, 86 + i * 14, l, { a: "middle", s: 9, b: i === 0 }); });
+    return o;
+  };
+  s += card(14, "INF 1", ["Less than", "4,000 TBq", "aggregate activity,", "any INF cargo"], G);
+  s += card(140, "INF 2", ["Fuel or wastes:", "less than 2 x 10^6 TBq", "Plutonium:", "less than 2 x 10^5 TBq"], Y);
+  s += card(266, "INF 3", ["No restriction on", "aggregate activity", "", "Not on passenger ships"], R);
+  s += txt(200, 214, "Class is set by the total activity of INF cargo the ship carries", { a: "middle", s: 9, c: L });
+  DIAGRAMS["inf-classes"] = svg(400, 232, s);
+}
+
+// 50. INF Code key figures
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "INF Code: key figures", { a: "middle", b: true, s: 12 });
+  const tile = (x, y, big, l1, l2, c) => {
+    let o = `<rect x="${x}" y="${y}" width="182" height="92" rx="6" fill="${c}" fill-opacity="0.1" stroke="${c}"/>`;
+    o += txt(x + 91, y + 38, big, { a: "middle", b: true, s: 24, c });
+    o += txt(x + 91, y + 60, l1, { a: "middle", s: 9.5 });
+    o += txt(x + 91, y + 74, l2, { a: "middle", s: 8.5, c: L });
+    return o;
+  };
+  s += tile(14, 40, "55 °C", "Cargo space average", "ambient temperature, at most (4.1)", Y);
+  s += tile(204, 40, "36 h", "Alternative power", "INF 2 and 3 (7.2)", G);
+  s += tile(14, 142, "1.5 g", "Securing: long. and transverse", "1.0 g vertically up, 2.0 g down (6.1)", A);
+  s += tile(204, 142, "4,000 TBq", "INF 1 limit", "INF 2: 2 x 10^6 TBq (fuel), 2 x 10^5 (Pu)", R);
+  DIAGRAMS["inf-requirements"] = svg(400, 250, s);
+}
