@@ -1924,3 +1924,63 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 236, "Counted from the last entry or from delivery", { a: "middle", s: 9, c: L });
   DIAGRAMS["marpol-records"] = svg(400, 250, s);
 }
+
+// 123-127. MLC 2006
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "MLC 2006 structure", { a: "middle", b: true, s: 12 });
+  s += `<rect x="20" y="40" width="360" height="40" rx="7" fill="#1d2040" stroke="${A}"/>` + txt(200, 65, "Articles: rights and principles", { a: "middle", s: 10.5, b: true, c: A });
+  s += `<rect x="20" y="90" width="360" height="40" rx="7" fill="#1d2040" stroke="${G}"/>` + txt(200, 115, "Regulations in 5 Titles", { a: "middle", s: 10.5, b: true, c: G });
+  s += `<rect x="20" y="140" width="174" height="44" rx="7" fill="#1d2040" stroke="${R}"/>` + txt(107, 160, "Code Part A", { a: "middle", s: 10.5, b: true, c: R }) + txt(107, 175, "Standards: mandatory", { a: "middle", s: 9, c: L });
+  s += `<rect x="206" y="140" width="174" height="44" rx="7" fill="#1d2040" stroke="${Y}"/>` + txt(293, 160, "Code Part B", { a: "middle", s: 10.5, b: true, c: Y }) + txt(293, 175, "Guidelines: not mandatory", { a: "middle", s: 9, c: L });
+  const t = ["1 Minimum requirements", "2 Employment", "3 Accommodation, food", "4 Health, welfare", "5 Compliance"];
+  t.forEach((x, i) => { s += txt(30, 212 + i * 16, "Title " + x, { s: 9.5, c: i % 2 ? L : T }); });
+  s += txt(370, 296, "Amended by the Special Tripartite Committee", { a: "end", s: 8, c: L });
+  DIAGRAMS["mlc-structure"] = svg(400, 304, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Standard A2.3: pick one limit", { a: "middle", b: true, s: 12 });
+  s += txt(14, 52, "Maximum work", { s: 10.5, b: true, c: R });
+  s += `<rect x="14" y="60" width="372" height="26" rx="5" fill="#2a2d4a"/>` + `<rect x="14" y="60" width="${372 * 14 / 24}" height="26" rx="5" fill="${R}"/>` + txt(24, 78, "14 h work in 24 h", { s: 10, b: true, c: "#12131f" });
+  s += txt(14, 108, "or 72 h in any 7 days", { s: 9.5, c: L });
+  s += txt(14, 140, "Minimum rest", { s: 10.5, b: true, c: G });
+  s += `<rect x="14" y="148" width="372" height="26" rx="5" fill="#2a2d4a"/>` + `<rect x="14" y="148" width="${372 * 10 / 24}" height="26" rx="5" fill="${G}"/>` + txt(24, 166, "10 h rest in 24 h", { s: 10, b: true, c: "#12131f" });
+  s += txt(14, 196, "or 77 h in any 7 days", { s: 9.5, c: L });
+  s += txt(200, 222, "Rest in at most 2 periods, one of 6 h or more", { a: "middle", s: 9, c: Y });
+  s += txt(200, 238, "No more than 14 h between rest periods", { a: "middle", s: 9, c: Y });
+  DIAGRAMS["mlc-hours"] = svg(400, 250, s);
+}
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "Maritime Labour Certificate", { a: "middle", b: true, s: 12 });
+  s += line(30, 100, 370, 100, L);
+  const pts = [[30, "Year 0", "Issue", G], [214, "Year 2 to 3", "Intermediate", Y], [370, "Year 5", "Expires", R]];
+  pts.forEach(p => { s += `<circle cx="${p[0]}" cy="100" r="6" fill="${p[3]}"/>` + txt(p[0], 82, p[1], { a: p[0] === 30 ? "start" : p[0] === 370 ? "end" : "middle", s: 9, c: L }) + txt(p[0], 124, p[2], { a: p[0] === 30 ? "start" : p[0] === 370 ? "end" : "middle", s: 10, b: true, c: p[3] }); });
+  s += `<rect x="152" y="94" width="92" height="12" rx="3" fill="${Y}" fill-opacity="0.35"/>`;
+  s += txt(200, 160, "Valid up to 5 years · ships 500 GT+ on international voyages", { a: "middle", s: 9, c: T });
+  s += txt(200, 180, "Interim certificate: up to 6 months", { a: "middle", s: 9, c: A });
+  s += txt(200, 200, "DMLC Part I (flag State) + Part II (shipowner)", { a: "middle", s: 9, c: A });
+  DIAGRAMS["mlc-certificate"] = svg(400, 230, s);
+}
+{
+  let s = frame(400, 220);
+  s += txt(200, 26, "Amendments in force", { a: "middle", b: true, s: 12 });
+  s += line(24, 100, 376, 100, L);
+  const ev = [[36, "Aug 2013", "MLC", G], [102, "Jan 2017", "2014", A], [168, "Jan 2019", "2016", A], [234, "Dec 2020", "2018", A], [300, "Dec 2024", "2022", Y], [364, "Dec 2027", "2025", R]];
+  ev.forEach((e, i) => { s += `<circle cx="${e[0]}" cy="100" r="6" fill="${e[3]}"/>` + txt(e[0], 84, e[1], { a: "middle", s: 8.5, c: L }) + txt(e[0], 124, e[2], { a: "middle", s: 10, b: true, c: e[3] }); });
+  s += txt(200, 160, "2014 financial security · 2016 harassment guidance", { a: "middle", s: 9 });
+  s += txt(200, 178, "2018 piracy wages · 2022 connectivity, food, medical, PPE", { a: "middle", s: 9 });
+  s += txt(200, 196, "2025 shore leave, repatriation, key workers (expected)", { a: "middle", s: 9, c: R });
+  DIAGRAMS["mlc-amendments"] = svg(400, 220, s);
+}
+{
+  let s = frame(400, 296);
+  s += txt(200, 26, "The 16 areas", { a: "middle", b: true, s: 12 });
+  const a = ["Minimum age", "Medical certificate", "Qualifications", "Employment agreement", "Recruitment service", "Hours of work, rest", "Manning levels", "Accommodation", "Recreation", "Food and catering", "Health and safety", "Medical care", "Complaints", "Payment of wages", "Security: repatriation", "Security: liability"];
+  a.forEach((x, i) => {
+    const col = i % 2, row = Math.floor(i / 2), X = 14 + col * 188, Y2 = 40 + row * 31;
+    s += `<rect x="${X}" y="${Y2}" width="182" height="26" rx="5" fill="#1d2040" stroke="${i < 8 ? A : G}"/>` + txt(X + 8, Y2 + 17, (i + 1) + "  " + x, { s: 9 });
+  });
+  DIAGRAMS["mlc-areas"] = svg(400, 296, s);
+}

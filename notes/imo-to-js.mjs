@@ -42,12 +42,12 @@ function toHtml(md) {
   return { body: out.replace(/<ul><li><\/li>/g, "<ul>"), tags };
 }
 const notes = [];
-for (const [dir, cat] of [["", "Maritime › IMO"], ["Conventions", "Maritime › IMO › Conventions"], ["Codes", "Maritime › IMO › Codes"]]) {
+for (const [dir, cat] of [["", "Maritime › IMO"], ["Conventions", "Maritime › IMO › Conventions"], ["Codes", "Maritime › IMO › Codes"], ["ILO", "Maritime › ILO › Conventions"]]) {
   const d = path.join(ROOT, "notes", "imo", dir);
   for (const f of fs.readdirSync(d).filter(f => f.endsWith(".md")).sort()) {
     const rawMd = fs.readFileSync(path.join(d, f), "utf8"), tm = /^title:\s*(.+)$/m.exec(rawMd.split("\n---")[0] || ""), title = (rawMd.startsWith("---") && tm) ? tm[1].trim() : f.slice(0, -3), { body, tags } = toHtml(rawMd);
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    notes.push({ id: "note-imo-" + slug, v: parseInt(crypto.createHash("sha1").update(body).digest("hex").slice(0, 7), 16), title, category: cat, tags: [...new Set([...(tags.length ? tags : [slug.split("-")[0]]), "imo", dir ? dir.toLowerCase().replace(/s$/, "") : "index"])].slice(0, 12), body });
+    notes.push({ id: "note-imo-" + slug, v: parseInt(crypto.createHash("sha1").update(body).digest("hex").slice(0, 7), 16), title, category: cat, tags: [...new Set([...(tags.length ? tags : [slug.split("-")[0]]), ...(dir === "ILO" ? [] : ["imo"]), dir ? dir.toLowerCase().replace(/s$/, "") : "index"])].slice(0, 12), body });
   }
 }
 const W = path.join(ROOT, "worker.js"), src = fs.readFileSync(W, "utf8"), line = "const IMO_NOTES = " + JSON.stringify(notes) + ";";
