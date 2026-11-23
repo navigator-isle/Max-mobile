@@ -9,7 +9,7 @@ tags: [usa, opa-90, vgp, vida, eca, sewage, ballast-water, uscg, cfr, notice-of-
 |---|---|---|
 | Oil spill liability | [[OPA 90]], 33 U.S.C. 2701 ff., with **33 CFR 138, 153 and 155** | USCG |
 | Other discharges (graywater, bilge, scrubbers and more) | [[VGP and VIDA]] | EPA, USCG |
-| Air emissions | **MARPOL Annex VI** and the North American and US Caribbean Sea **ECAs**. Engines under **40 CFR 1042 and 1043** | EPA, USCG |
+| Air emissions | [[US Emission Control Areas]] | EPA, USCG |
 | Sewage | Clean Water Act **section 312**. EPA standards in **40 CFR 140**. USCG design rules in **33 CFR 159** | USCG |
 | Ballast water | **33 CFR 151 subpart D** and **46 CFR 162** (type approval) | USCG |
 | Arrival and port state control | **33 CFR 160 subpart C** (Notice of Arrival). USCG port state control exams | USCG |
@@ -31,17 +31,7 @@ Liability, defences, limits, COFR, claims, double hull and response plans are in
 The 2013 permit, the replacement law and the 20 discharge standards are in [[VGP and VIDA]].
 
 ## Emission Control Areas (ECA)
-| Item | Rule |
-|---|---|
-| **ECAs near the US** | **North American** area (coasts of the US and Canada, and Saint-Pierre-et-Miquelon) and **US Caribbean Sea** area (Puerto Rico and the US Virgin Islands) |
-| **Sulphur in an ECA** | **1.00% m/m** from 1 Jul 2010. **0.10% m/m** from **1 Jan 2015** (MARPOL Annex VI reg 14.4) |
-| **Sulphur elsewhere** | **3.50%** from 1 Jan 2012. **0.50%** from **1 Jan 2020** (reg 14.1) |
-| **NOx Tier III** | Ships constructed (keel laid) on or after **1 Jan 2016**. Emergency-only engines such as emergency generators, emergency fire pumps and lifeboat engines are excepted |
-| **Changeover** | A **written changeover procedure** on board. Enough time to flush before entering. Log the **volume of low-sulphur fuel in each tank**, and the **date, time and position** of the changeover, in the logbook the flag State prescribes (reg 14.6) |
-| **US engine rules** | US-flag engines meet **40 CFR 1042 and 1043**. Foreign ships must show that engines that are not Tier III were not and will not be used in the ECA |
-| **Pilot fuel** | Within the US ECAs it meets the **0.10%** limit |
-| **Scrubber waste** | Under the 2013 VGP, sludge and residue from washwater treatment is **not discharged** within 3 nm. It goes ashore. Monitoring equipment is calibrated **at least yearly** or as the maker says |
-| **Dual-fuel engines** | Switching fuel mode happens **outside** the ECA. Averaging of NOx is not allowed |
+Sulphur, NOx, fuel changeover, FONAR and enforcement are in [[US Emission Control Areas]].
 
 ## Sewage
 Under Clean Water Act section 312, a vessel with an **installed toilet** on US navigable waters, including the 3 nm territorial sea, uses a **USCG-certified marine sanitation device (MSD)**. A portable toilet is not covered. EPA sets the performance standard. The USCG sets design, certification and installation.
@@ -130,18 +120,12 @@ One of **five** methods must be used by a vessel with ballast tanks operating in
 - The ballast water **reporting form**, the time before arrival, the **record-keeping period**, and exemptions (151.2060 to 151.2070). Their text could not be retrieved
 - **Small vessel** and Great Lakes ballast rules, and state rules such as **California** and **Washington**
 - **MARPOL Annex IV** inside the US (cruise ship rules in Alaska) and the **Annex V** garbage rules
-- The **200 nm** extent of the North American ECA and its **coordinates**
-- The **Clean Air Act** fuel rules and fines, bunker delivery notes, and the **exhaust gas cleaning** approvals
 - The USCG **targeting matrix**, **QUALSHIP 21**, flag lists and the exam booklet
 - **Section 301 port fees** on certain ships, which were suspended to 9 Nov 2026 and may have changed
 - **Jones Act**, **TWIC**, **CBP and customs** rules, and **MTSA** security
 - **46 CFR** manning, inspection and licensing rules
 
 ## Sources (checked 23 Nov 2026)
-- MARPOL Annex VI reg 14 text (EGCSA copy): https://www.egcsa.com/regulatory/marpol-annex-vi-regulation-14/
-- IMO FAQ, sulphur limits in ECAs (West P&I copy): https://www.westpandi.com/globalassets/news/imo-frequenty-asked-questions---sulphur-limits-in-emission-control-areas-from-1-january-2015.pdf
-- ABS, Emission Control Areas: https://ww2.eagle.org/en/rules-and-resources/regulatory-updates/emission-control-areas.html
-- EPA, Guidance on ECA and Tier III engines: https://19january2017snapshot.epa.gov/sites/production/files/2017-01/documents/420f16055.pdf
 - 33 CFR 159.3 and 159.53 (MSD types): https://www.law.cornell.edu/cfr/text/33/159.3 and https://www.law.cornell.edu/cfr/text/33/159.53
 - EPA, Marine sanitation devices: https://www.epa.gov/node/113769
 - 33 CFR 151.2025, 151.2030, 151.2035 (ballast): https://www.law.cornell.edu/cfr/text/33/151.2025
