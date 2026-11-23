@@ -93,6 +93,7 @@ tags: [cargo-gear, lifting-appliances, loose-gear, swl, proof-load, register, il
 
 ## Related notes
 - [[Cargo Handling and Stowage]] stowage and securing of the cargo the gear lifts
+- [[Lifting Appliances]] cranes, derricks, winches, blocks and wire rope in use
 - [[MLC 2006]] seafarers' health and safety
 - [[SOLAS 1974]] chapter II-1 and other ship safety rules
 - [[BLU Code]] ship and terminal duties when loading and unloading bulk carriers
