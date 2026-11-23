@@ -1321,3 +1321,31 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 176, "Part 2: 3.10.1 · 6.3 · 6.2.3", { a: "middle", s: 9.5, c: L });
   DIAGRAMS["ro-cycles"] = svg(400, 210, s);
 }
+
+// 76. TDC structure
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "2011 TDC Code structure", { a: "middle", b: true, s: 12 });
+  const P = [["CHAPTER 1", "General", "Purpose, application (24 m and above), definitions", L, 42], ["PART A", "Operational requirements", "Ch 2 stowage and securing · Ch 3 visibility · Ch 4 physical properties", A, 98], ["PART B", "Design of securing arrangements", "Ch 5 design · Ch 6 alternative · Ch 7 uprights · Ch 8 denotations", G, 154]];
+  P.forEach(([a, b, c, col, y]) => {
+    s += `<rect x="20" y="${y}" width="360" height="48" rx="7" fill="#1d2040" stroke="${col}"/>` + txt(32, y + 19, a, { c: col, b: true, s: 10 }) + txt(110, y + 19, b, { b: true, s: 10.5 }) + txt(32, y + 38, c, { s: 8.6, c: L });
+  });
+  s += txt(200, 226, "Annex A procedures and checklists · B stowage samples", { a: "middle", s: 9.2, c: L });
+  s += txt(200, 244, "Annex C water absorption · Annex D references", { a: "middle", s: 9.2, c: L });
+  s += txt(200, 270, "Voluntary: replaces A.715(17) (1991)", { a: "middle", s: 9.5, c: Y });
+  DIAGRAMS["tdc-structure"] = svg(400, 290, s);
+}
+
+// 77. TDC lashing spacing
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Maximum lashing spacing", { a: "middle", b: true, s: 12 });
+  const t = [["Sawn wood, up to 2.5 m high", "3 m", A], ["Sawn wood, above 2.5 m high", "1.5 m", Y], ["Round wood (logs)", "1.5 m", G]];
+  t.forEach(([a, b, c], i) => {
+    const y = 44 + i * 50;
+    s += `<rect x="20" y="${y}" width="360" height="42" rx="6" fill="#1d2040" stroke="${c}"/>` + txt(34, y + 26, a, { s: 10.5 }) + txt(366, y + 27, b, { a: "end", b: true, s: 15, c });
+  });
+  s += txt(200, 206, "Spacing is halved at the foremost and aftmost sections (sawn wood)", { a: "middle", s: 9, c: L });
+  s += txt(200, 226, "Lashing breaking strength at least 133 kN (5.1.2)", { a: "middle", s: 9.5 });
+  DIAGRAMS["tdc-lashing"] = svg(400, 250, s);
+}
