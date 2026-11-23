@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-23a";
+const WORKER_VERSION = "max-worker-2026-11-23b";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -701,7 +701,8 @@ async function brainCron(env, when) {
   if (!(await srvSetting(env, "max_brain_rescan_v2"))) { const db = await brainDb(env); await db.prepare("UPDATE max_brain SET hash = ''").run(); await srvSetting(env, "max_brain_rescan_v2", "done"); }   // Mark: "scan my notes again" (23 Nov 2026: re-study every note that was edited)
   const s = await brainStudy(env, {maxUnits: night ? 8 : 3, ms: night ? 40000 : 22000});
   let v = 0, e = 0, dr = 0; try { dr = await deepCleanup(env); } catch {} try { v = await brainVerify(env, night ? 2 : 1); } catch {} try { e = await brainExam(env, night ? 2 : 1); } catch {}
-  return `studied ${s.studied} (units ${s.units}, left ${s.left})${v ? ", checked " + v + " suspect(s)" : ""}${e ? ", exam " + e : ""}${dr ? ", removed deep-review text from " + dr + " note(s)" : ""}`;
+  let imp = ""; if (night || manilaHour === 14) { try { imp = await improveWeekly(env, when); } catch (e) { imp = "improve failed: " + cleanText(String(e.message), 60); } }
+  return (imp ? imp + "; " : "") + `studied ${s.studied} (units ${s.units}, left ${s.left})${v ? ", checked " + v + " suspect(s)" : ""}${e ? ", exam " + e : ""}${dr ? ", removed deep-review text from " + dr + " note(s)" : ""}`;
 }
 async function brainStatus(env) {
   const db = await brainDb(env), notes = (await listNotes(db)).filter(n => !n.deleted && !BRAIN_SKIP.test(n.category || "") && brainNoteText(n).length > 40);
@@ -2059,10 +2060,166 @@ async function guardRun(env, opts = {}) {
   if (opts.backup) report.backup = await guardBackup(env).catch(e => ({ok: false, error: cleanText(String(e.message), 150)}));
   if (report.backup && report.backup.ok === false) problems.push("The backup could not be sent: " + report.backup.error);
   report.ms = Date.now() - t0;
+  if (env.MAX_MEMORY && opts.source === "schedule") { try { await improveDaily(env, report, opts.when || t0); } catch (e) { report.max.push("Self-improvement log failed: " + cleanText(String(e.message), 60)); } }
   const known = new Set(last?.problems || []); report.newProblems = problems.filter(p => !known.has(p));
   if (env.MAX_MEMORY) { await srvSetting(env, "max_srv_guard_report", JSON.stringify(report)).catch(() => {});
     await logAct(env, {dept: "guard", kind: "guard check", text: problems.length ? problems.length + " problem" + (problems.length === 1 ? "" : "s") + ": " + problems.slice(0, 3).join("; ") : "All clear — sites up, builds passing, Max healthy" + (report.backup?.ok ? ", backup sent" : ""), ok: !problems.length, ms: report.ms, source: opts.source || "guard"}); }
   return report;
+}
+// ================= MAX IMPROVES HIMSELF (23 Nov 2026, Mark: "I want this to improve max") =================
+// 1) Findings register (like an ISM audit's non-conformities): every error Max finds is kept with its corrective action and whether it is
+//    closed out; an error that comes back after closing is flagged REPEAT. 2) Daily log of what he did and what failed. 3) Weekly audit.
+// 4) Weekly examiner: ~20 of Max's own answers are graded against Mark's notes; each proven mistake becomes a rule Max follows.
+// 5) Weekly stop / start / continue list. Everything is in-app only (no emails).
+const NC_KEY = "max_nc_v1", DECK_KEY = "max_decklog_v1", AUDIT_KEY = "max_audit_v1", RULES_KEY = "max_rules_v1", EXAM_KEY = "max_exam_v1", SSC_KEY = "max_ssc_v1";
+const ncNorm = t => String(t || "").toLowerCase().replace(/\d{4}-\d{2}-\d{2}/g, "#").replace(/\d+(\.\d+)?/g, "#").replace(/\s+/g, " ").replace(/[“”"']/g, "").trim().slice(0, 140);
+const NC_ACTIONS = [
+  [/crypto/i, "Max rotates through 10 price sources and continues next hour when the request budget runs out"],
+  [/kucoin|binance|okx|bybit|bitget|coingecko|answered (4|5)\d\d|429/i, "Max drops a source that refuses and tries the next one"],
+  [/pse|stock/i, "Max tries the backup stock sources (5)"],
+  [/dollar|usd|fx|forex|php/i, "Max tries the backup exchange-rate sources (5)"],
+  [/gemini|brain/i, "Max uses the other free AIs in turn"],
+  [/google|gmail|calendar/i, "Sign in again in Settings (needs you)"],
+  [/down|slow|could not be reached|score/i, "Site checked again tomorrow; look at the site (needs you if it stays)"],
+  [/failed|workflow/i, "Look at the failed build on GitHub (needs you)"]];
+const ncAction = t => (NC_ACTIONS.find(([re]) => re.test(t)) || [0, ""])[1];
+async function sget(env, key, d) { try { return jparse(await srvSetting(env, key), d); } catch { return d; } }
+// findings = list of strings found today. Returns the register.
+async function ncIntake(env, findings, when) {
+  const day = new Date(when || Date.now()).toISOString().slice(0, 10), reg = await sget(env, NC_KEY, {items: []});
+  const seen = new Set();
+  for (const raw of [...new Set(findings.map(f => cleanText(String(f), 220)).filter(Boolean))]) {
+    const key = ncNorm(raw); if (!key || seen.has(key)) continue; seen.add(key);
+    let it = reg.items.find(x => x.key === key);
+    if (!it) { reg.items.push(it = {key, text: raw, first: day, last: day, days: 1, status: "open", clear: 0, repeats: 0, action: ncAction(raw)}); }
+    else {
+      if (it.status === "closed") { it.status = "open"; it.repeats = (it.repeats || 0) + 1; it.reopened = day; it.closedAt = null; }
+      if (it.last !== day) it.days++;
+      it.last = day; it.text = raw; it.clear = 0; it.action = it.action || ncAction(raw);
+    }
+    if (it.status === "open" && it.action && it.days >= 1) it.status = "corrective";
+  }
+  for (const it of reg.items) if (!seen.has(it.key) && it.status !== "closed" && it.last !== day) { it.clear = (it.clear || 0) + 1; if (it.clear >= 2) { it.status = "closed"; it.closedAt = day; } }
+  const closed = reg.items.filter(x => x.status === "closed").sort((a, b) => String(a.closedAt).localeCompare(String(b.closedAt)));
+  while (reg.items.length > 150 && closed.length) reg.items.splice(reg.items.indexOf(closed.shift()), 1);
+  await srvSetting(env, NC_KEY, JSON.stringify(reg));
+  return reg;
+}
+// What happened on one day, built from the activity log and the paper-trading steps.
+async function deckLogDay(env, when, S) {
+  const db = env.MAX_MEMORY, to = when || Date.now(), day = new Date(to).toISOString().slice(0, 10); await actTable(db);
+  const rows = (await db.prepare("SELECT dept, kind, text, ok FROM max_activity WHERE at > ? AND at <= ?").bind(to - 864e5, to).all()).results || [];
+  const byDept = {}, failures = [];
+  for (const r of rows) { const d = byDept[r.dept || "general"] ||= {done: 0, failed: 0}; if (r.ok) d.done++; else { d.failed++; if (failures.length < 6) failures.push(cleanText(`${r.dept}: ${r.text}`, 140)); } }
+  const jobErrs = (S?.errors || []).filter(e => to - e.at < 864e5).map(e => cleanText(String(e.error || ""), 120));
+  const entry = {day, done: rows.filter(r => r.ok).length, failed: rows.filter(r => !r.ok).length, byDept, failures, jobErrors: [...new Set(jobErrs)].slice(0, 5)};
+  const log = (await sget(env, DECK_KEY, [])).filter(x => x.day !== day); log.push(entry);
+  await srvSetting(env, DECK_KEY, JSON.stringify(log.slice(-60)));
+  return entry;
+}
+// Weekly audit in the language of an ISM audit: non-conformities, corrective action, close-out.
+async function weeklyAudit(env, when) {
+  const to = when || Date.now(), day = new Date(to).toISOString().slice(0, 10), wk = new Date(to - 7 * 864e5).toISOString().slice(0, 10);
+  const reg = await sget(env, NC_KEY, {items: []}), deck = (await sget(env, DECK_KEY, [])).filter(x => x.day > wk);
+  const newNc = reg.items.filter(x => x.first > wk), closed = reg.items.filter(x => x.closedAt && x.closedAt > wk), open = reg.items.filter(x => x.status !== "closed"), repeats = reg.items.filter(x => x.reopened && x.reopened > wk);
+  const done = deck.reduce((a, d) => a + d.done, 0), failed = deck.reduce((a, d) => a + d.failed, 0);
+  const a = {day, days: deck.length, done, failed, newNc: newNc.map(x => x.text), closed: closed.map(x => x.text), repeats: repeats.map(x => x.text),
+    open: open.map(x => ({text: x.text, since: x.first, days: x.days, status: x.status, action: x.action})),
+    verdict: repeats.length ? "Not satisfactory: " + repeats.length + " error(s) came back after being closed. The corrective action did not work." : open.length ? "Satisfactory with " + open.length + " open item(s)." : "Satisfactory. No open non-conformities."};
+  const all = (await sget(env, AUDIT_KEY, [])).filter(x => x.day !== day); all.push(a);
+  await srvSetting(env, AUDIT_KEY, JSON.stringify(all.slice(-12)));
+  return a;
+}
+// ---- examiner: grade a sample of Max's answers against the notes ----
+const normWs = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+async function examSample(env, n = 20, when) {
+  const db = env.MAX_MEMORY, to = when || Date.now(); await ensureSchema(db);
+  const rows = (await db.prepare("SELECT id, role, text FROM max_talk WHERE created_at > ? ORDER BY id").bind(to - 7 * 864e5).all()).results || [], pairs = [];
+  for (let i = 1; i < rows.length; i++) if (rows[i].role === "model" && rows[i - 1].role === "user" && rows[i].text.length > 60) pairs.push({q: rows[i - 1].text, a: rows[i].text});
+  const out = []; const step = Math.max(1, pairs.length / n); for (let i = 0; i < pairs.length && out.length < n; i += step) out.push(pairs[Math.floor(i)]);
+  return out;
+}
+async function examGrade(env, when) {
+  const db = env.MAX_MEMORY, sample = await examSample(env, 20, when), ex = {at: when || Date.now(), sampled: sample.length, ok: 0, wrong: 0, unsupported: 0, rulesAdded: 0, grader: "", note: ""};
+  if (!sample.length) { ex.note = "no answers to grade this week"; await srvSetting(env, EXAM_KEY, JSON.stringify(ex)); return ex; }
+  const rules = await sget(env, RULES_KEY, []), titles = new Map();
+  for (let b = 0; b < sample.length; b += 5) {
+    const batch = sample.slice(b, b + 5), items = [];
+    for (let i = 0; i < batch.length; i++) {
+      const notes = await relevantNotes(db, batch[i].q + " " + batch[i].a.slice(0, 200)).catch(() => []);
+      notes.slice(0, 3).forEach(n => titles.set(n.title, plainText(n.body)));
+      items.push(`#${i}\nQUESTION: ${cleanText(batch[i].q, 500)}\nANSWER: ${cleanText(batch[i].a, 900)}\nNOTES:\n` + (notes.slice(0, 3).map(n => `[${n.title}] ${cleanText(plainText(n.body), 1800)}`).join("\n") || "(none found)"));
+    }
+    const sys = "You are an examiner. Grade each ANSWER Max gave, using ONLY the NOTES shown. verdict: ok (agrees with the notes or the notes do not cover it), wrong (the answer contradicts a note), unsupported (the answer states a specific fact, number or rule that the notes do not contain, and the notes cover that subject). For wrong or unsupported also give: note (exact title of the note in brackets), fact (an exact sentence copied word for word from that note that is the correct fact), rule (one short instruction to Max, imperative, e.g. 'Say the casualty report deadline is 5 days, not 24 hours'). Reply with JSON {\"grades\":[{\"i\":0,\"verdict\":\"ok\"}]}.";
+    let r = null, usedClaude = false;
+    if (env.ANTHROPIC_API_KEY) { const c = await claude(env, sys + " Reply with JSON only.", [], items.join("\n\n"), 1500); if (c?.text) { try { const m = /\{[\s\S]*\}/.exec(c.text); r = {data: JSON.parse(m ? m[0] : c.text)}; usedClaude = true; ex.grader = "Claude"; } catch {} } }
+    if (!r) { r = await brainAsk(env, sys, items.join("\n\n"), 1500); if (r?.model) ex.grader = ex.grader || "free AI (" + r.model + ")"; }
+    if (!r?.data) { ex.note = "the examiner could not be reached for part of the sample"; continue; }
+    for (const g of Array.isArray(r.data.grades) ? r.data.grades : []) {
+      const it = batch[g.i]; if (!it) continue;
+      if (g.verdict === "wrong" || g.verdict === "unsupported") {
+        const body = titles.get(String(g.note || "").replace(/^\[|\]$/g, "")), fact = normWs(g.fact), rule = cleanText(String(g.rule || ""), 200);
+        if (body && fact.length > 15 && normWs(body).includes(fact) && rule.length > 10) {   // a rule must be proven by a real sentence in a real note
+          g.verdict === "wrong" ? ex.wrong++ : ex.unsupported++;
+          if (!rules.some(x => normWs(x.rule) === normWs(rule) || normWs(x.fact) === fact)) { rules.push({rule, note: String(g.note).replace(/^\[|\]$/g, ""), fact: cleanText(String(g.fact), 300), at: ex.at, from: g.verdict}); ex.rulesAdded++; }
+        } else ex.ok++;   // could not be proven from the notes → not counted as a mistake
+      } else ex.ok++;
+    }
+  }
+  await srvSetting(env, RULES_KEY, JSON.stringify(rules.slice(-25)));
+  await srvSetting(env, EXAM_KEY, JSON.stringify(ex));
+  return ex;
+}
+async function rulesPrompt(env) {
+  try { const rules = (await sget(env, RULES_KEY, [])).slice(-12); return rules.length ? "\nLESSONS FROM YOUR OWN PAST MISTAKES (each was checked against his notes; follow them):\n- " + rules.map(r => `${r.rule} (note: ${r.note})`).join("\n- ") : ""; } catch { return ""; }
+}
+// ---- stop / start / continue ----
+async function stopStartContinue(env, when) {
+  const to = when || Date.now(), db = env.MAX_MEMORY; await actTable(db);
+  const rows = (await db.prepare("SELECT dept, ok, count(*) AS c FROM max_activity WHERE at > ? GROUP BY dept, ok").bind(to - 14 * 864e5).all()).results || [], by = {};
+  for (const r of rows) { const d = by[r.dept || "general"] ||= {ok: 0, bad: 0}; r.ok ? d.ok += r.c : d.bad += r.c; }
+  const reg = await sget(env, NC_KEY, {items: []}), stop = [], start = [], keep = [];
+  for (const a of AGENT_LIST) {
+    const d = by[a.id] || {ok: 0, bad: 0}, n = d.ok + d.bad;
+    if (n >= 6 && d.bad / n >= 0.5) stop.push({what: a.name, why: `${d.bad} of ${n} runs failed in 14 days. Fix it or switch it off.`});
+    else if (n === 0 && !["music", "email", "schedule", "shopping", "security"].includes(a.id)) stop.push({what: a.name, why: "Did nothing in 14 days. If you do not use it, delete it so it stops costing requests."});
+    else if (n >= 3) keep.push({what: a.name, why: `${d.ok} runs done, ${d.bad} failed in 14 days.`});
+  }
+  const rep = reg.items.filter(x => x.reopened && x.status !== "closed" || (x.repeats || 0) > 0);
+  for (const x of rep) start.push({what: "A permanent fix for: " + x.text, why: `It came back ${x.repeats}x after being closed. Another workaround is not enough.`});
+  for (const x of reg.items.filter(x => x.status !== "closed" && !x.action)) start.push({what: "A corrective action for: " + x.text, why: "Open " + x.days + " day(s) and Max has no automatic fix for it."});
+  // overlap: ask a free AI which agents do the same job; accepted only if it names real agents
+  let overlap = [];
+  try {
+    const list = AGENT_LIST.map(a => `${a.name}: ${a.workers.join("; ").slice(0, 300)}`).join("\n"), r = await brainAsk(env, "You review a list of AI agents for overlap. Name pairs that do largely the same job. Reply {\"overlaps\":[{\"a\":\"exact agent name\",\"b\":\"exact agent name\",\"why\":\"short\"}]}. At most 3. Empty list if none.", list, 800);
+    const names = new Set(AGENT_LIST.map(a => a.name));
+    overlap = (Array.isArray(r?.data?.overlaps) ? r.data.overlaps : []).filter(o => names.has(o.a) && names.has(o.b) && o.a !== o.b).slice(0, 3).map(o => ({what: o.a + " and " + o.b, why: cleanText(String(o.why || ""), 160)}));
+  } catch {}
+  for (const o of overlap) stop.push({what: "Overlap: " + o.what, why: o.why + " Keep one."});
+  const out = {at: to, stop: stop.slice(0, 8), start: start.slice(0, 6), keep: keep.slice(0, 8), overlapChecked: true};
+  await srvSetting(env, SSC_KEY, JSON.stringify(out));
+  return out;
+}
+// Called by the daily guard (after the guard report is built).
+async function improveDaily(env, report, when) {
+  const S = await paperLoad(env).catch(() => null), finds = [...report.problems];
+  for (const e of (S?.errors || [])) if ((when || Date.now()) - e.at < 864e5 && e.error) finds.push("Job failed: " + cleanText(String(e.error), 120));
+  const reg = await ncIntake(env, finds, when); await deckLogDay(env, when, S);
+  const wk = new Date(when || Date.now()), last = (await sget(env, AUDIT_KEY, [])).slice(-1)[0];
+  if (wk.getUTCDay() === 0 || !last || (when || Date.now()) - Date.parse(last.day) > 8 * 864e5) await weeklyAudit(env, when);
+  return reg;
+}
+// Called by the hourly brain job; does the weekly examiner + stop/start/continue once a week.
+async function improveWeekly(env, when) {
+  const to = when || Date.now(), ex = await sget(env, EXAM_KEY, null), ssc = await sget(env, SSC_KEY, null), WEEK = 6.5 * 864e5; let did = "";
+  if (!ex || to - ex.at > WEEK) { const r = await examGrade(env, to); did += `exam: ${r.sampled} graded, ${r.rulesAdded} new rule(s) `; }
+  else if (!ssc || to - ssc.at > WEEK) { await stopStartContinue(env, to); did += "stop/start/continue made "; }
+  return did.trim();
+}
+async function improveStatus(env) {
+  const reg = await sget(env, NC_KEY, {items: []}), audits = await sget(env, AUDIT_KEY, []), deck = await sget(env, DECK_KEY, []);
+  return {nc: {open: reg.items.filter(x => x.status !== "closed").sort((a, b) => b.days - a.days).slice(0, 12), closed: reg.items.filter(x => x.status === "closed").slice(-8).reverse(), repeats: reg.items.filter(x => (x.repeats || 0) > 0).length},
+    audit: audits.slice(-1)[0] || null, deck: deck.slice(-7).reverse(), exam: await sget(env, EXAM_KEY, null), rules: (await sget(env, RULES_KEY, [])).slice(-12).reverse(), ssc: await sget(env, SSC_KEY, null), claudeGrader: !!env.ANTHROPIC_API_KEY};
 }
 // ---------- Code backup (works without GitHub) ----------
 // build.mjs packs all of Max's code into site/_src/max-code.zip; it ships with the app but is never public.
@@ -4355,7 +4512,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {paperCryptoStep, deepCleanup, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {ncIntake, deckLogDay, weeklyAudit, examGrade, stopStartContinue, improveDaily, improveWeekly, improveStatus, rulesPrompt, paperCryptoStep, deepCleanup, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -4631,7 +4788,7 @@ export default {
         `HIS COACHING FILE (goals, facts and progress he told you before):\n${coach.file || "(empty — this is your first session: greet him, then ask at most 3 short questions to learn his situation and goal, one at a time)"}\n` +
         `When he tells you something worth keeping for this coaching (a goal, a fact about his situation, a result, a session done), add it to "coach_notes" as short dated-free lines in third person, e.g. "Goal: 10 push-ups a day by December". Otherwise "coach_notes" is empty.`;
       const system = style + `\nCurrent time: ${cleanText(body.now, 40) || when(Date.now())}${body.tz ? " (" + cleanText(body.tz, 60) + ")" : ""}.` +
-        (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote + deskNote + (persona ? "\n" + persona : "");
+        (db ? await rulesPrompt(env) : "") + (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote + deskNote + (persona ? "\n" + persona : "");
       const contents = [...history, {role:"user", parts:[{text:message}]}];
       const jsonMode = !!(db || actionsOn), nowText = cleanText(body.now, 40) || when(Date.now());
       // "Double-check that" / "are you sure?" → a second AI checks his last answer.
@@ -4791,6 +4948,16 @@ CONFIDENCE: <high, medium or low, and why in a few words>`;
       if (!draftMode && bodyLen < plainText(old).length * 0.6) return json({error: "The new version came out much shorter than your note, so I didn't use it. Try asking for the change in smaller steps."}, 422, origin, env);
       if (plainText(html).length < 200) return json({error: "I couldn't write enough about that. Try a more specific topic."}, 422, origin, env);
       return json({html, title: title || (draftMode ? cleanText(topic, 80) : oldTitle), folder, changes: cleanText((/CHANGES:\s*(.+)/i.exec(head) || [])[1] || "", 400), sources, searched: sources.length > 0}, 200, origin, env);
+    }
+    if (url.pathname === "/api/improve" && request.method === "GET") {
+      if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
+      return json(await improveStatus(env), 200, origin, env);
+    }
+    if (url.pathname === "/api/improve/run" && request.method === "POST") {
+      if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
+      let body = {}; try { body = await request.json(); } catch {}
+      if (body.what === "exam") await examGrade(env); else if (body.what === "ssc") await stopStartContinue(env); else await weeklyAudit(env);
+      return json(await improveStatus(env), 200, origin, env);
     }
     if (url.pathname === "/api/brain/status" && request.method === "GET") {
       if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);

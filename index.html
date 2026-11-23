@@ -599,6 +599,7 @@ body.on-home.has-dash .edge-tabs{display:flex}
     <div id="tileGuide" class="tile" role="button" tabindex="0" aria-label="Investments — open the full view"><div class="tile-top"><span>💰 Investments</span></div><div class="muted small">Loading…</div></div>
     <div id="tileNotes" class="tile tile-notes" role="button" tabindex="0" aria-label="Open my notes"><div class="tile-top"><span>🗂 Notes</span></div><div class="muted small">Loading…</div></div>
     <div id="tileBrain" class="tile" role="button" tabindex="0" aria-label="Max’s brain — open the full view"><div class="tile-top"><span>🧠 Max’s brain</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileImprove" class="tile" role="button" tabindex="0" aria-label="Max improving himself — open the full view"><div class="tile-top"><span>📈 Max improves</span></div><div class="muted small">Loading…</div></div>
   </aside>
   <aside id="drawerR" class="drawer right" aria-label="Websites, Apps, Status">
     <div class="drawer-hint">Swipe back to hide · tap a card for details</div>
@@ -4482,6 +4483,32 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    (d.fixed.length?'<section class="pv-sec"><h3>Fixed by Max ('+d.fixed.length+')</h3><div class="muted small">Two different AIs and an official source agreed. The old version of the note is kept.</div>'+d.fixed.map(x=>'<div class="st-row"><b>'+dashE(x.title)+'</b><div class="small">“'+dashE(x.quote)+'” → “'+dashE(x.fixed||x.suggest||'')+'”</div>'+(x.source?'<div class="small muted">'+dashE(x.source)+'</div>':'')+'</div>').join('')+'</section>':'')+
    (d.exam.gaps.length?'<section class="pv-sec"><h3>Max could not answer</h3>'+d.exam.gaps.map(x=>'<div class="small">'+dashE(x.title)+' — '+dashE(x.q||'')+'</div>').join('')+'<div class="muted small">He studies these notes again.</div></section>':'')+
    '<div class="dash-actions"><button class="small-btn" data-brain="study">Study now</button></div><div class="muted small">AIs in use: '+(d.providers.length?d.providers.map(dashE).join(', '):'none')+'. More free AIs can be added later for faster study.</div>'};
+
+ let improveAt=0;
+ async function loadImprove(force){
+  if(!force&&dashData.improve&&Date.now()-improveAt<2*60e3)return dashData.improve;
+  const {r,data}=await fetchJson(workerBase()+'/api/improve',{method:'GET'},20000);
+  if(r.status===404)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
+  if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
+  if(!data||!data.nc)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
+  improveAt=Date.now();jset('max_cache_improve',data);return data;
+ }
+ const tileImprove=d=>'<div class="tile-top"><span>📈 Max improves</span></div><div class="tile-big">'+d.nc.open.length+'</div><div class="tile-label muted small">open finding'+(d.nc.open.length===1?'':'s')+(d.rules.length?' · '+d.rules.length+' rule'+(d.rules.length===1?'':'s')+' learned':'')+'</div>'+(d.nc.repeats?'<div class="tile-line down">'+d.nc.repeats+' came back after closing</div>':'');
+ const impList=(a,f)=>a&&a.length?a.map(f).join(''):'<div class="small muted">none</div>';
+ const improveFull=d=>{const au=d.audit,ex=d.exam,ss=d.ssc,day=t=>t?new Date(t).toLocaleDateString([], {month:'short',day:'numeric'}):'–';
+  return '<section class="pv-sec"><h3>Weekly audit</h3>'+(au?'<div class="pv-total"><b class="'+(/^Not/.test(au.verdict)?'down':'up')+'">'+dashE(au.verdict)+'</b><span class="muted small">'+dashE(au.day)+' · '+au.done+' done, '+au.failed+' failed in '+au.days+' day(s)</span></div>'+
+    (au.repeats.length?'<div class="small down">Came back: '+au.repeats.map(dashE).join('; ')+'</div>':'')+(au.newNc.length?'<div class="small">New: '+au.newNc.map(dashE).join('; ')+'</div>':'')+(au.closed.length?'<div class="small up">Closed: '+au.closed.map(dashE).join('; ')+'</div>':''):'<div class="small muted">The first audit is made on the next Sunday check.</div>')+
+   '<div class="dash-actions"><button class="small-btn" data-imp="audit">Audit now</button></div></section>'+
+   '<section class="pv-sec"><h3>Findings register</h3><div class="muted small">Every error Max finds is kept until it has stayed away for two daily checks. If it returns, it is marked REPEAT.</div>'+
+    impList(d.nc.open,x=>'<div class="st-row"><b>'+dashE(x.text)+'</b><div class="small muted">'+dashE(x.status)+' · since '+dashE(x.first)+' · seen '+x.days+' day(s)'+(x.repeats?' · <span class="down">REPEAT ×'+x.repeats+'</span>':'')+'</div><div class="small">'+(x.action?'Action: '+dashE(x.action):'No automatic fix yet')+'</div></div>')+
+    (d.nc.closed.length?'<h4>Closed out</h4>'+d.nc.closed.map(x=>'<div class="small muted">✓ '+dashE(x.text)+' · closed '+dashE(x.closedAt)+'</div>').join(''):'')+'</section>'+
+   '<section class="pv-sec"><h3>Daily log</h3>'+impList(d.deck,x=>'<div class="st-row"><b>'+dashE(x.day)+'</b> · '+x.done+' done, '+x.failed+' failed'+(x.failures.concat(x.jobErrors).slice(0,3).map(f=>'<div class="small muted">'+dashE(f)+'</div>').join(''))+'</div>')+'</section>'+
+   '<section class="pv-sec"><h3>Examiner (weekly)</h3><div class="muted small">About 20 of Max’s answers are graded against your notes by '+(d.claudeGrader?'Claude':'a free AI (add an Anthropic key to use Claude)')+'. A mistake becomes a rule only if a real sentence in your note proves it.</div>'+
+    (ex?'<div class="small">'+day(ex.at)+': '+ex.sampled+' graded, '+ex.ok+' fine, '+(ex.wrong+ex.unsupported)+' mistake'+((ex.wrong+ex.unsupported)===1?'':'s')+', '+ex.rulesAdded+' new rule'+(ex.rulesAdded===1?'':'s')+(ex.grader?' · by '+dashE(ex.grader):'')+(ex.note?' · '+dashE(ex.note):'')+'</div>':'<div class="small muted">Not run yet.</div>')+
+    impList(d.rules,x=>'<div class="st-row"><div class="small">'+dashE(x.rule)+'</div><div class="small muted">from “'+dashE(x.note)+'”</div></div>')+
+    '<div class="dash-actions"><button class="small-btn" data-imp="exam">Grade now</button></div></section>'+
+   '<section class="pv-sec"><h3>Stop · Start · Continue</h3>'+(ss?'<div class="muted small">Made '+day(ss.at)+'</div><h4>Stop</h4>'+impList(ss.stop,x=>'<div class="small"><b>'+dashE(x.what)+'</b> — '+dashE(x.why)+'</div>')+'<h4>Start</h4>'+impList(ss.start,x=>'<div class="small"><b>'+dashE(x.what)+'</b> — '+dashE(x.why)+'</div>')+'<h4>Continue</h4>'+impList(ss.keep,x=>'<div class="small"><b>'+dashE(x.what)+'</b> — '+dashE(x.why)+'</div>'):'<div class="small muted">Not made yet.</div>')+
+    '<div class="dash-actions"><button class="small-btn" data-imp="ssc">Make the list now</button></div></section>'};
  let healthAt=0;
  async function loadHealth(force){
   if(!force&&dashData.status&&Date.now()-healthAt<5*60e3)return dashData.status;
@@ -4521,6 +4548,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    info:'Max checks each app once a day: is it up, its speed on a phone, its version, and on Google Play the releases and newest reviews.'},
   brain:{name:'🧠 Max’s brain',title:'🧠 Max’s brain',tid:'tileBrain',side:'L',load:f=>loadBrain(f),tile:d=>tileBrain(d),full:d=>brainFull(d),cache:'max_cache_brain',
    info:'Max studies every note you wrote (maritime first): a short summary, the exact facts, and which other notes it connects to. He keeps a map of everything he knows, tests himself with exam questions, and answers from your notes. If he thinks a note is wrong, he changes it only when a second AI and an official web source agree (old version kept); otherwise it waits here for you.'},
+  improve:{name:'📈 Max improves',title:'📈 Max improves',tid:'tileImprove',side:'L',load:f=>loadImprove(f),tile:d=>tileImprove(d),full:d=>improveFull(d),cache:'max_cache_improve',
+   info:'Max keeps a register of every error he finds (like an audit’s non-conformities), what was done about it, and whether it stayed away. Once a week he audits himself, an examiner grades about 20 of his answers against your notes and turns proven mistakes into rules, and he lists what to stop, start and continue. Nothing here is emailed.'},
   status:{name:'🛡 Security',title:'🛡 Security',tid:'tileStatus',side:'R',load:f=>loadHealth(f),tile:d=>tileStatus(d),full:d=>healthFull(d),cache:'max_cache_health',
    info:'This is Max’s own health: what is connected, whether today’s jobs ran, and what the Guard found. An alert means Max will retry or needs you; “check everything now” runs the Guard again.'}};
  async function renderDash(which,force){
@@ -4569,6 +4598,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     else{const {r,data}=await postJson('/api/brain/resolve',{id:b.dataset.id,i:+b.dataset.i,action:a},20000);if(!r.ok)throw new Error(data.error||'HTTP '+r.status);toast(a==='apply'?'Changed in the note (old version kept)':'Left as it is')}}
    catch(err){toast(err.message)}
    await renderDash('brain',true)});
+  $('dashFull').addEventListener('click',async e=>{const b=e.target.closest('[data-imp]');if(!b)return;e.preventDefault();b.disabled=true;b.textContent='Working…';
+   try{const {r,data}=await postJson('/api/improve/run',{what:b.dataset.imp},120000);if(!r.ok)throw new Error(data.error||'HTTP '+r.status);toast('Done')}catch(err){toast(err.message)}
+   await renderDash('improve',true)});
   $('dashFull').addEventListener('change',e=>{const k=e.target?.dataset?.mp;if(!k)return;const P=moneyProfile();P[k]=k==='risk'?e.target.value:Math.max(0,+e.target.value||0);jset(MONEY_KEY,P);const sub=e.target.closest('details');if(dashGuideData){$('dashFullBody').innerHTML=ratesFull(dashGuideData);const d=$('dashFullBody').querySelector('.dash-sub');if(d&&sub)d.open=true;const dd=$('dashFullBody').querySelector('.dash-plan details');if(dd)dd.open=true}});
   renderDash();setInterval(()=>{if(document.visibilityState==='visible'&&screen==='home')renderDash(dashOpen==='guide'?'guide':'paper')},5*60e3);
  }
