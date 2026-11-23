@@ -3406,11 +3406,11 @@ async function paperCryptoStep(S, ctx, now) {
   const backups = [...order.filter(x => x !== src && !(ctx.skip || []).includes(x))], dead = new Set();
   const coin = async (c, n, min, needed) => {
     try { await pSleep(ctx.gap ?? 150); const k = await cryptoCandles(ctx, src, c, n); if (k.closed.length >= min) return k; throw new Error(src + ": too little data"); }
-    catch (e) { if (/budget/.test(e.message) || !needed) throw e; let last = e;
-      for (const b of backups) { if (dead.has(b)) continue;
-        try { const k = await cryptoCandles(ctx, b, c, n); if (k.closed.length >= min) return k; }
-        catch (e2) { if (/budget/.test(e2.message)) throw e2; last = e2; if (/answered (403|429)/.test(e2.message)) dead.add(b); } }
-      throw last; } };
+    catch (e) { if (/budget/.test(e.message) || !needed) throw e; let last = e; const all = [CRYPTO_NAMES[src] + ": " + cleanText(String(e.message), 40)];
+      for (const b of backups) { if (dead.has(b)) { all.push(CRYPTO_NAMES[b] + ": skipped, refused earlier"); continue; }
+        try { const k = await cryptoCandles(ctx, b, c, n); if (k.closed.length >= min) return k; all.push(CRYPTO_NAMES[b] + ": too little data"); }
+        catch (e2) { if (/budget/.test(e2.message)) throw e2; last = e2; all.push(CRYPTO_NAMES[b] + ": " + cleanText(String(e2.message), 40)); if (/answered (403|429)/.test(e2.message)) dead.add(b); } }
+      throw new Error("no source gave " + c + " — " + all.join("; ")); } };
   for (const c of pool) { if (c === "BTC") continue;
     const held = S.books.crypto_swing.positions.some(p => p.sym === c);       // backups only for coins Max holds (a coin a source doesn't list is just skipped)
     try { const k = await coin(c, 60, 21, held); U[c] = k.closed; live[c] = k.live; }
