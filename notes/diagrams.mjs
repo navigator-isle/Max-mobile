@@ -253,3 +253,40 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["afs-timeline"] = svg(400, 220, s);
 }
+
+// 14. Bunkers 2001: who is liable and who can be sued (Arts 1(3), 3, 7)
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "Bunkers 2001: liability chain", { a: "middle", b: true, s: 12 });
+  s += `<rect x="20" y="46" width="170" height="104" rx="6" fill="${A}" fill-opacity="0.15" stroke="${A}"/>`;
+  s += txt(105, 64, '"Shipowner" (Art 1(3))', { a: "middle", b: true, s: 10.5, c: A });
+  ["Owner (incl. registered owner)", "Bareboat charterer", "Manager", "Operator"].forEach((t, i) => { s += txt(105, 84 + i * 16, t, { a: "middle", s: 9.5 }); });
+  s += txt(105, 164, "Strict, joint and several (Art 3)", { a: "middle", s: 9.5, c: Y });
+  s += `<rect x="230" y="46" width="150" height="50" rx="6" fill="${G}" fill-opacity="0.15" stroke="${G}"/>`;
+  s += txt(305, 66, "Insurer / security provider", { a: "middle", b: true, s: 10, c: G });
+  s += txt(305, 82, "Ships over 1,000 GT (Art 7)", { a: "middle", s: 9.5 });
+  s += `<rect x="230" y="116" width="150" height="34" rx="6" fill="${R}" fill-opacity="0.12" stroke="${R}"/>`;
+  s += txt(305, 138, "Claimant", { a: "middle", b: true, s: 10.5, c: R });
+  s += arrow(190, 133, 230, 133, R) + arrow(305, 116, 305, 96, G);
+  s += txt(247, 108, "direct", { a: "middle", s: 8.5, c: G }) + txt(247, 118, "action", { a: "middle", s: 8.5, c: G });
+  s += txt(200, 184, "Cover: up to the applicable limitation amount,", { a: "middle", s: 10 });
+  s += txt(200, 198, "never more than the LLMC 1976 amount (as amended)", { a: "middle", s: 10 });
+  s += txt(200, 220, "Certificate carried on board · copy with the registry authorities", { a: "middle", s: 9.5, c: L });
+  s += txt(200, 236, "Insurer may use the shipowner's defences and wilful misconduct,", { a: "middle", s: 9, c: L });
+  s += txt(200, 249, "but not bankruptcy or winding up", { a: "middle", s: 9, c: L });
+  DIAGRAMS["bunkers-liability"] = svg(400, 270, s);
+}
+
+// 15. Bunkers 2001: time limits (Art 8)
+{
+  let s = frame(400, 190);
+  s += txt(200, 26, "Time limits (Art 8)", { a: "middle", b: true, s: 12 });
+  const x0 = 40, sc = 320 / 6;
+  s += txt(x0, 56, "Counted from the damage", { s: 10, c: G });
+  s += `<rect x="${x0}" y="62" width="${3 * sc}" height="20" fill="${G}" fill-opacity="0.35" stroke="${G}"/>` + txt(x0 + 1.5 * sc, 76, "3 years", { a: "middle", s: 10, b: true });
+  s += txt(x0, 108, "Counted from the incident (outer limit)", { s: 10, c: Y });
+  s += `<rect x="${x0}" y="114" width="${6 * sc}" height="20" fill="${Y}" fill-opacity="0.25" stroke="${Y}"/>` + txt(x0 + 3 * sc, 128, "6 years", { a: "middle", s: 10, b: true });
+  s += txt(200, 156, "An action must be brought within 3 years of the damage,", { a: "middle", s: 9.5, c: L });
+  s += txt(200, 170, "and never later than 6 years after the incident (first occurrence, for a series)", { a: "middle", s: 9, c: L });
+  DIAGRAMS["bunkers-timebar"] = svg(400, 190, s);
+}
