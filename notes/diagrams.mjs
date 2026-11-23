@@ -507,3 +507,41 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["fss-chapters"] = svg(400, 320, s);
 }
+
+// 28. FTP Code: standard time-temperature curve T = 345 log10(8t+1) + 20
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "Standard fire curve (FTP Code, definitions)", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "T = 345 log10(8t + 1) + 20   (t in minutes, T in °C)", { a: "middle", s: 9.5, c: L });
+  const bx = 56, by = 220, bw = 320, bh = 150, tmax = 60, Tmax = 1000;
+  const X = t => bx + t / tmax * bw, Y_ = T_ => by - T_ / Tmax * bh;
+  s += line(bx, by, bx + bw, by) + line(bx, by, bx, by - bh);
+  let d = "";
+  for (let t = 0; t <= 60; t += 1) { const T_ = 345 * Math.log10(8 * t + 1) + 20; d += (t ? "L" : "M") + X(t).toFixed(1) + "," + Y_(T_).toFixed(1); }
+  s += `<path d="${d}" fill="none" stroke="${R}" stroke-width="2"/>`;
+  [[0, 20], [5, 576], [15, 739], [30, 842], [60, 945]].forEach(([t, T_]) => {
+    s += `<circle cx="${X(t)}" cy="${Y_(T_)}" r="3.4" fill="${Y}"/>`;
+    if (t) s += txt(X(t), Y_(T_) - 8, `${T_}`, { a: "middle", s: 9, c: Y });
+    s += txt(X(t), by + 14, `${t}`, { a: "middle", s: 9.5 });
+  });
+  [0, 500, 1000].forEach(v => { s += txt(bx - 6, Y_(v) + 3, `${v}`, { a: "end", s: 9, c: L }); });
+  s += txt(200, 250, "Time (minutes)  ·  values rounded from the formula", { a: "middle", s: 9, c: L });
+  DIAGRAMS["ftp-fire-curve"] = svg(400, 270, s);
+}
+
+// 29. FTP Code Annex 1 Part 3: "A", "B" and "F" class insulation criteria
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Part 3: temperature rise on the unexposed side", { a: "middle", b: true, s: 12 });
+  const rows = [["Class A", "A-60 · A-30 · A-15 · A-0", 140, 180, A], ["Class B", "B-15 · B-0", 140, 225, G], ["Class F", "F-15 · F-0", 140, 225, Y]];
+  const x0 = 100, sc = 250 / 240;
+  rows.forEach(([n, subs, avg, pt, c], i) => {
+    const y = 60 + i * 56;
+    s += txt(20, y + 12, n, { b: true, s: 11, c }) + txt(20, y + 26, subs, { s: 8.5, c: L });
+    s += `<rect x="${x0 + 50}" y="${y}" width="${avg * sc * 0.55}" height="14" rx="2" fill="${c}" fill-opacity="0.5" stroke="${c}"/>`;
+    s += `<rect x="${x0 + 50}" y="${y + 20}" width="${pt * sc * 0.55}" height="14" rx="2" fill="${c}" fill-opacity="0.25" stroke="${c}"/>`;
+    s += txt(x0 + 56 + avg * sc * 0.55, y + 11, `${avg} °C average`, { s: 9 }) + txt(x0 + 56 + pt * sc * 0.55, y + 31, `${pt} °C any single point`, { s: 9 });
+  });
+  s += txt(200, 232, "Aluminium cores: rise no more than 200 °C · integrity: no flaming on the unexposed face", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["ftp-class-divisions"] = svg(400, 250, s);
+}

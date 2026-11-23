@@ -1,55 +1,144 @@
 ---
 tags: [ftp, fire-test, solas-ii-2, materials, imo, code]
 ---
-**FTP Code — International Code for Application of Fire Test Procedures (2010 FTP Code)**
+# FTP Code — International Code for Application of Fire Test Procedures (2010 FTP Code)
 
-**What is the FTP Code**
-- Test procedures used to approve fire-resistant and fire-restricting materials and products for ships
-- Mandatory under SOLAS Ch II-2 (Reg 3.23)
-- Tells the flag State/RO how a product is tested before it gets type approval ("A" class divisions, low flame-spread surfaces, fire doors, furniture…)
-- Mostly used by shipyards, manufacturers and class — on board you see the approval marking/certificate
+## At a glance
 
-**History**
-- 1998 FTP Code (MSC.61(67)) · in force 1 Jul 1998
-- 2010 FTP Code adopted 3 Dec 2010 at MSC 88 (MSC.307(88)) · in force 1 Jul 2012 · replaced the 1998 Code
-- Later amendments: MSC.437(99) and others (test details, Annex 1 parts)
+| Item | Detail |
+|---|---|
+| Adopted | 3 Dec 2010, resolution MSC.307(88) |
+| In force | 1 Jul 2012 (with the SOLAS II-2 amendments) |
+| Status | Mandatory under SOLAS chapter II-2, for products required to be tested, evaluated and approved on or after 1 Jul 2012 |
+| Replaced | The 1998 FTP Code, MSC.61(67) |
+| Structure | 9 chapters · Annex 1 (11 Parts) · Annexes 2–4 |
+| Amendment | MSC.437(99), adopted 24 May 2018, in force 1 Jan 2020 (Annex 3, Table 1) |
+| Used by | Administrations, competent authorities and testing laboratories |
 
-**Applies to**
-- Products and materials required by SOLAS II-2 to be tested and approved (non-combustibility, smoke, divisions, surface flammability…)
-- New ships and new installations on existing ships
+## What is the FTP Code
 
----
+- The **test procedures** used to approve fire-resistant and fire-restricting materials and products for ships
+- Used by the Administration to approve products and by laboratories to test them
+- Applies where SOLAS requires products to be tested "in accordance with the Fire Test Procedures Code"
+- On board you meet the result: approved products with their certificates
 
-**Annex 1 — Fire test procedures (Parts)**
-- Part 1 Non-combustibility test (ISO 1182): material must not burn or give off enough flammable vapour when heated to ~750 °C
-- Part 2 Smoke and toxicity test (ISO 5659-2): smoke density and toxic gases (CO, HCl, HF, HBr, HCN, NO₂, SO₂ limits)
-- Part 3 Test for "A", "B" and "F" class divisions (fire resistance, standard fire curve):
-  - "A" class: steel or equal · stops smoke and flame for 60 min · insulation so the unexposed side rises ≤140 °C average / ≤180 °C at any point within A-60, A-30, A-15, A-0 times
-  - "B" class: stops flame for 30 min · B-15, B-0 insulation
-  - "F" class (HSC Code)
-- Part 4 Test for fire door control systems (works at 200 °C for ≥60 min)
-- Part 5 Test for surface flammability (low flame-spread surfaces; IMO resolution A.653 method / ISO 5658-2)
-- Part 6 Test for primary deck coverings (now in Part 5)
-- Part 7 Test for vertically supported textiles and films (curtains)
-- Part 8 Test for upholstered furniture (cigarette and match flames)
-- Part 9 Test for bedding components
-- Part 10 Test for fire-restricting materials for high-speed craft
-- Part 11 Test for fire-resisting divisions of high-speed craft
+## History
 
-**Annex 2 — Products which may be installed without testing and/or approval**
-- E.g., glass, concrete, ceramics, metals and stone are non-combustible without testing
+- The 1998 Code was made mandatory by MSC.57(67) for ships constructed on or after 1 Jul 1998.
+- MSC.307(88) replaced it, taking effect 1 Jul 2012.
+- Type approvals based on tests under the previous Code were accepted if the tests were made no later than one year after entry into force; renewals without retesting were allowed for reports up to 15 years old.
+- MSC.437(99) amended Annex 3, Table 1 (adopted 24 May 2018, in force 1 Jan 2020).
 
-**Annex 3 — Fire protection materials and required approval test methods**
-- Table linking each SOLAS requirement to the FTP test part
+## Chapters
 
-**Approval and marking**
-- Type approval by flag or RO based on test report from a recognized laboratory
-- EU ships: Marine Equipment Directive "wheel mark" (MED) for FTP-tested products
+| Ch | Title | Key content |
+|---|---|---|
+| 1 | Scope | Use by Administrations, authorities and testing laboratories |
+| 2 | Application | Where the Convention requires products to be tested to the FTP Code |
+| 3 | Definitions | Standard time-temperature curve; "sustained flaming" = flames lasting 5 s or longer |
+| 4 | Testing | Test procedures (Annex 1); laboratories recognized by the Administration (quality control based on ISO/IEC 17025); test reports |
+| 5 | Approval | Type approval: certificates valid up to **5 years**, test reports under 5 years old when submitted. Case-by-case approval: valid only for the specific ship |
+| 6 | Products installed without testing and/or approval | Listed in Annex 2 |
+| 7 | Equivalents and modern technology | Alternative tests need written analyses |
+| 8 | Period of grace | See History |
+| 9 | List of references | ISO and IEC standards, including ISO 834-1, ISO 1182, ISO 5659-2, ISO 5660-1/-2, ISO 9705, ISO 19702 |
 
-**Key Point**
-- Replacing a cabin door, bulkhead panel, floor covering or curtain: use only FTP-approved products with certificate
-- Fire doors must self-close and the hold-back release must work (Part 4 approved systems)
-- PSC: check fire doors, divisions, penetrations (A-60 integrity not broken by new cables or pipes)
+![[diagram:ftp-fire-curve|The standard time-temperature curve used in the fire resistance tests]]
 
-**Sources (checked 10 Nov 2026)**
-- IMO — Resolution MSC.307(88) 2010 FTP Code: https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/MSCResolutions/MSC.307(88).pdf
+## Annex 1 — Fire test procedures
+
+| Part | Test |
+|---|---|
+| 1 | Non-combustibility (ISO 1182) |
+| 2 | Smoke and toxicity |
+| 3 | "A", "B" and "F" class divisions |
+| 4 | Fire door control systems |
+| 5 | Surface flammability (low flame-spread surfaces, primary deck coverings) |
+| 6 | Blank |
+| 7 | Vertically supported textiles and films |
+| 8 | Upholstered furniture |
+| 9 | Bedding components |
+| 10 | Fire-restricting materials for high-speed craft |
+| 11 | Fire-resisting divisions of high-speed craft |
+
+**Part 1 — Non-combustibility**
+
+| Item | Value |
+|---|---|
+| Furnace temperature | 750 ± 5 °C, test up to 30 min |
+| Average furnace and surface temperature rise | ≤ 30 °C |
+| Average sustained flaming | ≤ 10 s |
+| Average mass loss | ≤ 50% |
+| Specimens | 5 (homogeneous) or 10 (non-homogeneous), each 43–45 mm diameter and 50 ± 3 mm high |
+
+**Part 2 — Smoke and toxicity**
+- Appendix 1: smoke test to ISO 5659-2 at 25 kW/m² (with and without pilot flame) and 50 kW/m² (no pilot).
+- Appendix 2: toxic gases measured by FTIR (ISO 19702).
+
+| Smoke density Dm (max) | |
+|---|---|
+| Bulkhead, lining and ceiling surfaces | 200 |
+| Primary deck coverings | 400 |
+| Floor coverings | 500 |
+| Plastic pipes | 400 |
+
+| Toxic gas | Limit (ppm) |
+|---|---|
+| CO | 1,450 |
+| HCl, HBr, HF | 600 each |
+| HCN | 140 |
+| SO₂ | 120 (200 for floor coverings) |
+| NOx | 350 |
+
+**Part 3 — "A", "B" and "F" class divisions**
+
+![[diagram:ftp-class-divisions|Insulation criteria for the unexposed side]]
+
+- "A" class: average rise ≤ 140 °C, any single point ≤ 180 °C. Durations: A-60, A-30, A-15, A-0.
+- "B" and "F" class: average rise ≤ 140 °C, any single point ≤ 225 °C. Durations: B-15, B-0, F-15, F-0.
+- Integrity: no flaming on the unexposed face, no ignition of the cotton-wool pad, and gap gauges must not pass.
+- Aluminium cores may rise no more than 200 °C.
+- Appendices cover fire resistance (1), windows, dampers and penetrations (2), thermal radiation through windows (3), and continuous "B" ceilings and linings (4).
+
+**Part 4 — Fire door control systems**
+- The system is tested as a prototype, independent of its power supply (pneumatic, hydraulic or electrical), in the Part 3 furnace.
+- The door starts open, and the system must show it can close the door at the start of the test.
+- Furnace temperature raised and held at **200 ± 50 °C** within 5 min, held for the first **60 min**, then following the standard curve up to 945 °C.
+- The opening and closing function is activated every 5 min for the first 60 min.
+- Power to the control system is isolated at average furnace temperatures up to 300 °C. The door must stay closed at least up to 945 °C.
+- Criteria: the system must not fail in the first 60 min; from 60 min to the end of the test the door must remain closed.
+
+**Part 5 — Surface flammability**
+- Averages must meet Table 1 for materials to be considered low flame-spread.
+
+| Criterion | Linings (bulkhead, wall, ceiling) | Floor coverings | Primary deck coverings |
+|---|---|---|---|
+| Qt (MJ) | ≤ 0.7 | ≤ 2.0 | ≤ 2.0 |
+| Qp (kW) | ≤ 4.0 | ≤ 10.0 | ≤ 10.0 |
+| Burning droplets | Not produced | No more than 10 burning drops | Not produced |
+
+- Burning droplets make a lining or primary deck covering a reject, whatever the other criteria.
+
+**Part 10:** full-scale room test per ISO 9705 and heat release, smoke and mass loss per ISO 5660-1/-2.
+
+## Annex 2 — Products that may be installed without testing or approval
+
+| Group | Products |
+|---|---|
+| Non-combustible materials | Only glass, concrete, ceramics, natural stone, masonry units, common metals or metal alloys: treated as non-combustible, no testing or approval |
+| Low smoke and toxicity | Non-combustible materials meet Part 2. Surface materials and primary deck coverings with total heat release ≤ 0.2 MJ and peak heat release rate ≤ 1 kW meet Part 2 |
+| Steel divisions | **"A-0" bulkhead:** 4 mm plating with 60 × 60 × 5 mm stiffeners at 600 mm spacing, or a structural equivalent. **"A-0" deck:** 4 mm plating with 95 × 65 × 7 mm stiffeners at 600 mm spacing, or a structural equivalent |
+| Low flame-spread surfaces | Non-combustible materials meet Part 5 (but consider the method of fixing, for example glue). Primary deck coverings rated not readily ignitable meet the floor covering requirements |
+| High-speed craft | Fire-restricting materials meet Parts 2 and 5 without further testing |
+
+## Annexes 3 and 4
+
+- **Annex 3:** fire protection materials and the required approval test methods. Table 1 is for passenger ships carrying more than 36 passengers and high-speed craft; Table 2 is for cargo ships (method IC).
+- **Annex 4:** interpretation of SOLAS II-2 regulations 5.3 and 6.2 (MSC/Circ.1120), with tables for passenger ship accommodation bulkheads and cargo ship accommodation spaces (methods IC, IIC and IIIC).
+
+> **Key Point:** Use only products with a valid FTP approval when you replace a bulkhead panel, door, floor covering or curtain. Annex 2 lists the few products that need no test. Fire door control systems are tested to keep the door closed up to 945 °C.
+
+## Sources (checked 23 Nov 2026)
+
+- Resolution MSC.307(88), 2010 FTP Code text: https://traficom.fi/sites/default/files/media/regulation/21812-MSC_307%2888%29.pdf
+- FTP Code amendment status (Deutsche Flagge): https://www.deutsche-flagge.de/de/redaktion/dokumente/interpretationen/solas/ii-2/ftp-code-amendment-status.pdf
