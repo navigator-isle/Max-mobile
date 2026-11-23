@@ -15,8 +15,6 @@ tags: [alarms, alerts, indicators, general-alarm, bridge, machinery, imo, code]
 
 ![[diagram:alert-priorities|The four alert priorities]]
 
-> **Key Point:** Every alert has one of four priorities: **emergency alarm, alarm, warning, caution**. The priority decides how it sounds, what colour it shows, and where it appears. Emergency alarms mean immediate danger to human life or to the ship.
-
 ## Alert priorities (3.1)
 | Priority | Meaning |
 |---|---|

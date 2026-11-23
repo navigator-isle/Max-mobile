@@ -17,8 +17,6 @@ tags: [nox, nox-technical-code, eiapp, marpol-annex-vi, engines, tier-iii, imo, 
 
 ![[diagram:nox-survey|From engine test to certification]]
 
-> **Key Point:** The Code covers only NOx compliance of the engine. The limits themselves are in MARPOL Annex VI regulation 13.
-
 ## NOx limits (Annex VI, regulation 13)
 Limits in g/kWh by rated engine speed n (rpm).
 

@@ -16,8 +16,6 @@ tags: [bwms, ballast-water, type-approval, d-2, g8, imo, code]
 
 ![[diagram:bwms-approval|From test to certificate]]
 
-> **Key Point:** The Code tells Administrations how to test and approve a ballast water treatment system: pre-test documents, **land-based tests**, **shipboard tests**, environmental tests, self-monitoring and validation of **System Design Limitations (SDL)**. Systems using Active Substances also need IMO approval first.
-
 ## The D-2 standard behind the tests (Section 2)
 ![[diagram:bwms-d2|D-2 discharge limits]]
 

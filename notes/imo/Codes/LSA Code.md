@@ -16,8 +16,6 @@ tags: [lsa, life-saving, lifeboat, solas-iii, imo, code]
 
 ![[diagram:lsa-structure|The seven chapters of the LSA Code]]
 
-> **Key Point:** The LSA Code says how each appliance must be built and perform. SOLAS chapter III says which appliances a ship carries, and covers drills and maintenance.
-
 ## Amendments
 ![[diagram:lsa-dates|LSA Code amendments by entry into force]]
 

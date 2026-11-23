@@ -17,8 +17,6 @@ tags: [polar, arctic, antarctic, solas-xiv, marpol, imo, code]
 
 ![[diagram:polar-structure|Structure of the Polar Code]]
 
-> **Key Point:** Every ship the Code applies to needs a valid Polar Ship Certificate on board, and the PWOM must be carried on board.
-
 ## Ship categories (Introduction, 2)
 ![[diagram:polar-categories|Ship categories A, B and C]]
 

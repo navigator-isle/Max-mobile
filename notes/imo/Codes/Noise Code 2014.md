@@ -17,8 +17,6 @@ tags: [noise, hearing-protection, accommodation, solas, ii-1-3-12, imo, code]
 
 ![[diagram:noise-limits|Maximum noise levels by space (dB(A))]]
 
-> **Key Point:** The Code sets **maximum noise levels for each type of space**, requires a **noise survey report** kept on board, and says when crew must wear **hearing protection**. The 110 dB(A) limit in machinery spaces assumes protectors are worn.
-
 ## Chapters
 | Ch | Title | Main content |
 |---|---|---|

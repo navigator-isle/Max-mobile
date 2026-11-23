@@ -15,8 +15,6 @@ tags: [modu, offshore, drilling, rig, safety, imo, code]
 
 ![[diagram:modu-structure|The 14 chapters of the 2009 MODU Code]]
 
-> **Key Point:** The MODU Code gives a drilling unit the same level of safety that SOLAS and the Load Lines Convention give a conventional ship on an international voyage. It is a Code for governments to apply, not a convention.
-
 ## Definition and aim
 - **MODU:** a vessel capable of drilling for resources beneath the seabed, such as hydrocarbons, sulphur or salt (1.3.40)
 - The Code aims at safety equivalent to SOLAS and the 1988 Load Lines Protocol for conventional ships

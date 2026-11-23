@@ -25,9 +25,7 @@ tags: [ftp, fire-test, solas-ii-2, materials, imo, code]
 ## History
 
 - The 1998 Code was made mandatory by MSC.57(67) for ships constructed on or after 1 Jul 1998.
-- MSC.307(88) replaced it, taking effect 1 Jul 2012.
 - Type approvals based on tests under the previous Code were accepted if the tests were made no later than one year after entry into force; renewals without retesting were allowed for reports up to 15 years old.
-- MSC.437(99) amended Annex 3, Table 1 (adopted 24 May 2018, in force 1 Jan 2020).
 
 ## Chapters
 
