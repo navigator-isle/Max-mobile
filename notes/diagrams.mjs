@@ -1479,3 +1479,26 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 284, "Exceptions: intentional damage (Art 2(2)) · nuclear ship operator (Art 3)", { a: "middle", s: 9, c: Y });
   DIAGRAMS["nuclear-flow"] = svg(400, 300, s);
 }
+
+// 87-88. OPRC-HNS
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "OPRC-HNS 2000: three layers", { a: "middle", b: true, s: 12 });
+  const bx = (x, y, w, h, a, b, c) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="#1d2040" stroke="${c}"/>` + txt(x + w / 2, y + 22, a, { a: "middle", b: true, s: 10.5 }) + txt(x + w / 2, y + 40, b, { a: "middle", s: 9, c: L });
+  s += bx(30, 40, 340, 50, "Ship (Art 3)", "Flag State requires emergency plan and reporting", A);
+  s += bx(30, 98, 340, 50, "Ports and HNS facilities (Art 3)", "Plans coordinated with the national system", G);
+  s += bx(30, 156, 340, 50, "National system (Art 4)", "Authority, contact point, contingency plan", Y);
+  s += txt(200, 232, "Parties assist each other on request (Art 5), costs per Annex", { a: "middle", s: 9, c: L });
+  DIAGRAMS["oprchns-system"] = svg(400, 250, s);
+}
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "Who pays for assistance?", { a: "middle", b: true, s: 12 });
+  const bx = (x, y, w, h, a, b, c) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="#1d2040" stroke="${c}"/>` + txt(x + w / 2, y + 22, a, { a: "middle", b: true, s: 10.5 }) + txt(x + w / 2, y + 40, b, { a: "middle", s: 9, c: L });
+  s += bx(20, 44, 170, 62, "Express request", "Requesting Party pays", G);
+  s += bx(210, 44, 170, 62, "Own initiative", "Assisting Party pays", R);
+  s += bx(20, 118, 360, 50, "Cancelled request", "Costs already incurred are still paid", Y);
+  s += txt(200, 196, "No prior agreement: each Party bears its own costs", { a: "middle", s: 9, c: L });
+  s += txt(200, 212, "Waiver or deferral may be requested (Annex)", { a: "middle", s: 9, c: L });
+  DIAGRAMS["oprchns-costs"] = svg(400, 230, s);
+}
