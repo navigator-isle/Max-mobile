@@ -1656,3 +1656,47 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 200, "Higher Rw = better sound insulation", { a: "middle", s: 9, c: L });
   DIAGRAMS["noise-rw"] = svg(400, 212, s);
 }
+
+// 101-104. Alerts and Indicators Code
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "Alert priorities", { a: "middle", b: true, s: 12 });
+  const rows = [["Emergency alarm", "Immediate danger to life or ship", R], ["Alarm", "Immediate attention and action", "#ff9f4a"], ["Warning", "Precautionary, no immediate action", Y], ["Caution", "Needs attention beyond normal", A]];
+  rows.forEach((r, i) => {
+    const y = 42 + i * 56;
+    s += `<rect x="20" y="${y}" width="${360 - i * 30}" height="46" rx="7" fill="#1d2040" stroke="${r[2]}"/>` + txt(34, y + 20, r[0], { b: true, s: 11, c: r[2] }) + txt(34, y + 37, r[1], { s: 9, c: L });
+  });
+  s += txt(200, 280, "Highest priority at the top", { a: "middle", s: 9, c: L });
+  DIAGRAMS["alert-priorities"] = svg(400, 290, s);
+}
+{
+  let s = frame(400, 210);
+  s += txt(200, 26, "Signal characteristics", { a: "middle", b: true, s: 12 });
+  const t = [["Frequency", "200 – 2,500 Hz (bells excepted)"], ["General alarm", "Max 120 dB(A) in a space"], ["Bridge alerts", "75 – 85 dB(A) at 1 m"], ["Flashing light", "0.5 – 1.5 Hz, lit 50% or more"], ["Acknowledged", "Constant light, sound stops"]];
+  t.forEach((r, i) => {
+    const y = 40 + i * 31;
+    s += `<rect x="20" y="${y}" width="360" height="26" rx="5" fill="#1d2040"/>` + txt(32, y + 17, r[0], { b: true, s: 10, c: A }) + txt(150, y + 17, r[1], { s: 10 });
+  });
+  DIAGRAMS["alert-signal"] = svg(400, 210, s);
+}
+{
+  let s = frame(400, 220);
+  s += txt(200, 26, "Indicator colours", { a: "middle", b: true, s: 12 });
+  const t = [["Red", "Fire, pre-discharge (CO₂), water ingress main, chlorine gas", R], ["Amber", "Machinery, steering, bilge, cargo, other gas, door faults", "#ffb347"], ["Green / white", "General emergency alarm (summon passengers and crew)", G], ["White", "Calls: telephone, engine-room telegraph", T]];
+  t.forEach((r, i) => {
+    const y = 42 + i * 42;
+    s += `<rect x="20" y="${y}" width="360" height="36" rx="7" fill="#1d2040" stroke="${r[2]}"/><circle cx="40" cy="${y + 18}" r="8" fill="${r[2]}"/>` + txt(58, y + 15, r[0], { b: true, s: 10.5, c: r[2] }) + txt(58, y + 29, r[1], { s: 8.5, c: L });
+  });
+  DIAGRAMS["alert-colours"] = svg(400, 220, s);
+}
+{
+  let s = frame(400, 200);
+  s += txt(200, 26, "Alarm time limits", { a: "middle", b: true, s: 12 });
+  const t = [["Personnel alarm: pre-warning", "3 min before alarm", Y], ["Personnel alarm: reset within", "30 min at most", R], ["Engineers' alarm: acknowledge within", "5 min at most", R]];
+  t.forEach((r, i) => {
+    const y = 44 + i * 46;
+    s += `<rect x="20" y="${y}" width="360" height="38" rx="7" fill="#1d2040" stroke="${r[2]}"/>` + txt(34, y + 24, r[0], { s: 10 }) + txt(366, y + 24, r[1], { a: "end", b: true, s: 10.5, c: r[2] });
+  });
+  s += txt(200, 190, "Section 8", { a: "middle", s: 9, c: L });
+  DIAGRAMS["alert-timers"] = svg(400, 202, s);
+}
