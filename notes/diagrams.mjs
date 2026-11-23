@@ -1579,3 +1579,46 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 150, "2008 adoption · 2010 and 2016 in force on adoption · 2024 new certificate form", { a: "middle", s: 8.5, c: L });
   DIAGRAMS["sps-timeline"] = svg(400, 170, s);
 }
+
+// 95-97. CTU Code
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "CTU Code: 13 chapters + annexes", { a: "middle", b: true, s: 12 });
+  const grp = [
+    ["Basics", "1 Introduction · 2 Definitions · 3 Key requirements", A],
+    ["Who and why", "4 Responsibilities · 5 Transport conditions", Y],
+    ["The unit", "6 Properties · 7 Suitability · 8 Arrival and checking", G],
+    ["The work", "9 Packing · 10 Dangerous goods · 11 Completion", R],
+    ["After and training", "12 Unpacking · 13 Training", L],
+  ];
+  grp.forEach((g, i) => {
+    const y = 40 + i * 44;
+    s += `<rect x="20" y="${y}" width="360" height="38" rx="7" fill="#1d2040" stroke="${g[2]}"/>`;
+    s += txt(200, y + 16, g[0], { a: "middle", b: true, s: 10.5 }) + txt(200, y + 31, g[1], { a: "middle", s: 8.5, c: L });
+  });
+  s += txt(200, 276, "Annexes 1–10 and Appendices 1–5 give practical detail", { a: "middle", s: 9, c: L });
+  DIAGRAMS["ctu-structure"] = svg(400, 292, s);
+}
+{
+  let s = frame(400, 170);
+  s += txt(200, 26, "Information chain", { a: "middle", b: true, s: 12 });
+  const n = [["Consignor", 14], ["Packer", 92], ["Shipper", 170], ["Carrier", 248], ["Consignee", 326]];
+  n.forEach((x, i) => {
+    s += `<rect x="${x[1]}" y="60" width="62" height="40" rx="6" fill="#1d2040" stroke="${[A,G,Y,R,L][i]}"/>` + txt(x[1] + 31, 84, x[0], { a: "middle", s: 8.5, b: true });
+    if (i < 4) s += arrow(x[1] + 62, 80, n[i + 1][1], 80, L);
+  });
+  s += txt(200, 130, "Pass on: CTU number · seal number · verified gross mass · cargo description", { a: "middle", s: 9, c: Y });
+  s += txt(200, 150, "Packer weighs and tells shipper; shipper seals and documents", { a: "middle", s: 9, c: L });
+  DIAGRAMS["ctu-chain"] = svg(400, 170, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Transverse coefficient cy by mode", { a: "middle", b: true, s: 12 });
+  const rows = [["Road", 0.5, A], ["Rail", 0.5, A], ["Sea A (Hs ≤ 8 m)", 0.5, G], ["Sea B (8–12 m)", 0.7, Y], ["Sea C (> 12 m)", 0.8, R]];
+  rows.forEach((r, i) => {
+    const y = 48 + i * 36;
+    s += txt(20, y + 16, r[0], { s: 10 }) + `<rect x="150" y="${y}" width="${r[1] * 240}" height="22" rx="4" fill="${r[2]}"/>` + txt(150 + r[1] * 240 + 6, y + 16, r[1].toFixed(1), { s: 10, b: true });
+  });
+  s += txt(200, 236, "Force = mass × c × 9.81 m/s²", { a: "middle", s: 9, c: L });
+  DIAGRAMS["ctu-forces"] = svg(400, 250, s);
+}
