@@ -430,3 +430,44 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["ci-path"] = svg(400, 320, s);
 }
+
+// 24. ESP Code: structure (Annex A/B, Parts A/B, eight sections)
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "2011 ESP Code (A.1049(27)): structure", { a: "middle", b: true, s: 12 });
+  const box = (x, y, w, h, c, t1, t2) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${c}" fill-opacity="0.13" stroke="${c}"/>` + txt(x + w / 2, y + 18, t1, { a: "middle", b: true, s: 10.5, c }) + (t2 ? txt(x + w / 2, y + 32, t2, { a: "middle", s: 9, c: L }) : "");
+  s += box(18, 44, 178, 74, A, "Annex A: Bulk carriers", "");
+  s += box(28, 72, 78, 38, A, "Part A", "single-side skin");
+  s += box(112, 72, 78, 38, A, "Part B", "double-side skin");
+  s += box(204, 44, 178, 74, Y, "Annex B: Oil tankers", "");
+  s += box(214, 72, 78, 38, Y, "Part A", "double-hull");
+  s += box(298, 72, 78, 38, Y, "Part B", "not double-hull");
+  s += txt(200, 140, "Each part has the same eight sections", { a: "middle", s: 10.5, b: true });
+  const secs = ["General", "Renewal survey", "Annual survey", "Intermediate survey", "Preparations for survey", "Documentation on board", "Thickness procedures", "Reporting and evaluation"];
+  secs.forEach((t, i) => {
+    const col = i % 2, row = Math.floor(i / 2);
+    const x = 18 + col * 186, y = 150 + row * 34;
+    s += `<rect x="${x}" y="${y}" width="178" height="28" rx="4" fill="${G}" fill-opacity="0.12" stroke="${G}" stroke-opacity="0.6"/>`;
+    s += txt(x + 10, y + 18, `${i + 1}`, { b: true, c: G, s: 10.5 }) + txt(x + 26, y + 18, t, { s: 9.5 });
+  });
+  DIAGRAMS["esp-structure"] = svg(400, 300, s);
+}
+
+// 25. ESP Code: survey cycle for bulk carriers (renewal, annual, intermediate)
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "Five-year survey cycle (bulk carrier, Annex A)", { a: "middle", b: true, s: 12 });
+  const x0 = 40, sc = 64;
+  s += line(x0, 110, x0 + 5 * sc, 110, L, 2);
+  for (let y = 0; y <= 5; y++) {
+    s += line(x0 + y * sc, 102, x0 + y * sc, 118, T, 1.5) + txt(x0 + y * sc, 134, y === 0 ? "Start" : `Year ${y}`, { a: "middle", s: 9.5 });
+  }
+  for (let y = 1; y <= 4; y++) s += `<circle cx="${x0 + y * sc}" cy="110" r="5" fill="${A}"/>`;
+  s += `<rect x="${x0 + 1.5 * sc}" y="76" width="${sc}" height="14" rx="3" fill="${Y}" fill-opacity="0.35" stroke="${Y}"/>` + txt(x0 + 2 * sc, 87, "Intermediate", { a: "middle", s: 9, b: true });
+  s += `<rect x="${x0 + 3.5 * sc}" y="146" width="${1.5 * sc}" height="14" rx="3" fill="${R}" fill-opacity="0.35" stroke="${R}"/>` + txt(x0 + 4.25 * sc, 157, "Renewal window", { a: "middle", s: 9, b: true });
+  s += `<circle cx="${x0 + 5 * sc}" cy="110" r="6" fill="${R}"/>`;
+  s += `<circle cx="42" cy="186" r="4" fill="${A}"/>` + txt(52, 190, "Annual survey", { s: 9.5 });
+  s += `<rect x="150" y="180" width="14" height="10" fill="${Y}" fill-opacity="0.35" stroke="${Y}"/>` + txt(170, 190, "At the 2nd or 3rd annual, or between", { s: 9.5 });
+  s += txt(200, 214, "Renewal: may start at the 4th annual and finish by the 5th anniversary", { a: "middle", s: 9.5, c: L });
+  DIAGRAMS["esp-cycle"] = svg(400, 230, s);
+}
