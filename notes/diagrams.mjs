@@ -1622,3 +1622,37 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 236, "Force = mass × c × 9.81 m/s²", { a: "middle", s: 9, c: L });
   DIAGRAMS["ctu-forces"] = svg(400, 250, s);
 }
+
+// 98-100. Noise Code
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Noise limits, ships 10,000 GT and above", { a: "middle", b: true, s: 12 });
+  const rows = [["Machinery spaces", 110, R], ["Normally unoccupied", 90, Y], ["Workshops", 85, Y], ["Galleys", 75, A], ["Look-out posts", 70, A], ["Bridge and chartrooms", 65, G], ["Messrooms, offices", 60, G], ["Cabins and hospitals", 55, G]];
+  rows.forEach((r, i) => {
+    const y = 42 + i * 31;
+    s += txt(16, y + 15, r[0], { s: 10 }) + `<rect x="150" y="${y}" width="${r[1] * 1.8}" height="20" rx="4" fill="${r[2]}"/>` + txt(150 + r[1] * 1.8 + 5, y + 15, String(r[1]), { s: 10, b: true });
+  });
+  s += txt(200, 292, "dB(A), maximum levels", { a: "middle", s: 9, c: L });
+  DIAGRAMS["noise-limits"] = svg(400, 304, s);
+}
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "Warning notices at entrances", { a: "middle", b: true, s: 12 });
+  const rows = [["80–85 dB(A)", "High noise level, use hearing protectors", Y], ["85–110 dB(A)", "Dangerous noise, protectors mandatory", "#ff9f4a"], ["110–115 dB(A)", "Short stay only, protectors mandatory", R], ["Above 115 dB(A)", "Max 10 minutes, protectors mandatory", "#ff3b3b"]];
+  rows.forEach((r, i) => {
+    const y = 42 + i * 44;
+    s += `<rect x="20" y="${y}" width="360" height="38" rx="7" fill="#1d2040" stroke="${r[2]}"/>` + txt(34, y + 23, r[0], { b: true, s: 10.5, c: r[2] }) + txt(150, y + 23, r[1], { s: 9, c: L });
+  });
+  DIAGRAMS["noise-signs"] = svg(400, 230, s);
+}
+{
+  let s = frame(400, 210);
+  s += txt(200, 26, "Minimum Rw between spaces", { a: "middle", b: true, s: 12 });
+  const rows = [["Mess/recreation to cabin", 45, R], ["Cabin to cabin", 35, Y], ["Corridor to cabin", 30, G], ["Cabin to cabin, door", 30, G]];
+  rows.forEach((r, i) => {
+    const y = 44 + i * 38;
+    s += txt(16, y + 16, r[0], { s: 10 }) + `<rect x="170" y="${y}" width="${r[1] * 4}" height="22" rx="4" fill="${r[2]}"/>` + txt(170 + r[1] * 4 + 6, y + 16, String(r[1]), { s: 10, b: true });
+  });
+  s += txt(200, 200, "Higher Rw = better sound insulation", { a: "middle", s: 9, c: L });
+  DIAGRAMS["noise-rw"] = svg(400, 212, s);
+}
