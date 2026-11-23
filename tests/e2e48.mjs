@@ -1,55 +1,53 @@
-// Phone: 📈 Max improves card — register, audit, examiner rules, stop/start/continue, decision journal score, two-AI check.
+// 23 Nov 2026 (Mark): drawn diagrams inside notes (figure data-diagram → built-in SVG; never saved into the note).
+// Left: Paper trading (₱250,000 is now … + each category) → Overview / Positions by category / Journal (5 → 10 → all, dividends) / Strategy;
+// Investments (virtual value + % per account, best rate) → overview, how each is credited, rates kept; Notes = a folder that opens the notes.
+// Right: Websites / Apps = errors per item, tap one → overview (websites: visitors day / week / month; apps: status); Security = errors only.
+// Notes: no paperclip, Home button, one "Add note" button, menus in words, no tags, note ⋯ = attachment / share / print / delete, attachments read by Max.
 if (!process.env.SHOT_DIR) process.env.SHOT_DIR = (await import("node:os")).tmpdir();
 import http from "node:http"; import fs from "node:fs"; import path from "node:path"; import { createRequire } from "node:module";
 const require = createRequire(process.env.PW_REQUIRE || import.meta.url); const { chromium, devices } = require("playwright");
-const [, , pagePath, workerPath] = process.argv;
-let cfCalls = 0; const seen = [], days = [];
-let brainAsked = [];
-globalThis.fetch = async (u, o = {}) => { const url = String(u);
-  if (url.includes("generativelanguage")) { const q = JSON.parse(o.body).contents.at(-1).parts[0].text; brainAsked.push(q);
-    const action = /where should i put my money/i.test(q) ? { type: "home_dash", details: { name: "guide" } } : null;
-    return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ reply: action ? "Here." : "Answer to: " + q, action }) }] } }] })); }
-  return new Response("{}", { status: 404 }); };
-const worker = (await import(workerPath)).default;
-const ORIGIN = "http://127.0.0.1:8076", WK = "http://127.0.0.1:8875";
-let env = { GEMINI_API_KEY: "k", ALLOWED_ORIGIN: ORIGIN, MAX_PASSCODE: "pw" };
-const sW = http.createServer(async (req, res) => { const c = []; for await (const x of req) c.push(x);
-  const r = await worker.fetch(new Request(WK + req.url, { method: req.method, headers: req.headers, body: ["GET", "HEAD", "OPTIONS"].includes(req.method) ? undefined : Buffer.concat(c) }), env);
-  res.writeHead(r.status, Object.fromEntries(r.headers)); res.end(Buffer.from(await r.arrayBuffer())); }).listen(8875);
-const dir = path.dirname(pagePath);
-const sP = http.createServer((q, r) => { const f = q.url.split("?")[0].endsWith("sw.js") ? "sw.js" : "index.html"; r.writeHead(200, { "Content-Type": f === "sw.js" ? "text/javascript" : "text/html" }); r.end(fs.readFileSync(path.join(dir, f))); }).listen(8076);
+const [, , pagePath] = process.argv, dir = path.dirname(pagePath), FX = path.join(path.dirname(new URL(import.meta.url).pathname), "fixtures", "dash");
 let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
+let health = { ok: true, version: "max-worker-2026-11-18n", google: "linked (calendar, tasks, gmail)", database: "bound", paperTrading: "running — crypto checked " + new Date().toISOString().slice(0, 10), guard: "last check, 0 problem(s)", lastTrigger: { at: new Date().toISOString() }, emails: "last 2026-11-22T09:45Z “Max paper trading” sent; 3/3 recent sends OK" };
+const attSeen = []; let chatModel = "gemini-3.5-flash";
+const sP = http.createServer(async (q, r) => { const u = q.url.split("?")[0], J = (o, s = 200) => { r.writeHead(s, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" }); r.end(typeof o === "string" ? o : JSON.stringify(o)); };
+  if (q.method === "OPTIONS") return J("{}");
+  if (u === "/api/home/paper") return J(fs.readFileSync(path.join(FX, "paper.json"), "utf8"));
+  if (u === "/api/home/guide") return J(fs.readFileSync(path.join(FX, "guide.json"), "utf8"));
+  if (u === "/api/home/status") return J(fs.readFileSync(path.join(FX, "status.json"), "utf8"));
+  if (u === "/health") return J(health);
+  if (u === "/api/attachment") { const c = []; for await (const x of q) c.push(x); const b = JSON.parse(Buffer.concat(c).toString()); attSeen.push(b.name);
+    return J({ attachment: { kind: "document", title: "Ballast log", topic: "Ship", summary: "Ballast water exchange record PLANKTONMARK for voyage 12.", points: ["Exchange done 200 nm from land"], dates: [], amounts: [], text: Buffer.from(b.data, "base64").toString("utf8"), tags: [] } }); }
+  if (u === "/api/link") return J({ attachment: { kind: "web page", title: "IMO BWM page", summary: "BWM Convention overview LINKMARK.", points: [], dates: [], amounts: [], text: "D-2 standard" } });
+  if (u === "/api/chat") return J({ reply: "From your note Ballast water: ships must meet the D-2 standard.", model: chatModel, modelRole: chatModel === "gemini-3.5-flash" ? "main" : "backup", notesUsed: ["Ballast water"] });
+  if (u.startsWith("/api/")) return J({});
+  const f = u.endsWith("sw.js") ? "sw.js" : u.endsWith("sheetjs.js") ? "sheetjs.js" : "index.html"; r.writeHead(200, { "Content-Type": f.endsWith(".js") ? "text/javascript" : "text/html" }); r.end(fs.readFileSync(path.join(dir, f))); }).listen(8093);
+const B = "http://127.0.0.1:8093";
 const b = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), args: ["--no-sandbox"] });
-const mock = () => { window.__spoken = []; window.__q = []; window.__opened = [];
-  class R { start() { if (this.continuous) return; const t = window.__q.shift(); setTimeout(() => { if (t) this.onresult && this.onresult({ results: [[{ transcript: t }]] }); else this.onerror && this.onerror({ error: "no-speech" }); this.onend && this.onend(); }, 60); } stop() {} abort() {} }
-  window.webkitSpeechRecognition = R; window.SpeechRecognition = R;
-  Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { speak(u) { window.__spoken.push(u.text); u.onstart && u.onstart(); setTimeout(() => u.onend && u.onend(), 15); }, cancel() {}, getVoices() { return []; } } });
-  window.SpeechSynthesisUtterance = function (t) { this.text = t; };
-  window.open = (u) => { window.__opened.push(u); return {}; }; };
 const ctx = await b.newContext({ ...devices["Pixel 7"] });
-await ctx.addInitScript(([s, m]) => { if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); } (new Function("return " + m)())(); },
-  [{ jarvis_api_base_v2: WK, max_pass: "pw", max_notes_migrated_v1: "1" }, mock.toString()]);
-const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message));
-const reqs = [];
-const data = { nc: { open: [{ text: "Paper trading hasn't checked crypto since #", status: "corrective", first: "2026-11-20", days: 3, repeats: 1, action: "Max rotates sources" }], closed: [{ text: "Old error", closedAt: "2026-11-22" }], repeats: 1 },
-  audit: { day: "2026-11-23", days: 7, done: 40, failed: 3, newNc: ["X"], closed: ["Y"], repeats: ["Z"], open: [], verdict: "Not satisfactory: 1 error(s) came back after being closed." },
-  deck: [{ day: "2026-11-23", done: 9, failed: 1, failures: ["trading: crypto failed"], jobErrors: [] }], exam: { at: Date.now(), sampled: 20, ok: 18, wrong: 1, unsupported: 1, rulesAdded: 1, grader: "Claude" },
-  rules: [{ rule: "Say the report is due within 5 days.", note: "CFR Guide" }], ssc: { at: Date.now(), stop: [{ what: "Overlap: Websites and Apps", why: "Both check security." }], start: [], keep: [{ what: "Trading", why: "ok" }] }, claudeGrader: false,
-  calls: [{ area: "crypto", name: "Crypto", n: 12, right: 5, pct: 42, pnl: -3, open: 2, label: "poor, treat as noise" }, { area: "pse", name: "Philippine stocks", n: 3, right: 2, pct: 67, pnl: 4, open: 1, label: "too early (3 of 10 results)" }],
-  twoAi: { checks: 4, agree: 3, disagree: 1, recent: [{ q: "deadline for the report?", differences: ["5 days versus 24 hours"] }] } };
-await p.route("**/api/improve**", async r => { const u = r.request().url(), m = r.request().method(); reqs.push(m + " " + u.split("/api/")[1] + " " + (r.request().postData() || ""));
-  return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(data) }); });
-await p.goto(ORIGIN + "/"); await p.waitForTimeout(1500);
-await p.evaluate(() => window.maxOpenDrawer("L")); await p.waitForTimeout(800);
-const tile = await p.locator("#tileImprove").textContent();
-ok(/1/.test(tile) && /open finding/.test(tile) && /1 rule learned/.test(tile) && /came back after closing/.test(tile), "the card tile shows open findings, rules and repeats", tile);
-await p.click("#tileImprove"); await p.waitForTimeout(800);
-let body = await p.locator("#dashFullBody").textContent();
-ok(/Not satisfactory/.test(body) && /REPEAT/.test(body) && /Paper trading hasn't checked crypto/.test(body) && /Say the report is due within 5 days/.test(body), "audit verdict, REPEAT flag and learned rule are shown", body.slice(0, 300));
-ok(/Crypto/.test(body) && /42% right of 12/.test(body) && /poor, treat as noise/.test(body) && /too early \(3 of 10 results\)/.test(body), "decision journal shows the score per area and says too early when under 10", body);
-ok(/4 checked/.test(body) && /1 disagreed/.test(body) && /5 days versus 24 hours/.test(body), "two-AI check totals and the last disagreement are shown");
-ok(/Overlap: Websites and Apps/.test(body) && /Stop/.test(body) && /Continue/.test(body), "stop / start / continue list is shown");
-await p.click('[data-imp="exam"]'); await p.waitForTimeout(900);
-ok(reqs.some(x => /POST improve\/run .*"what":"exam"/.test(x)), "“Grade now” asks the server to run the examiner", reqs.join(" | "));
-ok(errs.length === 0, "no script errors", errs.join("|"));
-await b.close(); sW.close(); sP.close(); console.log(pass + " passed, " + fail + " failed"); process.exit(fail ? 1 : 0);
+const notes = JSON.stringify([{ id: "n1", title: "Ballast water", category: "Maritime › BWM", tags: ["bwm", "ballast"], body: "<p><b>D-2 standard</b></p><p>Ships must meet the D-2 standard.</p><figure class=\"note-diagram\" data-diagram=\"bwm-exchange-distance\"><figcaption>Exchange distances caption TEXTMARK</figcaption></figure><figure class=\"note-diagram\" data-diagram=\"evil-x\" onclick=\"window.__x=1\"><figcaption>unknown</figcaption></figure><svg onload=\"window.__y=1\"><circle r=\"3\"/></svg>", createdAt: 1, updatedAt: Date.now(), deleted: false }]);
+await ctx.addInitScript(([base, n]) => { window.__spoken = []; Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { speak(u) { window.__spoken.push(u.text); u.onend && setTimeout(() => u.onend(), 5); }, cancel() {}, getVoices() { return []; } } }); window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+  if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); localStorage.setItem("jarvis_api_base_v2", base); localStorage.setItem("max_pass", "pw"); localStorage.setItem("max_notes_migrated_v1", "1"); localStorage.setItem("max_notes_v3", n); localStorage.setItem("max_tree_open", JSON.stringify(["Maritime", "Maritime › BWM"])); } }, [B, notes]);
+const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message)); p.on("dialog", d => d.accept());
+await p.goto(B + "/"); await p.waitForTimeout(1200);
+const vis = s => p.locator(s).isVisible(), txt = s => p.locator(s).first().textContent();
+const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+
+await p.click('[data-edge="paper"]'); await p.waitForTimeout(600); await p.click("#tileNotes"); await p.waitForTimeout(600);
+await p.locator("#noteList >> text=Ballast water").first().click(); await p.waitForTimeout(800);
+ok(await p.locator("#readBody figure.note-diagram .diagram-svg svg").count() === 1, "read view shows the drawn diagram (one SVG for the known key)", String(await p.locator("#readBody figure.note-diagram").count()));
+ok(/TEXTMARK/.test(await txt("#readBody figure.note-diagram figcaption")), "the caption text stays under the diagram");
+ok(await p.locator("#readBody figure[data-diagram='evil-x'] svg").count() === 0 && await p.locator("#readBody svg").count() === 1, "unknown diagram key draws nothing, stray <svg> from outside text is removed");
+ok(await p.evaluate(() => !window.__x && !window.__y), "no script from the note text ran");
+const box = await p.locator("#readBody figure.note-diagram .diagram-svg svg").boundingBox();
+ok(box && box.width > 200 && box.width <= 420, "diagram fits the phone screen", JSON.stringify(box));
+// editing and saving must not store the SVG itself
+await p.click("#readEdit").catch(async () => { await p.locator("button", { hasText: /^Edit$/ }).first().click(); }); await p.waitForTimeout(500);
+ok(await p.locator("#editorBody figure.note-diagram .diagram-svg svg").count() === 1, "editor shows the diagram too");
+await p.locator("#editorBody p").first().click(); await p.keyboard.type(" EDITED"); await p.waitForTimeout(300);
+await p.click("#editorSave"); await p.waitForTimeout(1500);
+const body = await p.evaluate(() => { const n = JSON.parse(localStorage.getItem("max_notes_v3") || "[]"); return (n.find(x => x.id === "n1") || {}).body || ""; });
+ok(/EDITED/.test(body) && /data-diagram="bwm-exchange-distance"/.test(body) && !/diagram-svg/.test(body) && !/viewBox/.test(body), "the saved note keeps only the figure marker and caption, not the SVG", body.slice(0, 300));
+ok(errs.length === 0, "no page errors", errs.join(" | "));
+console.log("\n" + pass + " passed, " + fail + " failed"); await ctx.close(); await b.close(); sP.close();
+process.exit(fail ? 1 : 0);
