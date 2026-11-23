@@ -1363,3 +1363,32 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 260, "Rules 9, 11, 13, 17, 5", { a: "middle", s: 9, c: L });
   DIAGRAMS["stp-figures"] = svg(400, 270, s);
 }
+
+// 79. CSC test loads
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "CSC Annex II: test loads", { a: "middle", b: true, s: 12 });
+  const d = [["Lifting, corner fittings", "2R", 2.0, A], ["Stacking", "1.8R", 1.8, G], ["Lifting, fork-lift, grappler", "1.25R", 1.25, Y], ["Longitudinal restraint", "R each side", 1.0, A], ["Side-wall", "0.6P", 0.6, L], ["End-wall", "0.4P", 0.4, L]];
+  d.forEach(([n, v, k, c], i) => {
+    const y = 44 + i * 33;
+    s += txt(20, y + 14, n, { s: 9.5 }) + `<rect x="170" y="${y}" width="${k * 80}" height="20" rx="3" fill="${c}" fill-opacity="0.45" stroke="${c}"/>` + txt(170 + k * 80 + 6, y + 14, v, { b: true, s: 10 });
+  });
+  s += txt(200, 252, "R = maximum operating gross mass · P = R minus tare", { a: "middle", s: 9, c: L });
+  DIAGRAMS["csc-tests"] = svg(400, 260, s);
+}
+
+// 80. CSC examination cycle
+{
+  let s = frame(400, 210);
+  s += txt(200, 26, "Container examination", { a: "middle", b: true, s: 12 });
+  const x0 = 40, x1 = 360;
+  s += line(x0, 80, x1, 80, L, 2);
+  const m = [[0, "Manufacture", A], [0.3, "First exam", G], [0.65, "Next exam", Y], [1, "...", L]];
+  m.forEach(([f, t, c]) => { const x = x0 + f * (x1 - x0); s += `<circle cx="${x}" cy="80" r="5" fill="${c}"/>` + txt(x, 102, t, { a: "middle", s: 9.5 }); });
+  s += txt(x0 + 0.15 * (x1 - x0), 66, "within 5 years", { a: "middle", s: 9.5, c: G });
+  s += txt(x0 + 0.475 * (x1 - x0), 66, "date marked", { a: "middle", s: 9.5, c: Y });
+  s += txt(200, 140, "Periodic scheme: next examination date marked", { a: "middle", s: 9.5 });
+  s += txt(200, 160, "ACEP (continuous): at least every 30 months", { a: "middle", s: 9.5, c: A });
+  s += txt(200, 190, "Reg 2 of Annex I", { a: "middle", s: 9, c: L });
+  DIAGRAMS["csc-cycle"] = svg(400, 210, s);
+}
