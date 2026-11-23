@@ -1349,3 +1349,17 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 226, "Lashing breaking strength at least 133 kN (5.1.2)", { a: "middle", s: 9.5 });
   DIAGRAMS["tdc-lashing"] = svg(400, 250, s);
 }
+
+// 78. STP space figures
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "1973 Space Rules: key figures", { a: "middle", b: true, s: 12 });
+  const t = [["1.90 m", "Minimum headroom", A], ["0.37 m²", "Airing space per passenger", A], ["3.06 m³", "Gross volume per passenger", Y], ["72 h", "Bunks required from", Y], ["10 / hour", "Fresh air changes", G], ["12 months", "Space certificate, max", G]];
+  t.forEach(([a, b, c], i) => {
+    const col = i % 2, r = Math.floor(i / 2), x = 20 + col * 186, y = 42 + r * 62;
+    s += `<rect x="${x}" y="${y}" width="174" height="52" rx="7" fill="#1d2040" stroke="${c}"/>` + txt(x + 87, y + 24, a, { a: "middle", b: true, s: 15 }) + txt(x + 87, y + 42, b, { a: "middle", s: 9.5, c: L });
+  });
+  s += txt(200, 246, "Bunks: 1.90 m × 0.70 m · stairways at least 0.75 m wide", { a: "middle", s: 9.2, c: L });
+  s += txt(200, 260, "Rules 9, 11, 13, 17, 5", { a: "middle", s: 9, c: L });
+  DIAGRAMS["stp-figures"] = svg(400, 270, s);
+}
