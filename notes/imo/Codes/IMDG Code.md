@@ -13,7 +13,7 @@ tags: [imdg, dangerous-goods, packaged, solas-vii, marpol-iii, imo, code]
 | Legal basis | SOLAS chapter VII (carriage of dangerous goods) and MARPOL Annex III (harmful substances in packaged form) |
 | Amendments | Every **two years**, adopted by MSC |
 | Current mandatory edition | 2024 edition, Amendment 42-24, mandatory **1 Jan 2026** |
-| Next | Amendment 43-26, MSC.587(111), in force **1 Jan 2028** |
+| Next | Amendment 43-26 (adopted MSC 111, May 2026), MSC.587(111), in force **1 Jan 2028** |
 
 ## What it covers
 
