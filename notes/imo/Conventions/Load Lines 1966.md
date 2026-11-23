@@ -20,7 +20,6 @@ tags: [load-lines, freeboard, plimsoll, ll-protocol, certificate, imo, conventio
 - Ships carrying timber deck cargo get a smaller (timber) freeboard (Chapter IV)
 
 ## History
-- Adopted 5 Apr 1966 · in force 21 Jul 1968
 - Art 28: in force 12 months after at least 15 Governments, including 7 with at least 1 million GT of shipping, signed without reservation or deposited instruments
 - Amendments of 1971, 1975, 1979 and 1983 needed acceptance by two-thirds of Parties and never entered into force
 - **1988 Protocol**: adopted 11 Nov 1988 · in force **3 Feb 2000** · harmonised survey and certification with SOLAS and MARPOL, revised certain technical annex regulations, and introduced the **tacit amendment** procedure (Annex B amendments deemed accepted after 2 years from communication, or a shorter period of at least 1 year set at adoption; in force 6 months later; a Party may exempt itself for up to 1 year)

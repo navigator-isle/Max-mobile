@@ -20,10 +20,9 @@ tags: [hkc, ship-recycling, imo, convention]
 ![[diagram:hkc-flow|Steps for a ship: IHM Part I in service (initial and renewal surveys), IHM Parts II and III before recycling, Ship Recycling Plan from the authorized yard, final survey, then the Ready for Recycling Certificate (Regs 5, 9, 10, 11, 16). Drawn from the Convention text.]]
 
 ## History
-- Adopted 15 May 2009, Hong Kong diplomatic conference
 - Entry-into-force conditions: 15 States · 40% of world tonnage · recycling capacity ≥3% of their tonnage
 - Bangladesh and Liberia ratified 26 Jun 2023 → conditions met
-- In force 26 Jun 2025 (24 months after the conditions were met) · IMO lists 24 Parties covering about 57% of world tonnage
+- In force 24 months after the conditions were met · IMO lists 24 Parties covering about 57% of world tonnage
 - Annex Reg 1: existing ship = a ship that is not a new ship. New ship = building contract on/after entry into force (26 Jun 2025), or (no contract) keel laid or similar stage on/after 6 months after (26 Dec 2025), or delivery on/after 30 months after (26 Dec 2027)
 - Entry-into-force conditions at June 2023: about 45.9% of world tonnage and 3.31% recycling capacity
 - Cybutryne: Appendix 1 follows AFS Convention Annex 1 as in force (AFS amended by MEPC.331(76)) · the 2023 IHM Guidelines MEPC.379(80) (adopted MEPC 80, Jul 2023) add cybutryne to the Appendix 1 list for the IHM, with limits of 1,000 mg/kg dry paint (hull sample) or 200 mg/kg (wet paint sample)

@@ -19,11 +19,9 @@ tags: [cape-town, fishing-vessels, torremolinos, safety, imo, agreement]
 - IMO calls it the fourth pillar of fishing vessel safety, with STCW-F (training), the ILO Work in Fishing Convention 2007 and the FAO Port State Measures Agreement 2009
 
 ## History
-- Adopted 11 Oct 2012 ("Done at Cape Town this eleventh day of October two thousand and twelve")
 - Open for signature at IMO HQ 11 Feb 2013 – 10 Feb 2014, then accession (Art 3)
 - Art 4(1): in force 12 months after **not less than 22 States**, whose fishing vessels of 24 m and over operating on the high seas total **not less than 3,600**, have consented to be bound
-- Conditions met when Argentina deposited its instrument of accession at IMO on 24 Feb 2026: **28 States, 3,754 vessels** (24 m and over)
-- **In force February 2027**
+- Conditions met when Argentina deposited its instrument of accession at IMO on 24 Feb 2026: **28 States, 3,754 vessels** (24 m and over), so in force February 2027
 
 ## How the Agreement is built
 - Art 1(1): Parties give effect to the Agreement and to the 1993 Protocol, except Protocol Art 1(1)(a), 1(2), 1(3), Art 9 and Art 10

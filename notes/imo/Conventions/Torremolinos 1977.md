@@ -18,7 +18,7 @@ tags: [torremolinos, sfv, fishing-vessels, safety, protocol-1993, imo, conventio
 > **Key Point:** Neither the 1977 Convention nor the 1993 Protocol is in force. The rules live on through the Cape Town Agreement 2012, which brings the Protocol's technical rules into force. Conference Resolution 2 says the Agreement "replaces and supersedes" the 1993 Protocol, and States should become Parties to the Agreement instead.
 
 ## What is Torremolinos 1977
-- Set safety requirements for the construction and equipment of **new, decked, seagoing fishing vessels of 24 m and over**
+- Set safety requirements for the construction and equipment of those vessels
 - Recognised that fishing vessels differ from other ships: they sail empty and load their catch at sea
 - Existing vessels were covered only for radio requirements (IAPH summary of the 1977 text)
 - Subject areas: stability · construction, watertight integrity and equipment · machinery, electrical installations and unattended machinery spaces · fire protection · protection of the crew · life-saving appliances · emergency procedures, musters and drills · radiocommunications · shipborne navigational equipment

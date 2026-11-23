@@ -7,7 +7,7 @@ tags: [inmarsat, imso, satellite, gmdss, communications, imo, convention]
 | Item | Detail |
 |---|---|
 | Convention | Adopted 3 Sep 1976, London · in force **16 Jul 1979** |
-| Operating Agreement | Done at London 3 Sep 1976 · in force 16 Jul 1979 |
+| Operating Agreement | Same dates as the Convention |
 | Depositary | IMO |
 | Parties (IMO table, printed 5 Sep 2023) | 89 States for the Operating Agreement, 94.85% of world tonnage |
 | Purpose | Improve maritime communications: distress and safety of life, ship efficiency and management, maritime public correspondence, radiodetermination |
@@ -74,15 +74,12 @@ tags: [inmarsat, imso, satellite, gmdss, communications, imo, convention]
 | Date | Event |
 |---|---|
 | 1973 | IMO decides to create a satellite-based maritime communications system |
-| 3 Sep 1976 | Convention and Operating Agreement adopted |
-| 16 Jul 1979 | Convention in force |
-| 1982 | Operations begin, from London |
+| 3 Sep 1976 | Convention and Operating Agreement adopted · in force 16 Jul 1979 |
 | 16 Oct 1985 | Amendment extending services to **aircraft**, in force 13 Oct 1989 |
 | 19 Jan 1989 | Amendment extending services to **land vehicles**, in force 26 Jun 1997 |
-| 1988 | SOLAS amendments introduce the GMDSS and require ships in specified sea areas to carry Inmarsat equipment |
+| 1988 | SOLAS amendments introduce the GMDSS (see At a glance) |
 | 9 Dec 1994 | Amendment renaming the organization **International Mobile Satellite Organization** and changing Council composition (listed as not yet in force in the treaty summary checked) |
 | 24 Apr 1998 | Amendments for **privatization from April 1999**: a commercial company and an intergovernmental body (IMSO) with public service obligations, including GMDSS. In force **31 Jul 2001**. |
-| 1999 | Organization restructured into IMSO and Inmarsat |
 | End 2003 | Inmarsat Ltd fully privatised (IMO page) |
 
 ## IMSO today

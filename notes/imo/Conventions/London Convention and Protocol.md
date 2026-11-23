@@ -20,9 +20,7 @@ tags: [london-convention, london-protocol, dumping, waste, co2, imo, convention]
 - LP Art 2: Parties act according to their scientific, technical and economic capabilities to prevent, reduce and where practicable eliminate pollution from dumping or incineration
 
 ## History
-- LC adopted 13 Nov 1972 · in force 30 Aug 1975 · IMO administers it since 1977
 - 1993 LC amendments (in force 1994): ban on dumping low-level radioactive waste · industrial waste dumping phased out by 31 Dec 1995 · ban on incineration at sea of industrial waste
-- LP adopted 7 Nov 1996 · in force **24 Mar 2006**
 - **2006 amendment** (LP.1(1)): adds CO₂ sequestration in sub-seabed geological formations to Annex 1 · adopted 2 Nov 2006 · in force 10 Feb 2007 (Canada 29 Jan 2007) · excludes use of CO₂ streams for enhanced oil recovery (IMO)
 - **2009 amendment** (LP.3(4), adopted 30 Oct 2009): Art 6 — export of CO₂ streams for sub-seabed storage allowed between countries with an agreement · not yet in force: takes effect 60 days after two-thirds of Parties accept (IMO) · **2019 resolution LP.5(14)** allows provisional application, by a declaration to the IMO Secretary-General
 - **2013 amendment** (LP.4(8), adopted 18 Oct 2013): marine geoengineering — new Art 6bis, Annex 4 (ocean fertilization), Annex 5 (assessment framework)

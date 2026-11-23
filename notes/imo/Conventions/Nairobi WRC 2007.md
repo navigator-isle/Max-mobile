@@ -8,19 +8,16 @@ tags: [nairobi, wreck-removal, wrc, imo, convention, liability]
 |---|---|
 | Adopted | 18 May 2007 (Nairobi) |
 | In force | 14 Apr 2015 |
-| Owner liability | Locate, mark and remove hazardous wreck (Art 10) |
-| Insurance | Ships ≥ 300 GT (Art 12) |
+| Owner liability | The registered owner pays to locate, mark and remove a hazardous wreck (Art 10) |
+| Insurance | Ships ≥ 300 GT flying a Party's flag: compulsory insurance or other financial security, certificate carried on board (Art 12) |
 
 ## What is the WRC
 - IMO convention giving States a legal basis to remove, or arrange the removal of, wrecks that threaten safety at sea or the marine environment, with uniform rules beyond the territorial sea
-- Registered owner is liable for the costs of locating, marking and removing a hazardous wreck (Art 10)
-- Compulsory insurance or other financial security for ships ≥300 GT flying a Party's flag · certificate carried on board (Art 12)
 - The affected State may remove the wreck at the owner's expense if the owner does not (Art 9)
 
 ## History
-- Adopted 18 May 2007 at an international conference in Nairobi, Kenya
 - Open for signature at IMO HQ 19 Nov 2007 – 18 Nov 2008, then accession (Art 17)
-- Art 18: in force 12 months after 10 States signed without reservation or deposited instruments · in force **14 Apr 2015**
+- Art 18: in force 12 months after 10 States signed without reservation or deposited instruments
 
 ## Applies to
 - Convention area: a Party's exclusive economic zone (or, if none, an area adjacent to the territorial sea extending no more than 200 nm from the baselines) — Art 1

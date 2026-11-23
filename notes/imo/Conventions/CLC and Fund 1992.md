@@ -11,9 +11,9 @@ tags: [clc, fund, iopc, oil-pollution, liability, compensation, tanker, imo, con
 | 3 — Supplementary Fund 2003 | Oil receivers (optional) | 750 million in total |
 
 ## What is CLC / Fund
-- **CLC 1992**: International Convention on Civil Liability for Oil Pollution Damage — the shipowner is liable for pollution damage, with compulsory insurance (tier 1)
+- **CLC 1992** (tier 1): International Convention on Civil Liability for Oil Pollution Damage — strict shipowner liability with compulsory insurance
 - **Fund 1992**: International Convention on the Establishment of an International Fund for Compensation for Oil Pollution Damage — pays where full compensation cannot be obtained under the CLC (tier 2); financed by contributions from receivers of oil
-- **Supplementary Fund Protocol 2003**: optional third tier
+- **Supplementary Fund Protocol 2003** (tier 3): optional
 - Covers pollution damage from **persistent oil** carried by ships constructed or adapted to carry oil in bulk — laden or unladen, including the bunker oil of such ships
 
 ## History
@@ -23,8 +23,7 @@ tags: [clc, fund, iopc, oil-pollution, liability, compensation, tanker, imo, con
   - Extended coverage to the EEZ · preventive measures covered even without a spill, where there is a grave and imminent threat of pollution damage · environmental damage limited to the reasonable cost of reinstatement
   - States Parties to the 1992 CLC ceased to be Parties to CLC 1969 from 16 May 1998
   - CLC 1992 entry into force: 12 months after 10 States, including four each with at least 1 million units of gross tanker tonnage, deposited instruments (Protocol Art 13)
-- Original 1992 limits: CLC 3 million SDR (up to 5,000 GT) + 420 SDR per extra GT, max 59.7 million SDR · Fund max 135 million SDR per incident (including CLC)
-- 2000 amendments raised the limits by about 50% (see below) · apply to incidents on or after 1 Nov 2003
+- Original 1992 limits (CLC 3 million SDR up to 5,000 GT + 420 SDR per extra GT, max 59.7 million; Fund 135 million in total) were raised by about 50% by the 2000 amendments, for incidents on or after 1 Nov 2003 (current limits in the table above)
 - 2000 Protocol (adopted 27 Sep 2000, in force 27 Jun 2001) to end the Fund 1971 · Fund 1971 ceased to be in force 24 May 2002
 - Supplementary Fund Protocol: adopted 16 May 2003 · in force 3 Mar 2005
 
@@ -59,7 +58,6 @@ tags: [clc, fund, iopc, oil-pollution, liability, compensation, tanker, imo, con
 
 ## Key Point
 > Tankers carrying more than 2,000 tons of oil in bulk as cargo must have CLC insurance; the CLC covers the tanker's bunker oil as well as cargo oil
-> Three tiers per incident: CLC owner limit (max 89.77 million SDR) → Fund 1992 (203 million SDR total) → Supplementary Fund (750 million SDR total)
 > Persistent oil (crude, fuel oil, heavy diesel, lubricating oil) is covered
 
 ## Sources (re-checked 23 Nov 2026)

@@ -22,7 +22,6 @@ tags: [bunkers, bunker-oil, liability, insurance, certificate, imo, convention]
 - A standalone convention covering pollution damage only
 - Modelled on the 1969 Civil Liability Convention
 - Three tools: strict liability of the shipowner, compulsory insurance, and direct action against the insurer
-- Ships over 1,000 GT carry a certificate on board
 
 ## Scope (Art 2)
 

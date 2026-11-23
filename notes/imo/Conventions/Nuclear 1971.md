@@ -21,7 +21,6 @@ tags: [nuclear, liability, nuclear-material, paris-convention, vienna-convention
 
 ## What is Nuclear 1971
 - Nuclear damage during a sea voyage could fall under maritime conventions covering shipowners and also under conventions making the operators of the nuclear installations involved liable. The two systems could conflict (IMO).
-- The Convention removes that conflict: the operator is **exclusively liable**, and the carrier is exonerated
 - The preamble recalls the **Paris Convention** (29 Jul 1960, with its 1964 Additional Protocol) and the **Vienna Convention** (21 May 1963)
 - The Convention contains no definitions of "nuclear incident" or "nuclear material" of its own in the operative articles checked. Those concepts come from the nuclear liability conventions it refers to.
 

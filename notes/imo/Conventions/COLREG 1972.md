@@ -17,7 +17,6 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
 - On entry into force the Regulations replaced the International Regulations for Preventing Collisions at Sea, 1960 (Art IV(5))
 
 ## History
-- Done at London 20 Oct 1972 · in force **15 Jul 1977**
 - Entry into force (Art IV): 12 months after at least 15 States whose merchant fleets make up at least 65% of the world fleet (vessels of 100 GT and over) became Parties
 - Art II: open for signature until 1 Jun 1973, then accession
 - Amendments (Art VI): proposed → two-thirds majority in the Maritime Safety Committee → two-thirds majority in the Assembly → in force on the date set by the Assembly unless more than one-third of Parties object (tacit acceptance)

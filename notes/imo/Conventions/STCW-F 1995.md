@@ -21,12 +21,10 @@ tags: [stcw-f, fishing, training, certification, watchkeeping, imo, convention]
 - A Party may exempt certain provisions for vessels under 45 m that operate only from its ports and within its limited waters (IMO)
 
 ## History
-- Adopted 7 Jul 1995 in London
 - Art 12: in force 12 months after not less than 15 States signed without reservation or deposited instruments
-- In force **29 Sep 2012** (IMO)
 - Annex amendments follow a comprehensive review of the Convention, to meet the needs of the fishing industry (IMO)
-- **MSC.561(108)** — revised Annex: adopted 23 May 2024 · deemed accepted 1 Jul 2025 unless more than one third of Parties objected · in force **1 Jan 2026**
-- **MSC.562(108)** — new **STCW-F Code**, Part A (mandatory) and Part B (guidance): adopted 23 May 2024 · Part A takes effect on the same date as MSC.561(108)
+- **MSC.561(108)** (revised Annex): deemed accepted 1 Jul 2025 unless more than one third of Parties objected
+- **MSC.562(108)**: the new **STCW-F Code**, Part A (mandatory) and Part B (guidance)
 
 ## The 15 Articles
 | Art | Title |
@@ -141,7 +139,6 @@ tags: [stcw-f, fishing, training, certification, watchkeeping, imo, convention]
 
 ## Key Point
 > Fishing skippers and officers need STCW-F certificates, not the STCW merchant certificates
-> From 1 Jan 2026 the STCW-F Code competence tables apply
 > Certificates are revalidated at intervals not exceeding five years; the medical certificate lasts at most two years (one year under 18)
 > Port States can check the certificates of foreign fishing vessel crews (Art 8)
 

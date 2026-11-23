@@ -22,9 +22,9 @@ tags: [tonnage, gross-tonnage, net-tonnage, itc, imo, convention]
 - GT governs manning, safety and registration fees; both GT and NT are used for port dues (IMO)
 
 ## History
-- Adopted 23 Jun 1969 · open for signature six months from 23 Jun 1969, then accession (Art 16)
+- Open for signature six months from 23 Jun 1969, then accession (Art 16)
 - Art 17: in force **24 months after at least 25 Governments, whose merchant fleets are at least 65% of world gross tonnage**, signed without reservation or deposited instruments → in force **18 Jul 1982**
-- Ships built earlier could keep their old tonnage for 12 years, until 18 Jul 1994, to protect operators from higher charges tied to tonnage
+- Existing ships could keep their old tonnage for 12 years to protect operators from higher charges tied to tonnage
 
 ---
 
