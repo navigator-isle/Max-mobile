@@ -938,3 +938,45 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += tile(204, 142, "4,000 TBq", "INF 1 limit", "INF 2: 2 x 10^6 TBq (fuel), 2 x 10^5 (Pu)", R);
   DIAGRAMS["inf-requirements"] = svg(400, 250, s);
 }
+
+// 51. IP Code people thresholds
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "IP Code: how many people on board", { a: "middle", b: true, s: 12 });
+  // scale bar
+  const X = (n) => 24 + (n / 300) * 352;
+  s += `<rect x="${X(0)}" y="70" width="${X(12) - X(0)}" height="22" fill="${L}" fill-opacity="0.25" stroke="${L}"/>`;
+  s += `<rect x="${X(12)}" y="70" width="${X(60) - X(12)}" height="22" fill="${G}" fill-opacity="0.3" stroke="${G}"/>`;
+  s += `<rect x="${X(60)}" y="70" width="${X(240) - X(60)}" height="22" fill="${Y}" fill-opacity="0.3" stroke="${Y}"/>`;
+  s += `<rect x="${X(240)}" y="70" width="${X(300) - X(240)}" height="22" fill="${R}" fill-opacity="0.3" stroke="${R}"/>`;
+  [[0, "0"], [12, "12"], [60, "60"], [240, "240"]].forEach(([n, l]) => { s += txt(X(n), 108, l, { a: "middle", s: 9.5, b: true }); });
+  const lines = [
+    ["12 or fewer", "IP Code not triggered", L],
+    ["Over 12", "IP Code applies: Industrial Personnel Safety Certificate", G],
+    ["Over 60", "SOLAS III as passenger ships; fire safety as ship with 36 or fewer", Y],
+    ["Over 240", "Subdivision and fire safety as passenger ship", R],
+  ];
+  lines.forEach(([a, b, c], i) => {
+    const y = 134 + i * 26;
+    s += `<rect x="14" y="${y - 12}" width="6" height="18" rx="2" fill="${c}"/>`;
+    s += txt(28, y, a, { s: 9.5, b: true, c });
+    s += txt(98, y, b, { s: 8.5 });
+  });
+  s += txt(200, 242, "Count = industrial personnel + special personnel + passengers (passengers capped at 12)", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["ip-thresholds"] = svg(400, 252, s);
+}
+
+// 52. IP Code flow: before and during transfer
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Industrial personnel: from joining to transfer", { a: "middle", b: true, s: 12 });
+  const steps = [["1", "Fit and trained", "Age 16 or over, medical proof, training, documents to master", A], ["2", "Ship familiarization", "Before departure or on boarding: layout, muster, escape, alarms", G], ["3", "Transfer briefing", "Before transfer: procedures, arrangements, added safety equipment", Y], ["4", "Safe transfer", "Job safety analysis, checked equipment, lit route, headcount", R]];
+  steps.forEach(([n, t, d, c], i) => {
+    const y = 40 + i * 52;
+    s += `<rect x="14" y="${y}" width="372" height="44" rx="6" fill="${c}" fill-opacity="0.1" stroke="${c}"/>`;
+    s += `<circle cx="34" cy="${y + 22}" r="11" fill="${c}"/>` + txt(34, y + 26, n, { a: "middle", b: true, s: 11, c: BG });
+    s += txt(56, y + 17, t, { b: true, s: 10.5, c });
+    s += txt(56, y + 33, d, { s: 8.5 });
+  });
+  DIAGRAMS["ip-flow"] = svg(400, 250, s);
+}
