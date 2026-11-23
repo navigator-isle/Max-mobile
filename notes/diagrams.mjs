@@ -1239,3 +1239,44 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 262, "Weights add up to 1.0 per cycle", { a: "middle", s: 9, c: L });
   DIAGRAMS["nox-cycles"] = svg(400, 280, s);
 }
+
+// 70. Polar structure
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "Polar Code structure", { a: "middle", b: true, s: 12 });
+  const b = (x, y, w, h, t, u, c) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#1d2040" stroke="${c}"/>` + txt(x + w / 2, y + 20, t, { a: "middle", b: true, s: 10.5 }) + txt(x + w / 2, y + 38, u, { a: "middle", s: 9, c: L });
+  s += txt(110, 52, "SAFETY · SOLAS XIV", { a: "middle", c: A, b: true, s: 10 }) + txt(290, 52, "ENVIRONMENT · MARPOL", { a: "middle", c: G, b: true, s: 10 });
+  s += b(20, 60, 180, 48, "Part I-A", "Safety: 12 chapters (mandatory)", A) + b(20, 118, 180, 48, "Part I-B", "Guidance", A);
+  s += b(210, 60, 170, 48, "Part II-A", "Pollution: 5 chapters (mandatory)", G) + b(210, 118, 170, 48, "Part II-B", "Guidance", G);
+  s += txt(200, 200, "MSC.385(94), 21 Nov 2014 · MEPC.264(68), 15 May 2015", { a: "middle", s: 9.5 });
+  s += txt(200, 220, "In force 1 Jan 2017", { a: "middle", s: 10, b: true, c: Y });
+  s += txt(200, 246, "Introduction: definitions, categories A/B/C, hazards", { a: "middle", s: 9, c: L });
+  DIAGRAMS["polar-structure"] = svg(400, 270, s);
+}
+
+// 71. Polar categories
+{
+  let s = frame(400, 244);
+  s += txt(200, 26, "Ship categories", { a: "middle", b: true, s: 12 });
+  [["A", "Medium first-year ice, may include old ice", "Polar Class 1–5", R], ["B", "Thin first-year ice, may include old ice", "Polar Class 6–7", Y], ["C", "Open water or milder ice", "Ice-strengthened as approved", G]].forEach(([k, a, b, c], i) => {
+    const y = 42 + i * 58;
+    s += `<rect x="20" y="${y}" width="360" height="50" rx="7" fill="#1d2040" stroke="${c}"/><circle cx="46" cy="${y + 25}" r="14" fill="${c}"/>` + txt(46, y + 31, k, { a: "middle", b: true, s: 15, c: BG }) + txt(72, y + 21, a, { s: 10.5 }) + txt(72, y + 39, b, { s: 9.5, c: L });
+  });
+  s += txt(200, 230, "Category A is the most ice-capable", { a: "middle", s: 9, c: L });
+  DIAGRAMS["polar-categories"] = svg(400, 244, s);
+}
+
+// 72. Polar discharge
+{
+  let s = frame(400, 240);
+  s += txt(200, 26, "Arctic: distance from ice shelf or fast ice", { a: "middle", b: true, s: 12 });
+  const x0 = 30, k = 26;
+  s += `<rect x="${x0}" y="46" width="20" height="150" fill="#9fd3ff" fill-opacity="0.5"/>` + txt(x0 + 10, 214, "Ice", { a: "middle", s: 9, c: L });
+  const rows = [["Comminuted, disinfected sewage", 3, Y], ["Untreated sewage", 12, R], ["Food waste (from land or ice)", 12, R]];
+  rows.forEach(([t, n, c], i) => {
+    const y = 56 + i * 48;
+    s += txt(60, y + 2, t, { s: 9.5 }) + `<rect x="${x0 + 20}" y="${y + 8}" width="${n * 24}" height="16" rx="3" fill="${c}" fill-opacity="0.4" stroke="${c}"/>` + txt(x0 + 20 + n * 24 + 6, y + 21, "> " + n + " nm", { b: true, s: 10, c });
+  });
+  s += txt(200, 224, "Oil and NLS: no discharge in Arctic waters", { a: "middle", s: 9.5, c: L });
+  DIAGRAMS["polar-discharge"] = svg(400, 240, s);
+}
