@@ -2387,3 +2387,110 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 220, "or had no reasonable means of checking", { a: "middle", s: 8.5, c: Y });
   DIAGRAMS["bl-clause"] = svg(400, 240, s);
 }
+
+// 165-170. Life-saving equipment guide
+const OR = "#ff9f43";
+{
+  let s = frame(400, 232);
+  s += txt(200, 24, "Personal life-saving appliances", { a: "middle", b: true, s: 12 });
+  // lifebuoy
+  s += `<circle cx="55" cy="84" r="25" fill="none" stroke="${OR}" stroke-width="13"/><circle cx="55" cy="84" r="31" fill="none" stroke="${T}" stroke-width="1" stroke-dasharray="2 3"/>`;
+  // lifejacket
+  s += `<path d="M132,62 L148,56 Q155,66 162,56 L178,62 L184,112 L168,114 L166,98 L144,98 L142,114 L126,112 Z" fill="${A}" fill-opacity=".45" stroke="${A}" stroke-width="1.6"/><circle cx="170" cy="70" r="3" fill="${Y}"/>`;
+  // immersion suit
+  s += `<circle cx="255" cy="60" r="10" fill="${R}" fill-opacity=".5" stroke="${R}" stroke-width="1.6"/><path d="M243,72 L267,72 L276,108 L268,110 L262,88 L260,124 L250,124 L248,88 L242,110 L234,108 Z" fill="${R}" fill-opacity=".45" stroke="${R}" stroke-width="1.6"/>`;
+  // thermal protective aid
+  s += `<path d="M330,58 L370,58 L376,122 L324,122 Z" fill="#c9ced9" fill-opacity=".5" stroke="#c9ced9" stroke-width="1.6"/><line x1="337" y1="70" x2="363" y2="112" stroke="#c9ced9" stroke-width="1" opacity=".6"/><line x1="363" y1="70" x2="337" y2="112" stroke="#c9ced9" stroke-width="1" opacity=".6"/>`;
+  const cap = [[55, "Lifebuoy", "both sides"], [155, "Lifejacket", "every person"], [255, "Immersion suit", "boat crews"], [350, "Thermal aid", "if no suit"]];
+  cap.forEach(c => { s += txt(c[0], 156, c[1], { a: "middle", b: true, s: 9.5 }) + txt(c[0], 171, c[2], { a: "middle", s: 8, c: L }); });
+  s += txt(200, 206, "Regulation III/7, with III/32 for cargo ships", { a: "middle", s: 8.5, c: Y });
+  DIAGRAMS["lsa-personal"] = svg(400, 234, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 24, "A lifebuoy and its fittings", { a: "middle", b: true, s: 12 });
+  const cx = 120, cy = 130;
+  s += `<circle cx="${cx}" cy="${cy}" r="62" fill="none" stroke="${OR}" stroke-width="26"/>`;
+  for (let i = 0; i < 4; i++) { const a = i * 90 + 45, r = 62; s += `<rect x="${cx + r * Math.cos(a * Math.PI / 180) - 5}" y="${cy + r * Math.sin(a * Math.PI / 180) - 5}" width="10" height="10" fill="#fff" opacity=".85" transform="rotate(${a} ${cx + r * Math.cos(a * Math.PI / 180)} ${cy + r * Math.sin(a * Math.PI / 180)})"/>`; }
+  s += `<circle cx="${cx}" cy="${cy}" r="82" fill="none" stroke="${L}" stroke-width="1.4" stroke-dasharray="5 3"/>`;
+  s += `<rect x="${cx - 8}" y="${cy - 94}" width="16" height="12" rx="3" fill="${Y}"/>`;
+  s += `<rect x="${cx + 70}" y="${cy - 8}" width="12" height="18" rx="2" fill="${G}"/>`;
+  const L1 = (y, t, c, px, py) => line(px, py, 240, y, c, 1) + txt(246, y + 4, t, { s: 9.5, c });
+  s += L1(60, "Self-igniting light", Y, cx + 8, cy - 90);
+  s += L1(100, "Smoke signal", G, cx + 82, cy);
+  s += L1(140, "Grabline around the buoy", L, cx + 82, cy + 22);
+  s += L1(180, "Buoyant lifeline", A, cx + 50, cy + 52);
+  s += L1(216, "Ship's name, port of registry", T, cx + 10, cy + 62);
+  DIAGRAMS["lsa-lifebuoy"] = svg(400, 252, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 24, "Inflatable liferaft", { a: "middle", b: true, s: 12 });
+  s += line(10, 150, 392, 150, A, 1, "4 3");
+  s += `<path d="M110,128 Q200,34 290,128 Z" fill="${OR}" fill-opacity=".35" stroke="${OR}" stroke-width="2"/>`;
+  s += `<ellipse cx="116" cy="136" rx="22" ry="14" fill="#1d2040" stroke="${T}" stroke-width="2"/><ellipse cx="284" cy="136" rx="22" ry="14" fill="#1d2040" stroke="${T}" stroke-width="2"/>`;
+  s += `<rect x="116" y="146" width="168" height="8" fill="#2a2d4a" stroke="${T}" stroke-width="1.5"/>`;
+  s += `<path d="M300,128 L330,166" stroke="${G}" stroke-width="3" fill="none"/><path d="M300,140 L316,140 M310,152 L326,152" stroke="${G}" stroke-width="2"/>`;
+  s += `<path d="M200,156 L200,196 L170,214 L230,214 Z" fill="${Y}" fill-opacity=".25" stroke="${Y}" stroke-width="1.5"/>`;
+  s += `<path d="M96,132 Q50,100 30,50" stroke="${L}" stroke-width="1.6" fill="none" stroke-dasharray="4 3"/>`;
+  s += txt(30, 44, "Painter to the ship", { s: 9, c: L });
+  s += txt(14, 186, "Buoyancy tubes:", { s: 9, c: T }) + txt(14, 199, "two or more", { s: 8.5, c: L }) + txt(14, 211, "compartments", { s: 8.5, c: L });
+  s += line(205, 82, 205, 56, OR, 1) + txt(205, 50, "Canopy", { a: "middle", s: 9.5, c: OR });
+  s += line(332, 168, 360, 168, G, 1) + txt(362, 172, "Ramp,", { s: 9, c: G }) + txt(362, 184, "ladder", { s: 9, c: G });
+  s += txt(200, 226, "Sea anchor", { a: "middle", s: 9.5, c: Y }) + txt(200, 242, "Knife on the canopy, next to the painter", { a: "middle", s: 8, c: L });
+  DIAGRAMS["lsa-liferaft"] = svg(400, 252, s);
+}
+{
+  let s = frame(400, 266);
+  s += txt(200, 24, "Lifeboat types", { a: "middle", b: true, s: 12 });
+  const hullp = (x, y, w) => `<path d="M${x},${y} L${x + w},${y} L${x + w - 12},${y + 22} L${x + 12},${y + 22} Z" fill="#2a2d4a" stroke="${T}" stroke-width="1.6"/>`;
+  // open / partially enclosed
+  s += hullp(30, 80, 150);
+  s += `<path d="M30,80 L30,66 Q50,60 62,66 L62,80" fill="${OR}" fill-opacity=".5" stroke="${OR}" stroke-width="1.6"/><path d="M148,80 L148,66 Q160,60 180,66 L180,80" fill="${OR}" fill-opacity=".5" stroke="${OR}" stroke-width="1.6"/>`;
+  s += txt(105, 124, "Partially enclosed", { a: "middle", b: true, s: 10 }) + txt(105, 138, "covers at the two ends", { a: "middle", s: 8.5, c: L });
+  // totally enclosed
+  s += hullp(220, 80, 150);
+  s += `<path d="M228,80 Q232,46 300,44 Q362,46 366,80 Z" fill="${OR}" fill-opacity=".5" stroke="${OR}" stroke-width="1.8"/><rect x="290" y="56" width="16" height="12" rx="2" fill="${BG}" stroke="${T}"/>`;
+  s += txt(295, 124, "Totally enclosed", { a: "middle", b: true, s: 10 }) + txt(295, 138, "closed from the weather", { a: "middle", s: 8.5, c: L });
+  // free-fall
+  s += `<path d="M28,180 L150,226 L28,226 Z" fill="#2a2d4a" stroke="${L}" stroke-width="1.4"/>`;
+  s += `<path d="M80,176 L158,206 L150,214 L72,186 Z" fill="${OR}" fill-opacity=".5" stroke="${OR}" stroke-width="1.8" />`;
+  s += `<path d="M160,200 Q210,238 262,226" stroke="${R}" stroke-width="1.6" fill="none" stroke-dasharray="4 3"/><circle cx="262" cy="226" r="3" fill="${R}"/>`;
+  s += line(10, 232, 390, 232, A, 1, "4 3");
+  s += txt(295, 196, "Free-fall", { a: "middle", b: true, s: 10 }) + txt(295, 210, "launched down a ramp,", { a: "middle", s: 8.5, c: L }) + txt(295, 222, "drops into the sea", { a: "middle", s: 8.5, c: L });
+  s += txt(200, 256, "Self-contained air support and fire protection are added options", { a: "middle", s: 8, c: Y });
+  DIAGRAMS["lsa-lifeboats"] = svg(400, 268, s);
+}
+{
+  let s = frame(400, 290);
+  s += txt(200, 24, "How survival craft leave the ship", { a: "middle", b: true, s: 12 });
+  const panel = (x, y, title, sub, draw) => `<rect x="${x}" y="${y}" width="180" height="104" rx="8" fill="#1d2040" stroke="#3a3c52"/>` + draw + txt(x + 90, y + 88, title, { a: "middle", b: true, s: 9.5 }) + txt(x + 90, y + 100, sub, { a: "middle", s: 8, c: L });
+  const sh = (x, y) => `<rect x="${x}" y="${y + 6}" width="46" height="44" fill="#2a2d4a" stroke="${T}" stroke-width="1.4"/>` + line(x - 4, y + 56, x + 170, y + 56, A, 1, "4 3");
+  // davit lifeboat
+  s += panel(12, 40, "Davit lifeboat", "lowered by falls, hooks released", sh(30, 40) + `<path d="M76,52 L100,44 L100,60" stroke="${Y}" stroke-width="2.4" fill="none"/><rect x="92" y="66" width="38" height="12" rx="3" fill="${OR}" fill-opacity=".6" stroke="${OR}"/><line x1="100" y1="46" x2="100" y2="66" stroke="${Y}" stroke-width="1"/>`);
+  // free-fall
+  s += panel(208, 40, "Free-fall lifeboat", "ramp, dropped from height", `<path d="M226,46 L226,96 L254,96 L254,52 Z" fill="#2a2d4a" stroke="${T}" stroke-width="1.4"/><path d="M254,48 L300,72" stroke="${L}" stroke-width="3"/><rect x="306" y="74" width="28" height="10" rx="3" fill="${OR}" fill-opacity=".6" stroke="${OR}" transform="rotate(30 320 79)"/>` + line(222, 96, 380, 96, A, 1, "4 3"));
+  // davit liferaft
+  s += panel(12, 156, "Davit-launched liferaft", "lowered on a davit", sh(30, 156) + `<path d="M76,168 L98,160 L98,176" stroke="${Y}" stroke-width="2.4" fill="none"/><ellipse cx="100" cy="186" rx="18" ry="9" fill="${OR}" fill-opacity=".5" stroke="${OR}" stroke-width="1.6"/>`);
+  // float-free
+  s += panel(208, 156, "Float-free liferaft", "hydrostatic release lets it float up", `<rect x="226" y="166" width="46" height="26" fill="#2a2d4a" stroke="${T}" stroke-width="1.4"/><ellipse cx="300" cy="176" rx="14" ry="8" fill="${OR}" fill-opacity=".5" stroke="${OR}" stroke-width="1.6"/><path d="M300,184 L288,200" stroke="${Y}" stroke-width="1.5"/>` + line(222, 196, 380, 196, A, 1, "4 3"));
+  s += txt(200, 282, "Launching appliances: LSA Code chapter VI", { a: "middle", s: 8, c: Y });
+  DIAGRAMS["lsa-launch"] = svg(400, 292, s);
+}
+{
+  let s = frame(400, 300);
+  s += txt(200, 24, "Cargo ship: where the equipment sits (schematic plan)", { a: "middle", b: true, s: 12 });
+  s += hull(200, 165, 2.6).replace('fill="#2a2d4a"', 'fill="#232640"');
+  const lb = (x, y) => `<rect x="${x}" y="${y}" width="16" height="36" rx="6" fill="${OR}" fill-opacity=".65" stroke="${OR}" stroke-width="1.5"/>`;
+  const lr = (x, y) => `<circle cx="${x}" cy="${y}" r="7" fill="${A}" fill-opacity=".6" stroke="${A}" stroke-width="1.5"/>`;
+  s += lb(166, 200) + lb(218, 200) + lr(168, 168) + lr(232, 168) + lr(176, 242) + lr(224, 242);
+  s += `<rect x="222" y="146" width="9" height="20" rx="3" fill="${G}" fill-opacity=".7" stroke="${G}"/>`;
+  s += `<circle cx="200" cy="252" r="5" fill="none" stroke="${Y}" stroke-width="2.5"/><circle cx="172" cy="130" r="4" fill="none" stroke="${Y}" stroke-width="2.5"/><circle cx="228" cy="130" r="4" fill="none" stroke="${Y}" stroke-width="2.5"/>`;
+  const call = (x1, y1, x2, y2, t, c, a = "start") => line(x1, y1, x2, y2, c, 1) + txt(x2 + (a === "start" ? 4 : -4), y2 + 3, t, { a, s: 9, c });
+  s += call(234, 218, 296, 218, "Lifeboat, starboard", OR) + call(166, 218, 104, 218, "Lifeboat, port", OR, "end");
+  s += call(239, 168, 296, 168, "Liferafts", A) + call(161, 168, 104, 168, "Liferafts", A, "end");
+  s += call(231, 150, 296, 134, "Rescue boat", G) + call(205, 252, 296, 262, "Lifebuoy, stern", Y);
+  s += call(168, 130, 104, 118, "Lifebuoys", Y, "end");
+  s += txt(200, 290, "Layouts differ. Follow the ship's Safety Plan", { a: "middle", s: 8, c: L });
+  DIAGRAMS["lsa-plan"] = svg(400, 302, s);
+}
