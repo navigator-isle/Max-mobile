@@ -11,7 +11,7 @@ tags: [usa, opa-90, vgp, vida, eca, sewage, ballast-water, uscg, cfr, notice-of-
 | Other discharges (graywater, bilge, scrubbers and more) | [[VGP and VIDA]] | EPA, USCG |
 | Air emissions | [[US Emission Control Areas]] | EPA, USCG |
 | Sewage | [[US Sewage Regulations]] | USCG |
-| Ballast water | **33 CFR 151 subpart D** and **46 CFR 162** (type approval) | USCG |
+| Ballast water | [[US Ballast Water Regulations]] | USCG |
 | Arrival and port state control | **33 CFR 160 subpart C** (Notice of Arrival). USCG port state control exams | USCG |
 
 > **Key Point:** Many US rules go beyond the IMO conventions. They apply to foreign ships in US waters. A ship that follows MARPOL and BWM only can still break a US rule.
@@ -36,38 +36,8 @@ Sulphur, NOx, fuel changeover, FONAR and enforcement are in [[US Emission Contro
 ## Sewage
 MSD types and standards, no-discharge zones, foreign ships and Alaska cruise ships are in [[US Sewage Regulations]].
 
-## Ballast water (33 CFR 151 subpart D)
-One of **five** methods must be used by a vessel with ballast tanks operating in US waters (151.2025):
-| Method | Rule |
-|---|---|
-| **1. Approved BWMS** | A system approved by the Coast Guard under **46 CFR 162**. It meets the discharge standard at every discharge |
-| **2. US public water** | Only water from a US public system that meets 40 CFR 141 and 143. Tanks cleaned, or never holding ambient water. Source records and an invoice kept |
-| **3. Exchange** | A **complete exchange at least 200 nm from any shore**. Only if the vessel is not yet required to have an approved BWMS |
-| **4. No discharge** | No ballast discharged into US waters |
-| **5. Transfer** | To an onshore facility or another vessel for treatment |
-
-- An **alternate management system (AMS)**, fitted before the vessel's compliance date, may be used for **up to 5 years** after that date
-- A ship with a BWMS in independent laboratory testing is deemed compliant with method 1
-
-**Discharge standard (151.2030)**
-| Measure | Limit |
-|---|---|
-| Organisms **50 µm or larger** | Fewer than **10 per m³** |
-| Organisms **10 to under 50 µm** | Fewer than **10 per mL** |
-| *Vibrio cholerae* (O1 and O139) | Less than **1 cfu per 100 mL** |
-| *Escherichia coli* | Fewer than **250 cfu per 100 mL** |
-| Intestinal enterococci | Fewer than **100 cfu per 100 mL** |
-
-**When an approved system is required (151.2035)**
-| Ballast capacity | Built | Compliance |
-|---|---|---|
-| All | On or after **1 Dec 2013** | On delivery |
-| Under 1,500 m³ | Before 1 Dec 2013 | First scheduled drydocking after **1 Jan 2016** |
-| 1,500 to 5,000 m³ | Before 1 Dec 2013 | First scheduled drydocking after **1 Jan 2014** |
-| Over 5,000 m³ | Before 1 Dec 2013 | First scheduled drydocking after **1 Jan 2016** |
-
-- Alaskan North Slope crude exporters also do the mandatory deep-water exchange under 15 CFR 754.2(j) unless it would endanger the vessel or crew
-- Rule 151.2036 lets the Coast Guard **extend a compliance date**. Rule 151.2060 sets the **reporting** and 151.2070 the **recordkeeping**
+## Ballast water
+The five methods, discharge standard, compliance dates, extensions, reporting and records are in [[US Ballast Water Regulations]].
 
 ## Coming into a US port
 
@@ -108,15 +78,11 @@ One of **five** methods must be used by a vessel with ballast tanks operating in
 
 ## Not included (not verified against the original text)
 - **Penalties** under the Clean Water Act, APPS and the ballast rules
-- The ballast water **reporting form**, the time before arrival, the **record-keeping period**, and exemptions (151.2060 to 151.2070). Their text could not be retrieved
-- **Small vessel** and Great Lakes ballast rules, and state rules such as **California** and **Washington**
 - The USCG **targeting matrix**, **QUALSHIP 21**, flag lists and the exam booklet
 - **Section 301 port fees** on certain ships, which were suspended to 9 Nov 2026 and may have changed
 - **Jones Act**, **TWIC**, **CBP and customs** rules, and **MTSA** security
 - **46 CFR** manning, inspection and licensing rules
 
 ## Sources (checked 23 Nov 2026)
-- 33 CFR 151.2025, 151.2030, 151.2035 (ballast): https://www.law.cornell.edu/cfr/text/33/151.2025
-- 33 CFR 151 subpart D contents: https://www.law.cornell.edu/cfr/text/33/part-151/subpart-D
 - 33 CFR 160 subpart C (NOA), 160.212: https://chanrobles.com/usa/uslaws/cfr/title33/33-2.0.1.6.28.3.php and https://www.law.cornell.edu/cfr/text/33/160.212
 - USCG, 2025 Port State Control annual report: https://www.news.uscg.mil/maritime-commons/Article/4495805/2025-port-state-control-annual-report-posted/
