@@ -670,3 +670,58 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["ibc-dates"] = svg(400, 230, s);
 }
+
+// 36. IGC Code: ship types and tank location (2.4.1)
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "IGC Code: ship types and cargo tank location", { a: "middle", b: true, s: 12 });
+  const panel = (x, title, sub, c, side) => {
+    let o = `<rect x="${x}" y="40" width="120" height="170" rx="6" fill="${c}" fill-opacity="0.08" stroke="${c}"/>`;
+    o += txt(x + 60, 58, title, { a: "middle", b: true, s: 11, c });
+    o += txt(x + 60, 71, sub, { a: "middle", s: 8.5, c: L });
+    o += `<path d="M${x + 14},84 L${x + 14},160 Q${x + 14},176 ${x + 28},176 L${x + 92},176 Q${x + 106},176 ${x + 106},160 L${x + 106},84 Z" fill="#2a2d4a" stroke="${T}" stroke-width="1.4"/>`;
+    const sx = side ? 24 : 4;
+    o += `<rect x="${x + 14 + sx}" y="88" width="${92 - 2 * sx}" height="66" fill="${c}" fill-opacity="0.35" stroke="${c}"/>`;
+    o += txt(x + 60, 124, "cargo", { a: "middle", s: 9.5 }) + txt(x + 60, 136, "tanks", { a: "middle", s: 9.5 });
+    o += txt(x + 60, 198, side ? "side + bottom setback" : "bottom setback", { a: "middle", s: 8.5, c: L });
+    return o;
+  };
+  s += panel(14, "Type 1G", "maximum preventive", R, true);
+  s += panel(140, "Type 2G / 2PG", "significant preventive", Y, false);
+  s += panel(266, "Type 3G", "moderate preventive", G, false);
+  s += txt(200, 228, "Side damage: B/5 or 11.5 m (less). Bottom damage, vertical: B/15 or 2 m (less)", { a: "middle", s: 9, c: L });
+  s += txt(200, 242, "Minimum distance d from shell: 0.8 m to 2 m depending on tank volume Vc", { a: "middle", s: 9, c: L });
+  s += txt(200, 256, "2PG: ships 150 m or less, type C tanks, MARVS at least 0.7 MPa, at least -55 °C", { a: "middle", s: 9, c: L, b: true });
+  DIAGRAMS["igc-ship-types"] = svg(400, 280, s);
+}
+
+// 37. IGC Code: independent / membrane tank types
+{
+  let s = frame(400, 264);
+  s += txt(200, 26, "IGC Code Chapter 4: containment types", { a: "middle", b: true, s: 12 });
+  const rows = [["Type A", "Po below 0.07 MPa", "Complete secondary barrier below -10 °C", A], ["Type B", "Po below 0.07 MPa", "Partial barrier + small leak protection below -10 °C", G], ["Type C", "Po at least 0.2 + A·C·ρ^1.5 MPa", "Design pressure by formula (4.23.1.2)", Y], ["Membrane", "Po normally up to 0.025 MPa", "Complete secondary barrier below -10 °C", R], ["Semi-membrane", "Same limits as membrane", "Same limits as membrane", L], ["Integral", "Po normally up to 0.025 MPa", "Complete barrier if boiling point below -10 °C", T]];
+  rows.forEach(([n, p, b, c], i) => {
+    const y = 42 + i * 33;
+    s += `<rect x="14" y="${y}" width="372" height="28" rx="4" fill="${c}" fill-opacity="0.1" stroke="${c}" stroke-opacity="0.6"/>`;
+    s += txt(22, y + 12, n, { b: true, s: 10, c });
+    s += txt(22, y + 24, p, { s: 8.5, c: L });
+    s += txt(160, y + 18, b, { s: 8.5 });
+  });
+  s += txt(200, 254, "No secondary barrier needed if cargo is at or above -10 °C at atmospheric pressure (4.4.5)", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["igc-tank-types"] = svg(400, 264, s);
+}
+
+// 38. IGC Code: key dates
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "IGC Code: key dates", { a: "middle", b: true, s: 12 });
+  const rows = [["17 Jun 1983", "MSC.5(48) adopts the Code (mandatory: MSC.6(48))", A], ["1 Jul 1986", "Original Code in force for ships built from this date", G], ["22 May 2014", "MSC.370(93): complete revision adopted", Y], ["1 Jan 2016", "Revised Code in force; applies from keel 1 Jul 2016", Y], ["1 Jan 2024", "MSC.476(102) and MSC.492(104) in force", T], ["1 Jan 2026", "MSC.523(106): Table 6.3 replaced", T], ["1 Jul 2026", "MSC.566(109): paragraph 16.9.2 replaced", R]];
+  rows.forEach(([d, t, c], i) => {
+    const y = 42 + i * 28;
+    s += `<circle cx="34" cy="${y + 10}" r="5" fill="${c}"/>`;
+    if (i < 6) s += line(34, y + 15, 34, y + 33, L, 1);
+    s += txt(48, y + 14, d, { b: true, s: 10, c });
+    s += txt(128, y + 14, t, { s: 9 });
+  });
+  DIAGRAMS["igc-dates"] = svg(400, 250, s);
+}
