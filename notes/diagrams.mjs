@@ -1392,3 +1392,46 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 190, "Reg 2 of Annex I", { a: "middle", s: 9, c: L });
   DIAGRAMS["csc-cycle"] = svg(400, 210, s);
 }
+
+// 81. INMARSAT split
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Before and after 1998", { a: "middle", b: true, s: 12 });
+  const bx = (x, y, w, h, a, b, c) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="#1d2040" stroke="${c}"/>` + txt(x + w / 2, y + 22, a, { a: "middle", b: true, s: 10.5 }) + txt(x + w / 2, y + 40, b, { a: "middle", s: 9, c: L });
+  s += bx(20, 52, 130, 62, "INMARSAT", "Maritime satellite org", A);
+  s += arrow(150, 83, 200, 83, L);
+  s += txt(175, 72, "1998", { a: "middle", s: 8.5, c: Y });
+  s += bx(210, 44, 170, 52, "IMSO", "Intergovernmental, public duties", G);
+  s += bx(210, 104, 170, 52, "Inmarsat (commercial)", "Privatised from April 1999", Y);
+  s += txt(200, 186, "IMSO oversees GMDSS satellite services", { a: "middle", s: 10 });
+  s += txt(200, 204, "and acts as LRIT Co-ordinator", { a: "middle", s: 10 });
+  s += txt(200, 232, "Amendments in force 31 Jul 2001", { a: "middle", s: 9, c: L });
+  DIAGRAMS["inmarsat-split"] = svg(400, 250, s);
+}
+
+// 82. INMARSAT organs
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "Organs (1976 Convention)", { a: "middle", b: true, s: 12 });
+  const t = [["Assembly", "All Parties", "Every 2 years · 1 vote each", A], ["Council", "22 members", "18 by share + 4 elected", G], ["Directorate", "Director General", "Term 6 years", Y]];
+  t.forEach(([a, b, c2, c], i) => {
+    const x = 16 + i * 125;
+    s += `<rect x="${x}" y="46" width="118" height="116" rx="7" fill="#1d2040" stroke="${c}"/>` + txt(x + 59, 70, a, { a: "middle", b: true, s: 11.5, c }) + txt(x + 59, 96, b, { a: "middle", b: true, s: 10.5 }) + txt(x + 59, 120, c2.split(" · ")[0], { a: "middle", s: 8.8, c: L }) + (c2.includes(" · ") ? txt(x + 59, 136, c2.split(" · ")[1], { a: "middle", s: 8.8, c: L }) : "");
+  });
+  s += txt(200, 190, "Council: one Signatory at most 25% of votes (14(3))", { a: "middle", s: 9.5 });
+  s += txt(200, 208, "Assembly: substantive decisions need two-thirds", { a: "middle", s: 9.5, c: L });
+  DIAGRAMS["inmarsat-organs"] = svg(400, 230, s);
+}
+
+// 83. INMARSAT timeline
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "INMARSAT timeline", { a: "middle", b: true, s: 12 });
+  const rows = [["1976", "Convention adopted", A], ["1979", "Convention in force", G], ["1982", "Operations begin", G], ["1988", "SOLAS: GMDSS introduced", Y], ["1989", "Aircraft services in force", Y], ["1997", "Land vehicle services in force", Y], ["1998", "Privatization amendments", R], ["1999", "IMSO and Inmarsat split", R], ["2001", "1998 amendments in force", R]];
+  s += line(90, 44, 90, 270, L, 1.5);
+  rows.forEach(([d, t, c], i) => {
+    const y = 54 + i * 26;
+    s += `<circle cx="90" cy="${y}" r="4.5" fill="${c}"/>` + txt(82, y + 4, d, { a: "end", s: 9.5, c, b: true }) + txt(102, y + 4, t, { s: 9.5 });
+  });
+  DIAGRAMS["inmarsat-timeline"] = svg(400, 290, s);
+}
