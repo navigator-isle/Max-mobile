@@ -28,7 +28,7 @@ tags: [tonnage, gross-tonnage, net-tonnage, itc, imo, convention]
 
 ---
 
-## The 23 Articles
+## Articles (the Convention has 23; Arts 1–18 below)
 | Art | Content |
 |---|---|
 | 1 | General obligation — the Annexes are an integral part |
