@@ -1,9 +1,17 @@
 ---
 tags: [hkc, ship-recycling, imo, convention]
 ---
-**Hong Kong Convention 2009 — International Convention for the Safe and Environmentally Sound Recycling of Ships**
+# Hong Kong Convention 2009 — International Convention for the Safe and Environmentally Sound Recycling of Ships
 
-**What is the HKC**
+## At a glance
+| Item | Detail |
+|---|---|
+| Adopted | 15 May 2009 (Hong Kong) |
+| In force | 26 Jun 2025 |
+| Main documents | Inventory of Hazardous Materials (IHM) · Ship Recycling Plan · Ready for Recycling Certificate |
+| Yard | Authorized Ship Recycling Facility |
+
+## What is the HKC
 - IMO convention for safe, environmentally sound ship recycling: covers the ship (design, operation, preparation for recycling) and the recycling yard
 - Ship: Inventory of Hazardous Materials (IHM) all its life · surveys and certificates
 - Yard: Ship Recycling Facility (SRF) authorized by its State · Ship Recycling Facility Plan (SRFP) · ship-specific Ship Recycling Plan (SRP)
@@ -11,7 +19,7 @@ tags: [hkc, ship-recycling, imo, convention]
 
 ![[diagram:hkc-flow|Steps for a ship: IHM Part I in service (initial and renewal surveys), IHM Parts II and III before recycling, Ship Recycling Plan from the authorized yard, final survey, then the Ready for Recycling Certificate (Regs 5, 9, 10, 11, 16). Drawn from the Convention text.]]
 
-**History**
+## History
 - Adopted 15 May 2009, Hong Kong diplomatic conference
 - Entry-into-force conditions: 15 States · 40% of world tonnage · recycling capacity ≥3% of their tonnage
 - Bangladesh and Liberia ratified 26 Jun 2023 → conditions met
@@ -21,13 +29,13 @@ tags: [hkc, ship-recycling, imo, convention]
 - Cybutryne: Appendix 1 follows AFS Convention Annex 1 as in force (AFS amended by MEPC.331(76)) · the 2023 IHM Guidelines MEPC.379(80) (adopted MEPC 80, Jul 2023) add cybutryne to the Appendix 1 list for the IHM, with limits of 1,000 mg/kg dry paint (hull sample) or 200 mg/kg (wet paint sample)
 - Older IHM guidelines: MEPC.179(59), MEPC.197(62), MEPC.269(68) → replaced by MEPC.379(80)
 
-**Applies to**
+## Applies to
 - Ships entitled to fly a Party's flag or operating under its authority (Art 3)
 - Ship Recycling Facilities under a Party's jurisdiction
 - Survey and certificate requirements: ships ≥500 GT on international voyages
 - Not covered: warships, naval auxiliaries, State ships on non-commercial service, ships <500 GT, ships operating throughout their life only in waters of the State whose flag they fly (Party should still act consistently, as far as reasonable and practicable) — Art 3
 
-**Articles (21)**
+## Articles (21)
 - Art 1 General obligations · Art 2 Definitions · Art 3 Application
 - Art 4 Controls related to ship recycling · Art 5 Survey and certification of ships · Art 6 Authorization of Ship Recycling Facilities
 - Art 7 Exchange of information · Art 8 Inspection of ships · Art 9 Detection of violations · Art 10 Violations · Art 11 Undue delay or detention of ships
@@ -37,10 +45,10 @@ tags: [hkc, ship-recycling, imo, convention]
 
 ---
 
-**Annex Ch 1 — General**
+## Annex Ch 1 — General
 - Reg 1 Definitions (para 3 existing ship, para 4 new ship) · Reg 2 General applicability · Reg 3 Relationship with other standards, recommendations and guidance (take into account relevant ILO and Basel Convention standards)
 
-**Annex Ch 2 — Requirements for Ships**
+## Annex Ch 2 — Requirements for Ships
 
 *Part A — Design, construction, operation, maintenance*
 - Reg 4 Controls of hazardous materials (Appendix 1 — prohibited or restricted):
@@ -75,7 +83,7 @@ tags: [hkc, ship-recycling, imo, convention]
   - International Ready for Recycling Certificate (IRRC): after final survey, taking the yard's authorization into account · validity ≤3 months
 - Reg 12 Issuance or endorsement of a certificate by another Party (mutual acceptance among Parties) · Reg 13 Form of the certificates · Reg 14 Duration and validity
 
-**Annex Ch 3 — Requirements for Ship Recycling Facilities**
+## Annex Ch 3 — Requirements for Ship Recycling Facilities
 - Reg 15 Controls on ship recycling facilities
 - Reg 16 Authorization: Document of Authorization to conduct Ship Recycling (DASR) · ≤5 years
 - Reg 17 General requirements
@@ -84,30 +92,30 @@ tags: [hkc, ship-recycling, imo, convention]
 - Reg 21 Emergency preparedness · Reg 22 Worker safety and training
 - Reg 23 Reporting on incidents, accidents, occupational diseases and chronic effects
 
-**Annex Ch 4 — Reporting Requirements**
+## Annex Ch 4 — Reporting Requirements
 - Reg 24 Initial notification and reporting · Reg 25 Reporting upon completion
 
-**Appendices**
+## Appendices
 - Appendix 1 — Controls (prohibited/restricted): asbestos, ozone-depleting substances (HCFC exception to 1 Jan 2020), PCBs, anti-fouling compounds (organotin, cybutryne)
 - Appendix 2 — Minimum list for the IHM: Appendix 1 items + cadmium, hexavalent chromium, lead, mercury (and their compounds), PBBs, PBDEs, polychlorinated naphthalenes (more than 3 chlorine atoms), radioactive substances, certain short-chain chlorinated paraffins (C10–C13)
 - Appendix 3 — form of the International Certificate on Inventory of Hazardous Materials
 
-**IMO guidelines (MEPC)**
+## IMO guidelines (MEPC)
 - MEPC.379(80) — 2023 Guidelines for the development of the IHM
 - MEPC.196(62) Ship Recycling Plan · MEPC.210(63) safe recycling (yards) · MEPC.211(63) authorization of SRFs
 - MEPC.222(64) Survey and certification · MEPC.223(64) Inspection of ships (PSC)
 
-**EU Ship Recycling Regulation (EU 1257/2013) — on top of HKC**
+## EU Ship Recycling Regulation (EU 1257/2013) — on top of HKC
 - Large commercial seagoing EU-flag ships: recycle only at yards on the European List (from 2019)
 - IHM required: EU ships and non-EU ships calling at EU ports or anchorages (since 31 Dec 2020); non-EU-flag ships need a certificate of compliance
 - EU Annex I prohibits PFOS as well · EU IHM list (Annex II) includes HBCDD, which HKC does not require
 - HKC certificate does not automatically replace EU SRR compliance (EU SRR is based on HKC; check with flag and class)
 
-**Key Point**
-- Onboard: keep IHM Part I updated with every new or changed equipment · ask for Material Declarations (MD) and Supplier Declarations of Conformity (SDoC) from suppliers
-- Before sale for recycling: final survey + IRRC (3 months) + yard with DASR
+## Key Point
+> Onboard: keep IHM Part I updated with every new or changed equipment · ask for Material Declarations (MD) and Supplier Declarations of Conformity (SDoC) from suppliers
+> Before sale for recycling: final survey + IRRC (3 months) + yard with DASR
 
-**Sources (re-checked 23 Nov 2026)**
+## Sources (re-checked 23 Nov 2026)
 - IMO — Recycling of ships and HKC (guidelines list): https://www.imo.org/en/MediaCentre/HotTopics/Pages/Recycling-of-ships-and-Hong-Kong-Convention.aspx
 - EMSA — ship recycling (EU SRR): https://www.emsa.europa.eu/sustainable-shipping/ship-recycling.html
 - ABS — HKC and IHM Part I (MEPC.379(80), cybutryne): https://ww2.eagle.org/content/dam/eagle/regulatory-news/2023/ABS%20Regulatory%20News%20-%20Ship%20Recycling.pdf

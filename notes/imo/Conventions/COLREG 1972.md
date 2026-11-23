@@ -1,14 +1,22 @@
 ---
 tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping, imo, convention]
 ---
-**COLREG 1972 — Convention on the International Regulations for Preventing Collisions at Sea**
+# COLREG 1972 — Convention on the International Regulations for Preventing Collisions at Sea
 
-**What is COLREG**
+## At a glance
+| Item | Detail |
+|---|---|
+| Done at London | 20 Oct 1972 |
+| In force | 15 Jul 1977 |
+| Structure | Articles I–IX · Rules 1–41 · Annexes I–IV |
+| Parts | A General · B Steering and Sailing · C Lights and Shapes · D Sound and Light Signals · E Exemptions |
+
+## What is COLREG
 - The "rules of the road" at sea: look-out, safe speed, risk of collision, action to avoid collision, steering and sailing rules, lights and shapes, sound and light signals, distress signals
 - The Convention (Articles I–IX) obliges Parties to give effect to the International Regulations (Rules 1–41 + Annexes I–IV) (Art I)
 - On entry into force the Regulations replaced the International Regulations for Preventing Collisions at Sea, 1960 (Art IV(5))
 
-**History**
+## History
 - Done at London 20 Oct 1972 · in force **15 Jul 1977**
 - Entry into force (Art IV): 12 months after at least 15 States whose merchant fleets make up at least 65% of the world fleet (vessels of 100 GT and over) became Parties
 - Art II: open for signature until 1 Jun 1973, then accession
@@ -32,7 +40,7 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
 - 2013: new **Part F, Rules 39–41** (verification of compliance)
 - Note: the UK MCA amendment table gives 10 Dec 2013 for the 2013 amendments; the IMO resolution A.1085(28) itself states 4 Dec 2013
 
-**Applies to**
+## Applies to
 - All vessels on the high seas and in all waters connected therewith navigable by seagoing vessels (Rule 1(a))
 - Rule 1(b): special rules for roadsteads, harbours, rivers, lakes or inland waterways connected with the high seas must conform as closely as possible to these Rules
 - Rule 1(c): a State may make special rules for additional station or signal lights, shapes or whistle signals for warships, vessels under convoy, fishing vessels fishing in a fleet — they must not be mistaken for any signal in the Rules
@@ -41,7 +49,7 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
 
 ---
 
-**Part A — General (Rules 1–3)**
+## Part A — General (Rules 1–3)
 - Rule 1 Application (above)
 - Rule 2 **Responsibility**
   - (a) nothing exonerates a vessel, owner, master or crew from the consequences of neglect to comply with the Rules or neglect of any precaution required by the ordinary practice of seamen or the special circumstances
@@ -58,7 +66,7 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
   - (j) length and breadth: length overall and greatest breadth
   - (k) in sight of one another: only when one can be observed visually from the other
 
-**Part B — Steering and sailing rules**
+## Part B — Steering and sailing rules
 - **Section I — Conduct of vessels in any condition of visibility (Rules 4–10)**
   - Rule 4 Application: Rules in Section I apply in any condition of visibility
   - Rule 5 **Look-out**: at all times by sight and hearing as well as by all available means appropriate in the prevailing circumstances and conditions, so as to make a full appraisal of the situation and of the risk of collision
@@ -131,7 +139,7 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
 
 ![[diagram:colreg-situations|Rule 13 overtaking (more than 22.5 degrees abaft the beam, the overtaking vessel keeps clear), Rule 14 head-on (both alter to starboard, pass port to port), Rule 15 crossing (the vessel with the other on her starboard side gives way).]]
 
-**Part C — Lights and shapes (Rules 20–31)**
+## Part C — Lights and shapes (Rules 20–31)
 - Rule 20 Application: in all weathers; lights from sunset to sunrise (no other lights unless they cannot be mistaken for the prescribed lights and do not impair them); prescribed lights, if carried, also from sunrise to sunset in restricted visibility, and may be shown in all other circumstances when considered necessary; shapes by day; lights and shapes must comply with Annex I
 - Rule 21 Definitions:
   - masthead light: white, over the fore-and-aft centreline, **225°** arc, from right ahead to 22.5° abaft the beam on either side
@@ -169,7 +177,7 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
 
 ![[diagram:colreg-light-arcs|Rule 21 light arcs: masthead light white 225 degrees, sidelights green starboard and red port 112.5 degrees each, sternlight white 135 degrees.]]
 
-**Part D — Sound and light signals (Rules 32–37)**
+## Part D — Sound and light signals (Rules 32–37)
 - Rule 32 Definitions: **short blast** about 1 second · **prolonged blast** 4–6 seconds
 - Rule 33 Equipment: vessels of 12 m or more — whistle · 20 m or more — whistle and bell · 100 m or more — whistle, bell and gong (tone and sound not to be confused with the bell) · under 12 m — not obliged, but must have some other means of making an efficient sound signal
 - Rule 34 **Manoeuvring and warning signals**
@@ -198,7 +206,7 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
 - Rule 40 Application: Parties use the III Code to discharge their obligations under the Convention
 - Rule 41 Verification of compliance: every Party is subject to periodic IMO audits against the audit standard; the Secretary-General administers the scheme; Parties facilitate the audit and carry out a programme of actions to address findings; audits follow an overall schedule set by the Secretary-General
 
-**Annexes**
+## Annexes
 - **Annex I — Positioning and technical details of lights and shapes** (per the US publication of the International Rules)
   - Forward masthead light: at least 6 m above the hull for vessels of 20 m or more (not more than 12 m); the after masthead at least 4.5 m higher than the forward · vessels of 12 m to under 20 m: masthead at least 2.5 m above the gunwale
   - Masthead lights horizontally at least half the vessel's length apart (max 100 m)
@@ -210,12 +218,12 @@ tags: [colreg, rules-of-the-road, collision, lights, sound-signals, watchkeeping
 - **Annex III — Technical details of sound signal appliances**: whistle fundamental frequency 70–700 Hz (200 m or more: 70–200 Hz; 75–200 m: 130–350 Hz; under 75 m: 250–700 Hz) · sound pressure level at 1 m: 143 dB (200 m or more), 138 dB (75–200 m), 130 dB (20–75 m) · audibility range 2 / 1.5 / 1 / 0.5 nm by length band · bell or gong: at least 110 dB at 1 m; bell mouth at least 300 mm for vessels of 20 m or more
 - **Annex IV — Distress signals** (as revised by A.1004(25), in force 1 Dec 2009): (a) gun or other explosive signal fired at intervals of about a minute · (b) continuous sounding of any fog-signalling apparatus · (c) rockets or shells throwing red stars fired one at a time at short intervals · (d) Morse code SOS · (e) the spoken word "MAYDAY" by radiotelephone · (f) International Code signal N.C. · (g) a square flag with a ball (or anything resembling a ball) above or below it · (h) flames on the vessel (e.g. burning tar barrel) · (i) a rocket parachute flare or hand flare showing a red light · (j) a smoke signal giving off orange-coloured smoke · (k) slowly and repeatedly raising and lowering arms outstretched to each side · (l) a DSC distress alert on VHF channel 70, or on MF/HF · (m) a ship-to-shore distress alert transmitted by Inmarsat or another mobile satellite service ship earth station · (n) signals transmitted by EPIRBs · (o) approved signals transmitted by radiocommunication systems, including survival craft radar transponders · using these signals for any other purpose, or other signals that may be confused with them, is prohibited · aids: orange canvas with a black square and circle, and a dye marker
 
-**Key Point**
-- Rules 5–8 (look-out, safe speed, risk of collision, action to avoid collision) and 13–19 are the core of watchkeeping
-- Rule 2: depart from the Rules only to avoid immediate danger; Rule 17(b): the stand-on vessel must act when collision cannot be avoided by the give-way vessel alone
-- Rule 19: vessels not in sight of one another — safe speed, engines ready, radar-only detection → avoid turning to port for a vessel forward of the beam (except overtaking) and turning towards a vessel abeam or abaft the beam
+## Key Point
+> Rules 5–8 (look-out, safe speed, risk of collision, action to avoid collision) and 13–19 are the core of watchkeeping
+> Rule 2: depart from the Rules only to avoid immediate danger; Rule 17(b): the stand-on vessel must act when collision cannot be avoided by the give-way vessel alone
+> Rule 19: vessels not in sight of one another — safe speed, engines ready, radar-only detection → avoid turning to port for a vessel forward of the beam (except overtaking) and turning towards a vessel abeam or abaft the beam
 
-**Sources (re-checked 23 Nov 2026)**
+## Sources (re-checked 23 Nov 2026)
 - Convention articles (University of Oslo library): https://jus.uio.no/english/services/library/treaties/08/8-03/preventing-collisions-sea.html
 - UK MCA — original COLREG and amendments table: https://www.gov.uk/government/publications/msn-1781-mf-amendment-3-the-merchant-shipping-regulations-1996-colreg/appendix-2-original-colreg-and-amendments
 - US Coast Guard — Navigation Rules (International and Inland): https://www.whoi.edu/wp-content/uploads/2020/04/USCG-Navigation-Rules_International-Inland.pdf

@@ -27,7 +27,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}.b
 .color-tool input{width:22px;height:22px;border:0;padding:0;background:transparent}
 .rich-editor{min-height:42vh;max-height:55vh;overflow:auto;outline:none;background:#071421;border:1px solid #24465d;border-radius:10px;padding:14px;font:inherit;line-height:1.7;color:var(--max-text)}
 .rich-editor:empty:before{content:attr(data-placeholder);color:#718ba2;pointer-events:none}
-.rich-editor h1,.rich-editor h2,.rich-editor h3{color:#bcecff}
+.rich-editor h1,.rich-editor h2,.rich-editor h3{color:#bcecff}.rich-editor table{border-collapse:collapse;display:block;overflow-x:auto}.rich-editor td,.rich-editor th{border:1px solid #2c3050;padding:4px 8px}
 .rich-editor blockquote{border-left:3px solid #77d7ff;padding-left:12px;color:#9db4c8;margin-left:0}
 .editor-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .save-note-button{padding:12px 24px;border-radius:12px}
@@ -320,7 +320,9 @@ body[data-coach]::after{content:attr(data-coach);position:fixed;top:8px;left:50%
 .read-body em,.read-body i{color:#cfd0e6}
 .read-body pre{background:#141522;padding:10px;border-radius:8px;overflow:auto}
 .read-body blockquote{border-left:3px solid var(--v-accent);margin:.6em 0;padding:.2em .9em;color:#cfd0e6}
-.read-body table{border-collapse:collapse}.read-body td,.read-body th{border:1px solid var(--v-guide);padding:4px 8px}
+.read-body table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;margin:.7em 0;font-size:.82rem}.read-body td,.read-body th{border:1px solid var(--v-guide);padding:5px 9px;vertical-align:top}.read-body th{background:#1d2036;color:#bcecff;text-align:left}.read-body tr:nth-child(even) td{background:#15172a}
+.read-body h1{color:#fff;font-size:1.2rem;line-height:1.3;margin:.2em 0 .6em}.read-body h2{color:#8fd8ff;font-size:1.02rem;margin:1.5em 0 .4em;padding-bottom:4px;border-bottom:1px solid #2c3050}.read-body h3{color:#cfe9ff;font-size:.92rem;margin:1.1em 0 .3em}
+.read-body blockquote{background:#16213a;border-radius:0 8px 8px 0;margin:.8em 0;padding:.5em .9em}
 #editorScreen.reading .full-editor>*:not(.editor-bottom):not(#editorLinksWrap):not(.export-row){display:none!important}
 body.vault-mode{background:#1e1f2e!important}
 body.vault-mode .topbar,body.vault-mode .mini-max{background:transparent}

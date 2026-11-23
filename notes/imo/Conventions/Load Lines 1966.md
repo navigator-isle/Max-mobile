@@ -1,16 +1,25 @@
 ---
 tags: [load-lines, freeboard, plimsoll, ll-protocol, certificate, imo, convention]
 ---
-**LL 1966 — International Convention on Load Lines (with the 1988 Protocol)**
+# LL 1966 — International Convention on Load Lines (with the 1988 Protocol)
 
-**What is LL**
+## At a glance
+| Item | Detail |
+|---|---|
+| Adopted | 5 Apr 1966 |
+| In force | 21 Jul 1968 |
+| Annex I | Regulations for determining freeboard |
+| Annex II | Zones, areas and seasonal periods |
+| Annex III | Certificates |
+
+## What is LL
 - Sets the **minimum freeboard** a ship must keep (Annex I) so that load lines are not submerged · zones and seasonal periods in Annex II · certificates in Annex III
 - Freeboard = vertical distance, measured amidships, from the upper edge of the deck line down to the upper edge of the load line (Reg 3)
 - Load lines and the deck line are marked amidships on each side of the ship
 - Conditions of assignment (Chapter II) keep the hull weathertight and watertight: doors, hatchways, openings, ventilators, air pipes, freeing ports, protection of the crew
 - Ships carrying timber deck cargo get a smaller (timber) freeboard (Chapter IV)
 
-**History**
+## History
 - Adopted 5 Apr 1966 · in force 21 Jul 1968
 - Art 28: in force 12 months after at least 15 Governments, including 7 with at least 1 million GT of shipping, signed without reservation or deposited instruments
 - Amendments of 1971, 1975, 1979 and 1983 needed acceptance by two-thirds of Parties and never entered into force
@@ -27,7 +36,7 @@ tags: [load-lines, freeboard, plimsoll, ll-protocol, certificate, imo, conventio
 
 ---
 
-**Articles (34)**
+## Articles (34)
 - Art 1 General obligation · Art 2 Definitions (**Length L = 96% of the total length on a waterline at 85% of the least moulded depth, or the stem-to-rudder-stock length on that waterline if greater**) · Art 3 General provisions (ships on international voyages are surveyed, marked and hold an International Load Line Certificate (1966) or an Exemption Certificate; the Administration may assign more than the minimum freeboard) · Art 4 Application · Art 5 Exceptions
 - Art 6 Exemptions: short voyages between neighbouring ports · ships with novel features · a single exceptional international voyage — reported to IMO
 - Art 7 Force majeure · Art 8 Equivalents · Art 9 Experimental approvals · Art 10 Repairs, alterations and modifications · Art 11 Zones and areas (Annex II)
@@ -60,17 +69,17 @@ tags: [load-lines, freeboard, plimsoll, ll-protocol, certificate, imo, conventio
 - Reg 52 Winter North Atlantic load line: part of Winter Zone II between 15°W and 50°W, and all of Winter Zone I
 - Art 11: a port on a zone boundary is treated as in the zone the ship arrives from or departs to
 
-**Annex III — Certificates**
+## Annex III — Certificates
 - **International Load Line Certificate (1966)**: ship name, distinctive number or letters, port of registry, length L · assigned type (A, B, B with reduced freeboard, B with increased freeboard) · freeboards from the deck line for T, S, W, WNA and the timber equivalents · fresh water allowance · survey date · reverse side: endorsements from periodical inspections and extensions · valid up to 5 years (Art 19)
 - **International Load Line Exemption Certificate**: exemptions under Art 6(2) and any single-voyage exemption under Art 6(4)
 - Fresh water allowance adjusted in proportion to the difference of the water density from 1.025; allowance for river or inland-water departure for fuel and consumables used to reach the sea
 
-**Key Point**
-- Never submerge the load line (for the zone and season) at departure, during the voyage or on arrival (Art 12)
-- Annual inspection within 3 months before or after each anniversary; renewal every ≤5 years
-- Port State control (Art 21): valid certificate, not overloaded, load line position matches the certificate, no material alteration making the ship unfit for sea
+## Key Point
+> Never submerge the load line (for the zone and season) at departure, during the voyage or on arrival (Art 12)
+> Annual inspection within 3 months before or after each anniversary; renewal every ≤5 years
+> Port State control (Art 21): valid certificate, not overloaded, load line position matches the certificate, no material alteration making the ship unfit for sea
 
-**Sources (re-checked 23 Nov 2026)**
+## Sources (re-checked 23 Nov 2026)
 - Convention text, Arts 1–34 (NUS CIL): https://cil.nus.edu.sg/wp-content/uploads/2019/02/1966-International-Convention-on-Load-Lines.pdf
 - Convention text with Annexes (UK Treaty Series 1968): https://treaties.fcdo.gov.uk/data/Library2/pdf/1968-TS0058.pdf
 - IMO — Load Lines Convention: https://imo.org/en/About/Conventions/Pages/International-Convention-on-Load-Lines.aspx

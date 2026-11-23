@@ -8,7 +8,7 @@ const inline = s => esc(s.replace(/\[\[([^\]|]+)(\|([^\]]+))?\]\]/g, (_, a, __, 
 function toHtml(md) {
   let tags = [], lines = md.replace(/\r/g, "").split("\n");
   if (lines[0] === "---") { const end = lines.indexOf("---", 1); const fm = lines.slice(1, end).join("\n"); const m = /tags:\s*\[([^\]]*)\]/.exec(fm); if (m) tags = m[1].split(",").map(t => t.trim()).filter(Boolean); lines = lines.slice(end + 1); }
-  let out = "", depth = 0;
+  let out = "", depth = 0, inTable = false;
   const close = to => { while (depth > to) { out += depth > 1 ? "</li></ul>" : "</li></ul>"; depth--; } };
   for (const raw of lines) {
     const m = /^(\s*)- (.*)$/.exec(raw);
@@ -19,14 +19,26 @@ function toHtml(md) {
       continue;
     }
     close(0);
-    const t = raw.trim(); if (!t) continue;
+    const t = raw.trim();
+    if (inTable && !t.startsWith("|")) { out += "</tbody></table>"; inTable = false; }
+    if (!t) continue;
     const dg = /^!\[\[diagram:([a-z0-9-]+)(?:\|([^\]]*))?\]\]$/.exec(t);
     if (dg) { out += `<figure class="note-diagram" data-diagram="${dg[1]}"><figcaption>${inline(dg[2] || "Diagram")}</figcaption></figure>`; continue; }
+    let hm;
+    if ((hm = /^(#{1,3}) (.+)$/.exec(t))) { out += `<h${hm[1].length}>` + inline(hm[2]) + `</h${hm[1].length}>`; continue; }
+    if (t.startsWith("> ")) { out += "<blockquote>" + inline(t.slice(2)) + "</blockquote>"; continue; }
+    if (t.startsWith("|")) { // table: | a | b |  then |---|---|  then rows
+      const cells = t.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+      if (cells.every(c => /^:?-{3,}:?$/.test(c))) continue;
+      if (!inTable) { out += "<table><thead><tr>" + cells.map(c => "<th>" + inline(c) + "</th>").join("") + "</tr></thead><tbody>"; inTable = true; }
+      else out += "<tr>" + cells.map(c => "<td>" + inline(c) + "</td>").join("") + "</tr>";
+      continue;
+    }
     if (t === "---") out += "<hr>";
     else if (/^\*\*[^*]+\*\*$/.test(t)) out += "<p><b>" + inline(t.slice(2, -2)) + "</b></p>";
     else out += "<p>" + inline(t) + "</p>";
   }
-  close(0);
+  close(0); if (inTable) out += "</tbody></table>";
   return { body: out.replace(/<ul><li><\/li>/g, "<ul>"), tags };
 }
 const notes = [];
