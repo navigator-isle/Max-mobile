@@ -1,66 +1,97 @@
 ---
 tags: [casualty-investigation, ci-code, accident, solas-xi-1, imo, code]
 ---
-**Casualty Investigation Code — Code of the International Standards and Recommended Practices for a Safety Investigation into a Marine Casualty or Marine Incident**
+# Casualty Investigation Code
 
-**What is the CI Code**
-- Common approach for States to investigate marine casualties and incidents to find causes and prevent repeats — not to blame or punish
-- Part I and II mandatory under SOLAS XI-1/6 (from 1 Jan 2010) · Part III recommended
-- Investigation report published and sent to IMO (GISIS)
+**Code of the International Standards and Recommended Practices for a Safety Investigation into a Marine Casualty or Marine Incident**
 
-**History**
-- Code for the Investigation of Marine Casualties and Incidents (A.849(20), 1997; amended A.884(21), 1999)
-- New Code adopted 16 May 2008 by MSC.255(84) · mandatory 1 Jan 2010 (SOLAS XI-1/6)
-- Guidelines on fair treatment of seafarers in the event of a maritime accident (IMO/ILO, 2006, revised 2024)
-- III 12 (Jul 2026): comprehensive review of the Code and its implementation guidelines started (target 2028)
+## At a glance
 
-**Applies to**
-- Every flag State: a marine safety investigation into every very serious marine casualty
-- Other States with substantial interest (coastal State, State of nationality of victims) may take part
+| Item | Detail |
+|---|---|
+| Adopted | 16 May 2008, resolution MSC.255(84) (MSC 84) |
+| Mandatory | Parts I and II mandatory under SOLAS chapter XI-1 from 1 Jan 2010 (resolution MSC.257(84)) · Part III recommended |
+| Structure | 3 Parts · 26 chapters |
+| Core duty | A marine safety investigation into every **very serious marine casualty** |
+| Reports | Final report to IMO and made public |
+| Guidance | Resolution A.1075(28) (investigator guidelines) |
 
----
+## What is the Casualty Investigation Code
 
-**Key definitions (Ch 2)**
-- Marine casualty: event linked to ship operation causing death or serious injury, loss of a person from a ship, loss/presumed loss/abandonment of a ship, material damage to a ship, stranding/disabling, collision, damage to infrastructure endangering the ship, severe environmental damage
-- Very serious marine casualty: total loss of the ship, loss of life, or severe pollution
-- Marine incident: event (not a casualty) that endangered or could have endangered the ship, people or environment
-- Marine safety investigation State(s) · substantially interested State · seafarer
+- A common approach for States to investigate marine casualties and incidents, to **prevent future casualties and incidents**
+- It expands SOLAS I/21, which only required an investigation when the Administration judged it could inform regulatory changes
+- The Code requires an investigation of every very serious marine casualty, and recommends investigating other casualties and incidents likely to prevent future accidents
+- Related provisions cited by IMO: MARPOL articles 8 and 12, Load Lines Convention article 23, UNCLOS article 94(7)
 
-**Part I — General provisions**
-- Ch 1 Purpose: prevent future casualties; investigations separate from criminal or liability proceedings
-- Ch 2 Definitions · Ch 3 Application of chapters of Part I and II
+## History
 
-**Part II — Mandatory standards**
-- Ch 4 Notification: flag State notified by the ship/owner; flag and coastal State notify each other
-- Ch 5 Requirement to investigate very serious marine casualties: flag State must investigate (or agree another State leads)
-- Ch 6 Flag State's obligation to allow participation
-- Ch 7 Marine safety investigation State to agree on the leading State · Ch 8 Powers of an investigation (access to ship, evidence, VDR, witnesses)
-- Ch 9 Parallel investigations allowed (criminal), but not to hinder the safety investigation
-- Ch 10 Co-operation between substantially interested States
-- Ch 11 Investigation not subject to external direction (independent)
-- Ch 12 Obtaining evidence from seafarers: they must not be forced to incriminate themselves; fair treatment
-- Ch 13 Draft reports to substantially interested States for comment (30 days)
-- Ch 14 Final reports: published · sent to IMO · safety recommendations
+- **MSC.255(84)** adopted 16 May 2008; entry into force tied to the SOLAS XI-1 amendments, 1 Jan 2010
+- **A.1075(28)** provides guidelines to help investigators apply the Code, and revoked resolutions A.849(20) and A.884(21)
+- IMO's GISIS Maritime Casualties and Incidents module stores casualty data and uploaded investigation reports (some restricted to IMO Members)
 
-**Part III — Recommended practices**
-- Ch 15 Administrative responsibilities (independent investigation body, trained investigators)
-- Ch 16 Principles of investigation: independence, safety focus, cooperation, priority to investigation
-- Ch 17 Investigation of marine incidents · Ch 18 Factors to consider (human element, ISM, fatigue)
-- Ch 19 Information to the public · Ch 20 Notification of seafarers of the investigation
-- Ch 21–25 Witnesses, evidence, records, reports and responses to recommendations
+## Structure
 
-**On board after an accident**
-- Save the VDR data (press "save" — data overwritten after 12/30 days otherwise)
-- Preserve evidence: logbooks, ECDIS, engine data, CCTV, charts, records
-- Seafarers can have a representative; statements used for safety, not punishment, under the Code (national law may differ)
-- Report to DPA and flag at once; ISM Element 9 internal investigation runs in parallel
+![[diagram:ci-structure|The three parts and 26 chapters of the Code]]
 
-**Key Point**
-- Very serious casualty = flag State must investigate and publish the report
-- Purpose is prevention, not blame — but other legal investigations may run at the same time
-- Save the VDR immediately after any serious casualty or incident
+## Key definitions (Chapter 2)
 
-**Sources (checked 10 Nov 2026)**
-- IMO — Casualty investigation (Code and guidelines): https://www.imo.org/en/OurWork/MSAS/Pages/Casualties.aspx
-- DNV — IMO III 12: review of the Casualty Investigation Code (Jul 2026): https://www.dnv.com/news/2026/imo-iii-12-initiation-of-ism-implementation-guidelines-revision-and-progression-of-survey-requirements-revision/
-- IMO — Resolution MSC.255(84): https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/MSCResolutions/MSC.255(84).pdf
+| Term | Meaning |
+|---|---|
+| Marine casualty (2.9) | An event or sequence of events directly connected with a ship's operations that causes: death or serious injury; loss of a person from a ship; loss or abandonment of a ship; material damage to a ship; stranding, disabling or collision; damage to external marine infrastructure that could seriously endanger safety; or severe environmental damage (or its potential). Deliberate harmful acts are excluded |
+| Marine incident (2.10) | A non-casualty event that endangered, or would endanger if not corrected, a ship, its occupants, other persons or the environment |
+| Very serious marine casualty (2.22) | A casualty involving **total loss of the ship, a death, or severe environmental damage** |
+| Serious injury (2.18) | Incapacitation where a person cannot function normally for more than **72 hours**, starting within **7 days** of the injury |
+| Marine safety investigation (2.11) | An investigation or inquiry, however a State names it, conducted to prevent future casualties and incidents: evidence collection and analysis, identification of causal factors, safety recommendations |
+| Substantially interested State (2.20) | The flag State or coastal State involved; a State whose environment was severely or significantly damaged; whose serious interests were harmed or threatened; whose nationals died or were seriously injured; that holds important information; or that has another significant interest |
+
+The Code does not define "serious marine casualty"; it uses only "very serious".
+
+## Part II — Mandatory standards
+
+| Ch | Title | Key content |
+|---|---|---|
+| 4 | Marine safety investigation Authority | |
+| 5 | Notification | On the high seas or in an EEZ: the flag State notifies other substantially interested States as soon as reasonably practicable. In a coastal State's territory or territorial sea: flag and coastal States notify each other, then other interested States. Not delayed for lack of complete information |
+| 6 | Requirement to investigate very serious marine casualties | An investigation into every very serious marine casualty; the flag State is responsible, subject to a Chapter 7 agreement |
+| 7 | Flag State's agreement with another substantially interested State | States consult to agree who investigates; full participation in another State's investigation fulfils the flag State's obligations |
+| 8 | Powers of an investigation | National law must let investigators board ships, interview the master, crew and others, and obtain evidence |
+| 9 | Parallel investigations | Other substantially interested States may run separate investigations; timing coordinated |
+| 10 | Co-operation | Interested States cooperate, with participation as far as practicable |
+| 11 | Not subject to external direction | Investigators impartial and free from external direction |
+| 12 | Obtaining evidence from seafarers | Taken at the earliest practical opportunity; seafarers return to their ship or are repatriated early; informed of their rights, including legal advice and protection against self-incrimination |
+| 13 | Draft reports | Sent to a substantially interested State on request, if it guarantees non-circulation; comments within **30 days** or another agreed period; accuracy and completeness verified |
+| 14 | Final reports | Submitted to IMO for every very serious marine casualty, and for other casualties or incidents where the information could prevent or lessen future occurrences; made available to the public and the shipping industry |
+
+## From casualty to final report
+
+![[diagram:ci-path|Notification, investigation, evidence, draft report and final report]]
+
+## Part III — Recommended practices
+
+| Ch | Title |
+|---|---|
+| 15 | Administrative responsibilities |
+| 16 | Principles of investigation |
+| 17 | Investigation of marine casualties (other than very serious) and marine incidents |
+| 18 | Factors for seeking agreement under Chapter 7 of Part II |
+| 19 | Acts of unlawful interference |
+| 20 | Notification to parties involved and commencement of an investigation |
+| 21 | Co-ordinating an investigation |
+| 22 | Collection of evidence |
+| 23 | Confidentiality of information |
+| 24 | Protection for witnesses and involved parties |
+| 25 | Draft and final report |
+| 26 | Re-opening an investigation |
+
+- **Ch 17:** the flag State should investigate other casualties and incidents where this is likely to prevent future occurrences.
+- **Ch 20:** the investigation starts as soon as reasonably practicable without unnecessarily delaying the ship.
+- **Ch 22:** ships are not detained unnecessarily; copies of documents are made where practicable.
+- **Ch 25:** reports completed as quickly as practicable; 30 days for comments on a draft; interim safety measures may be recommended at any stage; a State that disagrees with a final report may submit its own report to IMO.
+- **Ch 26:** an investigation should be reconsidered and may be re-opened when new evidence may materially change the conclusions.
+
+> **Key Point:** Every very serious marine casualty (total loss, a death, or severe pollution) must be investigated, and the final report goes to IMO and the public. The purpose is prevention, not blame. Seafarers must be told their rights, including legal advice and protection against self-incrimination. Other legal proceedings can run in parallel.
+
+## Sources (checked 23 Nov 2026)
+
+- MSC.255(84) Casualty Investigation Code text (IMO): https://wwwcdn.imo.org/localresources/en/OurWork/MSAS/Documents/Res.%20MSC.255(84)%20Casualty%20Iinvestigation%20Code.pdf
+- IMO — Casualty investigation: https://imo.org/en/OurWork/MSAS/Pages/Casualties.aspx

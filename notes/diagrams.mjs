@@ -391,3 +391,42 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 251, "Lashings above 60° do not count in the total", { a: "middle", s: 9, c: L });
   DIAGRAMS["css-rule-of-thumb"] = svg(400, 260, s);
 }
+
+// 22. Casualty Investigation Code: structure (MSC.255(84))
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Casualty Investigation Code: 26 chapters", { a: "middle", b: true, s: 12 });
+  const parts = [
+    ["Part I", "General provisions", "Ch 1–3", "Purpose · Definitions · Application", L, 46, 52],
+    ["Part II", "Mandatory standards", "Ch 4–14", "Authority · Notification · Duty to investigate (very serious) · Powers · Parallel investigations · Co-operation · Independence · Evidence from seafarers · Draft reports · Final reports", R, 104, 96],
+    ["Part III", "Recommended practices", "Ch 15–26", "Administration · Principles · Other casualties and incidents · Unlawful interference · Evidence · Confidentiality · Witness protection · Reports · Re-opening", G, 208, 84]];
+  parts.forEach(([p, t, c, d, col, y, h]) => {
+    s += `<rect x="18" y="${y}" width="364" height="${h}" rx="6" fill="${col}" fill-opacity="0.12" stroke="${col}"/>`;
+    s += txt(30, y + 20, `${p} — ${t}`, { b: true, s: 11, c: col }) + txt(370, y + 20, c, { a: "end", s: 10, c: L });
+    const w = d.split(" · "); let line1 = "", lines = [];
+    w.forEach(x => { if ((line1 + " · " + x).length > 62 && line1) { lines.push(line1); line1 = x; } else line1 = line1 ? line1 + " · " + x : x; }); lines.push(line1);
+    lines.forEach((l, i) => { s += txt(30, y + 38 + i * 14, l, { s: 9.5 }); });
+  });
+  DIAGRAMS["ci-structure"] = svg(400, 300, s);
+}
+
+// 23. Casualty Investigation Code: from casualty to final report
+{
+  let s = frame(400, 320);
+  s += txt(200, 26, "Very serious marine casualty: the path", { a: "middle", b: true, s: 12 });
+  const st = [
+    ["Notification (Ch 5)", "Flag State, coastal State and other substantially interested States notify each other; not delayed for lack of information", A],
+    ["Investigation (Ch 6–8)", "A marine safety investigation into every very serious marine casualty; flag State responsible unless another State agrees to lead", Y],
+    ["Evidence (Ch 12)", "Seafarers informed of their rights, including legal advice and protection against self-incrimination", R],
+    ["Draft report (Ch 13)", "Comments invited within 30 days, or another agreed period", G],
+    ["Final report (Ch 14)", "Sent to IMO and made available to the public and industry", T]];
+  st.forEach(([h, d, c], i) => {
+    const y = 40 + i * 56;
+    s += `<rect x="18" y="${y}" width="364" height="48" rx="6" fill="${c}" fill-opacity="0.12" stroke="${c}"/>`;
+    s += txt(30, y + 17, h, { b: true, s: 10.5, c });
+    const w = d.split(" "); let a = "", b = ""; w.forEach(x => { if ((a + " " + x).length < 66) a += (a ? " " : "") + x; else b += (b ? " " : "") + x; });
+    s += txt(30, y + 31, a, { s: 9, c: L }) + (b ? txt(30, y + 42, b, { s: 9, c: L }) : "");
+    if (i < 4) s += `<path d="M195,${y + 49} h10 l-5,6z" fill="${L}"/>`;
+  });
+  DIAGRAMS["ci-path"] = svg(400, 320, s);
+}
