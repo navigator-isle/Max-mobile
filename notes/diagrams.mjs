@@ -1157,3 +1157,44 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 240, "Lifeboats: 4.4 · liferafts: 4.1", { a: "middle", s: 9, c: L });
   DIAGRAMS["lsa-craft"] = svg(400, 250, s);
 }
+
+// 64. MASS structure
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "MASS Code structure", { a: "middle", b: true, s: 12 });
+  const P = [["PART I", "Introduction", "Ch 1–4: purpose, application, structure, definitions", A, 44], ["PART II", "Principles", "Ch 5–15: certificates, approval, risk, ConOps, SMS, security, manning", G, 108], ["PART III", "Goals and requirements", "Ch 16–24: navigation, connectivity, remote ops, SAR, machinery", Y, 172]];
+  P.forEach(([a, b, c, col, y]) => {
+    s += `<rect x="20" y="${y}" width="360" height="56" rx="7" fill="#1d2040" stroke="${col}"/>` + txt(32, y + 20, a, { c: col, b: true, s: 10.5 }) + txt(100, y + 20, b, { b: true, s: 11 }) + txt(32, y + 42, c, { s: 9.2, c: L });
+  });
+  s += txt(200, 250, "Appendix: certificate and record formats", { a: "middle", s: 9.5, c: L });
+  s += txt(200, 268, "Annex 1: approval process · Annex 2: ConOps framework", { a: "middle", s: 9.5, c: L });
+  DIAGRAMS["mass-structure"] = svg(400, 290, s);
+}
+
+// 65. MASS timeline
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "MASS Code timeline", { a: "middle", b: true, s: 12 });
+  const rows = [["21 May 2026", "Code adopted: MSC.595(111)", A], ["1 Jul 2026", "Takes effect (non-mandatory)", G], ["Dec 2026", "MSC 112: EBP working group", Y], ["2028", "Mandatory Code work starts", Y], ["By 1 Jul 2030", "Expected adoption", Y], ["1 Jan 2032", "Expected entry into force", R]];
+  s += line(110, 44, 110, 234, L, 1.5);
+  rows.forEach(([d, t, c], i) => {
+    const y = 56 + i * 32;
+    s += `<circle cx="110" cy="${y}" r="4.5" fill="${c}"/>` + txt(102, y + 4, d, { a: "end", s: 9.5, c, b: true }) + txt(122, y + 4, t, { s: 9.5 });
+  });
+  s += txt(200, 250, "Dates after 2026 are expected, not fixed", { a: "middle", s: 9, c: L });
+  DIAGRAMS["mass-timeline"] = svg(400, 260, s);
+}
+
+// 66. MASS approval
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "Approval: five steps (6.1.6)", { a: "middle", b: true, s: 12 });
+  const st = ["1 Preliminary design development", "2 Preliminary design approval", "3 Testing, simulation, verification", "4 Final approval", "5 Operation"];
+  st.forEach((t, i) => {
+    const y = 42 + i * 40;
+    s += `<rect x="30" y="${y}" width="340" height="30" rx="6" fill="#1d2040" stroke="${i == 4 ? G : A}"/>` + txt(44, y + 20, t, { s: 10.5 });
+    if (i < 4) s += arrow(200, y + 30, 200, y + 40, L);
+  });
+  s += txt(200, 258, "ConOps is the base document at every step", { a: "middle", s: 9.5, c: L });
+  DIAGRAMS["mass-approval"] = svg(400, 270, s);
+}
