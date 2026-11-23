@@ -809,3 +809,47 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["iii-dates"] = svg(400, 232, s);
 }
+
+// 44. IMDG Code structure
+{
+  let s = frame(400, 308);
+  s += txt(200, 26, "IMDG Code: parts of the Code", { a: "middle", b: true, s: 12 });
+  const rows = [
+    ["Vol 1", "Part 1", "General provisions, definitions, training, security", A],
+    ["Vol 1", "Part 2", "Classification: classes 1 to 9, marine pollutants (2.10)", A],
+    ["Vol 2", "Part 3", "Dangerous Goods List (3.2), special provisions, quantities", G],
+    ["Vol 1", "Part 4", "Packing and tank provisions", A],
+    ["Vol 1", "Part 5", "Consignment: marking, labelling, placarding, documents", Y],
+    ["Vol 1", "Part 6", "Construction and testing of packagings, IBCs, tanks", A],
+    ["Vol 1", "Part 7", "Transport operations: stowage, segregation, incidents", R],
+  ];
+  rows.forEach(([v, p, t, c], i) => {
+    const y = 40 + i * 36;
+    s += `<rect x="14" y="${y}" width="372" height="30" rx="5" fill="${c}" fill-opacity="0.1" stroke="${c}" stroke-opacity="0.7"/>`;
+    s += txt(22, y + 13, p, { b: true, s: 10.5, c });
+    s += txt(22, y + 25, v, { s: 8.5, c: L });
+    s += txt(74, y + 19, t, { s: 9 });
+  });
+  s += txt(200, 298, "Vol 1 = Parts 1, 2, 4 to 7; Vol 2 = Part 3 and appendices", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["imdg-structure"] = svg(400, 308, s);
+}
+
+// 45. IMDG Code amendment cycle
+{
+  let s = frame(400, 220);
+  s += txt(200, 26, "IMDG Code: two-year amendment cycle", { a: "middle", b: true, s: 12 });
+  const cols = [["41-22", "MSC.501(105)", "28 Apr 2022", "1 Jan 2023", "1 Jan 2024", T], ["42-24", "MSC.556(108)", "23 May 2024", "1 Jan 2025", "1 Jan 2026", A], ["43-26", "MSC.587(111)", "May 2026", "not confirmed", "1 Jan 2028", Y]];
+  s += txt(14, 56, "Amendment", { s: 9, c: L }) + txt(14, 80, "Resolution", { s: 9, c: L }) + txt(14, 104, "Adopted", { s: 9, c: L }) + txt(14, 128, "Voluntary from", { s: 9, c: L }) + txt(14, 152, "Mandatory from", { s: 9, c: L });
+  cols.forEach(([a, r, ad, v, m, c], i) => {
+    const x = 120 + i * 92;
+    s += `<rect x="${x - 4}" y="40" width="88" height="124" rx="5" fill="${c}" fill-opacity="0.1" stroke="${c}" stroke-opacity="0.7"/>`;
+    s += txt(x + 40, 56, a, { a: "middle", b: true, s: 10.5, c });
+    s += txt(x + 40, 80, r, { a: "middle", s: 9 });
+    s += txt(x + 40, 104, ad, { a: "middle", s: 9 });
+    s += txt(x + 40, 128, v, { a: "middle", s: 9 });
+    s += txt(x + 40, 152, m, { a: "middle", s: 9, b: true });
+  });
+  s += txt(200, 190, "MSC adopts amendments every two years", { a: "middle", s: 9, c: L });
+  s += txt(200, 206, "Voluntary use first, then mandatory under SOLAS", { a: "middle", s: 9, c: L });
+  DIAGRAMS["imdg-cycle"] = svg(400, 220, s);
+}
