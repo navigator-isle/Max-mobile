@@ -88,7 +88,7 @@ tags: [salvage, lof, special-compensation, environment, imo, convention]
 ## Chapter V — Final clauses (Arts 28–34)
 - Art 28: open for signature 1 Jul 1989 – 30 Jun 1990, then accession
 - Art 29: in force one year after 15 States consented
-- Art 30 reservations: a State may exclude (a) inland-waters salvage with only inland navigation vessels, (b) inland-waters salvage with no vessel involved, (c) cases where all interested parties are its nationals, (d) maritime cultural property of prehistoric, archaeological or historic interest on the sea-bed
+- Art 30 reservations: a State may exclude (a) inland-waters salvage with only inland navigation vessels, (b) inland-waters salvage with no vessel involved, (c) cases where all interested parties are its nationals, (d) maritime cultural property of historic interest on the sea-bed
 - Art 31: denunciation after one year from entry into force for that State; effective one year after receipt
 - Art 32: revision conference — by IMO, or by the Secretary-General at the request of eight States or one quarter of the Parties, whichever is higher
 - Art 34: six authentic languages
