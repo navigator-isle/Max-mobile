@@ -5,14 +5,14 @@ tags: [ffe, fire-fighting, fire-main, extinguishers, fireman-outfit, eebd, scba,
 # Fire-Fighting Equipment Guide — What is on board, how many, and how it is kept
 
 ## At a glance
-| Group | Equipment | SOLAS II-2 | Technical standard |
+| Group | Equipment | SOLAS II-2 | Detail in this note |
 |---|---|---|---|
-| Water | Fire pumps, fire main, hydrants, hoses, nozzles, international shore connection | 10.2 | [[FSS Code]] chapters 2 and 12 |
-| Portable | Extinguishers, spare charges, foam applicator | 10.3 | FSS Code chapter 4 |
-| Fixed | CO₂, high-expansion foam, water spray, local application, sprinklers | 10.4 to 10.9 | FSS Code chapters 5 to 8 |
-| Detection | Fire detection and alarm | 7, 10.6 | FSS Code chapters 9 and 10 |
-| Personal | Fire-fighter's outfit, breathing apparatus, EEBD | 10.10, 13.3.4 | FSS Code chapter 3 |
-| Plans and training | Fire control plan, training manual | 15 | |
+| Water | Fire pumps, fire main, hydrants, hoses, nozzles, international shore connection | 10.2 | Fire pumps section, emergency fire pump |
+| Portable | Extinguishers, spare charges, foam applicator | 10.3 | Portable extinguishers section |
+| Fixed | CO₂, high-expansion foam, water spray, local application, sprinklers | 10.4 to 10.9 | Fixed systems section |
+| Detection | Fire detection and alarm | 7, 10.6 | Detection section |
+| Personal | Fire-fighter's outfit, breathing apparatus, EEBD | 10.10, 13.3.4 | Personal protection section |
+| Plans and training | Fire control plan, training manual | 15 | Plans section |
 
 ![[diagram:ffe-main|The fire main]]
 
@@ -66,7 +66,41 @@ tags: [ffe, fire-fighting, fire-main, extinguishers, fireman-outfit, eebd, scba,
 | **Passenger ships over 36 passengers** | Sprinklers, detection and alarm in control stations, accommodation and service spaces. Two water fog applicators per Cat A space |
 - **Fixed systems allowed:** gas, high-expansion foam, pressure water-spray. **Halon 1211, 1301, 2402 and perfluorocarbons are banned.** Steam is not allowed except as a small extra in restricted areas
 - **Storage** is behind the forward collision bulkhead, for no other purpose, with its own entrance. Below deck it must be within one deck of the open deck, with at least **6 air changes an hour** by mechanical exhaust
-- Technical figures for each fixed system are in the [[FSS Code]]
+
+## Fixed systems: the technical figures (FSS Code chapters 5 to 8)
+| System | Specification |
+|---|---|
+| **CO₂, cargo spaces** | Free gas at least **30%** of the gross volume of the largest cargo space protected |
+| **CO₂, machinery spaces** | The larger of **40%** of the largest space's gross volume (casing partly excluded) or **35%** of its gross volume including the casing. Cargo ships under 2,000 GT with two or more non-separate machinery spaces counted as one: **35%** and **30%** |
+| **CO₂ calculation** | Free CO₂ taken as **0.56 m³/kg**. Starting-air receivers' free air volume is added to the space volume |
+| **CO₂ discharge** | **85%** of the gas into a machinery space within **2 min** |
+| **CO₂ alarm and controls** | Audible pre-discharge alarm for at least **20 s**. **Two separate controls**, one for the pipe valve and one for the cylinders, in a clearly marked release box. Any key in a break-glass enclosure |
+| **CO₂ piping and storage** | Pipes pressure-tested at not less than **5 N/mm²** after installation, not run through refrigerated spaces. Nozzles give uniform distribution. Containers outside the protected space unless the Administration permits otherwise. Spare parts on board |
+| **Steam** (where allowed) | At least **1 kg of steam per hour per 0.75 m³** of the largest protected space |
+| **High-expansion foam** | Fills the largest protected space at **1 m depth per minute**. Foam volume **five times** the space. Expansion ratio not above **1,000:1**. Generators at least **450 mm** from the space, delivery ducts of steel at least **5 mm**, stainless dampers at least **3 mm** |
+| **Low-expansion foam** | **150 mm** depth over the largest oil-spread area within **5 min**. Expansion ratio not above **12:1** |
+| **Deck foam, tankers** (chapter 14) | Solution rate the greatest of **0.6 L/min/m²** of cargo tank deck area, **6 L/min/m²** of the largest tank's section, or **3 L/min/m²** of the monitor-protected area (at least **1,250 L/min**). Supply **20 min** with inert gas, **30 min** without. Applicators at least **400 L/min**, throw at least **15 m**, at least four |
+| **Water-spray and water-mist** | Average at least **5 L/m²/min**. Pump supplies all sections of a compartment together at the required pressure and **starts automatically** on a pressure drop. Nozzles over bilges, tank tops and other oil-spread or high-hazard areas. Pump and controls outside the protected space |
+| **Sprinklers: layout** | Wet-pipe (saunas dry-pipe, heads up to **140 °C**). Sections of at most **200** sprinklers, passenger ships at most **two decks** and one main vertical zone. Each section: one **stop valve**, a **pressure gauge**, a **test valve**. Spacing for an average of at least **5 L/m²/min** |
+| **Sprinklers: heads** | Operating range **68 to 79 °C** in accommodation. Spare heads: **6** (under 300 installed), **12** (300 to 1,000), **24** (over 1,000) |
+| **Sprinklers: water** | **Pressure tank** holds at least **twice** the standing charge (one minute of pump discharge), air pressure kept up, sight gauge, seawater kept out. An **independent power pump** starts automatically on pressure drop and covers at least **280 m²** at the required rate, with a test valve. Fire main connection through a **lockable non-return valve** |
+| **Sprinklers: power and alarm** | **Two power sources**: passenger ships with an automatic changeover switch near the pump, cargo ships with the main source fed by at least two generators. Pump and tank remote from Category A spaces. Visual and audible alarm per section at the bridge or a manned control station, with a fault indication. Means to test the automatic start |
+
+## Detection and alarm (FSS Code chapter 9)
+| Item | Specification |
+|---|---|
+| **Smoke detectors** (stairways, corridors, escape routes) | Operate before **12.5%/m** obscuration and not below **2%/m** |
+| **Heat detectors** | Operate before **78 °C** and not below **54 °C**, at a rise under **1 °C/min**. Drying rooms and similar up to **130 °C**, saunas up to **140 °C** |
+| **Spacing: heat** | Up to **37 m²** per detector, **9 m** between centres, **4.5 m** from bulkheads |
+| **Spacing: smoke** | Up to **74 m²** per detector, **11 m** between centres, **5.5 m** from bulkheads |
+| **Overhead position** | At least **0.5 m** from bulkheads, except in corridors, lockers and stairways |
+| **Sections** | At most **50** enclosed spaces in one section |
+| **Alarm** | An audible alarm sounds if a fire signal is **not acknowledged within 2 min** |
+
+## Emergency fire pump (FSS Code chapter 12)
+- **Capacity** at least **40%** of the total fire pump capacity, and not less than **25 m³/h** (passenger ships under 1,000 GT, cargo ships **2,000 GT and above**) or **15 m³/h** (cargo ships under 2,000 GT)
+- **Diesel drive:** starts by hand at **0 °C**, with heating if that is impracticable. Other starting means: at least **six starts in 30 min**, two in the first 10 min
+- **Fuel:** service tank for **3 h** at full load, with reserve outside the machinery space for **15 h** more
 
 ## Personal protection
 ![[diagram:ffe-outfit|The fire-fighter's outfit]]
@@ -150,11 +184,13 @@ tags: [ffe, fire-fighting, fire-main, extinguishers, fireman-outfit, eebd, scba,
 - The **fire part of the Record of Equipment** (Form E) and the exact certificate wording
 - **Extinguisher classes** (A, B, C, D) and which agent suits which class
 - **Fire hose** material and construction standards, and the **fire blanket**
-- **Sprinkler and detection** quantities for cargo ships, and **EEBD** numbers for cargo pump-rooms and tankers
+- Which **detection and sprinkler** coverage each ship type needs (SOLAS II-2/7 and 10), and **EEBD** numbers for cargo pump-rooms and tankers
 - The text of **MSC.1/Circ.1432** itself. The intervals come from a flag State notice that follows it
 - SOLAS II-2 regulations **14** (operational readiness, maintenance plan) and **16** (operations booklet)
 - The monthly **drill** rule, and how many crew join each fire drill
 - STCW A-VI/1-2 and A-VI/3 **eligibility** and assessment criteria
+- Which ships need an **emergency fire pump** (the FSS chapter's application wording was not clear in the source)
+- FSS chapter **13 to 17** details (arrangement of means of escape, inert gas, helicopter foam), the **inert gas system**, **water-mist** design tests, and **fixed gas detection**
 - Requirements for **passenger ships built on or after 1 Jan 2026**, ro-ro spaces and **PFOS** (see the SOLAS and FSS notes)
 - Flag State variations, including the Philippines
 
@@ -162,7 +198,7 @@ tags: [ffe, fire-fighting, fire-main, extinguishers, fireman-outfit, eebd, scba,
 - UK MCA, SOLAS II-2 Regulation 10 Fire-fighting: https://assets.publishing.service.gov.uk/media/5a7f91bde5274a2e8ab4cf90/Regulation_10_-_Fire-Fighting.pdf
 - UK MCA, Regulation 13 Means of escape (EEBD): https://assets.publishing.service.gov.uk/media/5a80f3c6ed915d74e33fd543/Regulation_13_-_Means_of_Escape.pdf
 - UK MCA, Regulation 15 Instructions, on-board training and drills: https://assets.publishing.service.gov.uk/media/5a747c16ed915d0e8e3988ff/Regulation_15_-_Instructions__On-Board_Training_and_Drills.pdf
-- FSS Code text (chapters 2, 3, 4): https://corpora.tika.apache.org/base/docs/govdocs1/668/668672.pdf
+- FSS Code text (chapters 2 to 9, 12, 14, as printed by the US Government Printing Office; figures cross-checked against the [[FSS Code]] note): https://corpora.tika.apache.org/base/docs/govdocs1/668/668672.pdf
 - Transport Malta, Technical Notice SLS.6 Rev.4 (Feb 2025), fire protection maintenance: https://transport.gov.mt/maritime/merchant-shipping-notices/technical-notices/technical-notice-sls-6-rev-4-fire-protection-systems-and-appliances-and-compressed-gas-cylinders-periodic-maintenance-inspection-and-testing-2477
 - IMO MSC.1/Circ.1318/Rev.1, fixed CO₂ maintenance (HK Marine Department copy): https://www.mardep.gov.hk/en/msnote/pdf/msin2136anx1.pdf
 - STCW Table A-VI/1-2: https://weh.maritime.edu/stcw/2018/tables/612.html
