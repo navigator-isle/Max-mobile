@@ -19,11 +19,11 @@ tags: [intervention, high-seas, coastal-state, oil-pollution, casualty, imo, con
 - Covers seagoing vessels; warships and State ships on non-commercial government service are excluded (Art I(2))
 
 ## Key definitions (Art II)
-- **Maritime casualty**: collision, stranding or other incident of navigation, or other occurrence on board or outside a ship causing material damage or imminent threat of material damage to a ship or cargo
+- **Maritime casualty**: collision, stranding, other incidents of navigation, and other occurrences causing material damage or the imminent threat of it
 - **Ship**: any seagoing vessel of any type whatsoever, and any floating craft, except installations for exploring or exploiting sea-bed resources
 - **Oil**: crude oil, fuel oil, diesel oil and lubricating oil
 - **Related interests** of the coastal State directly affected or threatened:
-  - (a) maritime coastal, port or estuarine activities, including fisheries that are an essential means of livelihood
+  - (a) coastal, port or estuarine activities, including fisheries that are an essential means of livelihood
   - (b) tourist attractions of the area
   - (c) the health of the coastal population and the well-being of the area, including conservation of living marine resources and wildlife
 - **Organization**: the Inter-Governmental Maritime Consultative Organization (now IMO)
@@ -43,7 +43,7 @@ tags: [intervention, high-seas, coastal-state, oil-pollution, casualty, imo, con
 
 ## Proportionality (Art V)
 - V(1): measures must be proportionate to the damage, actual or threatened
-- V(2): must not go beyond what is reasonably necessary; must stop once the aim is achieved; must not interfere unnecessarily with the rights and interests of flag State, third States and persons concerned
+- V(2): must not go beyond what is reasonably necessary; must stop once the aim is achieved; must avoid unnecessary interference with the rights of others
 - V(3): proportionality is judged by (a) the extent and probability of imminent damage if no measures are taken, (b) the likelihood of the measures being effective, (c) the extent of damage the measures may cause
 
 ## Compensation and disputes
