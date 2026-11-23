@@ -2038,3 +2038,70 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(14, 234, "Same 10 h and 77 h as MLC 2006", { s: 8.5, c: L });
   DIAGRAMS["stcw-rest"] = svg(400, 250, s);
 }
+
+// 134-139. GMDSS
+{
+  let s = frame(400, 354);
+  s += txt(200, 26, "Nine GMDSS functions", { a: "middle", b: true, s: 12 });
+  const f = ["Ship-to-shore distress alert, 2 independent means", "Shore-to-ship distress relay", "Ship-to-ship distress alert", "SAR coordination communications", "On-scene communications", "Locating signals", "Maritime safety information (MSI)", "Urgency and safety communications", "Bridge-to-bridge communications"];
+  f.forEach((x, i) => { const y = 40 + i * 32; s += `<rect x="14" y="${y}" width="372" height="26" rx="6" fill="#1d2040" stroke="${i === 0 ? R : A}"/>` + txt(24, y + 17, (i + 1) + "  " + x, { s: 9.5 }); });
+  s += txt(200, 334, "Plus general radiocommunications", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["gmdss-functions"] = svg(400, 358, s);
+}
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Equipment by sea area (2024)", { a: "middle", b: true, s: 12 });
+  const a = [["A1", "VHF coast station · about 20 to 30 nm", "VHF", G], ["A2", "MF coast station · about 100 nm", "VHF + MF", A], ["A3", "Satellite service coverage", "VHF + MF/HF or SES", Y], ["A4", "Outside A1, A2, A3", "VHF + MF/HF", R]];
+  a.forEach((r, i) => { const y = 42 + i * 56; s += `<rect x="14" y="${y}" width="372" height="48" rx="7" fill="#1d2040" stroke="${r[3]}"/>` + txt(26, y + 29, r[0], { b: true, s: 16, c: r[3] }) + txt(70, y + 20, r[1], { s: 9, c: L }) + txt(70, y + 37, r[2], { s: 10.5, b: true }); });
+  s += txt(200, 276, "All ships also: VHF channel 70 DSC, 406 MHz EPIRB, SART or AIS-SART", { a: "middle", s: 8.5, c: L });
+  s += txt(200, 290, "MSI receiver: NAVTEX where provided, otherwise EGC", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["gmdss-areas"] = svg(400, 298, s);
+}
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Distress alert paths", { a: "middle", b: true, s: 12 });
+  s += `<rect x="150" y="40" width="100" height="36" rx="7" fill="#3a1d28" stroke="${R}"/>` + txt(200, 63, "Ship in distress", { a: "middle", b: true, s: 10, c: R });
+  const p = [["DSC alert", "VHF 70 · 2187.5 kHz · HF", "Coast station + ships nearby", G, 14], ["Satellite SES", "RMSS service", "Straight to the RCC", A, 140], ["EPIRB 406 MHz", "Cospas-Sarsat", "LUT > MCC > RCC", Y, 266]];
+  p.forEach(r => { s += line(200, 76, r[4] + 60, 110, r[3]) + `<rect x="${r[4]}" y="110" width="120" height="48" rx="7" fill="#1d2040" stroke="${r[3]}"/>` + txt(r[4] + 60, 128, r[0], { a: "middle", b: true, s: 9.5, c: r[3] }) + txt(r[4] + 60, 143, r[1], { a: "middle", s: 7.5, c: L }) + txt(r[4] + 60, 218, r[2], { a: "middle", s: 8, c: T }) + line(r[4] + 60, 158, r[4] + 60, 196, r[3]); });
+  s += `<rect x="100" y="238" width="200" height="34" rx="7" fill="#1d2040" stroke="${G}"/>` + txt(200, 260, "Rescue coordination centre", { a: "middle", b: true, s: 10, c: G });
+  s += txt(200, 290, "Satellite alerts go to the RCC, not directly to nearby ships", { a: "middle", s: 8, c: L });
+  DIAGRAMS["gmdss-alert"] = svg(400, 300, s);
+}
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "Cospas-Sarsat chain", { a: "middle", b: true, s: 12 });
+  const b = [["Beacon", "406 MHz", R], ["Satellite", "LEO · MEO · GEO", A], ["LUT", "decodes, locates", Y], ["MCC", "national centre", Y], ["RCC", "sends help", G]];
+  b.forEach((r, i) => { const x = 10 + i * 78; s += `<rect x="${x}" y="70" width="70" height="54" rx="7" fill="#1d2040" stroke="${r[2]}"/>` + txt(x + 35, 92, r[0], { a: "middle", b: true, s: 10.5, c: r[2] }) + txt(x + 35, 108, r[1], { a: "middle", s: 7, c: L }); if (i < 4) s += txt(x + 74, 100, "›", { a: "middle", s: 14, c: L }); });
+  s += txt(200, 156, "Each beacon sends a unique HEX ID", { a: "middle", s: 9.5 });
+  s += txt(200, 174, "Registered beacons show ship, owner and contacts", { a: "middle", s: 9, c: Y });
+  s += txt(200, 196, "EPIRB tested every year · maintained at most every 5 years", { a: "middle", s: 9, c: L });
+  s += txt(200, 214, "Over 50,000 people rescued since 1982", { a: "middle", s: 9, c: G });
+  DIAGRAMS["gmdss-cospas"] = svg(400, 230, s);
+}
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "NAVTEX header: B1 B2 B3 B4", { a: "middle", b: true, s: 12 });
+  const b = [["B1", "Station", A], ["B2", "Subject", G], ["B3", "Number", Y], ["B4", "Number", Y]];
+  b.forEach((r, i) => { const x = 40 + i * 80; s += `<rect x="${x}" y="48" width="70" height="52" rx="7" fill="#1d2040" stroke="${r[2]}"/>` + txt(x + 35, 72, r[0], { a: "middle", b: true, s: 14, c: r[2] }) + txt(x + 35, 90, r[1], { a: "middle", s: 9, c: L }); });
+  s += txt(200, 128, "Receiver uses B1 + B2 to accept or reject a message", { a: "middle", s: 9 });
+  s += txt(200, 146, "and B3 B4 to avoid repeats", { a: "middle", s: 9 });
+  s += txt(200, 172, "518 kHz international · 490 kHz local language · 4209.5 kHz", { a: "middle", s: 9, c: Y });
+  s += txt(200, 192, "Range about 400 nm", { a: "middle", s: 9, c: L });
+  s += txt(200, 212, "B2 letter A: navigational warning · B: weather warning", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["gmdss-navtex"] = svg(400, 230, s);
+}
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "Power, maintenance, position", { a: "middle", b: true, s: 12 });
+  s += txt(14, 52, "Reserve power", { s: 10.5, b: true, c: A });
+  s += `<rect x="14" y="60" width="${20}" height="22" rx="4" fill="${G}"/>` + txt(40, 76, "1 hour with a compliant emergency source", { s: 9 });
+  s += `<rect x="14" y="90" width="${120}" height="22" rx="4" fill="${Y}"/>` + txt(140, 106, "6 hours without one", { s: 9 });
+  s += txt(14, 134, "Recharge within 10 h · capacity checked at most every 12 months", { s: 8.5, c: L });
+  s += txt(14, 166, "Keeping equipment available", { s: 10.5, b: true, c: A });
+  s += `<rect x="14" y="174" width="176" height="40" rx="6" fill="#1d2040" stroke="${G}"/>` + txt(102, 192, "A1, A2", { a: "middle", b: true, s: 10, c: G }) + txt(102, 207, "at least 1 method", { a: "middle", s: 9 });
+  s += `<rect x="210" y="174" width="176" height="40" rx="6" fill="#1d2040" stroke="${R}"/>` + txt(298, 192, "A3, A4", { a: "middle", b: true, s: 10, c: R }) + txt(298, 207, "at least 2 methods", { a: "middle", s: 9 });
+  s += txt(200, 234, "Duplication · shore-based · at-sea electronic maintenance", { a: "middle", s: 9, c: L });
+  s += txt(200, 262, "Navigation receiver fails: update position by hand", { a: "middle", s: 9, c: Y });
+  s += txt(200, 278, "at least every 4 hours while under way", { a: "middle", s: 9, c: Y });
+  DIAGRAMS["gmdss-power"] = svg(400, 290, s);
+}

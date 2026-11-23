@@ -42,7 +42,7 @@ function toHtml(md) {
   return { body: out.replace(/<ul><li><\/li>/g, "<ul>"), tags };
 }
 const notes = [];
-for (const [dir, cat] of [["", "Maritime › IMO"], ["Conventions", "Maritime › IMO › Conventions"], ["Codes", "Maritime › IMO › Codes"], ["ILO", "Maritime › ILO › Conventions"]]) {
+for (const [dir, cat] of [["", "Maritime › IMO"], ["Conventions", "Maritime › IMO › Conventions"], ["Codes", "Maritime › IMO › Codes"], ["ILO", "Maritime › ILO › Conventions"], ["Systems", "Maritime › IMO › Systems"]]) {
   const d = path.join(ROOT, "notes", "imo", dir);
   for (const f of fs.readdirSync(d).filter(f => f.endsWith(".md")).sort()) {
     const rawMd = fs.readFileSync(path.join(d, f), "utf8"), tm = /^title:\s*(.+)$/m.exec(rawMd.split("\n---")[0] || ""), title = (rawMd.startsWith("---") && tm) ? tm[1].trim() : f.slice(0, -3), { body, tags } = toHtml(rawMd);

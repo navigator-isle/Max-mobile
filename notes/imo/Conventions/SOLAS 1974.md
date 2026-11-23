@@ -197,7 +197,7 @@ Rocket parachute flares: not less than **12**, stowed on or near the bridge.
 
 - **Regs 8, 9, 10 and 11 now define sea areas A1, A2, A3 and A4 individually.** Before 2024 each covered a combined set (A1, A1+A2, A1+A2+A3, A1+A2+A3+A4).
 - **A3:** an area excluding A1 and A2 within the coverage of a **recognized mobile satellite service** (no longer tied to Inmarsat only). **A4:** the area outside A1, A2 and A3.
-- **NAVTEX, EGC and HF NBDP receivers are no longer mandatory.** Under MSC.1/Circ.1645 ships should carry NAVTEX where international NAVTEX is provided, otherwise HF NBDP (where available) and EGC. The mandatory NBDP function was removed.
+- **NAVTEX, EGC and HF NBDP receivers are no longer mandatory.** Under MSC.1/Circ.1645 ships should carry NAVTEX where international NAVTEX is provided, otherwise an EGC receiver (SafetyNET or Iridium SafetyCast) covering the operating area. The mandatory NBDP function was removed. See [[GMDSS]].
 - **1 Jan 2028:** under MSC.1/Circ.1676 flag States may allow continued installation of VHF, MF/HF and Inmarsat-C equipment approved under the previous standards
 - The two-way VHF and SART provisions moved from III/6 to **IV/7**
 
