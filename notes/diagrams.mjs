@@ -594,3 +594,40 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 226, "Partly filled and unsecured: total heeling moment × 1.12 (B 1.5) · section numbers of the 1991 text", { a: "middle", s: 9, c: L });
   DIAGRAMS["grain-shift-angles"] = svg(400, 240, s);
 }
+
+// 32. HSC Code: speed threshold  V = 3.7 * displacement^0.1667
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "High-speed craft: speed threshold (1.4.30)", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "max speed (m/s) ≥ 3.7 × ∇^0.1667   (∇ = displacement, m³)", { a: "middle", s: 9.5, c: L });
+  const bx = 56, by = 206, bw = 320, bh = 140;
+  s += line(bx, by, bx + bw, by) + line(bx, by, bx, by - bh);
+  const X = v => bx + (Math.log10(v) - 1) / 4 * bw, Yp = m => by - m / 25 * bh;
+  let d = "", a = `M${bx},${by}`;
+  for (let e = 1; e <= 5.001; e += 0.1) { const v = Math.pow(10, e), sp = 3.7 * Math.pow(v, 0.1667); const px = bx + (e - 1) / 4 * bw; d += (e > 1.01 ? "L" : "M") + px.toFixed(1) + "," + Yp(sp).toFixed(1); }
+  const top = `M${bx},${by - bh}`;
+  s += `<path d="${d} L${bx + bw},${by - bh} L${bx},${by - bh}Z" fill="${G}" fill-opacity="0.12" stroke="none"/>`;
+  s += `<path d="${d}" fill="none" stroke="${G}" stroke-width="2"/>`;
+  [[100, 7.97], [1000, 11.7], [10000, 17.2]].forEach(([v, m]) => {
+    s += `<circle cx="${X(v)}" cy="${Yp(m)}" r="3.4" fill="${Y}"/>` + txt(X(v), Yp(m) + 16, `${m.toFixed(1)} m/s`, { a: "middle", s: 9, c: Y });
+    s += txt(X(v), by + 14, v.toLocaleString("en"), { a: "middle", s: 9.5 });
+  });
+  s += txt(bx + 150, by - 118, "High-speed craft", { s: 10, b: true, c: G }) + txt(bx + 150, by - 104, "(at or above the line)", { s: 9, c: L });
+  s += txt(bx + 180, by - 22, "Below the line: not high-speed", { s: 9, c: L });
+  s += txt(200, 238, "Displacement at the design waterline (m³), log scale", { a: "middle", s: 9, c: L });
+  s += txt(200, 252, "Values calculated from the formula · craft clear of the water on ground effect are excluded", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["hsc-speed-line"] = svg(400, 260, s);
+}
+
+// 33. HSC Code: craft types
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "HSC Code: passenger and cargo craft", { a: "middle", b: true, s: 12 });
+  const card = (y, h, c, t, l1, l2, l3) => `<rect x="18" y="${y}" width="364" height="${h}" rx="6" fill="${c}" fill-opacity="0.12" stroke="${c}"/>` + txt(30, y + 18, t, { b: true, s: 11, c }) + txt(30, y + 34, l1, { s: 9.5 }) + (l2 ? txt(30, y + 48, l2, { s: 9.5 }) : "") + (l3 ? txt(30, y + 62, l3, { s: 9.5 }) : "");
+  s += card(42, 74, G, "Category A passenger craft (1.4.12)", "Not more than 450 passengers", "Rescue of all within the least of: time to prevent hypothermia,", "a time suited to the route, or 4 hours (shown by flag and port States)");
+  s += card(124, 62, Y, "Category B passenger craft (1.4.13)", "Any high-speed passenger craft that is not Category A", "Keeps navigating safely if essential systems in one", "compartment are disabled");
+  s += card(194, 48, A, "Cargo craft (1.4.10)", "Any high-speed craft that is not a passenger craft", "", "");
+  s += txt(200, 262, "Voyage limits (1.3.4): passenger craft up to 4 h; cargo craft", { a: "middle", s: 9, c: L });
+  s += txt(200, 276, "(500 GT and above) up to 8 h, at operational speed from a place of refuge", { a: "middle", s: 9, c: L });
+  DIAGRAMS["hsc-craft-types"] = svg(400, 290, s);
+}
