@@ -1078,3 +1078,44 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["ism-dates"] = svg(400, 290, s);
 }
+
+// 58. ISPS flow
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "ISPS: assessment, plan, certificate", { a: "middle", b: true, s: 12 });
+  const bx = (x, y, w, t, c) => `<rect x="${x}" y="${y}" width="${w}" height="34" rx="6" fill="#1d2040" stroke="${c}"/>` + txt(x + w / 2, y + 21, t, { a: "middle", s: 10 });
+  s += txt(20, 52, "SHIP", { c: A, b: true, s: 10 });
+  s += bx(20, 58, 105, "SSA (CSO)", A) + bx(147, 58, 105, "SSP (approved)", A) + bx(274, 58, 106, "ISSC", G);
+  s += arrow(125, 75, 147, 75, A) + arrow(252, 75, 274, 75, G);
+  s += txt(20, 130, "PEOPLE", { c: Y, b: true, s: 10 });
+  s += bx(20, 136, 105, "CSO (Company)", Y) + bx(147, 136, 105, "SSO (each ship)", Y) + bx(274, 136, 106, "Master: authority", R);
+  s += txt(20, 198, "PORT FACILITY", { c: L, b: true, s: 10 });
+  s += txt(20, 216, "PFSA  →  PFSP  →  PFSO   (Part A, 14–18)", { s: 10 });
+  s += txt(200, 238, "Part A mandatory · Part B guidance", { a: "middle", s: 9, c: L });
+  DIAGRAMS["isps-flow"] = svg(400, 250, s);
+}
+
+// 59. ISPS levels
+{
+  let s = frame(400, 214);
+  s += txt(200, 26, "Security levels", { a: "middle", b: true, s: 12 });
+  [["1", "Minimum measures, at all times", G], ["2", "Heightened risk: extra measures", Y], ["3", "Incident probable or imminent", R]].forEach(([n, t, c], i) => {
+    const y = 42 + i * 50;
+    s += `<rect x="20" y="${y}" width="360" height="40" rx="6" fill="#1d2040" stroke="${c}"/><circle cx="46" cy="${y + 20}" r="13" fill="${c}"/>` + txt(46, y + 25, n, { a: "middle", b: true, s: 14, c: BG }) + txt(70, y + 25, t, { s: 11 });
+  });
+  s += txt(200, 200, "Set by the Contracting Government · may go from 1 to 3", { a: "middle", s: 9, c: L });
+  DIAGRAMS["isps-levels"] = svg(400, 214, s);
+}
+
+// 60. ISPS cycle
+{
+  let s = frame(400, 190);
+  s += txt(200, 26, "ISSC: up to 5 years", { a: "middle", b: true, s: 12 });
+  const x0 = 40, x1 = 360, y = 80, k = (x1 - x0) / 5;
+  s += line(x0, y, x1, y, L, 2);
+  for (let i = 0; i <= 5; i++) s += `<circle cx="${x0 + i * k}" cy="${y}" r="4" fill="${i == 0 || i == 5 ? A : Y}"/>` + txt(x0 + i * k, y + 18, i == 0 ? "Issue" : i == 5 ? "Renewal" : "Year " + i, { a: "middle", s: 9, c: L });
+  s += `<rect x="${x0 + 2 * k}" y="${y - 30}" width="${k}" height="16" rx="3" fill="${G}" fill-opacity="0.35" stroke="${G}"/>` + txt(x0 + 2.5 * k, y - 18, "Intermediate", { a: "middle", s: 8.5 });
+  s += txt(200, 134, "Interim ISSC: 6 months, cannot be extended", { a: "middle", s: 10, c: A });
+  s += txt(200, 156, "Intermediate (one only): between 2nd and 3rd anniversary", { a: "middle", s: 9.5 });
+  DIAGRAMS["isps-cycle"] = svg(400, 190, s);
+}
