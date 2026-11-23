@@ -138,3 +138,25 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(222, 206, "Convention area (Art 1)", { a: "middle", s: 9, c: L });
   DIAGRAMS["wrc-convention-area"] = svg(400, 220, s);
 }
+
+// 8. Athens 2002 liability tiers for death and personal injury (Arts 3, 4bis, 7)
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Death / injury: per passenger, per occasion", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "(shipping incident, SDR)", { a: "middle", s: 9.5, c: L });
+  const x0 = 60, W = 280, sc = W / 400; // 400,000 SDR = full width
+  s += `<rect x="${x0}" y="64" width="${250 * sc}" height="40" fill="${G}" fill-opacity="0.35" stroke="${G}"/>`;
+  s += `<rect x="${x0 + 250 * sc}" y="64" width="${150 * sc}" height="40" fill="${Y}" fill-opacity="0.35" stroke="${Y}"/>`;
+  s += txt(x0 + 125 * sc, 88, "Strict liability", { a: "middle", s: 10.5, b: true });
+  s += txt(x0 + 325 * sc, 88, "Fault presumed", { a: "middle", s: 9.5, b: true });
+  s += txt(x0, 122, "0", { a: "middle", s: 10, c: L });
+  s += txt(x0 + 250 * sc, 122, "250,000", { a: "middle", s: 10, c: G });
+  s += txt(x0 + 400 * sc, 122, "400,000", { a: "middle", s: 10, c: Y });
+  s += txt(200, 146, "Up to 250,000: carrier liable without proof of fault", { a: "middle", s: 10, c: G });
+  s += txt(200, 160, "(defences: war, hostilities, exceptional natural phenomenon, third-party intent)", { a: "middle", s: 9, c: L });
+  s += txt(200, 178, "250,000 to 400,000: carrier liable unless it proves no fault", { a: "middle", s: 10, c: Y });
+  s += txt(200, 196, "Insurance (Art 4bis): at least 250,000 per passenger", { a: "middle", s: 10, c: A });
+  s += txt(200, 210, "Ships registered in a Party, licensed for more than 12 passengers", { a: "middle", s: 9, c: L });
+  s += txt(200, 232, "Time bar: 2 years · outer limit 5 years · direct action against insurer", { a: "middle", s: 9.5, c: L });
+  DIAGRAMS["athens-liability"] = svg(400, 250, s);
+}
