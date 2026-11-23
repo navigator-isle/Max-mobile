@@ -25,7 +25,8 @@ await p.click("#jNew"); await p.waitForTimeout(500);
 ok(await p.locator("#editorScreen.active").count() === 1 && (await p.locator("#editorCategory").inputValue()) === "Journal", "＋ New entry opens the editor filed under Journal", await p.locator("#editorCategory").inputValue());
 await p.click("#editorBody"); await p.keyboard.type("Rain all day, wrote the survey plan."); await p.click("#insertBtn"); await p.waitForTimeout(200);
 ok(await p.locator("#insPlace").isVisible(), "Insert menu has Place");
-await p.click("#insPlace"); await p.waitForTimeout(1200);
+await p.route("**/nominatim.openstreetmap.org/**", r => r.fulfill({json:{display_name:"Test Bay, Subic, PH"}}));
+await p.click("#insPlace"); await p.waitForTimeout(2500);
 const bodyHtml = await p.locator("#editorBody").innerHTML();
 ok(/openstreetmap\.org\/\?mlat=14\.79/.test(bodyHtml) && /📍/.test(bodyHtml), "Place inserts a map link with the phone's position", bodyHtml.slice(-250));
 await p.click("#editorSave"); await p.waitForTimeout(500); if (await p.locator("#editorScreen.active").count()) { await p.locator("#editorBack").click({ timeout: 3000 }).catch(async () => { await p.evaluate(() => document.getElementById("editorBack").click()); }); await p.waitForTimeout(500); }

@@ -33,7 +33,7 @@ await p.goto(B + "/"); await p.waitForTimeout(1200);
 const vis = s => p.locator(s).isVisible(), txt = s => p.locator(s).first().textContent();
 const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
 
-await p.click('[data-edge="paper"]'); await p.waitForTimeout(600); await p.click("#tileNotes"); await p.waitForTimeout(600);
+await p.click("#dockNotes"); await p.waitForTimeout(600);
 await p.locator("#noteList >> text=Ballast water").first().click(); await p.waitForTimeout(800);
 ok(await p.locator("#readBody figure.note-diagram .diagram-svg svg").count() === 1, "read view shows the drawn diagram (one SVG for the known key)", String(await p.locator("#readBody figure.note-diagram").count()));
 ok(/TEXTMARK/.test(await txt("#readBody figure.note-diagram figcaption")), "the caption text stays under the diagram");
