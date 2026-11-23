@@ -83,10 +83,17 @@ tags: [grain, bulk, stability, solas-vi, imo, code]
 ## Stowage (A 10)
 
 - Trim free surfaces and minimize shifting.
-- **Trimmed compartments:** filled under decks and hatch covers as far as possible (10.2).
-- **Untrimmed compartments:** filled in way of the hatch; grain may rest at its natural angle outside the hatch periphery, for compartments with feeder ducts or perforated decks, or specially suitable compartments (10.3).
-- Non-grain-tight 'tween-deck hatch covers are sealed by taping, tarpaulins or similar.
-- Partly filled surfaces are levelled and secured against overstowing (A 16), or strapped or lashed (A 17 or A 18), unless the heeling effect is accounted for.
+- **Trimmed compartments (10.2):**
+  - filled under decks and hatch covers as far as possible
+- **Untrimmed compartments (10.3):**
+  - filled in way of the hatch
+  - grain may rest at its natural angle outside the hatch periphery
+  - only for compartments with feeder ducts or perforated decks, or specially suitable compartments
+- **Hatch covers:**
+  - non-grain-tight 'tween-deck hatch covers are sealed by taping, tarpaulins or similar
+- **Partly filled compartments:**
+  - surface levelled
+  - secured against overstowing (A 16), or strapped or lashed (A 17 or A 18), unless the heeling effect is accounted for
 
 ## Securing the grain surface (A 11 to A 18)
 
