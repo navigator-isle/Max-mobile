@@ -511,6 +511,80 @@ body.on-home.has-dash .edge-tabs{display:flex}
 .att-card{border:1px solid #1f3a52;border-radius:12px;padding:10px;margin:10px 0;background:#0c1d30}.att-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.att-kind{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#8fa6bd}
 .att-media{display:block;max-width:100%;max-height:320px;border-radius:10px;margin:8px 0}.att-acts{display:flex;gap:8px;margin-top:6px}.link-row-att{display:flex;gap:8px}.link-row-att input{flex:1;min-width:0}
 .model-chip{opacity:.85}.model-chip.backup{border-color:#f2c14e;color:#f2d27e}.model-chip.offline{border-color:#8fa6bd}
+
+/* ===== redesign 23 Nov 2026 (Mark): futuristic glass look. Brain bottom-left, Notes bottom-right, dashboards as cards on home ===== */
+:root{--fx-glass:rgba(255,255,255,.045);--fx-line:rgba(110,200,255,.18);--fx-cy:#5ad8ff;--fx-te:#3de0c0;--fx-vi:#9a8bff;--fx-am:#ffb454;--fx-rd:#ff6b8a}
+body{background:radial-gradient(120% 55% at 50% 0%,#0c2036 0%,#050b15 58%) fixed,#050b15}
+.brand,.logo{letter-spacing:.42em}
+#homeScreen{padding-bottom:calc(112px + env(safe-area-inset-bottom))!important}
+.home-cards{width:100%;max-width:640px;display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:4px 2px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.home-cards::-webkit-scrollbar{display:none}
+.home-cards .tile{flex:0 0 148px;height:132px;max-height:132px;overflow:hidden;min-height:112px!important;aspect-ratio:auto;scroll-snap-align:start;border-radius:20px;padding:12px;gap:3px;background:linear-gradient(160deg,rgba(90,216,255,.12),rgba(255,255,255,.02));border:1px solid var(--fx-line);box-shadow:0 0 24px rgba(90,216,255,.05);backdrop-filter:blur(8px)}
+.home-cards .tile.alert{border-color:rgba(255,107,138,.55);box-shadow:0 0 22px rgba(255,107,138,.14)}
+.home-cards .tile .tile-top{font-size:.78rem;letter-spacing:.04em}
+#homeScreen .subtitles{min-height:12vh}
+.home-cards .tile .muted.small,.home-cards .tile .tile-line{font-size:.72rem;line-height:1.25}
+.home-cards .tile .tile-big{font-size:1.5rem;font-weight:700}
+.home-dock{position:fixed;left:0;right:0;bottom:0;z-index:30;display:none;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px calc(22px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,rgba(5,11,21,.92) 38%)}
+body.on-home .home-dock{display:flex}
+.home-dock .type-row{flex:1 1 0;min-width:0;width:auto!important;max-width:none;margin:0}
+.home-dock .type-row input{width:100%;min-width:0}
+.home-dock .type-row input{height:50px;border-radius:25px;background:rgba(255,255,255,.035);border:1px solid var(--fx-line)}
+.home-dock .type-row .send-btn{flex:none;width:46px;height:46px;font-size:0;position:relative;border-radius:50%;padding:0;background:linear-gradient(135deg,var(--fx-cy),var(--fx-te));color:#03121c;border:0}
+.dock-btn{position:relative;flex:none;width:58px;height:58px;border-radius:50%;border:1px solid var(--fx-line);background:linear-gradient(160deg,rgba(90,216,255,.16),rgba(255,255,255,.03));display:grid;place-items:center;padding:0;cursor:pointer;box-shadow:0 0 24px rgba(90,216,255,.14)}
+.dock-btn svg{width:28px;height:28px}
+.home-dock .type-row .send-btn::after{content:'';position:absolute;inset:0;margin:auto;width:18px;height:18px;background:#03121c;clip-path:polygon(0 0,100% 50%,0 100%,22% 50%)}
+.dock-brain{color:var(--fx-te)}.dock-notes{color:var(--fx-cy)}
+.dock-btn.alert{border-color:rgba(255,180,84,.7)}
+.dock-lbl{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#7f96ad;white-space:nowrap}
+.dock-badge{position:absolute;top:-5px;right:-5px;min-width:22px;height:20px;border-radius:10px;background:var(--fx-am);color:#1a1200;font-size:10.5px;font-weight:700;display:grid;place-items:center;padding:0 5px}
+.dock-brain .dock-badge{background:var(--fx-te);color:#02130f}
+.dock-badge[hidden]{display:none}
+.edge-tabs,.drawer,.drawer-shade{display:none!important}
+
+/* ----- notes hub: Notes · Journal · To-do ----- */
+.hub-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 4px}
+.hub-tile{position:relative;text-align:left;min-height:116px;border-radius:20px;padding:12px;border:1px solid var(--fx-line);color:var(--text);font:inherit;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;overflow:hidden}
+.hub-tile svg{position:absolute;left:12px;top:12px;width:28px;height:28px}
+.hub-tile .hub-n{position:absolute;right:12px;top:8px;font-size:1.35rem;font-weight:700}
+.hub-tile b{font-size:.98rem}.hub-tile small{color:#7f96ad;font-size:.72rem;line-height:1.25}
+.hub-tile.t1{background:linear-gradient(160deg,rgba(90,216,255,.16),rgba(90,216,255,.02))}.hub-tile.t1 svg,.hub-tile.t1 .hub-n{color:var(--fx-cy)}
+.hub-tile.t2{background:linear-gradient(160deg,rgba(154,139,255,.2),rgba(154,139,255,.02))}.hub-tile.t2 svg,.hub-tile.t2 .hub-n{color:var(--fx-vi)}
+.hub-tile.t3{background:linear-gradient(160deg,rgba(255,180,84,.18),rgba(255,180,84,.02))}.hub-tile.t3 svg,.hub-tile.t3 .hub-n{color:var(--fx-am)}
+.hub-tile.on{box-shadow:0 0 0 1.5px currentColor,0 0 26px rgba(90,216,255,.18)}
+.hub-tile.t1.on{color:var(--fx-cy)}.hub-tile.t2.on{color:var(--fx-vi)}.hub-tile.t3.on{color:var(--fx-am)}.hub-tile.on b,.hub-tile.on small{color:var(--text)}
+.hub-pane{display:none}
+#notesScreen[data-hub="journal"] .hub-journal,#notesScreen[data-hub="todo"] .hub-todo{display:block}
+#notesScreen:not([data-hub="notes"]) .hub-notes{display:none!important}
+.hub-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0}
+.j-day{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#7f96ad;margin:16px 2px 8px;display:flex;justify-content:space-between;align-items:center}
+.j-card{display:block;width:100%;text-align:left;font:inherit;color:var(--text);border:1px solid var(--fx-line);background:var(--fx-glass);border-radius:20px;padding:14px;margin-bottom:10px;cursor:pointer}
+.j-card .j-meta{font-size:.74rem;color:var(--fx-vi);margin-bottom:4px}.j-card b{display:block;font-size:.98rem;margin-bottom:4px}
+.j-card p{margin:0;color:#cfe0ee;font-size:.9rem;line-height:1.45}
+.j-pin{display:inline-block;margin-top:9px;font-size:.74rem;padding:5px 10px;border-radius:12px;background:rgba(61,224,192,.1);border:1px solid rgba(61,224,192,.35);color:#b9f5e8}
+.td-prog{display:flex;align-items:center;gap:16px;border:1px solid var(--fx-line);background:var(--fx-glass);border-radius:20px;padding:14px;margin:10px 0}
+.td-ring{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;flex:none;background:conic-gradient(var(--fx-am) 0 0%,rgba(255,255,255,.08) 0 100%)}
+.td-ring div{width:52px;height:52px;border-radius:50%;background:#0a1626;display:grid;place-items:center;font-weight:700;font-size:.9rem}
+.td-add{display:flex;gap:8px;margin:0 0 6px}
+.td-add input[type=text],.td-add input:not([type]){flex:1;min-width:0;height:46px;border-radius:23px;border:1px solid rgba(255,180,84,.4);background:rgba(255,255,255,.035);color:var(--text);padding:0 16px;font:inherit}
+.td-add input[type=date]{width:142px;font-size:.8rem;height:46px;border-radius:23px;border:1px solid var(--fx-line);background:rgba(255,255,255,.035);color:var(--text);padding:0 10px;font:inherit}
+.td-row{display:flex;align-items:center;gap:12px;border:1px solid var(--fx-line);background:var(--fx-glass);border-radius:16px;padding:11px 12px;margin-bottom:8px}
+.td-cb{width:26px;height:26px;border-radius:50%;border:2px solid var(--fx-am);background:transparent;color:#1a1200;font-weight:700;flex:none;cursor:pointer;padding:0}
+.td-row.done .td-cb{background:var(--fx-am)}.td-row.done b{text-decoration:line-through;color:#7f96ad;font-weight:500}
+.td-t{flex:1;min-width:0}.td-t b{font-size:.95rem;font-weight:600;overflow-wrap:anywhere}
+.td-due{font-size:.72rem;padding:4px 9px;border-radius:999px;background:rgba(61,224,192,.1);color:var(--fx-te);border:1px solid rgba(61,224,192,.3);white-space:nowrap}
+.td-due.late{background:rgba(255,107,138,.14);color:var(--fx-rd);border-color:rgba(255,107,138,.3)}
+.td-x{border:0;background:transparent;color:#7f96ad;font-size:1rem;cursor:pointer;padding:4px 6px}
+.sel-bar,.paste-bar{position:fixed;left:8px;right:8px;z-index:60;display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-radius:26px;border:1px solid rgba(90,216,255,.45);background:rgba(8,20,36,.97);padding:10px 12px;box-shadow:0 0 40px rgba(90,216,255,.18)}
+.sel-bar{bottom:16px}.paste-bar{bottom:16px;border-color:rgba(61,224,192,.6)}
+.sel-bar span,.paste-bar span{flex:1;min-width:70px;font-size:.85rem}
+.sel-bar[hidden],.paste-bar[hidden]{display:none}
+.selecting .note-item[data-selkey]{position:relative;padding-left:40px!important}
+.selecting .note-item[data-selkey]::before{content:'';position:absolute;left:12px;top:50%;margin-top:-9px;width:18px;height:18px;border-radius:6px;border:1.5px solid #7f96ad}
+.selecting .note-item[data-selkey].picked::before{background:var(--fx-cy);border-color:var(--fx-cy);box-shadow:inset 0 0 0 3px #07111f}
+.selecting [data-selkey].picked{background:rgba(90,216,255,.12);box-shadow:inset 3px 0 0 var(--fx-cy)}
+.selecting summary[data-selkey]{cursor:pointer}
+#notesScreen .note-item,#notesScreen .tree-folder>summary{border-radius:14px}
 </style></head>
 <body>
 <div id="movedNote" hidden style="background:#3a2a05;color:#ffe9a8;padding:8px 12px;font:13px system-ui;text-align:center">Max now lives on Cloudflare: <a style="color:#ffd76a" href="https://max-app-axv.pages.dev/">max-app-axv.pages.dev</a> — open it and add it to your home screen.</div>
@@ -581,31 +655,34 @@ body.on-home.has-dash .edge-tabs{display:flex}
       <div id="noteRefs" class="note-refs" hidden></div>
       <div id="memoryBadge" class="memory-badge" hidden></div>
     </div>
+    <div id="homeCards" class="home-cards" aria-label="Your dashboards">
+    <div id="tilePaper" class="tile" role="button" tabindex="0" aria-label="Paper trading — open the full view"><div class="tile-top"><span>📈 Paper trading</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileGuide" class="tile" role="button" tabindex="0" aria-label="Investments — open the full view"><div class="tile-top"><span>💰 Investments</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileImprove" class="tile" role="button" tabindex="0" aria-label="Max improving himself — open the full view"><div class="tile-top"><span>📈 Max improves</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileSites" class="tile" role="button" tabindex="0" aria-label="Websites status — open the full view"><div class="tile-top"><span>🌐 Websites</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileApps" class="tile" role="button" tabindex="0" aria-label="Apps status — open the full view"><div class="tile-top"><span>📱 Apps</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileStatus" class="tile" role="button" tabindex="0" aria-label="Security — open the full view"><div class="tile-top"><span>🛡 Security</span></div><div class="muted small">Loading…</div></div>
+    </div>
+    <div id="legacyTiles" hidden>
+    <div id="tileNotes" class="tile tile-notes" role="button" tabindex="0" aria-label="Open my notes"><div class="tile-top"><span>🗂 Notes</span></div><div class="muted small">Loading…</div></div>
+    <div id="tileBrain" class="tile" role="button" tabindex="0" aria-label="Max’s brain — open the full view"><div class="tile-top"><span>🧠 Max’s brain</span></div><div class="muted small">Loading…</div></div>
+    </div>
+    <div class="home-dock">
+      <button id="dockBrain" class="dock-btn dock-brain" aria-label="Max’s brain"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="16" r="3.2"/><circle cx="6" cy="9" r="2"/><circle cx="26" cy="9" r="2"/><circle cx="6" cy="23" r="2"/><circle cx="26" cy="23" r="2"/><circle cx="16" cy="4.5" r="1.7"/><circle cx="16" cy="27.5" r="1.7"/><path d="M13.3 14.4 7.6 10.2M18.7 14.4l5.7-4.2M13.3 17.6l-5.7 4.2M18.7 17.6l5.7 4.2M16 12.8V6.2M16 19.2v6.6"/></svg><span id="dockBrainBadge" class="dock-badge" hidden></span><span class="dock-lbl">Brain</span></button>
     <div id="typeRow" class="type-row" hidden>
       <input id="typeInput" placeholder="Type to Max…" autocomplete="off" enterkeyhint="send" aria-label="Type a message to Max">
       <button id="typeSend" class="send-btn" aria-label="Send">➤</button>
     </div>
-    <div class="kbd-hint">Enter to send · Ctrl+K to type · Ctrl+Space to talk · Esc to stop</div>
+      <button id="dockNotes" class="dock-btn dock-notes" aria-label="Notes, journal and to-do"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h10l6 6v16a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M19 4v6h6"/><path d="M11 16h10M11 20.5h10M11 25h6"/></svg><span id="dockNotesBadge" class="dock-badge" hidden></span><span class="dock-lbl">Notes</span></button>
+    </div>
     <!-- 18e (10 Nov 2026): the home screen stays short; the six dashboards hide at the edges (swipe or tap a tab) -->
-    <div id="edgeL" class="edge-tabs left"><button data-edge="paper" aria-label="Trading summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></button><button data-edge="guide" aria-label="Investments summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h4.500a2 2 0 0 1 0 4H9"/></svg></button><button data-edge="notes" aria-label="Notes summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/></svg></button></div>
-    <div id="edgeR" class="edge-tabs right"><button data-edge="sites" aria-label="Websites summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button><button data-edge="apps" aria-label="Apps summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></button><button data-edge="status" aria-label="Status summary"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></button></div>
     <div hidden><button id="homeTalk">Talk</button><button id="homeStop">Stop</button></div>
   </main>
 
   <div id="drawerShade" class="drawer-shade" hidden></div>
-  <aside id="drawerL" class="drawer left" aria-label="Trading, Investments, Notes, Brain">
-    <div class="drawer-hint">Swipe back to hide · tap a card for details</div>
-    <div id="tilePaper" class="tile" role="button" tabindex="0" aria-label="Paper trading — open the full view"><div class="tile-top"><span>📈 Paper trading</span></div><div class="muted small">Loading…</div></div>
-    <div id="tileGuide" class="tile" role="button" tabindex="0" aria-label="Investments — open the full view"><div class="tile-top"><span>💰 Investments</span></div><div class="muted small">Loading…</div></div>
-    <div id="tileNotes" class="tile tile-notes" role="button" tabindex="0" aria-label="Open my notes"><div class="tile-top"><span>🗂 Notes</span></div><div class="muted small">Loading…</div></div>
-    <div id="tileBrain" class="tile" role="button" tabindex="0" aria-label="Max’s brain — open the full view"><div class="tile-top"><span>🧠 Max’s brain</span></div><div class="muted small">Loading…</div></div>
-    <div id="tileImprove" class="tile" role="button" tabindex="0" aria-label="Max improving himself — open the full view"><div class="tile-top"><span>📈 Max improves</span></div><div class="muted small">Loading…</div></div>
+  <aside id="drawerL" class="drawer left" aria-label="Panel" hidden>
   </aside>
-  <aside id="drawerR" class="drawer right" aria-label="Websites, Apps, Status">
-    <div class="drawer-hint">Swipe back to hide · tap a card for details</div>
-    <div id="tileSites" class="tile" role="button" tabindex="0" aria-label="Websites status — open the full view"><div class="tile-top"><span>🌐 Websites</span></div><div class="muted small">Loading…</div></div>
-    <div id="tileApps" class="tile" role="button" tabindex="0" aria-label="Apps status — open the full view"><div class="tile-top"><span>📱 Apps</span></div><div class="muted small">Loading…</div></div>
-    <div id="tileStatus" class="tile" role="button" tabindex="0" aria-label="Security — open the full view"><div class="tile-top"><span>🛡 Security</span></div><div class="muted small">Loading…</div></div>
+  <aside id="drawerR" class="drawer right" aria-label="Panel" hidden>
   </aside>
   <div id="dashFull" class="dash-full" hidden role="dialog" aria-modal="true" aria-labelledby="dashFullTitle">
     <div class="dash-full-head"><h2 id="dashFullTitle">Dashboard</h2><span style="display:flex;gap:8px;align-items:center"><button id="dashFullInfo" class="info-i" aria-label="What is this? Show the explanation" aria-expanded="false">i</button><button id="dashFullClose" class="home-mic" aria-label="Close">✕ Close</button></span></div>
@@ -1043,7 +1120,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  window.maxNotesReady=()=>notesReady;
  const loadAll=()=>rawLoad().map(normNote).filter(Boolean);
  const getNotes=()=>loadAll().filter(n=>!n.deleted);
- const putNotes=items=>{rawSave(items);scheduleSync();try{scheduleIndex()}catch{}};
+ const putNotes=items=>{rawSave(items);scheduleSync();try{scheduleIndex()}catch{}try{hubRefresh()}catch{}};
  const escHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const plain=html=>{const d=document.createElement('div');d.innerHTML=html||'';return (d.innerText||d.textContent||'').replace(/\s+/g,' ').trim()};
  const newId=()=>'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
@@ -1472,7 +1549,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function treeStats(){const notes=getNotes(),t=buildTree(notes);let folders=0;const walk=n=>{for(const f of n.folders.values()){folders++;walk(f)}};walk(t);return {files:notes.length,folders}}
  function renderList(){
-  const list=$('noteList'),q=$('notesSearch').value.toLowerCase().trim(),all=getNotes();
+  const list=$('noteList'),q=$('notesSearch').value.toLowerCase().trim(),all=getNotes().filter(n=>!isJ(n)&&!isT(n));
   list.replaceChildren();refreshTopicList();
   const found=all.filter(n=>matchesQuery(n,q));
   const st=treeStats();
@@ -1484,11 +1561,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const draw=(node,parent)=>{
    const count=n=>n.notes.length+[...n.folders.values()].reduce((s,f)=>s+count(f),0);
    [...node.folders.values()].filter(f=>!q||count(f)>0).sort((a,b)=>byName(a.name,b.name)).forEach(f=>{
-    const det=document.createElement('details');det.className='topic tree-folder';det.dataset.path=f.path;det.open=!!q||fresh||open.has(f.path);
+    const det=document.createElement('details');det.className='topic tree-folder';det.dataset.path=f.path;det.open=!!q||fresh||open.has(f.path)||selMode;
     const sum=document.createElement('summary');if(f.path===selFolder)sum.className='sel';const nm=document.createElement('span');nm.textContent=f.name;const cnt=document.createElement('span');const cf=count(f);cnt.className='f-count'+(cf?'':' zero');cnt.textContent=cf;const fm=document.createElement('button');fm.type='button';fm.className='f-menu';fm.textContent='⋯';fm.title='Folder options';fm.setAttribute('aria-label','Options for folder '+f.name);fm.onclick=e=>{e.preventDefault();e.stopPropagation();openFolderSheet(f.path)};
     sum.append(nm,cnt,fm);det.append(sum);
     det.addEventListener('toggle',()=>{if(q||fresh&&det.open&&!det.dataset.touched)return;const o=fresh&&localStorage.getItem(TREE_OPEN)===null?new Set([...list.querySelectorAll('details[open]')].map(d=>d.dataset.path)):openSet();det.open?o.add(f.path):o.delete(f.path);jset(TREE_OPEN,[...o])});
-    sum.addEventListener('click',()=>{selFolder=f.path;list.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));sum.classList.add('sel')});
+    sum.dataset.selkey='f:'+f.path;if(sel.has('f:'+f.path))sum.classList.add('picked');
+    sum.addEventListener('click',e=>{if(selMode){e.preventDefault();selToggle('f:'+f.path);return}selFolder=f.path;list.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));sum.classList.add('sel');if(clip)pasteRefresh()});
     const kids=document.createElement('div');kids.className='tree-kids';draw(f,kids);det.append(kids);parent.append(det);
    });
    node.notes.sort((a,b)=>sort==='modified'?b.updatedAt-a.updatedAt:byName(a.title||'',b.title||'')).forEach(n=>{
@@ -1499,10 +1577,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     {const d=document.createElement('span');d.className='n-date';const dt=new Date(n.updatedAt||n.createdAt||0),now=new Date();d.textContent=dt.toDateString()===now.toDateString()?dt.toTimeString().slice(0,5):dt.getFullYear()===now.getFullYear()?dt.toLocaleDateString(undefined,{month:'short',day:'numeric'}):String(dt.getFullYear());row.append(d)}
     if(n.source==='research'){const b=document.createElement('span');b.className='tag';b.textContent='research';row.append(b)}
     if(flash.id===n.id&&Date.now()<flash.until){row.classList.add('just-saved');setTimeout(()=>row.classList.remove('just-saved'),Math.max(300,flash.until-Date.now()))}
-    row.onclick=()=>loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')loadNote(n.id)};parent.append(row);
+    row.dataset.selkey='n:'+n.id;if(sel.has('n:'+n.id))row.classList.add('picked');
+    row.onclick=()=>selMode?selToggle('n:'+n.id):loadNote(n.id);row.onkeydown=e=>{if(e.key==='Enter')selMode?selToggle('n:'+n.id):loadNote(n.id)};parent.append(row);
    });
   };
   draw(buildTree(found),list);
+  try{hubRefresh()}catch{}
  }
  $('newFolder').onclick=()=>{$('newFolderRow').hidden=false;$('newFolderName').value=selFolder?selFolder+' › ':'';$('newFolderName').focus()};
  const addFolder=()=>{const v=splitPath($('newFolderName').value).join(' › ');$('newFolderRow').hidden=true;if(!v)return;const l=jget(FOLDERS,[]);if(!l.includes(v))l.push(v);jset(FOLDERS,l);const o=openSet();splitPath(v).forEach((_,i,a)=>o.add(a.slice(0,i+1).join(' › ')));jset(TREE_OPEN,[...o]);selFolder=v;renderList();status('Folder “'+v.split(' › ').pop()+'” added. ✎ makes a note inside it.')};
@@ -1575,6 +1655,139 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  $('vaultMore').addEventListener('click',e=>{if(e.target.closest('button'))$('vaultMore').hidden=true});
  $('notesHome').onclick=()=>setSection('home');
  $('editorHome').onclick=()=>{if(dirty&&!confirm('You have unsaved changes. Leave without saving?'))return;setSection('home')};
+ // ================= notes hub (23 Nov 2026, Mark): Notes · Journal · To-do, copy / move / paste, places =================
+ function isJ(n){return /^Journal(\s|›|$)/.test(String(n.category||''))}
+ function isT(n){return /^To-do(\s|›|$)/i.test(String(n.category||''))}
+ let hubTab='notes';
+ const hubSvg={notes:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h10l6 6v16a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M19 4v6h6"/><path d="M11 16h10M11 20.5h10M11 25h6"/></svg>',
+  journal:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5h16a2 2 0 0 1 2 2v19a1.5 1.5 0 0 1-1.5 1.5H8.5A1.5 1.5 0 0 1 7 26z"/><path d="M7 9H4M7 15H4M7 21H4"/><path d="M19 5v9l-3-2.2-3 2.2V5"/></svg>',
+  todo:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="11.5"/><path d="m10.5 16.5 4 4 7.5-8.5"/></svg>'};
+ ['.search-box','#newFolderRow','#noteList','.vault-dock'].forEach(q=>{const e=document.querySelector('#notesScreen '+q);if(e)e.classList.add('hub-notes')});
+ {const h=document.createElement('div');h.id='hubTiles';h.className='hub-tiles';
+  h.innerHTML=[['notes','Notes','t1'],['journal','Journal','t2'],['todo','To-do','t3']].map(([k,l,c])=>'<button class="hub-tile '+c+(k==='notes'?' on':'')+'" data-hub="'+k+'">'+hubSvg[k]+'<span class="hub-n" id="hubN_'+k+'">0</span><b>'+l+'</b><small id="hubS_'+k+'"></small></button>').join('');
+  const mv=$('vaultMore');mv.parentNode.insertBefore(h,mv.nextSibling);
+  const jv=document.createElement('section');jv.id='journalView';jv.className='hub-pane hub-journal';jv.innerHTML='<div class="hub-bar"><span class="muted small">Your private diary. Max reads it as part of his second brain.</span><button id="jNew" class="pill pill-ok">＋ New entry</button></div><div id="jList"></div>';
+  const tv=document.createElement('section');tv.id='todoView';tv.className='hub-pane hub-todo';tv.innerHTML='<div class="td-prog"><div class="td-ring" id="tdRing"><div id="tdPct">0%</div></div><div><b id="tdTitle">Nothing to do</b><div class="muted small" id="tdSub"></div></div></div><div class="td-add"><input id="tdText" placeholder="Add a to-do…" enterkeyhint="done" aria-label="New to-do"><input id="tdDue" type="date" aria-label="Due date"><button id="tdAdd" class="pill pill-ok">Add</button></div><div id="tdList"></div>';
+  h.parentNode.insertBefore(jv,h.nextSibling);h.parentNode.insertBefore(tv,jv.nextSibling);
+  $('notesScreen').dataset.hub='notes'}
+ function setHub(k){hubTab=k;$('notesScreen').dataset.hub=k;document.querySelectorAll('.hub-tile').forEach(b=>b.classList.toggle('on',b.dataset.hub===k));if(k==='journal')renderJournal();if(k==='todo')renderTodo()}
+ $('hubTiles').addEventListener('click',e=>{const b=e.target.closest('[data-hub]');if(b)setHub(b.dataset.hub)});
+ function hubRefresh(){
+  const all=getNotes(),J=all.filter(isJ),T=all.filter(isT),N=all.length-J.length-T.length,td=todoItems();
+  $('hubN_notes').textContent=N;$('hubS_notes').textContent=folderList().length+' folders';$('hubN_journal').textContent=J.length;$('hubS_journal').textContent=J.length?'last '+dayLabel(Math.max(...J.map(n=>n.createdAt||0))):'start your diary';
+  const open=td.filter(x=>!x.done),late=open.filter(x=>x.due&&x.due<todayStr()).length;$('hubN_todo').textContent=open.length;$('hubS_todo').textContent=late?late+' overdue':open.some(x=>x.due===todayStr())?'due today':'all clear';
+  const bd=$('dockNotesBadge');if(bd){const due=open.filter(x=>x.due&&x.due<=tomorrowStr()).length;bd.textContent=due;bd.hidden=!due}
+  if(hubTab==='journal')renderJournal();if(hubTab==='todo')renderTodo();
+ }
+ const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+ const tomorrowStr=()=>{const d=new Date(Date.now()+864e5);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+ const dayLabel=t=>{const d=new Date(t),n=new Date();if(d.toDateString()===n.toDateString())return 'today';if(d.toDateString()===new Date(Date.now()-864e5).toDateString())return 'yesterday';return d.toLocaleDateString([],{month:'short',day:'numeric'})};
+ // ---- journal: notes filed in the "Journal" folder; pictures, videos, files and a place are attached with the normal note tools ----
+ function journalNew(){const d=new Date(),t=d.toLocaleDateString([],{weekday:'short',day:'numeric',month:'short',year:'numeric'})+' · '+d.toTimeString().slice(0,5);
+  selFolder='Journal';createNewNote(t);$('editorCategory').value='Journal';try{metaSummary()}catch{}}
+ $('jNew').onclick=journalNew;
+ function renderJournal(){
+  const box=$('jList');box.replaceChildren();const items=getNotes().filter(isJ).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(!items.length){const p=document.createElement('p');p.className='notes-tip';p.style.padding='18px';p.textContent='No entries yet. Tap “＋ New entry”. Add pictures, videos, files and a place from the Insert button. Max reads everything you write here.';box.append(p);return}
+  let last='';
+  for(const n of items){
+   const day=new Date(n.createdAt||0).toLocaleDateString([],{weekday:'long',day:'numeric',month:'long'});
+   if(day!==last){last=day;const h=document.createElement('div');h.className='j-day';h.textContent=dayLabel(n.createdAt)==='today'?'Today':day;box.append(h)}
+   const c=document.createElement('button');c.className='j-card';c.dataset.id=n.id;
+   const txt=plain(n.body).replace(/📍[^()]*(\([^)]*\))?/,'').slice(0,170),nm=(String(n.body).match(/openstreetmap\.org[^>]*>([^<]+)</)||[])[1];
+   const media=(String(n.body).match(/data-media=/g)||[]).length,atts=noteAtts(n).length;
+   const t=document.createElement('div');t.className='j-meta';t.textContent=new Date(n.createdAt||0).toTimeString().slice(0,5)+(media+atts?' · '+(media+atts)+' attachment'+(media+atts===1?'':'s'):'');
+   const h=document.createElement('b');h.textContent=n.title||'Entry';
+   const p=document.createElement('p');p.textContent=txt;
+   c.append(t,h,p);
+   if(nm){const pin=document.createElement('span');pin.className='j-pin';pin.textContent='📍 '+nm;c.append(pin)}
+   c.onclick=()=>loadNote(n.id);box.append(c)}
+ }
+ // ---- to-do: one note "To-do list" in the folder "To-do"; each line is "☐ text (due YYYY-MM-DD)" so Max can read it too ----
+ function todoNote(create){
+  let n=getNotes().find(x=>isT(x)&&x.title==='To-do list');
+  if(!n&&create){n={id:newId(),title:'To-do list',category:'To-do',tags:['to-do'],body:'',analysis:null,createdAt:Date.now(),updatedAt:Date.now(),deleted:false};const all=loadAll();all.push(n);putNotes(all)}
+  return n||null}
+ function todoItems(){
+  const n=todoNote(false);if(!n)return[];const d=document.createElement('div');d.innerHTML=String(n.body||'').replace(/<br\s*\/?>/gi,'</p><p>');
+  const out=[];for(const el of d.querySelectorAll('p,div,li')){if(el.querySelector('p,div,li'))continue;const m=/^\s*([☐☑])\s*(.*?)\s*(?:\(due (\d{4}-\d\d-\d\d)\))?\s*$/.exec(el.textContent||'');if(m)out.push({done:m[1]==='☑',text:m[2],due:m[3]||''})}
+  return out}
+ function todoSave(items){
+  const n=todoNote(true),all=loadAll(),x=all.find(a=>a.id===n.id);
+  x.body=items.map(i=>'<p>'+(i.done?'☑':'☐')+' '+escHtml(i.text)+(i.due?' (due '+i.due+')':'')+'</p>').join('');x.updatedAt=Date.now();putNotes(all);hubRefresh()}
+ function renderTodo(){
+  const items=todoItems(),open=items.filter(x=>!x.done),done=items.filter(x=>x.done),pct=items.length?Math.round(done.length/items.length*100):0;
+  $('tdRing').style.background='conic-gradient(var(--fx-am) 0 '+pct+'%,rgba(255,255,255,.08) '+pct+'% 100%)';$('tdPct').textContent=pct+'%';
+  $('tdTitle').textContent=!items.length?'Nothing to do yet':open.length?open.length+' to do':'All done';$('tdSub').textContent=items.length?done.length+' of '+items.length+' done':'Write what you need to do below.';
+  const box=$('tdList');box.replaceChildren();
+  const T=todayStr(),M=tomorrowStr(),week=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
+  const grp=[['Overdue',x=>x.due&&x.due<T],['Today',x=>x.due===T],['Tomorrow',x=>x.due===M],['This week',x=>x.due&&x.due>M&&x.due<=week],['Later',x=>x.due&&x.due>week],['No date',x=>!x.due]];
+  const row=(x,i)=>{const r=document.createElement('div');r.className='td-row'+(x.done?' done':'');r.dataset.i=i;
+   const cb=document.createElement('button');cb.className='td-cb';cb.dataset.act='tog';cb.setAttribute('aria-label',x.done?'Mark as not done':'Mark as done');cb.textContent=x.done?'✓':'';
+   const w=document.createElement('div');w.className='td-t';const b=document.createElement('b');b.textContent=x.text;w.append(b);
+   const del=document.createElement('button');del.className='td-x';del.dataset.act='del';del.setAttribute('aria-label','Delete');del.textContent='✕';
+   r.append(cb,w);if(x.due){const d=document.createElement('span');d.className='td-due'+(x.due<T&&!x.done?' late':'');d.textContent=x.due===T?'Today':x.due===M?'Tomorrow':new Date(x.due+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'});r.append(d)}
+   r.append(del);return r};
+  for(const [name,f] of grp){const g=items.map((x,i)=>[x,i]).filter(([x])=>!x.done&&f(x));if(!g.length)continue;const h=document.createElement('div');h.className='j-day';h.textContent=name;box.append(h);g.forEach(([x,i])=>box.append(row(x,i)))}
+  if(done.length){const h=document.createElement('div');h.className='j-day';h.innerHTML='Done <button id="tdClear" class="pill">Clear done</button>';box.append(h);items.forEach((x,i)=>{if(x.done)box.append(row(x,i))})}
+ }
+ $('tdList').addEventListener('click',e=>{
+  if(e.target.id==='tdClear'){todoSave(todoItems().filter(x=>!x.done));return}
+  const b=e.target.closest('[data-act]');if(!b)return;const i=+b.closest('.td-row').dataset.i,items=todoItems();
+  if(b.dataset.act==='tog')items[i].done=!items[i].done;else items.splice(i,1);todoSave(items)});
+ function tdAdd(){const t=$('tdText').value.trim();if(!t)return;const items=todoItems();items.push({done:false,text:t,due:$('tdDue').value||''});$('tdText').value='';$('tdDue').value='';todoSave(items)}
+ $('tdAdd').onclick=tdAdd;$('tdText').onkeydown=e=>{if(e.key==='Enter')tdAdd()};
+ window.maxTodo={items:todoItems,add:(text,due)=>{const it=todoItems();it.push({done:false,text:String(text||'').slice(0,200),due:due||''});todoSave(it)}};
+ // ---- a place from the phone (or typed) goes into the entry as a link to the map ----
+ async function placeInsert(){
+  let name='',lat=null,lon=null;
+  try{const pos=await new Promise((ok,no)=>navigator.geolocation?navigator.geolocation.getCurrentPosition(ok,no,{timeout:8000,maximumAge:60000}):no(new Error('no location')));lat=+pos.coords.latitude.toFixed(5);lon=+pos.coords.longitude.toFixed(5);
+   try{const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat='+lat+'&lon='+lon,{headers:{Accept:'application/json'}});if(r.ok){const j=await r.json();name=j.display_name?String(j.display_name).split(',').slice(0,3).join(',').trim():''}}catch{}}catch{}
+  if(!name){name=(window.prompt('Where is this? Type the place name',name)||'').trim();if(!name)return}
+  const url=lat!=null?'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=16/'+lat+'/'+lon:'https://www.openstreetmap.org/search?query='+encodeURIComponent(name);
+  restoreRange();$('editorBody').focus();document.execCommand('insertHTML',false,'<p>📍 <a href="'+escHtml(url)+'">'+escHtml(name)+'</a>'+(lat!=null?' ('+lat+', '+lon+')':'')+'</p>');dirty=true}
+ { const b=document.createElement('button');b.id='insPlace';b.textContent='Place';$('insAttach').after(b);b.onclick=()=>{closeEdMenus();placeInsert()} }
+ // ---- select, copy, move, paste (notes and whole folders) ----
+ let selMode=false,clip=null;const sel=new Set();
+ {const bar=document.createElement('div');bar.id='selBar';bar.className='sel-bar';bar.hidden=true;
+  bar.innerHTML='<span id="selCount"></span><button data-sel="copy" class="pill">Copy</button><button data-sel="move" class="pill">Move</button><button data-sel="del" class="pill danger-btn">Delete</button><button data-sel="cancel" class="pill">Cancel</button>';
+  const pb=document.createElement('div');pb.id='pasteBar';pb.className='paste-bar';pb.hidden=true;
+  pb.innerHTML='<span id="pasteInfo"></span><button data-paste="go" class="pill pill-ok">Paste here</button><button data-paste="top" class="pill">Top level</button><button data-paste="cancel" class="pill">✕</button>';
+  document.body.append(bar,pb)}
+ function pasteLabel(){return selFolder?selFolder:'the top level'}
+ function pasteRefresh(){const pb=$('pasteBar');pb.hidden=!clip;if(!clip)return;const n=clip.notes.length+clip.folders.length;$('pasteInfo').textContent=(clip.mode==='copy'?'Copy ':'Move ')+n+' item'+(n===1?'':'s')+' → '+pasteLabel()}
+ function selRefresh(){$('selBar').hidden=!selMode;$('selCount').textContent=sel.size+' selected';document.querySelectorAll('#noteList [data-selkey]').forEach(e=>e.classList.toggle('picked',sel.has(e.dataset.selkey)))}
+ function selToggle(key){sel.has(key)?sel.delete(key):sel.add(key);selRefresh()}
+ function selStart(on){selMode=on;if(!on)sel.clear();$('notesScreen').classList.toggle('selecting',on);renderList();selRefresh()}
+ { const b=document.createElement('button');b.id='selectModeBtn';b.className='pill';b.textContent='Select, copy or move';$('vaultMore').prepend(b);b.onclick=()=>selStart(!selMode) }
+ $('selBar').addEventListener('click',e=>{const b=e.target.closest('[data-sel]');if(!b)return;const k=b.dataset.sel;
+  if(k==='cancel'){selStart(false);return}
+  if(!sel.size){status('Tap the notes or folders you want first.');return}
+  const notes=[...sel].filter(x=>x.startsWith('n:')).map(x=>x.slice(2)),folders=[...sel].filter(x=>x.startsWith('f:')).map(x=>x.slice(2));
+  if(k==='del'){const nn=notes.length+folders.reduce((s,f)=>s+folderCount(f),0);if(!confirm('Delete '+sel.size+' item'+(sel.size===1?'':'s')+' ('+nn+' note'+(nn===1?'':'s')+')? Deleted notes are removed everywhere.'))return;
+   const all=loadAll(),now=Date.now();for(const x of all)if(notes.includes(x.id)){x.deleted=true;x.updatedAt=now}putNotes(all);folders.forEach(f=>folderDelete(f,true));selStart(false);savedBanner('Deleted.');return}
+  clip={mode:k,notes,folders};selMode=false;sel.clear();$('notesScreen').classList.remove('selecting');renderList();selRefresh();pasteRefresh();status('Now open the folder where it should go, then tap “Paste here”.')});
+ $('pasteBar').addEventListener('click',e=>{const b=e.target.closest('[data-paste]');if(!b)return;const k=b.dataset.paste;
+  if(k==='cancel'){clip=null;pasteRefresh();return}
+  if(k==='top'){selFolder='';renderList();pasteRefresh();return}
+  try{const r=doPaste(clip,selFolder);if(clip.mode==='move')clip=null;renderList();pasteRefresh();savedBanner(r)}catch(err){status(err.message);savedBanner(err.message)}});
+ function doPaste(c,dest){
+  dest=pathOf(dest);const all=loadAll(),now=Date.now();let nn=0,nf=0;
+  const into=name=>dest?dest+' › '+name:name,copies=[];
+  for(const f of c.folders){const from=pathOf(f);if(dest&&underPath(dest,from))throw new Error('A folder can’t go inside itself.')}
+  if(c.mode==='move'){
+   for(const id of c.notes){const x=all.find(a=>a.id===id);if(x&&!x.deleted){x.category=dest||'Unsorted';x.updatedAt=now;nn++}}
+   putNotes(all);
+   for(const f of c.folders){const from=pathOf(f),to=into(splitPath(from).at(-1));if(from!==to){nn+=folderRename(from,to);nf++}}
+  }else{
+   for(const id of c.notes){const x=all.find(a=>a.id===id);if(!x||x.deleted)continue;const same=pathOf(x.category)===(dest||'Unsorted');copies.push({...x,id:newId(),title:(x.title||'Untitled')+(same?' (copy)':''),category:dest||'Unsorted',createdAt:now,updatedAt:now});nn++}
+   for(const f of c.folders){const from=pathOf(f),to=into(splitPath(from).at(-1))+(dest===pathOf(splitPath(from).slice(0,-1).join(' › '))?' (copy)':'');
+    const sw=p=>underPath(p,from)?to+p.slice(from.length):null;
+    for(const x of all){if(x.deleted)continue;const v=sw(pathOf(x.category));if(v!==null){copies.push({...x,id:newId(),category:v,createdAt:now,updatedAt:now});nn++}}
+    [from,...jget(FOLDERS,[]).map(pathOf).filter(p=>underPath(p,from))].forEach(p=>folderAdd(sw(p)));nf++}
+   putNotes([...all,...copies])}
+  return (c.mode==='copy'?'Copied ':'Moved ')+nn+' note'+(nn===1?'':'s')+(nf?' and '+nf+' folder'+(nf===1?'':'s'):'')+' to '+(dest||'the top level')+'.'}
+ try{hubRefresh()}catch{}
  // ---------- attachments inside a note (22 Nov 2026, Mark): pictures, videos, files, folders, web links — shown under the note and read by Max ----------
  const attKind=(m,name)=>m==='link'?'Web link':/^image\//.test(m)?'Picture':/^video\//.test(m)?'Video':/^audio\//.test(m)?'Recording':m==='application/pdf'?'PDF':/\.(docx?|dot)$/i.test(name)?'Word':/\.(xlsx?|xlsm|xlsb|ods|csv)$/i.test(name)?'Excel':/\.(pptx?|pps)$/i.test(name)?'PowerPoint':'File';
  const noteAtts=n=>Array.isArray(n?.analysis?.attachments)?n.analysis.attachments:[];
@@ -4564,7 +4777,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    let d=null,offline='';try{d=await D.load(force)}catch(e){d=D.cache?jget(D.cache,null):null;offline=d?'Offline — saved copy.':e.message}
    if(!d){t.innerHTML='<div class="tile-top"><span>'+D.name+'</span></div><div class="muted small">'+dashE(offline)+'</div>';continue}
    dashData[k]=d;t.innerHTML=D.tile(d)+(offline?'<div class="muted small">saved copy</div>':'');
-   if(k==='status'){const b=document.querySelector('[data-edge="status"]');if(b)b.classList.toggle('alert',healthAlerts(d).length>0)}
+   if(k==='status'){t.classList.toggle('alert',healthAlerts(d).length>0)}
+   try{dockUpdate(k,d)}catch{}
    if(dashOpen===k){$('dashFullBody').innerHTML=(offline?'<div class="muted small">'+dashE(offline)+'</div>':'')+D.full(d);if(k==='paper')toJournal()}}
  }
  let drawerOpen=null;
@@ -4589,7 +4803,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(drawerOpen){if((drawerOpen==='L'&&dx<0)||(drawerOpen==='R'&&dx>0))closeDrawer();return}
    if(s.inField||screen!=='home'||dashOpen||!document.body.classList.contains('has-dash'))return;
    let busy=false;try{busy=modalOpen()||!$('quickMenu').hidden}catch{}if(busy)return;
-   openDrawer(dx>0?'L':'R')},{passive:true});
+   },{passive:true});
   $('dashFullClose').addEventListener('click',closeFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(dashOpen)closeFull();else if(drawerOpen)closeDrawer()}});
   $('dashFull').addEventListener('click',async e=>{const pt=e.target.closest('[data-ptab]');if(pt){paperTab=pt.dataset.ptab;if(dashPaperData)$('dashFullBody').innerHTML=paperFull(dashPaperData);return}
    const pk=e.target.closest('[data-pj-kind],[data-pj-more]');if(pk){if(pk.dataset.pjKind){pjKind=pk.dataset.pjKind;pjN=5}else pjN=+pk.dataset.pjMore;const d=dashData.paper||dashPaperData;if(d){const y=$('dashFullBody').scrollTop;$('dashFullBody').innerHTML=paperFull(d);$('dashFullBody').scrollTop=y}return}
@@ -4609,6 +4823,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   $('dashFull').addEventListener('change',e=>{const k=e.target?.dataset?.mp;if(!k)return;const P=moneyProfile();P[k]=k==='risk'?e.target.value:Math.max(0,+e.target.value||0);jset(MONEY_KEY,P);const sub=e.target.closest('details');if(dashGuideData){$('dashFullBody').innerHTML=ratesFull(dashGuideData);const d=$('dashFullBody').querySelector('.dash-sub');if(d&&sub)d.open=true;const dd=$('dashFullBody').querySelector('.dash-plan details');if(dd)dd.open=true}});
   renderDash();setInterval(()=>{if(document.visibilityState==='visible'&&screen==='home')renderDash(dashOpen==='guide'?'guide':'paper')},5*60e3);
  }
+
+ // ---------- redesign (23 Nov 2026, Mark): Brain bottom-left, Notes bottom-right; the old side panels are cards on the home screen ----------
+ function dockUpdate(k,d){
+  if(k==='brain'){const b=$('dockBrainBadge');if(d&&d.total){const pct=Math.round(d.studied/d.total*100);b.textContent=pct+'%';b.hidden=false;$('dockBrain').classList.toggle('alert',(d.checks||[]).length>0)}}
+ }
+ $('dockBrain').onclick=()=>showFull('brain');
+ $('dockNotes').onclick=()=>setSection('notes');
  window.maxRenderDash=renderDash;window.maxOpenDrawer=openDrawer;window.maxCloseDrawer=closeDrawer;
  function openDash(which){closeConnection();closeMenu();setSection('home');if(which==='journal'){which='paper';pjN=10;pjKind='trades';wantJournal=true}
   if(which==='notes'){setSection('notes');return 'Here are your notes.'}

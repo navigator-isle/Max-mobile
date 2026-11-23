@@ -1,0 +1,71 @@
+// 23 Nov 2026 (Mark): Notes hub — Notes · Journal · To-do tiles, journal entries filed under "Journal", to-do list, select / copy / move / paste.
+import http from "node:http"; import fs from "node:fs"; import path from "node:path"; import { createRequire } from "node:module";
+const require = createRequire(process.env.PW_REQUIRE || import.meta.url); const { chromium, devices } = require("playwright");
+const [, , pagePath] = process.argv;
+const ORIGIN = "http://127.0.0.1:8079";
+const sP = http.createServer((q, r) => { r.writeHead(200, { "Content-Type": "text/html" }); r.end(fs.readFileSync(pagePath)); }).listen(8079);
+let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
+const b = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), args: ["--no-sandbox"] });
+const ctx = await b.newContext({ ...devices["Pixel 7"], permissions: ["geolocation"], geolocation: { latitude: 14.79, longitude: 120.27 } });
+const now = Date.now(), mk = (id, title, category, body) => ({ id, title, category, tags: [], body, analysis: null, createdAt: now, updatedAt: now, deleted: false });
+await ctx.addInitScript(([n]) => { if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); localStorage.setItem("max_notes_migrated_v1", "1"); localStorage.setItem("max_notes_v3", JSON.stringify(n)); localStorage.setItem("max_folders", JSON.stringify(["Maritime", "Maritime › Topics"])); } },
+  [[mk("a", "Cargo Gear", "Maritime › Topics", "<p>gear</p>"), mk("b", "Ship Stability", "Maritime › Topics", "<p>stability</p>"), mk("c", "Loose note", "Unsorted", "<p>x</p>"), mk("j1", "Mon entry", "Journal", "<p>Long day at sea. 📍 <a href=\"https://www.openstreetmap.org/?mlat=14.79&mlon=120.27\">Subic Bay</a></p>")]]);
+const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message));
+await p.goto(ORIGIN + "/"); await p.waitForTimeout(1200);
+ok(await p.locator("#dockBrain").isVisible() && await p.locator("#dockNotes").isVisible() && await p.locator("#homeCards").count() === 1, "home: Brain bottom-left, Notes bottom-right, dashboard cards on home");
+const bx1 = await p.locator("#dockBrain").boundingBox(), bx2 = await p.locator("#dockNotes").boundingBox(), vp = p.viewportSize();
+ok(bx1.x < 40 && bx2.x + bx2.width > vp.width - 40 && bx1.y > vp.height - 120, "…Brain on the left, Notes on the right, both at the bottom", JSON.stringify([bx1, bx2, vp]));
+await p.click("#dockNotes"); await p.waitForTimeout(500);
+ok(await p.locator("#hubTiles").isVisible() && /1/.test(await p.locator("#hubN_journal").textContent()) && /3/.test(await p.locator("#hubN_notes").textContent()), "notes hub shows three tiles with counts (3 notes, 1 journal entry)", await p.locator("#hubTiles").textContent());
+const tree = await p.locator("#noteList").textContent();
+ok(!/Mon entry/.test(tree) && /Cargo Gear/.test(tree), "journal entries are NOT in the notes tree");
+await p.click('[data-hub="journal"]'); await p.waitForTimeout(300);
+ok(await p.locator("#journalView").isVisible() && !(await p.locator("#noteList").isVisible()) && /Subic Bay/.test(await p.locator("#jList").textContent()), "Journal tab: entry card with its place");
+await p.click("#jNew"); await p.waitForTimeout(500);
+ok(await p.locator("#editorScreen.active").count() === 1 && (await p.locator("#editorCategory").inputValue()) === "Journal", "＋ New entry opens the editor filed under Journal", await p.locator("#editorCategory").inputValue());
+await p.click("#editorBody"); await p.keyboard.type("Rain all day, wrote the survey plan."); await p.click("#insertBtn"); await p.waitForTimeout(200);
+ok(await p.locator("#insPlace").isVisible(), "Insert menu has Place");
+await p.click("#insPlace"); await p.waitForTimeout(1200);
+const bodyHtml = await p.locator("#editorBody").innerHTML();
+ok(/openstreetmap\.org\/\?mlat=14\.79/.test(bodyHtml) && /📍/.test(bodyHtml), "Place inserts a map link with the phone's position", bodyHtml.slice(-250));
+await p.click("#editorSave"); await p.waitForTimeout(500); if (await p.locator("#editorScreen.active").count()) { await p.locator("#editorBack").click({ timeout: 3000 }).catch(async () => { await p.evaluate(() => document.getElementById("editorBack").click()); }); await p.waitForTimeout(500); }
+ok(/2/.test(await p.locator("#hubN_journal").textContent()), "the new entry is counted in Journal", await p.locator("#hubN_journal").textContent());
+// to-do
+await p.click('[data-hub="todo"]'); await p.waitForTimeout(300);
+await p.fill("#tdText", "Send survey documents"); const d = new Date(Date.now() + 864e5), ds = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+await p.fill("#tdDue", ds); await p.click("#tdAdd"); await p.fill("#tdText", "Buy stores"); await p.press("#tdText", "Enter"); await p.waitForTimeout(300);
+let td = await p.locator("#tdList").textContent();
+ok(/Tomorrow/.test(td) && /Send survey documents/.test(td) && /No date/.test(td) && /Buy stores/.test(td), "to-do: added items are grouped by Tomorrow and No date", td);
+const stored = await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).find(n => n.title === "To-do list"));
+ok(stored && stored.category === "To-do" && /☐ Send survey documents \(due /.test(stored.body), "the list is kept as one note Max can read, with ☐ lines", stored && stored.body);
+await p.click('.td-row .td-cb >> nth=0'); await p.waitForTimeout(300);
+td = await p.locator("#tdList").textContent();
+ok(/Done/.test(td) && /1 of 2 done/.test(await p.locator("#tdSub").textContent()) && /50%/.test(await p.locator("#tdPct").textContent()), "ticking an item moves it to Done and updates the ring", await p.locator("#tdSub").textContent());
+ok(/☑/.test(await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).find(n => n.title === "To-do list").body)), "…and the note shows ☑");
+ok((await p.locator("#dockNotesBadge").count()) === 1, "Notes symbol on home carries a badge for what is due");
+// select, copy, move, paste
+await p.click('[data-hub="notes"]'); await p.waitForTimeout(300);
+await p.evaluate(() => document.querySelectorAll("#noteList details").forEach(d => d.open = true));
+await p.click("#vaultMoreBtn"); await p.click("#selectModeBtn"); await p.waitForTimeout(300);
+await p.evaluate(() => document.querySelectorAll("#noteList details").forEach(d => d.open = true));
+await p.click('[data-selkey="n:a"]'); await p.waitForTimeout(100);
+ok(/1 selected/.test(await p.locator("#selCount").textContent()), "select mode: tapping a note selects it");
+await p.click('[data-sel="copy"]'); await p.waitForTimeout(300);
+ok(await p.locator("#pasteBar").isVisible(), "Copy shows the paste bar");
+await p.click('summary:has-text("Maritime") >> nth=0'); await p.waitForTimeout(200);
+await p.click('[data-paste="top"]'); await p.waitForTimeout(200); await p.click('[data-paste="go"]'); await p.waitForTimeout(400);
+let all = await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).filter(n => !n.deleted && n.title.startsWith("Cargo Gear")).map(n => n.title + "|" + n.category));
+ok(all.length === 2 && all.some(x => x === "Cargo Gear|Maritime › Topics") && all.some(x => x === "Cargo Gear|Unsorted"), "copy: the note is now in two places", JSON.stringify(all));
+await p.click("#pasteBar [data-paste=cancel]");
+await p.click("#vaultMoreBtn"); await p.click("#selectModeBtn"); await p.waitForTimeout(200); await p.evaluate(() => document.querySelectorAll("#noteList details").forEach(d => d.open = true)); await p.click('[data-selkey="n:b"]'); await p.click('[data-sel="move"]'); await p.waitForTimeout(300);
+await p.click('[data-paste="top"]'); await p.click('[data-paste="go"]'); await p.waitForTimeout(400);
+all = await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).filter(n => n.title === "Ship Stability").map(n => n.category + "|" + n.deleted));
+ok(all.length === 1 && all[0] === "Unsorted|false", "move: the note leaves its folder (no copy left behind)", JSON.stringify(all));
+// copy a whole folder
+await p.click("#vaultMoreBtn"); await p.click("#selectModeBtn"); await p.waitForTimeout(200);
+await p.click('summary[data-selkey="f:Maritime"]'); await p.click('[data-sel="copy"]'); await p.waitForTimeout(300);
+await p.click('[data-paste="top"]'); await p.click('[data-paste="go"]'); await p.waitForTimeout(400);
+all = await p.evaluate(() => JSON.parse(localStorage.getItem("max_notes_v3")).filter(n => !n.deleted && /^Maritime \(copy\)/.test(n.category)).map(n => n.title + "|" + n.category));
+ok(all.length >= 1 && all.some(x => /Cargo Gear\|Maritime \(copy\) › Topics/.test(x)), "copy a whole folder → “Maritime (copy)” with its notes inside", JSON.stringify(all));
+ok(errs.length === 0, "no script errors", errs.join("|"));
+await b.close(); sP.close(); console.log(pass + " passed, " + fail + " failed"); process.exit(fail ? 1 : 0);

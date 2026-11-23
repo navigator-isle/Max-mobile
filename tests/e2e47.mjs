@@ -40,10 +40,10 @@ await p.route("**/api/brain/**", async r => { const u = r.request().url(), m = r
   if (u.includes("/study-now")) { status = { ...status, studied: 3, left: 0 }; return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ units: 1, studied: 1, left: 0, checked: 0, status }) }); }
   status = { ...status, checks: [] }; return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ ok: true }) }); });
 await p.goto(ORIGIN + "/"); await p.waitForTimeout(1500);
-await p.evaluate(() => window.maxOpenDrawer("L")); await p.waitForTimeout(800);
-const tile = await p.locator("#tileBrain").textContent();
-ok(/2\/3/.test(tile) && /exam 88%/.test(tile) && /1 for you to check/.test(tile), "the brain card shows 2/3 studied, the exam score and what to check", tile);
-await p.click("#tileBrain"); await p.waitForTimeout(800);
+await p.waitForTimeout(800);
+const tile = await p.locator("#legacyTiles #tileBrain").textContent(), badge = await p.locator("#dockBrainBadge").textContent();
+ok(/2\/3/.test(tile) && /exam 88%/.test(tile) && /1 for you to check/.test(tile) && badge === "67%", "the Brain button shows 67% learned; its data is 2/3 studied, exam 88%, 1 to check", tile + " " + badge);
+await p.click("#dockBrain"); await p.waitForTimeout(800);
 let body = await p.locator("#dashFullBody").textContent();
 ok(/2 of 3 notes studied/.test(body) && /88% · 4 questions/.test(body) && /Connectionsbetweennotes5/.test(body.replace(/\s+/g, "")) && /Please check \(1\)/.test(body) && /drills every 6 months/.test(body) && /Fixed by Max \(1\)/.test(body) && /Max could not answer/.test(body), "overview: progress, exam, links, Please check, Fixed by Max, gaps", body.slice(0, 500));
 await p.click('[data-brain="apply"]'); await p.waitForTimeout(900);
