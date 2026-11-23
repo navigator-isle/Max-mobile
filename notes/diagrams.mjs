@@ -1700,3 +1700,39 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 190, "Section 8", { a: "middle", s: 9, c: L });
   DIAGRAMS["alert-timers"] = svg(400, 202, s);
 }
+
+// 105-107. BWMS Code
+{
+  let s = frame(400, 220);
+  s += txt(200, 26, "BWMS type approval path", { a: "middle", b: true, s: 12 });
+  const n = [["Pre-test", "documents, SDL", A], ["Land-based", "5 cycles per salinity", G], ["Shipboard", "6 months, 3 cycles", Y], ["Certificate", "Type Approval", R]];
+  n.forEach((x, i) => {
+    const X = 14 + i * 96;
+    s += `<rect x="${X}" y="60" width="84" height="64" rx="7" fill="#1d2040" stroke="${x[2]}"/>` + txt(X + 42, 84, x[0], { a: "middle", b: true, s: 10, c: x[2] }) + txt(X + 42, 102, x[1], { a: "middle", s: 8, c: L });
+    if (i < 3) s += arrow(X + 84, 92, X + 96, 92, L);
+  });
+  s += txt(200, 156, "Active Substance systems need IMO approval first (D-3.2)", { a: "middle", s: 9, c: Y });
+  s += txt(200, 176, "Then installation survey and BWM Certificate", { a: "middle", s: 9, c: L });
+  DIAGRAMS["bwms-approval"] = svg(400, 220, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "D-2 discharge limits", { a: "middle", b: true, s: 12 });
+  const t = [["50 µm and above", "< 10 per m³", R], ["10 to 50 µm", "< 10 per mL", Y], ["V. cholerae", "< 1 cfu / 100 mL", G], ["E. coli", "< 250 cfu / 100 mL", A], ["Enterococci", "< 100 cfu / 100 mL", A]];
+  t.forEach((r, i) => {
+    const y = 42 + i * 40;
+    s += `<rect x="20" y="${y}" width="360" height="34" rx="6" fill="#1d2040" stroke="${r[2]}"/>` + txt(34, y + 22, r[0], { s: 10.5, b: true, c: r[2] }) + txt(366, y + 22, r[1], { a: "end", s: 10.5 });
+  });
+  DIAGRAMS["bwms-d2"] = svg(400, 250, s);
+}
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "Test programme key figures", { a: "middle", b: true, s: 12 });
+  s += txt(105, 52, "Land-based", { a: "middle", b: true, s: 11, c: G }) + txt(295, 52, "Shipboard", { a: "middle", b: true, s: 11, c: Y });
+  const L1 = ["≥ 5 cycles per salinity", "3 salinities: 28–36 · 10–20 · <1 PSU", "Tanks ≥ 200 m³", "Regrowth ≥ 5 days"];
+  const L2 = ["≥ 6 months of cycles", "3 consecutive compliant cycles", "Uptake ≥ 10× D-2.1 limits", "Samples 1 m³ in, 3 m³ out"];
+  L1.forEach((t, i) => { s += `<rect x="14" y="${64 + i * 44}" width="182" height="38" rx="6" fill="#1d2040" stroke="${G}"/>` + txt(105, 88 + i * 44, t, { a: "middle", s: 8.5 }); });
+  L2.forEach((t, i) => { s += `<rect x="204" y="${64 + i * 44}" width="182" height="38" rx="6" fill="#1d2040" stroke="${Y}"/>` + txt(295, 88 + i * 44, t, { a: "middle", s: 8.5 }); });
+  s += txt(200, 250, "Part 2 of the Code", { a: "middle", s: 9, c: L });
+  DIAGRAMS["bwms-tests"] = svg(400, 260, s);
+}
