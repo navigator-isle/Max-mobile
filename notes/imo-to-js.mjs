@@ -45,7 +45,7 @@ const notes = [];
 for (const [dir, cat] of [["", "Maritime › IMO"], ["Conventions", "Maritime › IMO › Conventions"], ["Codes", "Maritime › IMO › Codes"]]) {
   const d = path.join(ROOT, "notes", "imo", dir);
   for (const f of fs.readdirSync(d).filter(f => f.endsWith(".md")).sort()) {
-    const title = f.slice(0, -3), { body, tags } = toHtml(fs.readFileSync(path.join(d, f), "utf8"));
+    const rawMd = fs.readFileSync(path.join(d, f), "utf8"), tm = /^title:\s*(.+)$/m.exec(rawMd.split("\n---")[0] || ""), title = (rawMd.startsWith("---") && tm) ? tm[1].trim() : f.slice(0, -3), { body, tags } = toHtml(rawMd);
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     notes.push({ id: "note-imo-" + slug, v: parseInt(crypto.createHash("sha1").update(body).digest("hex").slice(0, 7), 16), title, category: cat, tags: [...new Set([...(tags.length ? tags : [slug.split("-")[0]]), "imo", dir ? dir.toLowerCase().replace(/s$/, "") : "index"])].slice(0, 12), body });
   }

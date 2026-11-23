@@ -1860,3 +1860,67 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 264, "1 Jan 2029: S-100 ECDIS (new), lifeboat ventilation", { a: "middle", s: 9, c: L });
   DIAGRAMS["solas-2026"] = svg(400, 280, s);
 }
+
+// 118-122. MARPOL 73/78
+{
+  let s = frame(400, 310);
+  s += txt(200, 26, "MARPOL Annexes", { a: "middle", b: true, s: 12 });
+  const an = [["I", "Oil", "In force 2 Oct 1983", "IOPP", "#aab0d0"], ["II", "Noxious liquids", "Compulsory with Annex I", "NLS", Y], ["III", "Packaged goods", "In force 1 Jul 1992", "Optional", "#c792ea"], ["IV", "Sewage", "In force 27 Sep 2003", "ISPP", A], ["V", "Garbage", "In force 31 Dec 1988", "Optional", G], ["VI", "Air pollution", "In force 19 May 2005", "IAPP, EIAPP, IEE", R]];
+  an.forEach((c, i) => {
+    const col = i % 2, row = Math.floor(i / 2), x = 14 + col * 192, y = 42 + row * 82;
+    s += `<rect x="${x}" y="${y}" width="180" height="72" rx="8" fill="#1d2040" stroke="${c[4]}"/>` + txt(x + 10, y + 22, "Annex " + c[0], { b: true, s: 12, c: c[4] }) + txt(x + 10, y + 40, c[1], { s: 10.5 }) + txt(x + 10, y + 56, c[2], { s: 8.5, c: L }) + txt(x + 170, y + 22, c[3], { a: "end", s: 8.5, c: c[4] });
+  });
+  s += txt(200, 288, "Annexes I and II are compulsory. III to VI are optional for each State", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["marpol-annexes"] = svg(400, 314, s);
+}
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Minimum distance from land", { a: "middle", b: true, s: 12 });
+  const X = d => 168 + d * 3.6;
+  [0, 12, 24, 36, 48].forEach(d => { s += line(X(d), 40, X(d), 268, "#2a2d4a") + txt(X(d), 282, d + " nm", { a: "middle", s: 8, c: L }); });
+  const rows = [["Food waste, comminuted (V)", 3, G], ["Sewage, treated (IV)", 3, A], ["Food waste, whole (V)", 12, G], ["Cargo residues (V)", 12, G], ["Sewage, untreated (IV)", 12, A], ["NLS residues (II, 25 m deep)", 12, Y], ["Tanker cargo oil (I)", 50, R]];
+  rows.forEach((r, i) => {
+    const y = 44 + i * 31, x0 = X(r[1]), x1 = X(Math.min(r[1] + 14, 58));
+    s += txt(10, y + 14, r[0], { s: 8.5 }) + `<rect x="${x0}" y="${y}" width="${X(60) - x0}" height="20" rx="4" fill="${r[2]}" fill-opacity="0.85"/>` + txt(x0 + 6, y + 14, ">" + r[1] + " nm", { s: 8.5, b: true, c: "#12131f" });
+  });
+  s += `<rect x="${X(0) - 3}" y="40" width="3" height="228" fill="#8a7a55"/>` + txt(X(0) - 8, 38, "land", { a: "end", s: 8, c: L });
+  DIAGRAMS["marpol-distances"] = svg(400, 300, s);
+}
+{
+  let s = frame(400, 330);
+  s += txt(200, 26, "Fuel and engine milestones", { a: "middle", b: true, s: 12 });
+  const ev = [["1 Jan 2015", "0.10% sulphur in SOx ECAs", A], ["1 Jan 2016", "Tier III: North America, US Caribbean", Y], ["1 Jan 2020", "0.50% sulphur worldwide", G], ["1 Jan 2021", "Tier III: Baltic, North Sea", Y], ["1 May 2025", "Mediterranean 0.10%", A], ["1 Mar 2026", "Canadian Arctic, Norwegian Sea in force", R], ["1 Mar 2027", "Their 0.10% sulphur starts", A], ["1 Sep 2027", "North East Atlantic ECA in force", R], ["1 Sep 2028", "North East Atlantic 0.10%", A]];
+  s += line(104, 44, 104, 306, L);
+  ev.forEach((e, i) => {
+    const y = 52 + i * 28;
+    s += `<circle cx="104" cy="${y}" r="5" fill="${e[2]}"/>` + txt(94, y + 4, e[0], { a: "end", s: 9.5, b: true, c: e[2] }) + txt(118, y + 4, e[1], { s: 9.5 });
+  });
+  s += txt(200, 322, "Blue sulphur · yellow NOx · green global · red new ECA in force", { a: "middle", s: 8, c: L });
+  DIAGRAMS["marpol-ecas"] = svg(400, 334, s);
+}
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "CII (Annex VI Reg 28, ships 5,000 GT+)", { a: "middle", b: true, s: 12 });
+  const z = [["2027", 13.625], ["2028", 16.25], ["2029", 18.875], ["2030", 21.5]];
+  z.forEach((r, i) => {
+    const y = 48 + i * 32;
+    s += txt(14, y + 15, r[0], { s: 10, b: true }) + `<rect x="60" y="${y}" width="${r[1] * 11}" height="22" rx="4" fill="${A}"/>` + txt(60 + r[1] * 11 + 6, y + 15, r[1].toFixed(3) + "%", { s: 10, b: true });
+  });
+  s += txt(200, 190, "Cut required against the 2019 reference line", { a: "middle", s: 9, c: L });
+  const cols = [["A", G], ["B", "#9be564"], ["C", Y], ["D", "#ff9f4a"], ["E", R]];
+  cols.forEach((c, i) => { s += `<rect x="${24 + i * 70}" y="206" width="64" height="30" rx="5" fill="${c[1]}"/>` + txt(56 + i * 70, 227, c[0], { a: "middle", b: true, s: 14, c: "#12131f" }); });
+  s += txt(24, 254, "A best", { s: 9, c: G }) + txt(376, 254, "E worst", { a: "end", s: 9, c: R });
+  s += txt(200, 276, "D three years in a row, or E once: corrective action plan", { a: "middle", s: 9, c: Y });
+  DIAGRAMS["marpol-cii"] = svg(400, 292, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Record retention", { a: "middle", b: true, s: 12 });
+  const rows = [["Oil Record Book I, II", 3, R], ["Cargo Record Book", 3, Y], ["Bunker Delivery Note", 3, A], ["Garbage Record Book", 2, G], ["MARPOL fuel sample (at least)", 1, "#c792ea"]];
+  rows.forEach((r, i) => {
+    const y = 46 + i * 36;
+    s += txt(14, y + 15, r[0], { s: 9.5 }) + `<rect x="190" y="${y}" width="${r[1] * 44}" height="22" rx="4" fill="${r[2]}"/>` + txt(190 + r[1] * 44 + 8, y + 16, r[1] + (r[1] === 1 ? " year" : " years"), { s: 10, b: true });
+  });
+  s += txt(200, 236, "Counted from the last entry or from delivery", { a: "middle", s: 9, c: L });
+  DIAGRAMS["marpol-records"] = svg(400, 250, s);
+}
