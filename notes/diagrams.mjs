@@ -2319,3 +2319,45 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   r.forEach(x => { s += `<rect x="${x[2]}" y="${x[5]}" width="${x[3]}" height="12" rx="3" fill="${x[4]}" fill-opacity=".85"/>` + txt(14, x[5] - 4, x[0], { b: true, s: 9, c: x[4] }) + txt(386, x[5] - 4, x[1], { a: "end", s: 7.5, c: L }); });
   DIAGRAMS["cargo-regimes"] = svg(400, 272, s);
 }
+
+// 160-162. Draft survey
+{
+  let s = frame(400, 210);
+  s += txt(200, 24, "Draft marks and perpendiculars", { a: "middle", b: true, s: 12 });
+  const x0 = 30, x1 = 370, wl = 120, top = 70, bot = 150;
+  s += `<path d="M${x0},${top} L${x1 - 30},${top} L${x1},${top + 30} L${x1 - 16},${bot} L${x0},${bot} Z" fill="#2a2d4a" stroke="${T}" stroke-width="1.3"/>`;
+  s += `<rect x="${x0 + 1}" y="${wl}" width="${x1 - x0 - 12}" height="${bot - wl}" fill="${A}" fill-opacity=".35"/>` + line(10, wl, 392, wl, A, 1, "4 3");
+  const ap = 38, fp = 362, am = 74, mm = 200, fm = 336;
+  [[ap, "AP"], [fp, "FP"]].forEach(p => { s += line(p[0], 52, p[0], 164, Y, 1, "3 3") + txt(p[0], 46, p[1], { a: "middle", s: 9, b: true, c: Y }); });
+  [[am, "Aft"], [mm, "Mid"], [fm, "Fwd"]].forEach(p => { s += line(p[0], top, p[0], bot, G, 2.2) + txt(p[0], 178, p[1], { a: "middle", s: 9, b: true, c: G }); });
+  s += txt(200, 196, "Read port and starboard at each mark: six readings", { a: "middle", s: 8.5, c: L });
+  s += arrow(ap, 62, am, 62, L) + txt((ap + am) / 2, 59, "Ad", { a: "middle", s: 8, c: L });
+  s += arrow(fp, 62, fm, 62, L) + txt((fp + fm) / 2, 59, "Fd", { a: "middle", s: 8, c: L });
+  DIAGRAMS["draft-marks"] = svg(400, 212, s);
+}
+{
+  let s = frame(400, 200);
+  s += txt(200, 24, "Hull bend and the middle draft", { a: "middle", b: true, s: 12 });
+  const draw = (cx, k, label, sub, col) => {
+    let g = line(cx - 80, 100, cx + 80, 100, A, 1, "4 3");
+    g += `<path d="M${cx - 80},${100 - 6 + k * 0} Q${cx},${100 + 6 - k * 22} ${cx + 80},${100 - 6}" fill="none" stroke="${T}" stroke-width="2.4"/>`;
+    g += txt(cx, 140, label, { a: "middle", b: true, s: 10, c: col }) + txt(cx, 156, sub, { a: "middle", s: 8.5, c: L });
+    return g;
+  };
+  s += draw(105, 1, "Hogging", "Middle draft is less", Y);
+  s += draw(295, -1, "Sagging", "Middle draft is more", R);
+  s += txt(200, 186, "The quarter mean gives the middle draft six times the weight", { a: "middle", s: 8.5, c: G });
+  DIAGRAMS["draft-hogsag"] = svg(400, 202, s);
+}
+{
+  const st = ["Read six drafts", "Correct to the perpendiculars", "Quarter mean draft", "Displacement from the tables", "Trim corrections (first, second)", "Density correction", "Deduct tanks, stores, constant", "Cargo weight"];
+  const H = 40 + st.length * 32 + 10;
+  let s = frame(400, H);
+  s += txt(200, 24, "Draft survey in order", { a: "middle", b: true, s: 12 });
+  st.forEach((t, i) => {
+    const y = 38 + i * 32, c = i === st.length - 1 ? G : A;
+    s += `<rect x="70" y="${y}" width="260" height="24" rx="6" fill="#1d2040" stroke="${c}"/>` + txt(86, y + 16, String(i + 1), { b: true, s: 10, c }) + txt(106, y + 16, t, { s: 10 });
+    if (i < st.length - 1) s += arrow(200, y + 24, 200, y + 32, L);
+  });
+  DIAGRAMS["draft-steps"] = svg(400, H + 2, s);
+}
