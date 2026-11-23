@@ -1027,3 +1027,54 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 252, "Area b must be at least area a (after rolling to windward by φ1)", { a: "middle", s: 9, c: L });
   DIAGRAMS["is-weather"] = svg(400, 270, s);
 }
+
+// 55. ISM elements
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "ISM Code: 16 elements", { a: "middle", b: true, s: 12 });
+  const A_ = ["1 General", "2 Policy", "3 Company duties", "4 Designated Person", "5 Master's authority", "6 Resources, personnel", "7 Shipboard operations", "8 Emergencies", "9 Reports, analysis", "10 Maintenance", "11 Documentation", "12 Review, audit"];
+  s += txt(20, 48, "PART A: Implementation", { c: A, b: true, s: 10.5 });
+  A_.forEach((a, i) => {
+    const c = i % 2, r = Math.floor(i / 2);
+    s += `<rect x="${20 + c * 182}" y="${56 + r * 24}" width="176" height="20" rx="4" fill="#1d2040" stroke="${A}" stroke-width="0.8"/>` + txt(28 + c * 182, 70 + r * 24, a, { s: 9.5 });
+  });
+  s += txt(20, 218, "PART B: Certification", { c: G, b: true, s: 10.5 });
+  const B_ = ["13 Certification", "14 Interim", "15 Verification", "16 Forms"];
+  B_.forEach((a, i) => {
+    const c = i % 2, r = Math.floor(i / 2);
+    s += `<rect x="${20 + c * 182}" y="${226 + r * 24}" width="176" height="20" rx="4" fill="#1d2040" stroke="${G}" stroke-width="0.8"/>` + txt(28 + c * 182, 240 + r * 24, a, { s: 9.5 });
+  });
+  s += txt(200, 284, "Part A: the SMS · Part B: certificates and audits", { a: "middle", s: 9, c: L });
+  DIAGRAMS["ism-elements"] = svg(400, 300, s);
+}
+
+// 56. ISM certificate cycle
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "5-year certificate cycle", { a: "middle", b: true, s: 12 });
+  const x0 = 40, x1 = 360, y = 90, k = (x1 - x0) / 5;
+  s += line(x0, y, x1, y, L, 2);
+  for (let i = 0; i <= 5; i++) {
+    s += `<circle cx="${x0 + i * k}" cy="${y}" r="4" fill="${i == 0 || i == 5 ? A : Y}"/>` + txt(x0 + i * k, y + 18, i == 0 ? "Issue" : i == 5 ? "Expiry" : "Year " + i, { a: "middle", s: 9, c: L });
+  }
+  s += `<rect x="${x0 + 2 * k}" y="${y - 30}" width="${k}" height="16" rx="3" fill="${G}" fill-opacity="0.35" stroke="${G}"/>` + txt(x0 + 2.5 * k, y - 18, "SMC intermediate", { a: "middle", s: 8.5 });
+  s += txt(200, 140, "DOC: annual verification each year, ±3 months of anniversary", { a: "middle", s: 9.5, c: T });
+  s += txt(200, 158, "SMC: at least one intermediate; if only one, year 2 to 3", { a: "middle", s: 9.5, c: T });
+  s += txt(200, 186, "Interim DOC: up to 12 months", { a: "middle", s: 9.5, c: A });
+  s += txt(200, 202, "Interim SMC: up to 6 months (+ up to 6 months)", { a: "middle", s: 9.5, c: A });
+  s += txt(200, 226, "Endorsement up to 5 months · voyage extension up to 3 months", { a: "middle", s: 9, c: L });
+  DIAGRAMS["ism-certificates"] = svg(400, 250, s);
+}
+
+// 57. ISM dates
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "ISM Code timeline", { a: "middle", b: true, s: 12 });
+  const rows = [["4 Nov 1993", "A.741(18) adopts the Code", A], ["1 Jul 1998", "Mandatory: passenger, tankers, bulk", G], ["1 Jul 2002", "Other cargo ships, MODUs; MSC.104(73)", G], ["1 Jul 2006", "MSC.179(79) in force", Y], ["1 Jan 2009", "MSC.195(80) in force", Y], ["1 Jul 2010", "MSC.273(85) in force", Y], ["1 Jan 2015", "MSC.353(92) in force", Y], ["1 Jan 2021", "Cyber risk by next DOC audit", R]];
+  s += line(100, 44, 100, 268, L, 1.5);
+  rows.forEach(([d, t, c], i) => {
+    const y = 56 + i * 27;
+    s += `<circle cx="100" cy="${y}" r="4.5" fill="${c}"/>` + txt(92, y + 4, d, { a: "end", s: 9.5, c: c, b: true }) + txt(112, y + 4, t, { s: 9.5 });
+  });
+  DIAGRAMS["ism-dates"] = svg(400, 290, s);
+}

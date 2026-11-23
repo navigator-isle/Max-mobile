@@ -1,74 +1,113 @@
 ---
 tags: [ism, sms, safety-management, solas-ix, imo, code, core]
 ---
-**ISM Code — International Safety Management Code**
+# ISM Code — International Safety Management Code
 
-**What is the ISM Code**
-- International standard for the safe management and operation of ships and for pollution prevention
-- Mandatory under SOLAS Ch IX
-- The Company builds a Safety Management System (SMS); the flag State (or RO) audits it
-- Certificates: Document of Compliance (DOC) — Company · Safety Management Certificate (SMC) — ship
+## At a glance
+| Item | Detail |
+|---|---|
+| Full name | International Management Code for the Safe Operation of Ships and for Pollution Prevention |
+| Adopted | 4 Nov 1993, Assembly resolution A.741(18) |
+| Made mandatory by | SOLAS chapter IX (in force 1 Jul 1998) |
+| Structure | Part A: Implementation (elements 1–12) · Part B: Certification and verification (13–16) |
+| Company certificate | Document of Compliance (DOC) |
+| Ship certificate | Safety Management Certificate (SMC) |
+| Validity | DOC and SMC: up to 5 years |
+| Key person | Designated Person(s) ashore (element 4) |
 
-**History**
-- Born from accidents caused by poor management: Herald of Free Enterprise (1987), Scandinavian Star (1990)
-- Adopted 4 Nov 1993 (Assembly resolution A.741(18))
-- Mandatory 1 Jul 1998: passenger ships, tankers, bulk carriers, high-speed craft ≥500 GT
-- 1 Jul 2002: other cargo ships and MODUs ≥500 GT
-- Amendments: MSC.104(73) (2002), MSC.179(79), MSC.195(80) (2006), MSC.273(85) (2010: risk assessment, near-miss emphasis), MSC.353(92) (2015)
-- Guidelines on implementation by Administrations: A.1118(30) (2017) · Revised guidelines on implementation by Companies
-- MSC.428(98) (2017): cyber risks addressed in the SMS by first annual DOC verification after 1 Jan 2021
-- 2026: IMO III 12 started a comprehensive revision of the ISM implementation guidelines (roadmap to III 14)
+![[diagram:ism-elements|The 16 elements of the ISM Code]]
 
-**Applies to**
-- SOLAS ships ≥500 GT on international voyages: passenger ships (incl. HSC), oil/chemical tankers, gas carriers, bulk carriers, cargo HSC, other cargo ships, MODUs
-- Not covered: government ships on non-commercial service
+## What the Code does
+- Gives an international standard for the safe management and operation of ships and for pollution prevention
+- The **Company** builds a Safety Management System (SMS). The flag State (or its recognized organization) audits it.
+- Objectives (1.2): safety at sea, prevention of injury or loss of life, avoidance of damage to the environment and property
+- IMO says the cornerstone of good safety management is commitment from the top
 
----
+> **Key Point:** The ISM Code certifies the *management system*, not the ship's hardware. The DOC belongs to the Company; the SMC belongs to the ship.
 
-**Part A — Implementation**
-- 1 General:
-  - 1.1 Definitions (Company, Administration, SMS, DOC, SMC, objective evidence, observation, non-conformity, major non-conformity, anniversary date)
-  - 1.2 Objectives: safety at sea, prevent injury/loss of life, avoid damage to environment and property · assess all identified risks, set safeguards · improve skills and emergency preparedness
-  - 1.4 Functional requirements of an SMS
-- 2 Safety and environmental-protection policy (Company writes it; implemented at all levels)
-- 3 Company responsibilities and authority (if not the owner, Company details reported to flag; defined responsibilities; adequate resources and shore support)
-- 4 Designated Person(s) Ashore (DPA): direct access to highest management; monitors safety of each ship
-- 5 Master's responsibility and authority:
-  - Implements policy, motivates crew, gives orders simply, verifies requirements, reviews SMS and reports deficiencies
-  - **Overriding authority** to make decisions on safety and pollution prevention, and to request Company help
-- 6 Resources and personnel: qualified master, crew familiarization, SMS in a working language understood by crew, training needs identified
-- 7 Shipboard operations: plans, procedures, instructions with checklists for key operations
-- 8 Emergency preparedness: identify emergencies, drills and exercises, Company response at any time
-- 9 Reports and analysis of non-conformities, accidents and hazardous occurrences (near misses) — corrective action
-- 10 Maintenance of the ship and equipment: inspections, records, critical equipment and systems identified and tested
-- 11 Documentation: controlled documents, Safety Management Manual on board
-- 12 Company verification, review and evaluation: internal audits on board and ashore at least every 12 months (≤3 months extension in exceptional cases); management review
+## Application dates (SOLAS IX)
+Applies to ships on international voyages, regardless of build date.
 
-**Part B — Certification and verification**
-- 13 Certification and periodical verification:
-  - DOC: valid ≤5 years · annual verification (±3 months of anniversary)
-  - SMC: valid ≤5 years · intermediate verification between 2nd and 3rd anniversary
-  - Ship SMC only if Company holds a valid DOC for that ship type
-- 14 Interim certification:
-  - Interim DOC: ≤12 months (new Company or new ship type)
-  - Interim SMC: ≤6 months (new ship, new Company, change of flag) — may extend 6 months more in special cases
-- 15 Verification (audits per procedures acceptable to the Administration)
-- 16 Forms of certificates
+| Date | Ship types |
+|---|---|
+| 1 Jul 1998 | Passenger ships (including passenger high-speed craft) · oil tankers, chemical tankers, gas carriers, bulk carriers and cargo high-speed craft of 500 GT and above |
+| 1 Jul 2002 | Other cargo ships and mobile offshore drilling units (MODUs) of 500 GT and above |
 
-**Audit findings**
-- Observation: statement of fact
-- Non-conformity (NC): objective evidence that a requirement is not met — corrective action within agreed time (usually ≤3 months)
-- Major non-conformity: serious threat to safety/environment, or failure to implement a requirement — must be downgraded before the ship sails; may lead to withdrawal of SMC
+![[diagram:ism-dates|ISM Code dates: adoption, entry into force and amendments]]
 
-**Key Point**
-- Master's overriding authority is written into the SMS — use it
-- Near misses must be reported (Element 9) — PSC and auditors look for real reports
-- Critical equipment (steering, emergency generator, fire pumps…) tested per SMS and recorded
-- Cyber risk is part of the SMS since 2021
-- Many PSC detentions are "ISM-related": repeated deficiencies show the SMS is not working
+## Amendments
+| Resolution | Adopted | In force | Notes |
+|---|---|---|---|
+| MSC.104(73) | 5 Dec 2000 | 1 Jul 2002 | Definitions in 1.1, chapter 7, Part B chapter 13, new chapters 14–16, certificate forms |
+| MSC.179(79) | 10 Dec 2004 | 1 Jul 2006 | Amends the Code |
+| MSC.195(80) | 20 May 2005 | 1 Jan 2009 | Amends the Code |
+| MSC.273(85) | 4 Dec 2008 | 1 Jul 2010 | Part A chapters 1, 5, 7, 8, 9, 10, 12; Part B chapters 13, 14 |
+| MSC.353(92) | 21 Jun 2013 | 1 Jan 2015 | Part A chapters 6 and 12 |
 
-**Sources (checked 10 Nov 2026)**
-- DNV — IMO III 12: ISM implementation guidelines revision (Jul 2026): https://www.dnv.com/news/2026/imo-iii-12-initiation-of-ism-implementation-guidelines-revision-and-progression-of-survey-requirements-revision/
-- IMO — Resolution MSC.353(92) (ISM amendments): https://wwwcdn.imo.org/localresources/en/OurWork/HumanElement/Documents/353(92).pdf
-- UK MCA — MGN 708 guidance on the ISM Code Regulations 2026: https://www.gov.uk/government/publications/mgn-708m-guidance-on-the-merchant-shipping-international-safety-management-ism-code-regulations-2026
-- ICS — III 12/12 Proposals to improve ISM implementation by Administrations: https://www.ics-shipping.org/wp-content/uploads/2026/07/III-12-12-Proposals-to-improve-the-implementation-of-the-ISM-Code-by-Administrations-ICS.pdf
+## Related IMO instruments
+- **A.1118(30)** (adopted 6 Dec 2017): Revised Guidelines on implementation of the ISM Code **by Administrations**. It revokes A.1071(28).
+- **MSC.428(98)** (adopted 16 Jun 2017): Maritime cyber risk management in safety management systems. Administrations are encouraged to ensure cyber risks are addressed in the SMS **no later than the first annual verification of the Company's DOC after 1 Jan 2021**.
+
+## Part A — Implementation
+| Element | Content |
+|---|---|
+| 1 General | Definitions (1.1: objective evidence, observation, non-conformity, major non-conformity, anniversary date) · objectives (1.2) · application (1.3) · functional requirements of an SMS (1.4) |
+| 2 Policy | Safety and environmental-protection policy |
+| 3 Company responsibilities | If the owner is not the Company, the owner reports the operator's details to the Administration (3.1) |
+| 4 Designated Person(s) | Link between the Company and those on board |
+| 5 Master's responsibility and authority | Includes the **overriding authority** to take decisions on safety and pollution prevention (5.2) |
+| 6 Resources and personnel | Manning (6.2, with reference to A.1047(27)) · working language |
+| 7 Shipboard operations | Plans and instructions for key operations |
+| 8 Emergency preparedness | Identify potential emergencies, drills, response (8.1–8.3) |
+| 9 Reports and analysis | Non-conformities, accidents and hazardous occurrences |
+| 10 Maintenance | Inspections, records; critical equipment (10.3) |
+| 11 Documentation | Controlled documents; Safety Management Manual |
+| 12 Verification, review, evaluation | Internal audits at intervals of **no more than 12 months** (12.1); auditors independent of the area audited (12.5) |
+
+> **Key Point:** Internal audits (12.1) are normally at intervals of up to 12 months. The Code allows this to be exceeded by up to 3 months only in exceptional circumstances.
+
+## Part B — Certification and verification
+![[diagram:ism-certificates|Certificate cycle: DOC and SMC]]
+
+### Document of Compliance (DOC) — the Company
+- Valid up to 5 years
+- Valid only for the ship types listed on it
+- Annual verification within 3 months before or after the anniversary date
+- Withdrawn if annual verification is not requested, or if there is a major non-conformity
+
+### Safety Management Certificate (SMC) — the ship
+- Valid up to 5 years
+- At least one intermediate verification. If only one, it is between the 2nd and 3rd anniversary.
+- Endorsement possible for up to 5 months (13.13)
+- Extension of up to 3 months allowed to complete a voyage (13.14)
+
+### Interim certificates (chapter 14)
+| Certificate | Maximum validity | Notes |
+|---|---|---|
+| Interim DOC | 12 months | |
+| Interim SMC | 6 months | Extendable by up to a further 6 months |
+
+- Conditions in 14.4 include an internal audit planned within 3 months
+
+## Verification (A.1118(30))
+- Types: interim, initial, annual (DOC), intermediate (SMC), renewal, additional
+- Initial verification needs an SMS operating at least 3 months ashore and on at least one ship of each type
+- Corrective actions for non-conformities should not normally exceed 3 months
+- Major non-conformities are handled per MSC/Circ.1059-MEPC/Circ.401
+- Auditors: at least 5 years' experience and at least 4 training audits
+
+## Not included (not verified against the original text)
+- Accident origins of the Code (Herald of Free Enterprise, Scandinavian Star)
+- Reported 2026 IMO III 12 revision of ISM implementation guidelines
+- Statement that a 2010 amendment emphasized risk assessment and near-miss reporting
+- Examples of "critical equipment" and statements on port State control detention patterns
+- Exemption of government ships
+
+## Sources (checked 23 Nov 2026)
+- IMO — ISM Code page: https://www.imo.org/en/ourwork/humanelement/pages/ISMCode.aspx
+- IMO — Resolution MSC.428(98): https://wwwcdn.imo.org/localresources/en/OurWork/Facilitation/Documents/RESOLUTION MSC.428 -98 -.pdf
+- Deutsche Flagge — ISM Code amendment status
+- EMSA — consolidated ISM Code text (2018)
+- IMO — Resolution A.1118(30), Revised Guidelines for Administrations
+- Steamship Mutual — ISM application dates: https://www.steamshipmutual.com/publications/articles/ism_deadline0602
+- shipinspection.eu — SOLAS chapter IX application: https://shipinspection.eu/which-ships-does-solas-chapter-ix-apply-to/
