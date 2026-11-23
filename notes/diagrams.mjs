@@ -853,3 +853,53 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 206, "Voluntary use first, then mandatory under SOLAS", { a: "middle", s: 9, c: L });
   DIAGRAMS["imdg-cycle"] = svg(400, 220, s);
 }
+
+// 46. IMSBC cargo groups
+{
+  let s = frame(400, 248);
+  s += txt(200, 26, "IMSBC Code: cargo groups (1.7)", { a: "middle", b: true, s: 12 });
+  const card = (x, g, h1, h2, ex, c) => {
+    let o = `<rect x="${x}" y="40" width="120" height="178" rx="6" fill="${c}" fill-opacity="0.1" stroke="${c}"/>`;
+    o += txt(x + 60, 62, g, { a: "middle", b: true, s: 14, c });
+    h1.forEach((t, i) => { o += txt(x + 60, 86 + i * 13, t, { a: "middle", s: 9 }); });
+    o += txt(x + 60, 150, "Examples", { a: "middle", s: 8.5, c: L, b: true });
+    ex.forEach((t, i) => { o += txt(x + 60, 164 + i * 13, t, { a: "middle", s: 8.5, c: L }); });
+    return o;
+  };
+  s += card(14, "Group A", ["Moisture hazard:", "liquefaction or", "dynamic separation", "above the TML"], 0, ["iron ore fines", "nickel ore", "mineral concentrates"], A);
+  s += card(140, "Group B", ["Chemical hazard that", "could create a", "dangerous situation", "on a ship"], 0, ["ammonium nitrate", "fertilizers", "aluminium ferrosilicon"], R);
+  s += card(266, "Group C", ["Neither Group A", "nor Group B", "", ""], 0, ["glass cullet"], G);
+  s += txt(200, 238, "Coal: Group A and B, unless B only by a test set by the authority", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["imsbc-groups"] = svg(400, 248, s);
+}
+
+// 47. IMSBC Group A certificate timing
+{
+  let s = frame(400, 200);
+  s += txt(200, 26, "Group A cargo: certificate timing (4.5)", { a: "middle", b: true, s: 12 });
+  s += line(30, 100, 370, 100, L, 2);
+  s += `<circle cx="300" cy="100" r="6" fill="${G}"/>`;
+  s += txt(312, 122, "Start of loading", { a: "start", b: true, s: 10, c: G });
+  s += `<rect x="36" y="70" width="264" height="14" rx="3" fill="${A}" fill-opacity="0.35" stroke="${A}"/>`;
+  s += txt(168, 64, "TML test: within 6 months before loading (4.5.1)", { a: "middle", s: 9.5, c: A, b: true });
+  s += `<rect x="252" y="106" width="48" height="12" rx="3" fill="${Y}" fill-opacity="0.45" stroke="${Y}"/>`;
+  s += txt(252, 138, "Moisture sampling and testing:", { a: "end", s: 9.5, c: Y, b: true });
+  s += txt(252, 152, "never more than 7 days before loading (4.5.2)", { a: "end", s: 9.5, c: Y });
+  s += txt(200, 186, "New TML test if the cargo's composition or characteristics have changed", { a: "middle", s: 9, c: L });
+  DIAGRAMS["imsbc-timing"] = svg(400, 200, s);
+}
+
+// 48. IMSBC amendment cycle
+{
+  let s = frame(400, 220);
+  s += txt(200, 26, "IMSBC Code: recent amendments", { a: "middle", b: true, s: 12 });
+  const rows = [["06-21", "MSC.500(105)", "1 Jan 2023", "1 Dec 2023", T], ["07-23", "MSC.539(107)", "1 Jan 2024", "1 Jan 2025", A], ["08-25", "MSC.575(110)", "1 Jan 2026", "1 Jan 2027", Y]];
+  s += txt(22, 52, "Amendment", { s: 9, c: L }) + txt(100, 52, "Resolution", { s: 9, c: L }) + txt(204, 52, "Voluntary from", { s: 9, c: L }) + txt(300, 52, "Mandatory from", { s: 9, c: L });
+  rows.forEach(([a, r, v, m, c], i) => {
+    const y = 62 + i * 40;
+    s += `<rect x="14" y="${y}" width="372" height="32" rx="5" fill="${c}" fill-opacity="0.1" stroke="${c}" stroke-opacity="0.7"/>`;
+    s += txt(22, y + 20, a, { b: true, s: 11, c }) + txt(100, y + 20, r, { s: 9.5 }) + txt(204, y + 20, v, { s: 9.5 }) + txt(300, y + 20, m, { s: 9.5, b: true });
+  });
+  s += txt(200, 200, "Original Code: adopted 4 Dec 2008 (MSC.268(85)), mandatory 1 Jan 2011", { a: "middle", s: 9, c: L });
+  DIAGRAMS["imsbc-amendments"] = svg(400, 220, s);
+}
