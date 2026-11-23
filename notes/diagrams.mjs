@@ -1435,3 +1435,31 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["inmarsat-timeline"] = svg(400, 290, s);
 }
+
+// 84. Torremolinos path
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "From 1977 to today", { a: "middle", b: true, s: 12 });
+  const st = [["2 Apr 1977", "Torremolinos Convention", "Never entered into force", R], ["Apr 1993", "Torremolinos Protocol", "Updates and absorbs the 1977 text · not in force", Y], ["11 Oct 2012", "Cape Town Agreement", "Brings the technical rules into force", A], ["Feb 2027", "Agreement in force", "Fishing vessels of 24 m and over", G]];
+  st.forEach(([d, a, b, c], i) => {
+    const y = 42 + i * 54;
+    s += `<rect x="20" y="${y}" width="360" height="46" rx="6" fill="#1d2040" stroke="${c}"/>` + txt(32, y + 19, d, { b: true, s: 10, c }) + txt(112, y + 19, a, { b: true, s: 10.5 }) + txt(112, y + 36, b, { s: 9, c: L });
+    if (i < 3) s += arrow(200, y + 46, 200, y + 54, L);
+  });
+  DIAGRAMS["tor-path"] = svg(400, 260, s);
+}
+
+// 85. Torremolinos chapters / thresholds
+{
+  let s = frame(400, 324);
+  s += txt(200, 26, "Annex: where each chapter applies", { a: "middle", b: true, s: 12 });
+  const x0 = 150, k = 3.2;
+  [["24 m", 24], ["45 m", 45], ["75 m", 75]].forEach(([t, v]) => { const x = x0 + (v - 24) * 3.2 + 40; });
+  const rows = [["I General", "all new vessels", A, 0], ["II Construction", "45 m, 75 m limits", A, 1], ["III Stability", "no general limit", G, 2], ["IV Machinery", "45 m and over", Y, 3], ["V Fire", "new, 45 m and over", Y, 4], ["VI Crew", "per regulation", L, 5], ["VII Life-saving", "new, 45 m and over", Y, 6], ["VIII Emergency", "24 m and over", G, 7], ["IX Radio", "45 m and over", Y, 8], ["X Navigation", "per regulation", L, 9]];
+  rows.forEach(([a, b, c, i]) => {
+    const y = 40 + i * 25;
+    s += `<rect x="20" y="${y}" width="360" height="21" rx="4" fill="#1d2040" stroke="${c}" stroke-width="0.8"/>` + txt(30, y + 15, a, { s: 10, b: true }) + txt(370, y + 15, b, { a: "end", s: 9.5, c: L });
+  });
+  s += txt(200, 312, "300 GT may be used in place of 24 m (Reg I/1)", { a: "middle", s: 9, c: L });
+  DIAGRAMS["tor-chapters"] = svg(400, 324, s);
+}
