@@ -545,3 +545,52 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 232, "Aluminium cores: rise no more than 200 °C · integrity: no flaming on the unexposed face", { a: "middle", s: 8.5, c: L });
   DIAGRAMS["ftp-class-divisions"] = svg(400, 250, s);
 }
+
+// 30. Grain Code A 7.1: stability criteria (schematic)
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "Grain Code A 7.1: stability after assumed grain shift", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "(schematic curves, not to scale)", { a: "middle", s: 9.5, c: L });
+  const bx = 46, by = 220, bw = 330, bh = 140;
+  s += line(bx, by, bx + bw, by) + line(bx, by, bx, by - bh);
+  const X = a => bx + a / 60 * bw;
+  // righting arm curve (rises, peaks ~40, falls)
+  let r = "", h = "";
+  for (let a = 0; a <= 60; a += 2) { const g = 105 * Math.sin(a * Math.PI / 90) * (1 - a / 150); r += (a ? "L" : "M") + X(a).toFixed(1) + "," + (by - g).toFixed(1); }
+  for (let a = 0; a <= 60; a += 2) { const g = 24 + 0.32 * a; h += (a ? "L" : "M") + X(a).toFixed(1) + "," + (by - g).toFixed(1); }
+  s += `<path d="${r}" fill="none" stroke="${G}" stroke-width="2"/><path d="${h}" fill="none" stroke="${R}" stroke-width="2"/>`;
+  // shaded residual area between curves from ~12 to 40
+  let area = `M${X(12)},${by - (24 + 0.32 * 12)}`;
+  for (let a = 12; a <= 40; a += 2) { const g = 105 * Math.sin(a * Math.PI / 90) * (1 - a / 150); area += `L${X(a).toFixed(1)},${(by - g).toFixed(1)}`; }
+  for (let a = 40; a >= 12; a -= 2) { const g = 24 + 0.32 * a; area += `L${X(a).toFixed(1)},${(by - g).toFixed(1)}`; }
+  s += `<path d="${area}Z" fill="${Y}" fill-opacity="0.3" stroke="none"/>`;
+  s += line(X(12), by, X(12), by - 120, A, 1, "4 3") + line(X(40), by, X(40), by - 120, A, 1, "4 3");
+  s += txt(X(12), by + 14, "12°", { a: "middle", s: 9.5, c: A }) + txt(X(40), by + 14, "40°", { a: "middle", s: 9.5, c: A });
+  s += txt(X(26), by - 50, "residual area", { a: "middle", s: 9, c: Y }) + txt(X(26), by - 38, "≥ 0.075 m·rad", { a: "middle", s: 9, c: Y, b: true });
+  s += txt(X(50), by - 126, "Righting arm", { a: "middle", s: 9, c: G }) + txt(X(50), by - 76, "Heeling arm", { a: "middle", s: 9, c: R });
+  s += txt(200, 248, "Heel from grain shift ≤ 12° (or deck-edge immersion angle if less, ships built from 1 Jan 1994)", { a: "middle", s: 8.5, c: L });
+  s += txt(200, 261, "Area measured up to the smaller of: 40°, angle of flooding, angle of maximum difference", { a: "middle", s: 8.5, c: L });
+  s += txt(200, 274, "Initial GM, corrected for free surface: at least 0.30 m", { a: "middle", s: 9, c: G, b: true });
+  DIAGRAMS["grain-criteria"] = svg(400, 290, s);
+}
+
+// 31. Grain Code Part B: assumed grain surface shift angles
+{
+  let s = frame(400, 240);
+  s += txt(200, 26, "Part B: assumed grain surface after shifting", { a: "middle", b: true, s: 12 });
+  const panel = (x, title, ang, c, note) => {
+    let o = `<rect x="${x}" y="44" width="112" height="140" rx="6" fill="${c}" fill-opacity="0.08" stroke="${c}"/>`;
+    o += `<rect x="${x + 12}" y="70" width="88" height="90" fill="none" stroke="${L}" stroke-width="1.5"/>`;
+    const dy = Math.tan(ang * Math.PI / 180) * 44;
+    o += `<path d="M${x + 12},${115 + dy} L${x + 100},${115 - dy} L${x + 100},160 L${x + 12},160 Z" fill="${c}" fill-opacity="0.35" stroke="${c}"/>`;
+    o += `<path d="M${x + 12},115 L${x + 100},115" stroke="${T}" stroke-width="1" stroke-dasharray="3 3"/>`;
+    o += txt(x + 56, 60, title, { a: "middle", b: true, s: 9.5, c }) + txt(x + 56, 176, `${ang}°`, { a: "middle", b: true, s: 11, c });
+    o += txt(x + 56, 200, note, { a: "middle", s: 8.5, c: L });
+    return o;
+  };
+  s += panel(14, "Filled, trimmed", 15, G, "Ch B 2");
+  s += panel(144, "Untrimmed", 25, Y, "Ch B 3 (generally)");
+  s += panel(274, "Partly filled", 25, R, "Ch B 5 (unsecured)");
+  s += txt(200, 226, "Partly filled and unsecured: total heeling moment × 1.12 (B 1.5) · section numbers of the 1991 text", { a: "middle", s: 9, c: L });
+  DIAGRAMS["grain-shift-angles"] = svg(400, 240, s);
+}
