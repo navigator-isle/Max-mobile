@@ -2226,3 +2226,30 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 234, "IIP's own season is longer (2022: 11 Jan – 7 Sep)", { a: "middle", s: 8.5, c: L });
   DIAGRAMS["meteo-ice"] = svg(400, 260, s);
 }
+
+// 151-153. IHR 2005
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Ship arrives from abroad", { a: "middle", b: true, s: 12 });
+  const st = [["1", "Before arrival", "Master reports ill persons or health risk (Art 28)", Y], ["2", "On arrival", "Maritime Declaration of Health to port authority (Art 37)", A], ["3", "Inspection", "Ship inspected if a risk is found. Certificate checked", "#ff9f4a"], ["4", "Result", "No risk: Exemption. Risk: control measures, Control Cert.", G], ["5", "Free pratique", "Cannot be refused for public health reasons (Art 28)", "#9be564"]];
+  st.forEach((r, i) => { const y = 40 + i * 50; s += `<rect x="14" y="${y}" width="372" height="42" rx="8" fill="#1d2040" stroke="${r[3]}"/>` + txt(30, y + 27, r[0], { b: true, s: 15, c: r[3] }) + txt(52, y + 17, r[1], { b: true, s: 10 }) + txt(52, y + 33, r[2].length > 62 ? r[2].slice(0, 60) + "…" : r[2], { s: 8, c: L }); });
+  DIAGRAMS["ihr-arrival"] = svg(400, 300, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Maritime Declaration of Health", { a: "middle", b: true, s: 12 });
+  const q = ["Death on board (not accident)", "Suspected infectious disease", "More sick passengers than expected", "Anyone ill now", "Doctor consulted", "Condition that may spread infection", "Sanitary measure applied", "Stowaways", "Sick animal or pet"];
+  q.forEach((t, i) => { const c = i % 2, r = Math.floor(i / 2); const x = 14 + c * 190, y = 40 + r * 38; s += `<rect x="${x}" y="${y}" width="182" height="30" rx="6" fill="#1d2040" stroke="#2a2d4a"/>` + txt(x + 10, y + 19, (i + 1) + ". " + t, { s: 8 }); });
+  s += txt(200, 238, "Plus ports of call: voyage or last 30 days, whichever is shorter", { a: "middle", s: 8.5, c: Y });
+  DIAGRAMS["ihr-mdh"] = svg(400, 250, s);
+}
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "Ship Sanitation Certificates (6 months)", { a: "middle", b: true, s: 12 });
+  s += `<rect x="14" y="44" width="178" height="110" rx="8" fill="#1d2040" stroke="${G}"/>` + txt(103, 66, "Exemption Certificate", { a: "middle", b: true, s: 10, c: G }) + txt(103, 92, "Inspection finds no", { a: "middle", s: 9 }) + txt(103, 106, "infection or contamination", { a: "middle", s: 9 }) + txt(103, 130, "Issued at authorized port", { a: "middle", s: 8.5, c: L });
+  s += `<rect x="208" y="44" width="178" height="110" rx="8" fill="#1d2040" stroke="${Y}"/>` + txt(297, 66, "Control Certificate", { a: "middle", b: true, s: 10, c: Y }) + txt(297, 92, "Risk found: control", { a: "middle", s: 9 }) + txt(297, 106, "measures completed first", { a: "middle", s: 9 }) + txt(297, 130, "Findings and measures listed", { a: "middle", s: 8.5, c: L });
+  s += txt(200, 180, "Extension: 1 month if the inspection or control", { a: "middle", s: 9, c: L });
+  s += txt(200, 195, "cannot be done at the port (Art 39)", { a: "middle", s: 9, c: L });
+  s += txt(200, 218, "Replaced the old Deratting Certificates", { a: "middle", s: 8.5, c: Y });
+  DIAGRAMS["ihr-certs"] = svg(400, 230, s);
+}
