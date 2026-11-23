@@ -631,3 +631,42 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 276, "(500 GT and above) up to 8 h, at operational speed from a place of refuge", { a: "middle", s: 9, c: L });
   DIAGRAMS["hsc-craft-types"] = svg(400, 290, s);
 }
+
+// 34. IBC Code Chapter 2: ship types and cargo tank location (2.6.1)
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "IBC Code: ship types and cargo tank location", { a: "middle", b: true, s: 12 });
+  const panel = (x, title, c, side, bot, note) => {
+    let o = `<rect x="${x}" y="40" width="120" height="180" rx="6" fill="${c}" fill-opacity="0.08" stroke="${c}"/>`;
+    o += txt(x + 60, 58, title, { a: "middle", b: true, s: 11, c });
+    // hull section
+    o += `<path d="M${x + 14},76 L${x + 14},170 Q${x + 14},186 ${x + 28},186 L${x + 92},186 Q${x + 106},186 ${x + 106},170 L${x + 106},76 Z" fill="#2a2d4a" stroke="${T}" stroke-width="1.4"/>`;
+    const sx = side ? 26 : 0, by = bot ? 22 : 0;
+    o += `<rect x="${x + 14 + sx}" y="82" width="${92 - 2 * sx}" height="${100 - by - 6}" fill="${c}" fill-opacity="0.35" stroke="${c}"/>`;
+    o += txt(x + 60, 126, "cargo", { a: "middle", s: 9.5 }) + txt(x + 60, 138, "tanks", { a: "middle", s: 9.5 });
+    o += txt(x + 60, 210, note, { a: "middle", s: 8.5, c: L });
+    return o;
+  };
+  s += panel(14, "Type 1", R, true, true, "side and bottom setback");
+  s += panel(140, "Type 2", Y, false, true, "bottom setback only");
+  s += panel(266, "Type 3", G, false, false, "no location requirement");
+  s += txt(200, 240, "Type 1: most severe damage standard; Type 2 and 3: severe hazards", { a: "middle", s: 9, c: L });
+  s += txt(200, 254, "Setbacks equal the damage extents: side B/5 or 11.5 m (less), bottom B/15 or 6 m (less)", { a: "middle", s: 9, c: L });
+  s += txt(200, 268, "Types 1 and 2 also: at least 760 mm from the shell plating (2.6.1)", { a: "middle", s: 9, c: L, b: true });
+  DIAGRAMS["ibc-ship-types"] = svg(400, 290, s);
+}
+
+// 35. IBC Code: key dates
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "IBC Code: key dates", { a: "middle", b: true, s: 12 });
+  const rows = [["17 Jun 1983", "MSC.4(48) adopts the Code (mandatory: MSC.6(48))", A], ["Dec 1985", "MEPC.19(22) extends it to pollution aspects", T], ["1 Jul 1986", "Applies to ships built on or after this date", G], ["10 Dec 2004", "MSC.176(79): 2004 amendments; in force 1 Jan 2007", Y], ["1 Jan 2021", "MEPC.318(74) / MSC.460(101): product chapters 17 and 18", Y], ["1 Jul 2024", "MEPC.345(78) / MSC.526(106): paragraph 2.9.2.1", R]];
+  rows.forEach(([d, t, c], i) => {
+    const y = 46 + i * 29;
+    s += `<circle cx="34" cy="${y + 10}" r="5" fill="${c}"/>`;
+    if (i < 5) s += line(34, y + 15, 34, y + 34, L, 1);
+    s += txt(48, y + 14, d, { b: true, s: 10, c });
+    s += txt(128, y + 14, t, { s: 9 });
+  });
+  DIAGRAMS["ibc-dates"] = svg(400, 230, s);
+}
