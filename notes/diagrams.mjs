@@ -2307,3 +2307,15 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 250, "States are liable for unlawful enforcement (Art 232)", { a: "middle", s: 8.5, c: L });
   DIAGRAMS["unclos-pollution"] = svg(400, 262, s);
 }
+
+// 159. Cargo liability regimes
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "Where the carrier is responsible", { a: "middle", b: true, s: 12 });
+  const legs = [["Door", 14, 52], ["Port", 66, 52], ["Ship", 118, 164], ["Port", 282, 52], ["Door", 334, 52]];
+  legs.forEach(l => { const c = l[0] === "Ship" ? A : "#3a3f66"; s += `<rect x="${l[1]}" y="48" width="${l[2]}" height="30" rx="4" fill="${c}" fill-opacity=".5" stroke="#2a2d4a"/>` + txt(l[1] + l[2] / 2, 68, l[0], { a: "middle", s: 8.5 }); });
+  s += txt(200, 96, "Shipper → loading → voyage → discharge → consignee", { a: "middle", s: 8, c: L });
+  const r = [["Hague-Visby", "Tackle to tackle: loading to discharge", 118, 164, Y, 116], ["Hamburg", "Port to port: in charge at loading until discharge", 66, 268, G, 156], ["Rotterdam", "Door to door, if the contract has a sea leg", 14, 372, "#c792ea", 196]];
+  r.forEach(x => { s += `<rect x="${x[2]}" y="${x[5]}" width="${x[3]}" height="12" rx="3" fill="${x[4]}" fill-opacity=".85"/>` + txt(14, x[5] - 4, x[0], { b: true, s: 9, c: x[4] }) + txt(386, x[5] - 4, x[1], { a: "end", s: 7.5, c: L }); });
+  DIAGRAMS["cargo-regimes"] = svg(400, 272, s);
+}
