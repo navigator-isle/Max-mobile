@@ -290,3 +290,38 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 170, "and never later than 6 years after the incident (first occurrence, for a series)", { a: "middle", s: 9, c: L });
   DIAGRAMS["bunkers-timebar"] = svg(400, 190, s);
 }
+
+// 16. FAL 1965: Annex structure (as replaced by FAL.14(46), in force 1 Jan 2024)
+{
+  let s = frame(400, 330);
+  s += txt(200, 26, "FAL Annex: seven sections, three appendices", { a: "middle", b: true, s: 12 });
+  s += txt(200, 41, "(text replaced by FAL.14(46), in force 1 Jan 2024)", { a: "middle", s: 9.5, c: L });
+  const secs = [["1", "Definitions and general provisions"], ["2", "Arrival, stay and departure of the ship"], ["3", "Arrival and departure of persons"], ["4", "Stowaways"], ["5", "Arrival, stay and departure of cargo and other articles"], ["6", "Public health and quarantine"], ["7", "Miscellaneous provisions"]];
+  secs.forEach(([n, t], i) => {
+    const y = 54 + i * 28;
+    s += `<rect x="20" y="${y}" width="360" height="23" rx="4" fill="${A}" fill-opacity="0.14" stroke="${A}" stroke-opacity="0.6"/>`;
+    s += txt(34, y + 16, n, { b: true, c: A, s: 11 }) + txt(56, y + 16, t, { s: 10 });
+  });
+  const aps = [["1", "Maximum information for the declarations (Std 2.1bis)"], ["2", "Declarations allowed on paper in exceptional cases (Std 2.11)"], ["3", "Stowaway details (RP 4.6.2)"]];
+  aps.forEach(([n, t], i) => {
+    const y = 258 + i * 22;
+    s += `<rect x="20" y="${y}" width="360" height="18" rx="4" fill="${Y}" fill-opacity="0.12" stroke="${Y}" stroke-opacity="0.6"/>`;
+    s += txt(34, y + 13, `App ${n}`, { b: true, c: Y, s: 9.5 }) + txt(80, y + 13, t, { s: 9.5 });
+  });
+  DIAGRAMS["fal-annex-map"] = svg(400, 330, s);
+}
+
+// 17. FAL 1965: Annex amendments timeline (adopted / in force)
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "FAL: adoption and entry into force", { a: "middle", b: true, s: 12 });
+  const rows = [["Convention", "9 Apr 1965", "5 Mar 1967"], ["2002 amendments", "10 Jan 2002", "1 May 2003"], ["2005 amendments", "7 Jul 2005", "1 Nov 2006"], ["2009 amendments", "16 Jan 2009", "15 May 2010"], ["2016 amendments", "8 Apr 2016", "1 Jan 2018"], ["2022 amendments", "13 May 2022", "1 Jan 2024"]];
+  s += txt(20, 52, "", {}) + txt(170, 52, "Adopted", { b: true, c: A, s: 10, a: "middle" }) + txt(290, 52, "In force", { b: true, c: G, s: 10, a: "middle" });
+  rows.forEach(([n, a, f], i) => {
+    const y = 60 + i * 26;
+    s += `<rect x="16" y="${y}" width="368" height="22" rx="4" fill="#1d2036" fill-opacity="${i % 2 ? 0.4 : 0.8}"/>`;
+    s += txt(26, y + 15, n, { s: 10 }) + txt(170, y + 15, a, { a: "middle", s: 10, c: A }) + txt(290, y + 15, f, { a: "middle", s: 10, c: G });
+  });
+  s += txt(200, 234, "2022: whole Annex replaced · single window mandatory from 1 Jan 2024", { a: "middle", s: 9.5, c: Y });
+  DIAGRAMS["fal-dates"] = svg(400, 250, s);
+}
