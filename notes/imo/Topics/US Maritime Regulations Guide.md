@@ -10,7 +10,7 @@ tags: [usa, opa-90, vgp, vida, eca, sewage, ballast-water, uscg, cfr, notice-of-
 | Oil spill liability | [[OPA 90]], 33 U.S.C. 2701 ff., with **33 CFR 138, 153 and 155** | USCG |
 | Other discharges (graywater, bilge, scrubbers and more) | [[VGP and VIDA]] | EPA, USCG |
 | Air emissions | [[US Emission Control Areas]] | EPA, USCG |
-| Sewage | Clean Water Act **section 312**. EPA standards in **40 CFR 140**. USCG design rules in **33 CFR 159** | USCG |
+| Sewage | [[US Sewage Regulations]] | USCG |
 | Ballast water | **33 CFR 151 subpart D** and **46 CFR 162** (type approval) | USCG |
 | Arrival and port state control | **33 CFR 160 subpart C** (Notice of Arrival). USCG port state control exams | USCG |
 
@@ -34,16 +34,7 @@ The 2013 permit, the replacement law and the 20 discharge standards are in [[VGP
 Sulphur, NOx, fuel changeover, FONAR and enforcement are in [[US Emission Control Areas]].
 
 ## Sewage
-Under Clean Water Act section 312, a vessel with an **installed toilet** on US navigable waters, including the 3 nm territorial sea, uses a **USCG-certified marine sanitation device (MSD)**. A portable toilet is not covered. EPA sets the performance standard. The USCG sets design, certification and installation.
-
-| Type | What it is | Standard |
-|---|---|---|
-| **Type I** | Flow-through, usually macerate and disinfect. **Vessels 65 ft (about 20 m) or less only** | Fecal coliform **not above 1,000 per 100 mL** and **no visible floating solids** |
-| **Type II** | Flow-through, often biological treatment. Any length | Fecal coliform **not above 200 per 100 mL** and suspended solids **not above 150 mg/L** |
-| **Type III** | Holding tank. Disposal ashore, or beyond 3 nm | No numeric standard. Must **prevent any overboard discharge** of sewage |
-
-- **Discharge is banned even when treated** in a designated **no-discharge zone**, in freshwater lakes or impoundments with an entrance too shallow for vessels with installed toilets, and in rivers that do not carry interstate traffic of such vessels
-- A State cannot set its own MSD design or use rules (houseboats excepted), but can ask EPA for a **no-discharge zone**
+MSD types and standards, no-discharge zones, foreign ships and Alaska cruise ships are in [[US Sewage Regulations]].
 
 ## Ballast water (33 CFR 151 subpart D)
 One of **five** methods must be used by a vessel with ballast tanks operating in US waters (151.2025):
@@ -119,15 +110,12 @@ One of **five** methods must be used by a vessel with ballast tanks operating in
 - **Penalties** under the Clean Water Act, APPS and the ballast rules
 - The ballast water **reporting form**, the time before arrival, the **record-keeping period**, and exemptions (151.2060 to 151.2070). Their text could not be retrieved
 - **Small vessel** and Great Lakes ballast rules, and state rules such as **California** and **Washington**
-- **MARPOL Annex IV** inside the US (cruise ship rules in Alaska) and the **Annex V** garbage rules
 - The USCG **targeting matrix**, **QUALSHIP 21**, flag lists and the exam booklet
 - **Section 301 port fees** on certain ships, which were suspended to 9 Nov 2026 and may have changed
 - **Jones Act**, **TWIC**, **CBP and customs** rules, and **MTSA** security
 - **46 CFR** manning, inspection and licensing rules
 
 ## Sources (checked 23 Nov 2026)
-- 33 CFR 159.3 and 159.53 (MSD types): https://www.law.cornell.edu/cfr/text/33/159.3 and https://www.law.cornell.edu/cfr/text/33/159.53
-- EPA, Marine sanitation devices: https://www.epa.gov/node/113769
 - 33 CFR 151.2025, 151.2030, 151.2035 (ballast): https://www.law.cornell.edu/cfr/text/33/151.2025
 - 33 CFR 151 subpart D contents: https://www.law.cornell.edu/cfr/text/33/part-151/subpart-D
 - 33 CFR 160 subpart C (NOA), 160.212: https://chanrobles.com/usa/uslaws/cfr/title33/33-2.0.1.6.28.3.php and https://www.law.cornell.edu/cfr/text/33/160.212
