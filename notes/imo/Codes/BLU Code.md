@@ -12,7 +12,6 @@ tags: [blu, bulk-carrier, loading, unloading, terminal, solas-vi, imo, code]
 | Structure | Introduction · 6 Sections · 5 Appendices |
 | Aim | Prevent loss of, or damage to, ships carrying solid bulk cargoes through improper loading and unloading |
 | Cargo | Solid bulk cargoes, **excluding grain** |
-| Amendments | MSC.238(82) (2006) · MSC.304(87) (2010) |
 | Linked to | SOLAS Chapter VI, regulation 7 |
 | Used with | IMSBC Code (cargo), BLU Manual (for terminals) |
 

@@ -16,7 +16,7 @@ tags: [ctu, cargo-securing, container, packing, vgm, imo, ilo, unece, code]
 
 ![[diagram:ctu-structure|Layout of the CTU Code]]
 
-> **Key Point:** The CTU Code is guidance, not law. It does not replace or conflict with national or international regulations (1.1.3), but flag States, ports and companies use it as the standard of good practice for packing containers and other cargo transport units.
+> **Key Point:** The CTU Code is guidance, not law (see 1.1.3 below), but flag States, ports and companies use it as the standard of good practice for packing containers and other cargo transport units.
 
 ## Purpose and scope (Chapter 1)
 - **1.1.1:** advice on safe packing of CTUs for people who pack and secure cargo and for those who train them, with the theory and practical measures

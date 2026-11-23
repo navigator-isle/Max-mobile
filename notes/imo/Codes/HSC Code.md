@@ -21,7 +21,6 @@ tags: [hsc, high-speed-craft, fast-ferry, solas-x, imo, code]
 
 - Complete safety standards for **high-speed craft** on international voyages: design, equipment, operation and crew
 - Requires the Code to be applied in its entirety, a quality-management system, operation only by persons qualified for the craft type, operating limits, proximity to a place of refuge, and no enclosed sleeping berths for passengers (1.2)
-- Introduced with SOLAS chapter X on 1 Jan 1996
 - The 1994 Code introduced "assisted craft" (basis for Category A) and "unassisted craft" (basis for cargo craft and Category B)
 
 ## What counts as a high-speed craft (1.4.30)

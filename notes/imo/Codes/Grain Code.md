@@ -12,7 +12,6 @@ tags: [grain, bulk, stability, solas-vi, imo, code]
 | Status | Mandatory under SOLAS chapter VI, part C |
 | Structure | Part A (specific requirements) · Part B (calculation of assumed heeling moments and general assumptions) |
 | Applies to | All ships regardless of size, including under 500 GT, carrying grain in bulk |
-| Key documents | Document of Authorization · grain loading manual |
 | Stability criteria | Heel ≤ 12° · residual area ≥ 0.075 m·rad · GM ≥ 0.30 m |
 | Latest amendment | MSC.552(108), in force 1 Jan 2026 |
 

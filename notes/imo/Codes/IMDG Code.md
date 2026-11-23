@@ -19,7 +19,6 @@ tags: [imdg, dangerous-goods, packaged, solas-vii, marpol-iii, imo, code]
 
 - Packing, container traffic and stowage, including keeping incompatible substances apart
 - Detailed requirements for each individual substance, material or article
-- Mandatory under SOLAS VII and MARPOL Annex III, which the Code extends
 - Some parts remain **recommendatory**: training paragraphs 1.3.1.4 to 1.3.1.7, security provisions in chapter 1.4 (except 1.4.1.1), and several sections including 7.8 and appendix B
 
 ## History and amendments
@@ -27,7 +26,7 @@ tags: [imdg, dangerous-goods, packaged, solas-vii, marpol-iii, imo, code]
 ![[diagram:imdg-cycle|The two-year amendment cycle]]
 
 - The IMDG Code was recommended by a 1960 SOLAS conference; an IMO working group began drafting in 1961 and the 4th Assembly adopted it in 1965.
-- MSC.122(75) adopted the Code in mandatory form on 24 May 2002; it supersedes the earlier version adopted by resolution A.716(17). Future amendments follow SOLAS article VIII.
+- The mandatory Code supersedes the earlier version adopted by resolution A.716(17). Future amendments follow SOLAS article VIII.
 - Amendments come from Member Government proposals and from updates to the UN Recommendations on the Transport of Dangerous Goods. Amendments that do not change the Code's principles can be adopted by MSC alone.
 
 | Amendment | Resolution | Adopted | Voluntary from | Mandatory from |

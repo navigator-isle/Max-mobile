@@ -11,14 +11,11 @@ tags: [fss, fire-safety, solas-ii-2, imo, code]
 | In force | 1 Jul 2002, with the revised SOLAS chapter II-2 |
 | Status | Mandatory under revised SOLAS chapter II-2 |
 | Structure | 17 chapters (1–15 original; 16 added 2012, 17 added 2020) |
-| Latest amendment | MSC.555(108), in force 1 Jan 2026 (chapters 7 and 9) |
 | Role | SOLAS II-2 says which systems a ship needs; the FSS Code says how they are built and perform |
 
 ## What is the FSS Code
 
-- Gives **international standards for the fire safety systems** required by SOLAS chapter II-2
-- The technical system requirements are in the Code, while the statutory requirements stay in the Convention
-- Some original technical provisions were moved from the Convention into the Code
+- Gives the technical standards for the fire safety systems required by SOLAS chapter II-2. Some original technical provisions were moved from the Convention into the Code
 - Chapter 1 also covers general provisions: applicability, definitions, equivalents and alternative designs, and a ban on toxic extinguishing media
 
 ## History

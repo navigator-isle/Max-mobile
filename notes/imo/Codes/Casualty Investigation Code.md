@@ -25,7 +25,6 @@ tags: [casualty-investigation, ci-code, accident, solas-xi-1, imo, code]
 
 ## History
 
-- **MSC.255(84)** adopted 16 May 2008; entry into force tied to the SOLAS XI-1 amendments, 1 Jan 2010
 - **A.1075(28)** provides guidelines to help investigators apply the Code, and revoked resolutions A.849(20) and A.884(21)
 - IMO's GISIS Maritime Casualties and Incidents module stores casualty data and uploaded investigation reports (some restricted to IMO Members)
 

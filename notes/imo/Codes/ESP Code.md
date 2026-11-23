@@ -11,8 +11,7 @@ tags: [esp, survey, bulk-carrier, oil-tanker, solas-xi-1, imo, code]
 | In force | 1 Jan 2014 (takes effect with the SOLAS chapter XI-1 amendments) |
 | Made mandatory by | SOLAS regulation XI-1/2 |
 | Structure | Annex A (bulk carriers) · Annex B (oil tankers), each in Parts A and B |
-| Consolidated text | Res. MSC.461(101), "completely revised", in force 1 Jan 2021 |
-| Latest amendments | MSC.553(108), in force 1 Jan 2026 (thickness measurement firms) · MSC.584(111), adopted at MSC 111 (May 2026), expected in force 1 Jan 2028 (remote inspection techniques) |
+| Amendments | See the History table: consolidated text MSC.461(101); latest MSC.553(108) and MSC.584(111) |
 | Bulk carrier survey cycle | Renewal every 5 years · annual · intermediate |
 
 ## What is the ESP Code

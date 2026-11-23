@@ -10,7 +10,7 @@ tags: [ibc, chemical-tanker, nls, marpol-ii, solas-vii, imo, code]
 | Adopted | 17 Jun 1983, resolution MSC.4(48) |
 | Mandatory under | SOLAS chapter VII (MSC.6(48)) and MARPOL Annex II (MEPC.19(22), Dec 1985) |
 | Applies to | Chemical tankers of any size, keels laid on or after **1 Jul 1986** |
-| Older ships | BCH Code (MARPOL Annex II regulation 11) |
+| Older ships | Chemical tankers built before 1 Jul 1986 follow the predecessor **BCH Code** (MARPOL Annex II regulation 11) |
 | Certificate | International Certificate of Fitness for the Carriage of Dangerous Chemicals in Bulk, up to 5 years |
 | Structure | 21 chapters and an appendix (certificate model) |
 | Current text | 2020 edition, with amendments in force 1 Jan 2021 and 1 Jul 2024 |
@@ -25,7 +25,6 @@ tags: [ibc, chemical-tanker, nls, marpol-ii, solas-vii, imo, code]
 
 ![[diagram:ibc-dates|From adoption in 1983 to the 2024 amendment]]
 
-- **BCH Code:** the predecessor. Chemical tankers built before 1 Jul 1986 must comply with it under MARPOL Annex II regulation 11.
 - **2004 amendments (MSC.176(79)):** adopted 10 Dec 2004, deemed accepted 1 Jul 2006, in force **1 Jan 2007**. They go with the revised MARPOL Annex II (in force 1 Jan 2007), which brought a four-category system for noxious liquid substances (X, Y, Z, OS).
 - **MEPC.318(74) and MSC.460(101):** in force 1 Jan 2021; amend chapters 1, 15, 16, 17, 18, 19 and 21, with a complete revision of the product information in chapters 17 and 18.
 - **MEPC.302(72) and MSC.440(99):** new model form of the Certificate of Fitness, in force 1 Jan 2020.
