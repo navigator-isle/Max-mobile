@@ -2588,3 +2588,24 @@ const OR = "#ff9f43";
   s += panel(330, 96, 130, "Unstable", R, "G above M, GM −");
   DIAGRAMS["stab-gm"] = svg(400, 250, s);
 }
+
+// Cargo stowage: transverse force grows with stow height and distance from centre of motion (CSS Code 1.3)
+{
+  let s = frame(400, 232);
+  s += txt(200, 24, "Where stowage forces are largest (schematic)", { a: "middle", b: true, s: 12 });
+  // cross-section: hull and stack
+  s += `<path d="M40,150 L52,196 L148,196 L160,150 Z" fill="#2a2d4a" stroke="${T}" stroke-width="1.3"/>`;
+  s += `<rect x="62" y="78" width="76" height="72" fill="#3a3c52" stroke="${L}"/>`;
+  s += line(40, 196, 160, 196, A, 1, "3 3") + txt(100, 214, "Cross-section", { a: "middle", c: L, s: 10 });
+  s += `<circle cx="100" cy="176" r="3.5" fill="${Y}"/>` + txt(108, 180, "centre of motion", { c: Y, s: 9 });
+  for (const [y, len] of [[140, 22], [118, 36], [96, 50]]) s += arrow(138, y, 138 + len, y, R);
+  s += txt(110, 52, "bigger force", { a: "middle", c: R, s: 10 }) + txt(110, 65, "with height", { a: "middle", c: R, s: 10 });
+  // side profile with dots at bow, stern, top
+  s += `<path d="M232,150 L246,190 L384,190 L372,150 Z" fill="#2a2d4a" stroke="${T}" stroke-width="1.3"/>`;
+  s += `<rect x="256" y="104" width="104" height="46" fill="#3a3c52" stroke="${L}"/>`;
+  s += `<circle cx="258" cy="104" r="5" fill="${R}"/><circle cx="358" cy="104" r="5" fill="${R}"/><circle cx="308" cy="170" r="3.5" fill="${Y}"/>`;
+  s += txt(258, 94, "fwd", { a: "middle", c: R, s: 10 }) + txt(358, 94, "aft", { a: "middle", c: R, s: 10 });
+  s += txt(308, 214, "Side view", { a: "middle", c: L, s: 10 });
+  s += txt(308, 70, "worst: highest, furthest", { a: "middle", c: R, s: 10 }) + txt(308, 83, "forward and aft", { a: "middle", c: R, s: 10 });
+  DIAGRAMS["cargo-forces"] = svg(400, 232, s);
+}
