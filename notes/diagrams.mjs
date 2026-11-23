@@ -1119,3 +1119,41 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 156, "Intermediate (one only): between 2nd and 3rd anniversary", { a: "middle", s: 9.5 });
   DIAGRAMS["isps-cycle"] = svg(400, 190, s);
 }
+
+// 61. LSA structure
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "LSA Code: 7 chapters", { a: "middle", b: true, s: 12 });
+  const ch = [["I", "General", L], ["II", "Personal LSA: lifebuoy, jacket, suit", A], ["III", "Visual signals", Y], ["IV", "Survival craft: rafts, lifeboats", G], ["V", "Rescue boats", G], ["VI", "Launching, embarkation", R], ["VII", "Line-throwing, alarms", L]];
+  ch.forEach(([n, t, c], i) => {
+    const y = 42 + i * 34;
+    s += `<rect x="20" y="${y}" width="360" height="28" rx="5" fill="#1d2040" stroke="${c}"/><rect x="20" y="${y}" width="40" height="28" rx="5" fill="${c}" fill-opacity="0.35"/>` + txt(40, y + 19, n, { a: "middle", b: true, s: 11 }) + txt(70, y + 19, t, { s: 10.5 });
+  });
+  DIAGRAMS["lsa-structure"] = svg(400, 290, s);
+}
+
+// 62. LSA dates
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Entry into force", { a: "middle", b: true, s: 12 });
+  const rows = [["1 Jul 1998", "MSC.48(66): the Code", A], ["1 Jul 2008", "MSC.218(82)", Y], ["1 Jul 2010", "MSC.207(81), MSC.272(85)", Y], ["1 Jan 2012", "MSC.293(87)", Y], ["1 Jan 2013", "MSC.320(89)", Y], ["1 Jan 2016", "MSC.368(93)", Y], ["1 Jan 2020", "MSC.425(98)", Y], ["1 Jan 2024", "MSC.459(101), MSC.485(103)", Y], ["1 Jan 2026", "MSC.535(107), MSC.554(108)", G], ["1 Jan 2029", "Enclosed lifeboat ventilation fitted", R]];
+  s += line(100, 44, 100, 282, L, 1.5);
+  rows.forEach(([d, t, c], i) => {
+    const y = 54 + i * 24;
+    s += `<circle cx="100" cy="${y}" r="4.5" fill="${c}"/>` + txt(92, y + 4, d, { a: "end", s: 9.5, c, b: true }) + txt(112, y + 4, t, { s: 9.5 });
+  });
+  DIAGRAMS["lsa-dates"] = svg(400, 300, s);
+}
+
+// 63. LSA craft numbers
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Survival craft key figures", { a: "middle", b: true, s: 12 });
+  const t = [["18 m", "Liferaft drop test"], ["6", "Liferaft min persons"], ["3 / 10 min", "Boarding: cargo / passenger"], ["-15 °C", "Lifeboat engine, 2 min"], ["6 kn · 24 h", "Lifeboat speed, fuel"], ["8 min", "Fire-protected, oil fire"]];
+  t.forEach(([a, b], i) => {
+    const c = i % 2, r = Math.floor(i / 2), x = 20 + c * 186, y = 44 + r * 62;
+    s += `<rect x="${x}" y="${y}" width="174" height="52" rx="7" fill="#1d2040" stroke="${[A, A, G, G, G, R][i]}"/>` + txt(x + 87, y + 24, a, { a: "middle", b: true, s: 15 }) + txt(x + 87, y + 42, b, { a: "middle", s: 9.5, c: L });
+  });
+  s += txt(200, 240, "Lifeboats: 4.4 · liferafts: 4.1", { a: "middle", s: 9, c: L });
+  DIAGRAMS["lsa-craft"] = svg(400, 250, s);
+}
