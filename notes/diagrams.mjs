@@ -1769,3 +1769,94 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 322, "A selection. See the full table in the note", { a: "middle", s: 9, c: L });
   DIAGRAMS["ics-letters"] = svg(400, 334, s);
 }
+
+// 111-117. SOLAS 1974
+{
+  let s = frame(400, 330);
+  s += txt(200, 26, "SOLAS chapters", { a: "middle", b: true, s: 12 });
+  const ch = [
+    ["I", "General, surveys", A], ["II-1", "Construction", A], ["II-2", "Fire", R], ["III", "Life-saving", R],
+    ["IV", "GMDSS", G], ["V", "Navigation", G], ["VI", "Cargoes", Y], ["VII", "Dangerous goods", Y],
+    ["VIII", "Nuclear ships", Y], ["IX", "ISM", L], ["X", "High-speed craft", "#c792ea"], ["XI-1", "Maritime safety", L],
+    ["XI-2", "Security", L], ["XII", "Bulk carriers", "#c792ea"], ["XIII", "Verification", L], ["XIV", "Polar waters", "#c792ea"],
+    ["XV", "Industrial pers.", "#c792ea"],
+  ];
+  ch.forEach((c, i) => {
+    const col = i % 3, row = Math.floor(i / 3), x = 14 + col * 128, y = 40 + row * 46;
+    s += `<rect x="${x}" y="${y}" width="120" height="40" rx="6" fill="#1d2040" stroke="${c[2]}"/>` + txt(x + 8, y + 17, "Ch " + c[0], { b: true, s: 10.5, c: c[2] }) + txt(x + 8, y + 32, c[1], { s: 9, c: L });
+  });
+  s += txt(200, 320, "Blue ship · red fire and rescue · green navigation · yellow cargo · purple special ships", { a: "middle", s: 8, c: L });
+  DIAGRAMS["solas-chapters"] = svg(400, 334, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "5-year certificate cycle (cargo ship)", { a: "middle", b: true, s: 12 });
+  s += line(30, 100, 370, 100, L);
+  const pts = [[30, "0", "Initial", G], [98, "1", "Annual", A], [166, "2", "Interm.", Y], [234, "3", "Interm.", Y], [302, "4", "Annual", A], [370, "5", "Renewal", R]];
+  pts.forEach(p => { s += `<circle cx="${p[0]}" cy="100" r="6" fill="${p[3]}"/>` + txt(p[0], 84, "Yr " + p[1], { a: "middle", s: 9, c: L }) + txt(p[0], 124, p[2], { a: "middle", s: 9, c: p[3] }); });
+  s += txt(200, 156, "Annual, intermediate, periodical: window of 3 months before to 3 months after", { a: "middle", s: 9, c: L });
+  s += txt(200, 174, "Intermediate and periodical: at the 2nd or 3rd anniversary", { a: "middle", s: 9, c: L });
+  s += txt(200, 192, "Renewal: can be completed up to 3 months before expiry", { a: "middle", s: 9, c: Y });
+  s += txt(200, 214, "Outside-of-bottom: 2 in 5 years, 36 months apart at most", { a: "middle", s: 9, c: Y });
+  s += txt(200, 236, "Certificate max: cargo 5 years · passenger 12 months", { a: "middle", s: 9, c: G });
+  DIAGRAMS["solas-surveys"] = svg(400, 250, s);
+}
+{
+  let s = frame(400, 286);
+  s += txt(200, 26, "Drill intervals (SOLAS III/19)", { a: "middle", b: true, s: 12 });
+  const rows = [["Abandon ship and fire (crew)", 1, G], ["Enclosed space entry", 2, A], ["Lifeboat launch", 3, Y], ["Rescue boat launch (at least)", 3, Y], ["Emergency steering (V/26)", 3, Y], ["Davit-launched liferaft (at most)", 4, "#ff9f4a"], ["Free-fall lifeboat", 6, R]];
+  rows.forEach((r, i) => {
+    const y = 44 + i * 30;
+    s += txt(14, y + 15, r[0], { s: 9.5 }) + `<rect x="190" y="${y}" width="${r[1] * 22}" height="20" rx="4" fill="${r[2]}"/>` + txt(190 + r[1] * 22 + 6, y + 15, r[1] + (r[1] === 1 ? " month" : " months"), { s: 9.5, b: true });
+  });
+  s += txt(200, 274, "Passenger ships: abandon ship and fire drills also weekly", { a: "middle", s: 9, c: L });
+  DIAGRAMS["solas-drills"] = svg(400, 288, s);
+}
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "GMDSS sea areas (from 1 Jan 2024)", { a: "middle", b: true, s: 12 });
+  const cx = 200, cy = 250;
+  const arc = (r, c) => `<path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy} Z" fill="${c}" fill-opacity="0.15" stroke="${c}"/>`;
+  s += arc(180, R) + arc(130, Y) + arc(85, A) + arc(40, G);
+  s += `<rect x="20" y="${cy}" width="360" height="26" fill="#2a2d4a"/>` + txt(200, cy + 17, "Coast", { a: "middle", s: 9, c: L });
+  s += txt(200, 238, "A1", { a: "middle", b: true, s: 11, c: G }) + txt(200, 188, "A2", { a: "middle", b: true, s: 11, c: A }) + txt(200, 142, "A3", { a: "middle", b: true, s: 11, c: Y }) + txt(200, 95, "A4", { a: "middle", b: true, s: 11, c: R });
+  s += txt(30, 60, "A1  VHF coast station", { s: 9, c: G }) + txt(30, 74, "A2  MF coast station", { s: 9, c: A });
+  s += txt(370, 60, "A3  recognized mobile satellite", { a: "end", s: 9, c: Y }) + txt(370, 74, "A4  outside A1, A2, A3", { a: "end", s: 9, c: R });
+  DIAGRAMS["solas-gmdss"] = svg(400, 290, s);
+}
+{
+  let s = frame(400, 320);
+  s += txt(200, 26, "Navigation equipment by tonnage", { a: "middle", b: true, s: 12 });
+  const rows = [["All ships", "Compass, charts, GNSS", G], ["150 GT+", "Spare compass, lamp, BNWAS", G], ["300 GT+", "9 GHz radar, echo sounder, AIS", A], ["500 GT+", "Gyro, indicators, ATA", A], ["3,000 GT+", "3 GHz radar, 2nd ATA", Y], ["10,000 GT+", "ARPA (20 targets), HCS", Y], ["50,000 GT+", "ROTI, SDME over ground", R]];
+  rows.forEach((r, i) => {
+    const y = 42 + i * 38, w = 110 + i * 14;
+    s += `<rect x="20" y="${y}" width="${w}" height="30" rx="6" fill="#1d2040" stroke="${r[2]}"/>` + txt(30, y + 19, r[0], { b: true, s: 10, c: r[2] }) + txt(20 + w + 8, y + 19, r[1], { s: 9, c: L });
+  });
+  s += txt(200, 312, "Each size adds to the ones above it (see the table for exact rules)", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["solas-bridge"] = svg(400, 324, s);
+}
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "Bridge visibility (V/22)", { a: "middle", b: true, s: 12 });
+  const bx = 200, by = 230;
+  const a = 10 * Math.PI / 180, R2 = 170;
+  s += `<path d="M ${bx} ${by - 30} L ${bx - R2 * Math.sin(a)} ${by - 30 - R2 * Math.cos(a)} L ${bx + R2 * Math.sin(a)} ${by - 30 - R2 * Math.cos(a)} Z" fill="${G}" fill-opacity="0.18" stroke="${G}"/>`;
+  s += `<path d="M ${bx - 22} ${by} L ${bx - 22} ${by - 20} Q ${bx} ${by - 44} ${bx + 22} ${by - 20} L ${bx + 22} ${by} Z" fill="#1d2040" stroke="${A}"/>`;
+  s += txt(bx, by - 8, "bridge", { a: "middle", s: 8, c: L });
+  s += txt(250, 100, "Up to 2 ship lengths", { s: 9, c: G }) + txt(250, 114, "or 500 m, whichever", { s: 9, c: G }) + txt(250, 128, "is less", { s: 9, c: G });
+  s += txt(250, 160, "10° each side of", { s: 9, c: G }) + txt(250, 174, "dead ahead", { s: 9, c: G });
+  s += txt(200, 262, "Blind sectors: 10° each, 20° total · 5° each within the forward view", { a: "middle", s: 9, c: Y });
+  DIAGRAMS["solas-visibility"] = svg(400, 280, s);
+}
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "SOLAS changes of 1 Jan 2026", { a: "middle", b: true, s: 12 });
+  const t = [["MSC.532(107)", "Lifting appliances · PFOS ban · inclinometer · polar extension", A], ["MSC.520(106)", "Fuel flashpoint declaration before bunkering", Y], ["MSC.550(108)", "Lost containers · ro-ro fire safety", R]];
+  t.forEach((r, i) => {
+    const y = 42 + i * 62;
+    s += `<rect x="20" y="${y}" width="360" height="54" rx="7" fill="#1d2040" stroke="${r[2]}"/>` + txt(34, y + 22, r[0], { b: true, s: 11, c: r[2] }) + txt(34, y + 40, r[1], { s: 9, c: L });
+  });
+  s += txt(200, 246, "Later: 1 Jan 2028 pilot transfer, ro-ro fire for existing passenger ships", { a: "middle", s: 9, c: L });
+  s += txt(200, 264, "1 Jan 2029: S-100 ECDIS (new), lifeboat ventilation", { a: "middle", s: 9, c: L });
+  DIAGRAMS["solas-2026"] = svg(400, 280, s);
+}

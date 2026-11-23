@@ -15,14 +15,14 @@ w = await fresh(1);
 let env = { GEMINI_API_KEY: "k", MAX_PASSCODE: "p", MAX_SEED_NOTES: "on", MAX_MEMORY: new D1(new DatabaseSync(":memory:")) };
 let d = await sync(env);
 const imo = (d.notes || []).filter(n => String(n.id).startsWith("note-imo-"));
-ok(imo.length === 59, "59 IMO notes arrive (27 conventions, 32 codes)", imo.length);
+ok(imo.length === 59, "59 IMO notes arrive (27 conventions, 32 codes; SOLAS updates the core note)", imo.length);
 ok(imo.filter(n => n.category === "Maritime › IMO › Codes").length === 32 && imo.filter(n => n.category === "Maritime › IMO › Conventions").length === 27, "notes sit in Maritime › IMO › Codes / Conventions");
 const esp = imo.find(n => n.title === "ESP Code"), imdg = imo.find(n => n.title === "IMDG Code"), tdc = imo.find(n => n.title === "TDC Code");
 ok(esp && /MSC\.584\(111\)/.test(esp.body) && /1 Jan 2028/.test(esp.body), "ESP note has the MSC 111 remote inspection amendment");
 ok(imdg && /43-26 \(adopted MSC 111/.test(imdg.body) && tdc && tdc.tags.includes("imo"), "IMDG 43-26 and the TDC Code are there");
 ok(imo.every(n => !/\*\*|\[\[|^---/.test(n.body) && /<p><b>|<h2>/.test(n.body)), "markdown turned into Max's note format (no ** or [[ ]] left)");
 ok(/<ul><li>[^<]*<ul><li>/.test(imo.find(n => n.title === "Grain Code").body), "sub-bullets stay nested");
-ok(d.notes.some(n => n.id === "note-solas-1974") && !imo.some(n => "v" in n), "core notes still there; no version field leaks into notes");
+ok(d.notes.some(n => n.id === "note-solas-1974" && /MSC\.550\(108\)/.test(n.body)) && !imo.some(n => "v" in n), "core notes still there; no version field leaks into notes");
 const acts = (await env.MAX_MEMORY.prepare("SELECT * FROM max_activity").all().catch(() => ({ results: [] }))).results.filter(a => /IMO conventions and codes/.test(JSON.stringify(a)));
 ok(acts.length === 1, "one activity line for the whole pack, not 59", acts.length);
 // 2. Second sync: nothing duplicated.
