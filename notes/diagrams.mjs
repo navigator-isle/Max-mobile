@@ -2105,3 +2105,68 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 278, "at least every 4 hours while under way", { a: "middle", s: 9, c: Y });
   DIAGRAMS["gmdss-power"] = svg(400, 290, s);
 }
+
+// 140-145. IAMSAR
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "IAMSAR Manual: three volumes", { a: "middle", b: true, s: 12 });
+  const v = [["I", "Organization and Management", "Governments, SAR agencies", A], ["II", "Mission Co-ordination", "Rescue centres, rescue units", G], ["III", "Mobile Facilities", "Ships, aircraft: carry on board", Y]];
+  v.forEach((r, i) => { const y = 42 + i * 62; s += `<rect x="14" y="${y}" width="372" height="54" rx="8" fill="#1d2040" stroke="${r[3]}"/>` + txt(28, y + 33, "Vol " + r[0], { b: true, s: 14, c: r[3] }) + txt(100, y + 24, r[1], { b: true, s: 10.5 }) + txt(100, y + 41, r[2], { s: 9, c: L }); });
+  s += txt(200, 248, "Published by IMO and ICAO", { a: "middle", s: 9, c: L });
+  s += txt(200, 266, "Volume III: hard copy on board (SOLAS V/21)", { a: "middle", s: 9, c: Y });
+  DIAGRAMS["iamsar-volumes"] = svg(400, 280, s);
+}
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "MSC.1/Circ.1686: from 1 Jan 2026", { a: "middle", b: true, s: 12 });
+  const v = [["Vol I", "Appendix P: SAR and accident investigation MoU · Appendix Q: assisting units entering a State", A], ["Vol II", "Appendix W: night search · section 6.15: offshore wind farms · flight tracking", G], ["Vol III", "Aligned with the 2024 GMDSS changes to SOLAS IV", Y]];
+  v.forEach((r, i) => { const y = 42 + i * 62; s += `<rect x="14" y="${y}" width="372" height="54" rx="8" fill="#1d2040" stroke="${r[2]}"/>` + txt(26, y + 22, r[0], { b: true, s: 11, c: r[2] }); const w = r[1].split(" · "); w.forEach((x, j) => { s += txt(78, y + 20 + j * 13, x.length > 60 ? x.slice(0, 58) + "" : x, { s: 8.5 }); }); });
+  s += txt(200, 246, "Approved MSC 109, Dec 2024 · circular dated 27 Jan 2025", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["iamsar-2026"] = svg(400, 270, s);
+}
+{
+  let s = frame(400, 230);
+  s += txt(200, 26, "Emergency phases", { a: "middle", b: true, s: 12 });
+  const p = [["Uncertainty", "INCERFA", "Doubt about safety", Y, 14], ["Alert", "ALERFA", "Apprehension", "#ff9f4a", 140], ["Distress", "DETRESFA", "Grave and imminent danger", R, 266]];
+  p.forEach((r, i) => { s += `<rect x="${r[4]}" y="52" width="120" height="86" rx="8" fill="#1d2040" stroke="${r[3]}"/>` + txt(r[4] + 60, 78, r[0], { a: "middle", b: true, s: 11, c: r[3] }) + txt(r[4] + 60, 96, r[1], { a: "middle", s: 9, c: L }) + txt(r[4] + 60, 120, r[2], { a: "middle", s: 8, c: T }); if (i < 2) s += txt(r[4] + 130, 98, "›", { a: "middle", s: 18, c: L }); });
+  s += txt(200, 172, "Escalation: from doubt, to concern, to certainty of danger", { a: "middle", s: 9 });
+  s += txt(200, 192, "The SMC is appointed as soon as an alert is received", { a: "middle", s: 9, c: Y });
+  DIAGRAMS["iamsar-phases"] = svg(400, 230, s);
+}
+{
+  let s = frame(400, 200);
+  s += txt(200, 26, "Five stages", { a: "middle", b: true, s: 12 });
+  const st = [["Awareness", A], ["Initial action", "#9be564"], ["Planning", Y], ["Operations", "#ff9f4a"], ["Conclusion", G]];
+  st.forEach((r, i) => { const x = 8 + i * 78; s += `<rect x="${x}" y="56" width="72" height="56" rx="8" fill="#1d2040" stroke="${r[1]}"/>` + txt(x + 36, 80, String(i + 1), { a: "middle", b: true, s: 15, c: r[1] }) + txt(x + 36, 100, r[0], { a: "middle", s: 8.5 }); });
+  s += txt(200, 146, "Stages can overlap. A mission may not have every stage.", { a: "middle", s: 9, c: L });
+  s += txt(200, 168, "Conclusion: units return and are debriefed", { a: "middle", s: 9, c: G });
+  DIAGRAMS["iamsar-stages"] = svg(400, 200, s);
+}
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Who does what", { a: "middle", b: true, s: 12 });
+  const b = [["Alert (ship, beacon, alerting post)", R], ["Rescue coordination centre", A], ["SAR mission coordinator (SMC)", Y], ["On-scene coordinator (OSC)", G], ["Rescue units and ships on scene", "#aab0d0"]];
+  b.forEach((r, i) => { const y = 42 + i * 48; s += `<rect x="40" y="${y}" width="320" height="34" rx="7" fill="#1d2040" stroke="${r[1]}"/>` + txt(200, y + 22, r[0], { a: "middle", b: true, s: 10, c: r[1] }); if (i < 4) s += txt(200, y + 46, "▼", { a: "middle", s: 9, c: L }); });
+  s += txt(200, 288, "First unit to arrive acts as OSC until the SMC names one", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["iamsar-roles"] = svg(400, 300, s);
+}
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Search patterns", { a: "middle", b: true, s: 12 });
+  const P = (pts) => "M " + pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L ");
+  const panel = (x, y, name, col) => `<rect x="${x}" y="${y}" width="184" height="124" rx="7" fill="#161830" stroke="#2a2d4a"/>` + txt(x + 92, y + 16, name, { a: "middle", b: true, s: 9.5, c: col });
+  // expanding square
+  let ox = 14, oy = 38; s += panel(ox, oy, "Expanding square", G);
+  { let cx = ox + 92 - 4, cy = oy + 76 + 4, d = 10, pts = [[cx, cy]], dir = [[0, -1], [1, 0], [0, 1], [-1, 0]], k = 0, len = 1; for (let i = 0; i < 9; i++) { const v = dir[i % 4]; cx += v[0] * d * len; cy += v[1] * d * len; pts.push([cx, cy]); if (i % 2 === 1) len++; } s += `<path d="${P(pts)}" fill="none" stroke="${G}" stroke-width="1.5"/><circle cx="${ox + 92}" cy="${oy + 76}" r="3" fill="${R}"/>`; }
+  // sector
+  ox = 202; s += panel(ox, oy, "Sector (120° turns)", A);
+  { const cx = ox + 92, cy = oy + 76, r = 42; for (let k = 0; k < 3; k++) { const a1 = (-90 + k * 40) * Math.PI / 180, a2 = a1 + 120 * Math.PI / 180; const A1 = [cx + r * Math.cos(a1), cy + r * Math.sin(a1)], A2 = [cx + r * Math.cos(a2), cy + r * Math.sin(a2)]; s += `<path d="${P([[cx, cy], A1, A2, [cx, cy]])}" fill="none" stroke="${A}" stroke-opacity="${1 - k * 0.25}" stroke-width="1.4"/>`; } s += `<circle cx="${cx}" cy="${cy}" r="3" fill="${R}"/>`; }
+  // creeping line
+  ox = 14; oy = 172; s += panel(ox, oy, "Creeping line", Y);
+  { const x0 = ox + 14, y0 = oy + 30, w = 156, h = 80, pts = []; let up = true; for (let x = x0; x <= x0 + w; x += 20) { pts.push([x, up ? y0 + h : y0]); pts.push([x, up ? y0 : y0 + h]); up = !up; } s += `<path d="${P(pts)}" fill="none" stroke="${Y}" stroke-width="1.5"/>`; }
+  // parallel track
+  ox = 202; s += panel(ox, oy, "Parallel track", "#c792ea");
+  { const x0 = ox + 14, y0 = oy + 30, w = 156, h = 80, pts = []; let right = true; for (let y = y0; y <= y0 + h; y += 16) { pts.push([right ? x0 : x0 + w, y]); pts.push([right ? x0 + w : x0, y]); right = !right; } s += `<path d="${P(pts)}" fill="none" stroke="#c792ea" stroke-width="1.5"/>`; }
+  s += txt(200, 296, "Red dot: datum", { a: "middle", s: 8, c: L });
+  DIAGRAMS["iamsar-patterns"] = svg(400, 302, s);
+}
