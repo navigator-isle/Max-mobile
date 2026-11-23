@@ -2170,3 +2170,59 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 296, "Red dot: datum", { a: "middle", s: 8, c: L });
   DIAGRAMS["iamsar-patterns"] = svg(400, 302, s);
 }
+
+// 146-150. Meteorology
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "SOLAS V: weather duties", { a: "middle", b: true, s: 12 });
+  s += `<rect x="14" y="42" width="178" height="170" rx="8" fill="#1d2040" stroke="${A}"/>` + txt(103, 62, "Governments (Reg 5)", { a: "middle", b: true, s: 10, c: A });
+  ["Warn of gales, storms,", "tropical cyclones", "Forecasts at least", "twice daily", "Ship observations at", "least 4 times daily", "Instrument checks free"].forEach((t, i) => { s += txt(26, 84 + i * 17, t, { s: 8.5 }); });
+  s += `<rect x="208" y="42" width="178" height="170" rx="8" fill="#1d2040" stroke="${G}"/>` + txt(297, 62, "Masters (Regs 5, 31, 34)", { a: "middle", b: true, s: 10, c: G });
+  ["Plan voyage: weather,", "sea room (Reg 34)", "Report force 10+ (Reg 5)", "Send danger messages", "to ships and authorities", "Free of charge", "Safety signal first"].forEach((t, i) => { s += txt(220, 84 + i * 17, t, { s: 8.5 }); });
+  s += txt(200, 236, "Company must not restrict the master's safety decisions", { a: "middle", s: 8.5, c: Y });
+  DIAGRAMS["meteo-solas"] = svg(400, 250, s);
+}
+{
+  let s = frame(400, 358);
+  s += txt(200, 24, "Beaufort scale: force and wind (knots)", { a: "middle", b: true, s: 12 });
+  const f = [["0", "Calm", "<1", 0], ["1", "Light air", "1-3", 3], ["2", "Light breeze", "4-6", 6], ["3", "Gentle breeze", "7-10", 10], ["4", "Moderate breeze", "11-16", 16], ["5", "Fresh breeze", "17-21", 21], ["6", "Strong breeze", "22-27", 27], ["7", "Near gale", "28-33", 33], ["8", "Gale", "34-40", 40], ["9", "Strong gale", "41-47", 47], ["10", "Storm", "48-55", 55], ["11", "Violent storm", "56-63", 63], ["12", "Hurricane", "64+", 70]];
+  f.forEach((r, i) => { const y = 38 + i * 22, n = +r[0], col = n >= 10 ? R : n >= 8 ? "#ff9f4a" : n === 7 ? Y : G, w = Math.max(4, r[3] * 2.6); s += txt(16, y + 13, r[0], { b: true, s: 10, c: col }) + txt(36, y + 13, r[1], { s: 9 }) + `<rect x="132" y="${y + 2}" width="${w}" height="14" rx="3" fill="${col}" fill-opacity=".8"/>` + txt(132 + w + 5, y + 13, r[2], { s: 8.5, c: L }); });
+  s += txt(200, 350, "Gale = 8-9 · Storm = 10 or over (warning levels)", { a: "middle", s: 8.5, c: Y });
+  DIAGRAMS["meteo-beaufort"] = svg(400, 362, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "Weather and sea bulletin", { a: "middle", b: true, s: 12 });
+  const p = [["Part I", "Warnings", "Gale, storm, tropical cyclone (or 'none')", R], ["Part II", "Synopsis", "Where the weather systems are and moving", Y], ["Part III", "Forecasts", "Wind, sea, visibility for each area", G]];
+  p.forEach((r, i) => { const y = 42 + i * 54; s += `<rect x="14" y="${y}" width="372" height="46" rx="8" fill="#1d2040" stroke="${r[3]}"/>` + txt(26, y + 28, r[0], { b: true, s: 11, c: r[3] }) + txt(86, y + 20, r[1], { b: true, s: 10 }) + txt(86, y + 36, r[2], { s: 8.5, c: L }); });
+  s += txt(200, 220, "At least twice daily, in this order, at set times", { a: "middle", s: 9, c: L });
+  s += txt(200, 238, "Unscheduled warning: repeated after 6 minutes", { a: "middle", s: 9, c: Y });
+  DIAGRAMS["meteo-bulletin"] = svg(400, 250, s);
+}
+{
+  let s = frame(400, 290);
+  s += txt(200, 26, "Danger message (Reg 31): send it when you meet", { a: "middle", b: true, s: 11 });
+  const d = [["Dangerous ice", "❄", A], ["Dangerous derelict or other danger", "⚠", Y], ["Tropical storm", "🌀", R], ["Gale + sub-freezing air: ice on ship", "🧊", "#9be564"], ["Force 10+ with no storm warning", "💨", "#ff9f4a"]];
+  d.forEach((r, i) => { const y = 40 + i * 34; s += `<rect x="20" y="${y}" width="360" height="28" rx="6" fill="#1d2040" stroke="${r[2]}"/>` + txt(36, y + 19, r[0], { s: 9.5 }); });
+  s += txt(200, 224, "Tell: nearby ships + competent authorities", { a: "middle", s: 9, c: G });
+  s += txt(200, 242, "Include: danger, position, date/time UTC", { a: "middle", s: 9, c: L });
+  s += txt(200, 260, "Free of charge · safety signal first", { a: "middle", s: 9, c: Y });
+  s += txt(200, 280, "Cyclone: pressure, 3-hour tendency, wind, sea, swell, course and speed", { a: "middle", s: 7.5, c: L });
+  DIAGRAMS["meteo-danger"] = svg(400, 292, s);
+}
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "Ice Patrol season (SOLAS V/6)", { a: "middle", b: true, s: 12 });
+  const m = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+  m.forEach((t, i) => { s += txt(28 + i * 29.5, 72, t, { a: "middle", s: 9, c: L }); });
+  s += `<rect x="13" y="80" width="354" height="18" rx="3" fill="#1d2040" stroke="#2a2d4a"/>`;
+  const x1 = 13 + (1 + 14 / 28) * 29.5, x2 = 13 + 6 * 29.5 + 1 * 29.5 / 31;
+  s += `<rect x="${x1}" y="80" width="${x2 - x1}" height="18" rx="3" fill="${A}" fill-opacity=".85"/>` + txt((x1 + x2) / 2, 93, "15 Feb – 1 Jul", { a: "middle", s: 8.5, b: true, c: "#0b0c18" });
+  s += txt(200, 128, "Ships crossing the region must use the Ice Patrol service", { a: "middle", s: 9 });
+  s += txt(200, 150, "Guarded: south-eastern, southern and south-western", { a: "middle", s: 9, c: L });
+  s += txt(200, 164, "limits of the Grand Banks iceberg region", { a: "middle", s: 9, c: L });
+  s += txt(200, 190, "Run by the US Coast Guard (International Ice Patrol)", { a: "middle", s: 9, c: G });
+  s += txt(200, 208, "Founded after the Titanic, 1912 · patrol since 1913", { a: "middle", s: 9, c: Y });
+  s += txt(200, 234, "IIP's own season is longer (2022: 11 Jan – 7 Sep)", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["meteo-ice"] = svg(400, 260, s);
+}
