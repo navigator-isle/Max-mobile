@@ -33,14 +33,15 @@ globalThis.fetch = async (u, o = {}) => {
 };
 const mod = await import(process.argv[2]), T = mod.__test, w = mod.default;
 // ---------- crypto ----------
-ok(T.CRYPTO_SOURCES.length === 8 && T.CRYPTO_SOURCES.includes("mexc") && T.CRYPTO_SOURCES.includes("cryptocompare"), "crypto: main + 7 backups (MEXC and CryptoCompare added)");
+ok(T.CRYPTO_SOURCES.length === 10 && T.CRYPTO_SOURCES.includes("mexc") && T.CRYPTO_SOURCES.includes("cryptocompare"), "crypto: main + 7 backups (MEXC and CryptoCompare added)");
 for (const src of ["mexc", "cryptocompare"]) { const k = await T.cryptoCandles({ n: 0, max: 9 }, src, "BTC", 160), last = k.closed.at(-1);
   ok(k.closed.length >= 150 && last[0] < iso(Date.now()) && last[1] > 0 && k.live > 0, src + ": daily closes read right", JSON.stringify([k.closed.length, last, k.live])); }
 const S = T.paperNew(); S.fxSet = true; S.books.crypto_swing.positions.push({ sym: "SOL", qty: 1, ep: 100, entry: iso(d0 - 5 * DAY), risk: 5, stop: 50 });
 M.kucoin429 = 2; M.refuse = new Set(["SOL", "PAXG"]); M.calls = [];
 let err = null, msg = ""; try { msg = await T.paperCryptoStep(S, { n: 0, max: 400, wait: 5, gap: 0 }, Date.now()); } catch (e) { err = e; console.log(e.stack.split("\n").slice(0,3).join(" | ")); }
-ok(!err && S.cryptoSrc === "kucoin", "KuCoin says “too many requests” twice → Max waits and asks again, and it works", (err && err.message) + " " + S.cryptoSrc);
-ok(!err && M.calls.some(u => /mexc\.com.*SOLUSDT/.test(u)) && M.calls.some(u => /mexc\.com.*PAXGUSDT/.test(u)), "a coin Max holds (SOL) that KuCoin refuses is fetched from a backup (MEXC) — the whole run no longer fails", (err && err.message) || "");
+ok(!err && S.cryptoSrc && S.cryptoSrc !== "kucoin" && S.cryptoPartial === false, "KuCoin says “too many requests” → Max drops it at once and the next source does the whole run (23 Nov 2026: no more waiting and retrying)", (err && err.message) + " " + S.cryptoSrc);
+ok(M.calls.filter(u => /kucoin/.test(u)).length <= 2, "KuCoin is not asked again and again", M.calls.filter(u => /kucoin/.test(u)).length);
+ok(!err && S.books.crypto_swing.positions.some(p => p.sym === "SOL") && /crypto:/.test(msg), "a coin Max holds (SOL) that a source refuses is fetched from a backup — the whole run no longer fails", (err && err.message) || "");
 ok(!M.calls.some(u => /gateio\.ws.*SOL_USDT/.test(u) && M.calls.filter(x => /gateio/.test(x)).length > 2), "a backup that refuses once is not asked again for every coin");
 // ---------- emails ----------
 const sqlite = new DatabaseSync(":memory:"), APP = "https://navigator-isle.github.io";

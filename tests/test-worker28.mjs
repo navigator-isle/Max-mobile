@@ -122,13 +122,13 @@ M.fail = /binance|okx|coinbase/; S.step.crypto = day(1); await env.MAX_MEMORY.pr
 const jBefore = S.jid;
 for (let k = 0; k < 3; k++) r = await T.backgroundStep(env, at(17));
 S = await T.paperLoad(env);
-ok(S.errors.filter(e => e.job === "crypto").length >= 3 && S.jid === jBefore && S.lastStep.ok === false && /no crypto price source answered — binance: .*okx: .*coinbase: /.test(S.lastStep.error), "all three price sources down → the step is logged as failed (with each source's error), nothing half-done is saved", JSON.stringify(S.lastStep));
+ok(S.errors.filter(e => e.job === "crypto").length >= 3 && S.jid === jBefore && S.lastStep.ok === false && /no source gave BTC — .*Binance: .*OKX: .*Coinbase: /.test(S.lastStep.error), "all three price sources down → the step is logged as failed (with each source's error), nothing half-done is saved", JSON.stringify(S.lastStep));
 r = await T.backgroundStep(env, at(17));
 ok(!/crypto/.test(r), "after 3 failures the crypto check waits until tomorrow so the other jobs still run", r);
 // Binance refuses Max's server → the same step works from OKX (what happened on the live server on 9 Nov 2026)
 M.fail = /binance/; S = await T.paperLoad(env); S.errors = []; S.step.crypto = day(1); await env.MAX_MEMORY.prepare("UPDATE max_settings SET value = ? WHERE key = 'max_paper'").bind(JSON.stringify(S)).run();
 M.okx = 0; r = await T.backgroundStep(env, at(17)); S = await T.paperLoad(env);
-ok(/from okx/.test(r) && S.step.crypto === new Date().toISOString().slice(0, 10) && S.cryptoSrc === "okx" && M.okx > 5 && S.lastStep.ok, "Binance down → the crypto check uses OKX instead (Coinbase is the third spare)", r);
+ok(/from OKX/.test(r) && S.step.crypto === new Date().toISOString().slice(0, 10) && S.cryptoSrc === "okx" && M.okx > 5 && S.lastStep.ok, "Binance down → the crypto check uses OKX instead (Coinbase is the third spare)", r);
 const hh = await (await w.fetch(new Request("https://x/health"), env)).json();
 ok(Array.isArray(hh.paperErrors) && hh.paperErrors.some(x => /crypto prices from okx \(binance: /.test(x)), "the status page says which price source is used and why", JSON.stringify(hh.paperErrors));
 M.fail = null;

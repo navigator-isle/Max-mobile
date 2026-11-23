@@ -130,7 +130,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-18t";
+const WORKER_VERSION = "max-worker-2026-11-23a";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -562,7 +562,7 @@ async function brainStudy(env, opts = {}) {
   for (const n of notes) {
     const text = brainNoteText(n), hash = (await sha256hex(n.title + "\n" + text)).slice(0, 16), r = rows.get(n.id), parts = Math.max(1, Math.ceil(text.length / BRAIN_PART));
     if (r && r.hash === hash && r.part >= r.parts) continue;
-    todo.push({n, text, hash, parts, part: r && r.hash === hash ? r.part : 0, r: r && r.hash === hash ? r : null, pri: (/^Maritime/i.test(n.category || "") ? 0 : 2) + (rows.has(n.id) ? 1 : 0)});
+    todo.push({n, text, hash, parts, part: r && r.hash === hash ? r.part : 0, r: r && r.hash === hash ? r : null, pri: (/^Maritime/i.test(n.category || "") ? 0 : 2) + (rows.has(n.id) ? 0 : 1)});
   }
   todo.sort((a, b) => a.pri - b.pri);
   let units = 0, studied = 0, errors = [];
@@ -679,54 +679,29 @@ async function brainVerify(env, maxN = 1) {
   }
   return handled;
 }
-// ---- deep review (23 Nov 2026, Mark): research every note on the web and ADD a detailed section at its end. Never edits his own text. ----
+// ---- deep review was removed (23 Nov 2026, Mark). One-time clean-up: take out what it added to notes (the old version is kept, so Undo works). ----
 const DEEP_MARK = "Added by Max — deep review";
 const escH = t => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-async function deepState(env) { const st = await setting(env, "max_deepreview", null) || {}; return {on: st.on !== false, done: st.done || {}, started: st.started || Date.now()}; }
-async function deepReviewRun(env, maxN = 1) {
-  const st = await deepState(env); if (!st.on) return 0;
-  const db = await brainDb(env), today = new Date().toISOString().slice(0, 10);
-  const notes = (await listNotes(db)).filter(n => !n.deleted && !BRAIN_SKIP.test(n.category || "") && plainText(n.body).length > 40);
-  const due = notes.filter(n => !st.done[n.id] && !String(n.body).includes(DEEP_MARK))
-    .sort((a, b) => ((/^Maritime/i.test(b.category || "") ? 1 : 0) - (/^Maritime/i.test(a.category || "") ? 1 : 0)) || (a.updatedAt - b.updatedAt));
-  let did = 0;
-  for (const n of due) {
-    if (did >= maxN) break;
-    const text = plainText(n.body).slice(0, 9000);
-    const r = await agentAsk(env, "review", `You are ${expertFor(n.category)}. Mark Jun, a ship officer, wants his study note below made SUPER DETAILED. Search the web (official sources first: IMO, flag States, USCG/eCFR, ILO, class societies, MARINA, manufacturers) and write ONLY what is missing from the note — never repeat it and never contradict it without saying so.\nAdd: the exact requirements with regulation / chapter / rule / paragraph numbers; numbers, limits, intervals and dates; the latest amendments with their entry-into-force dates; what it means in practice on board (who does what, records to keep, drills and checklists); common Port State Control / audit deficiencies; links to related conventions and codes. Be detailed and concrete. Never invent a number, date or reference; if unsure write "check". Today is ${today}.\nIf the note is already complete and current, set "nothing_to_add" to true.\nNOTE "${n.title}" (${n.category}):\n${text}\n\nReply with JSON only: {"nothing_to_add":false,"sections":[{"heading":"short bold heading","bullets":["detailed bullet with the real numbers","..."]}],"sources":[{"title":"site — page","url":"https://..."}]}`, {search: true, temp: 0.3});
-    if (r.error) break;    // brain out for today → try again next time
-    if (!r.data) { st.tries = st.tries || {}; st.tries[n.id] = (st.tries[n.id] || 0) + 1; if (st.tries[n.id] >= 3) st.done[n.id] = {at: Date.now(), title: cleanText(n.title, 120), why: "the research answer could not be read — left alone"}; did++; continue; }
-    const d = r.data || {}, secs = (Array.isArray(d.sections) ? d.sections : []).map(x => ({h: cleanText(String(x?.heading || ""), 120), b: (Array.isArray(x?.bullets) ? x.bullets : []).map(y => cleanText(String(y), 700)).filter(Boolean).slice(0, 14)})).filter(x => x.h && x.b.length).slice(0, 8);
-    const said = new Map((Array.isArray(d.sources) ? d.sources : []).map(x => [String(x?.url || ""), cleanText(String(x?.title || ""), 120)])),
-      src = (r.sources || []).filter(x => /^https:\/\//.test(x.url)).map(x => ({title: said.get(x.url) || x.title || x.url, url: x.url})).filter((x, i, a) => a.findIndex(y => y.url === x.url) === i).slice(0, 8);   // only sources the web search really found
-    const mark = (why, extra) => { st.done[n.id] = {at: Date.now(), title: cleanText(n.title, 120), why, ...(extra || {})}; };
-    if (d.nothing_to_add === true || !secs.length) { mark("nothing to add"); did++; continue; }
-    if (!src.length) { mark("no web source found — left alone"); did++; continue; }
-    const html = `<hr><p><b>${DEEP_MARK} ${today}</b></p>` + secs.map(x => `<p><b>${escH(x.h)}</b></p><ul>${x.b.map(y => `<li>${escH(y)}</li>`).join("")}</ul>`).join("")
-      + `<p><b>Sources (checked ${today})</b></p><ul>${src.map(x => `<li>${escH(x.title || x.url)} — ${escH(x.url)}</li>`).join("")}</ul>`;
-    await noteVersionSave(db, n.id, n.body, "before deep review"); const now = Date.now() + 1;
-    await db.prepare("UPDATE max_notes SET body = ?, updated_at = ? WHERE id = ?").bind(String(n.body) + html.slice(0, 40000), now, n.id).run();
-    const checks = await setting(env, "max_srv_notecheck", {}); checks[n.id] = {...(checks[n.id] || {}), at: now + 1, title: cleanText(n.title, 120), folder: cleanText(n.category || "", 120), verdict: "added — deep review", fixed: {at: Date.now(), changes: [{from: "(your text is untouched)", to: `Max added ${secs.length} research section${secs.length > 1 ? "s" : ""} at the end of the note`}]}, summary: "Deep review: " + secs.map(x => x.h).join("; ").slice(0, 300), issues: [], sources: src.slice(0, 5), expert: "Deep review"};
-    await srvSetting(env, "max_srv_notecheck", JSON.stringify(checks));
-    await logAct(env, {dept: "notes", kind: "deep review", text: `Researched "${cleanText(n.title, 80)}" and added ${secs.length} section${secs.length > 1 ? "s" : ""} (old version kept)`, detail: src.map(x => x.url).join(" ").slice(0, 280), source: "brain"});
-    mark("added " + secs.length + " sections", {sections: secs.length, sources: src.length}); did++;
+async function deepCleanup(env) {
+  if (await srvSetting(env, "max_deep_removed_v1")) return 0;
+  const db = await brainDb(env); let n = 0;
+  const rows = (await db.prepare("SELECT id, body FROM max_notes WHERE deleted = 0 AND body LIKE ?").bind("%" + DEEP_MARK + "%").all()).results || [];
+  for (const r of rows) {
+    const body = String(r.body), i = body.indexOf("<hr><p><b>" + DEEP_MARK); if (i < 0) continue;
+    const m = /<p><b>Sources \(checked [^<]*<\/b><\/p><ul>[\s\S]*?<\/ul>/.exec(body.slice(i)); if (!m) continue;
+    const cut = body.slice(0, i) + body.slice(i + m.index + m[0].length);
+    await noteVersionSave(db, r.id, body, "before removing deep review"); await db.prepare("UPDATE max_notes SET body = ?, updated_at = ? WHERE id = ?").bind(cut, Date.now(), r.id).run(); n++;
   }
-  const keys = Object.keys(st.done); if (keys.length > 1500) for (const k of keys.slice(0, keys.length - 1500)) delete st.done[k];
-  await srvSetting(env, "max_deepreview", JSON.stringify(st)); return did;
+  await srvSetting(env, "max_deep_removed_v1", "done"); return n;
 }
 const brainFamily = m => /gemini/i.test(String(m)) ? "gemini" : /cloudflare|workers-ai|@cf/i.test(String(m)) ? "cloudflare" : /groq/i.test(String(m)) ? "groq" : String(m || "?").split(":")[0];
 async function brainCron(env, when) {
   if (!env.MAX_MEMORY) return "no database";
   const manilaHour = (new Date(when || Date.now()).getUTCHours() + 8) % 24, night = manilaHour < 6;
-  if (!(await srvSetting(env, "max_brain_rescan_v1"))) { const db = await brainDb(env); await db.prepare("UPDATE max_brain SET hash = ''").run(); await srvSetting(env, "max_brain_rescan_v1", "done"); }   // Mark: "scan my notes again"
+  if (!(await srvSetting(env, "max_brain_rescan_v2"))) { const db = await brainDb(env); await db.prepare("UPDATE max_brain SET hash = ''").run(); await srvSetting(env, "max_brain_rescan_v2", "done"); }   // Mark: "scan my notes again" (23 Nov 2026: re-study every note that was edited)
   const s = await brainStudy(env, {maxUnits: night ? 8 : 3, ms: night ? 40000 : 22000});
-  let v = 0, e = 0, dr = 0; try { v = await brainVerify(env, night ? 2 : 1); } catch {} try { dr = await deepReviewRun(env, night ? 2 : 1); } catch {} try { e = await brainExam(env, night ? 2 : 1); } catch {}
-  return `studied ${s.studied} (units ${s.units}, left ${s.left})${v ? ", checked " + v + " suspect(s)" : ""}${e ? ", exam " + e : ""}${dr ? ", deep review " + dr : ""}`;
-}
-async function deepStatus(env, notes) {
-  const st = await deepState(env), done = notes.filter(n => st.done[n.id] || String(n.body).includes(DEEP_MARK)), vals = Object.values(st.done);
-  return {on: st.on, total: notes.length, done: done.length, added: vals.filter(x => x.sections).length, nothing: vals.filter(x => /nothing/.test(x.why || "")).length, skipped: vals.filter(x => /no web source/.test(x.why || "")).length,
-    last: vals.reduce((m, x) => Math.max(m, x.at || 0), 0) || null, recent: vals.filter(x => x.sections).sort((a, b) => b.at - a.at).slice(0, 5).map(x => ({title: x.title, sections: x.sections}))};
+  let v = 0, e = 0, dr = 0; try { dr = await deepCleanup(env); } catch {} try { v = await brainVerify(env, night ? 2 : 1); } catch {} try { e = await brainExam(env, night ? 2 : 1); } catch {}
+  return `studied ${s.studied} (units ${s.units}, left ${s.left})${v ? ", checked " + v + " suspect(s)" : ""}${e ? ", exam " + e : ""}${dr ? ", removed deep-review text from " + dr + " note(s)" : ""}`;
 }
 async function brainStatus(env) {
   const db = await brainDb(env), notes = (await listNotes(db)).filter(n => !n.deleted && !BRAIN_SKIP.test(n.category || "") && brainNoteText(n).length > 40);
@@ -738,7 +713,7 @@ async function brainStatus(env) {
     exam: {count: exams.length, score: exams.length ? Math.round(exams.reduce((a, e) => a + e.score, 0) / exams.length * 100) : null, gaps: done.filter(r => jparse(r.exam, {}).gap).map(r => ({title: r.title, q: jparse(r.exam, {}).q})).slice(0, 8)},
     links: Math.round(done.reduce((a, r) => a + jparse(r.links, []).length, 0) / 2), checks: items.filter(x => x.state === "check").slice(0, 20), fixed: items.filter(x => x.state === "fixed").slice(0, 20),
     usage: {day: use.day, calls: use.calls, fails: use.fails, gemini: use.gem, geminiCap: BRAIN_GEMINI_CAP}, providers: brainProviders(env).map(p => p.name), last: done.reduce((m, r) => Math.max(m, r.studied_at || 0), 0) || null,
-    mapChars: ((await srvSetting(env, "max_brain_map")) || "").length, deep: await deepStatus(env, notes)};
+    mapChars: ((await srvSetting(env, "max_brain_map")) || "").length};
 }
 // ================= end of Max's brain =================
 // ---------- conversation log (Max remembers every conversation) ----------
@@ -2737,6 +2712,9 @@ async function fxRates(base) {
       ["ECB (Frankfurter)", async () => { const d = await jget("https://api.frankfurter.dev/v1/latest?base=" + base); return d.rates && {date: d.date, rates: d.rates}; }],
       ["ExchangeRate-API", async () => { const d = await jget("https://open.er-api.com/v6/latest/" + base); return d.rates && {date: new Date((d.time_last_update_unix || 0) * 1000).toISOString().slice(0, 10), rates: d.rates}; }],
       ["currency-api", async () => { const d = await jget("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/" + base.toLowerCase() + ".json"); const x = d[base.toLowerCase()];
+        return x && {date: d.date, rates: Object.fromEntries(Object.entries(x).filter(([k]) => FIAT.includes(k.toUpperCase())).map(([k, v]) => [k.toUpperCase(), v]))}; }],
+      ["FloatRates", async () => { const d = await jget("https://www.floatrates.com/daily/" + base.toLowerCase() + ".json"); const rates = Object.fromEntries(Object.values(d).filter(x => x && x.code && x.rate > 0).map(x => [String(x.code).toUpperCase(), +x.rate])); return Object.keys(rates).length > 20 && {date: new Date().toISOString().slice(0, 10), rates}; }],
+      ["currency-api mirror", async () => { const d = await jget("https://latest.currency-api.pages.dev/v1/currencies/" + base.toLowerCase() + ".json"); const x = d[base.toLowerCase()];
         return x && {date: d.date, rates: Object.fromEntries(Object.entries(x).filter(([k]) => FIAT.includes(k.toUpperCase())).map(([k, v]) => [k.toUpperCase(), v]))}; }]]);
     const d = r.value; return {date: d.date, source: r.source, rates: {...d.rates, [base]: 1}};
   });
@@ -2937,7 +2915,7 @@ async function pFetch(ctx, url, init = {}) {
     if (ctx.n >= ctx.max) throw new Error("step budget used up (will continue next hour)");
     ctx.n++;
     const r = await fetch(url, {...init, headers: {"User-Agent": UA, ...(init.headers || {})}});
-    if (r.status === 429 && tryN < 2) { const ra = +r.headers.get("retry-after"); await pSleep(Math.min(8000, ra > 0 ? ra * 1000 : (ctx.wait ?? 1500) * (tryN + 1))); continue; }
+    if (r.status === 429 && tryN < 2 && !ctx.fast) { const ra = +r.headers.get("retry-after"); await pSleep(Math.min(8000, ra > 0 ? ra * 1000 : (ctx.wait ?? 1500) * (tryN + 1))); continue; }
     if (!r.ok) throw new Error(new URL(url).host + " answered " + r.status);
     return r;
   }
@@ -2959,7 +2937,7 @@ async function pseDaily(ctx, sym, days) {
   return (d.chartData || []).filter(x => +x.CLOSE > 0).map(x => ({d: pD(Date.parse(String(x.CHART_DATE).replace(/ 00:00:00$/, "") + " UTC")), o: +x.OPEN || +x.CLOSE, c: +x.CLOSE, v: +x.VALUE || 0}))
     .filter(x => /^\d{4}-/.test(x.d)).sort((a, b) => a.d < b.d ? -1 : 1);
 }
-// Dollar–peso rate: Frankfurter (ECB) first, then 2 backups.
+// Dollar–peso rate: Frankfurter (ECB) first, then 4 backups (23 Nov 2026: + FloatRates and a currency-api mirror).
 // PSE backup 1: TradingView's PSE screener — the last finished trading day for many stocks in ONE request.
 // Only a FINISHED day is used: a bar from today counts only after 4 pm Manila (market closed, 15-minute delay over).
 async function tvPse(ctx, syms) {
@@ -2980,13 +2958,22 @@ async function phisixPrice(ctx, sym) {
   const s = d && d.stocks && d.stocks[0], p = s && s.price && +s.price.amount; if (!(p > 0)) throw new Error("phisix: no price");
   return p;
 }
+async function yahooPse(ctx, sym) {
+  const d = await (await pFetch(ctx, `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}.PS?range=1mo&interval=1d`)).json(), x = d?.chart?.result?.[0];
+  if (!x || !x.timestamp) throw new Error("yahoo: no data for " + sym);
+  const q = x.indicators?.quote?.[0] || {}, out = [];
+  x.timestamp.forEach((t, i) => { const c = +q.close?.[i], o = +q.open?.[i] || c, v = +q.volume?.[i] || 0; if (c > 0) out.push({d: pD(t * 1000 + 8 * 3600e3), o, c, v: v * c}); });
+  return out;
+}
 async function usdPhp(ctx) {
   const ok = (php, cad) => php > 30 && php < 150 && cad > 0.5 && cad < 3;
   const tried = [];
   for (const [name, url, pick] of [
     ["frankfurter", "https://api.frankfurter.dev/v1/latest?base=USD&symbols=PHP,CAD", d => [+d.rates.PHP, +d.rates.CAD]],
     ["er-api", "https://open.er-api.com/v6/latest/USD", d => [+d.rates.PHP, +d.rates.CAD]],
-    ["currency-api", "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json", d => [+d.usd.php, +d.usd.cad]]]) {
+    ["currency-api", "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json", d => [+d.usd.php, +d.usd.cad]],
+    ["floatrates", "https://www.floatrates.com/daily/usd.json", d => [+d.php.rate, +d.cad.rate]],
+    ["currency-api-mirror", "https://latest.currency-api.pages.dev/v1/currencies/usd.json", d => [+d.usd.php, +d.usd.cad]]]) {
     try { const [php, cad] = pick(await (await pFetch(ctx, url)).json()); if (ok(php, cad)) return {php, cadphp: php / cad, src: name}; tried.push(name + ": odd numbers"); }
     catch (e) { if (/budget/.test(e.message)) throw e; tried.push(name + ": " + cleanText(String(e.message), 50)); }
   }
@@ -3207,6 +3194,7 @@ async function etfDaily(ctx, sym) {        // Yahoo (adjusted for dividends) →
   const r = await firstOk("US ETF price", [
     ["Yahoo", async () => { const d = await (await pFetch(ctx, `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=2y&interval=1d`)).json(); const x = d?.chart?.result?.[0]; if (!x) return null;
       const c = x.indicators?.adjclose?.[0]?.adjclose || x.indicators?.quote?.[0]?.close || []; return x.timestamp.map((t, i) => [pD(t * 1000), +c[i]]).filter(r => r[1] > 0); }],
+    ["Stooq", async () => { const t = await (await pFetch(ctx, `https://stooq.com/q/d/l/?s=${sym.toLowerCase()}.us&i=d`)).text(); const rows = t.trim().split(/\r?\n/).slice(1).map(l => l.split(",")).map(r => [r[0], +r[4]]).filter(r => /^\d{4}-\d\d-\d\d$/.test(r[0]) && r[1] > 0); return rows.length > 200 ? rows : null; }],
     ["Nasdaq", async () => { const d = await (await pFetch(ctx, `https://api.nasdaq.com/api/quote/${sym}/historical?assetclass=etf&fromdate=${pAdd(pD(Date.now()), -420)}&limit=400`, {headers: {Accept: "application/json"}})).json();
       const rows = d?.data?.tradesTable?.rows; if (!rows) return null; return rows.map(r => { const [m, dd, y] = r.date.split("/"); return [`${y}-${m}-${dd}`, +String(r.close).replace(/[$,]/g, "")]; }).reverse().filter(r => r[1] > 0); }]]);
   return {rows: r.value, src: r.source};
@@ -3376,53 +3364,69 @@ async function cryptoCandles(ctx, src, sym, limit) {
     if (d.Response !== "Success" || !Array.isArray(d.Data?.Data)) throw new Error("cryptocompare: " + cleanText(String(d.Message || "no data"), 60)); rows = d.Data.Data.map(r => [pD(r.time * 1000), +r.close, +r.volumeto]); }
   else if (src === "gate") { const d = await (await pFetch(ctx, `https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=${sym}_USDT&interval=1d&limit=${Math.min(1000, limit + 1)}`)).json();
     if (!Array.isArray(d)) throw new Error("gate: " + cleanText(String(d.message || d.label || "no data"), 60)); rows = d.map(r => [pD(+r[0] * 1000), +r[2], +r[1]]); }                 // [time, quote volume, close, high, low, open, ...]
+  else if (src === "bitget") { const d = await (await pFetch(ctx, `https://api.bitget.com/api/v2/spot/market/candles?symbol=${sym}USDT&granularity=1day&limit=${Math.min(200, limit + 1)}`)).json();
+    if (d.code !== "00000" || !Array.isArray(d.data)) throw new Error("bitget: " + cleanText(String(d.msg || "no data"), 60)); rows = d.data.map(r => [pD(+r[0]), +r[4], +r[6]]).sort((x, y) => x[0] < y[0] ? -1 : 1); }
+  else if (src === "bybit") { const d = await (await pFetch(ctx, `https://api.bybit.com/v5/market/kline?category=spot&symbol=${sym}USDT&interval=D&limit=${Math.min(1000, limit + 1)}`)).json();
+    if (d.retCode !== 0 || !Array.isArray(d.result?.list)) throw new Error("bybit: " + cleanText(String(d.retMsg || "no data"), 60)); rows = d.result.list.map(r => [pD(+r[0]), +r[4], +r[6]]).sort((x, y) => x[0] < y[0] ? -1 : 1); }
   else throw new Error("unknown price source " + src);
   rows = rows.filter(r => r[1] > 0);
   const last = rows[rows.length - 1];
   return {closed: rows.filter(r => r[0] < today), live: last ? last[1] : null};
 }
 // Main source + 5 backups, tried in order (the one that worked last time goes first, so a blocked source costs nothing).
-const CRYPTO_SOURCES = ["binance", "okx", "coinbase", "kraken", "kucoin", "gate", "mexc", "cryptocompare"];
-const CRYPTO_NAMES = {binance: "Binance", okx: "OKX", coinbase: "Coinbase", kraken: "Kraken", kucoin: "KuCoin", gate: "Gate.io", mexc: "MEXC", cryptocompare: "CryptoCompare"};
+const CRYPTO_SOURCES = ["binance", "okx", "coinbase", "kraken", "kucoin", "gate", "mexc", "cryptocompare", "bitget", "bybit"];
+const CRYPTO_NAMES = {binance: "Binance", okx: "OKX", coinbase: "Coinbase", kraken: "Kraken", kucoin: "KuCoin", gate: "Gate.io", mexc: "MEXC", cryptocompare: "CryptoCompare", bitget: "Bitget", bybit: "Bybit"};
 async function paperCryptoStep(S, ctx, now) {
-  let src = null, btc = null; const tried = [];
-  const order = [...new Set([...(S.cryptoSrc && CRYPTO_SOURCES.includes(S.cryptoSrc) ? [S.cryptoSrc] : []), ...CRYPTO_SOURCES])];
-  for (const s of order.filter(x => !(ctx.skip || []).includes(x))) {
-    try { const k = await cryptoCandles(ctx, s, "BTC", 160); if (k.closed.length >= 101) { src = s; btc = k; break; } tried.push(s + ": too little data"); }
-    catch (e) { if (/budget/.test(e.message)) throw e; tried.push(s + ": " + cleanText(String(e.message), 60)); }
-  }
-  if (!src) throw new Error("no crypto price source answered — " + tried.join("; "));
-  S.cryptoSrc = src; S.cryptoTried = tried;
-  let pool = CRYPTO_POOL.slice(0, 26), tick = {};
-  if (src === "binance") { try { tick = await bnTickers(ctx, [...CRYPTO_POOL, "PAXG"]); pool = CRYPTO_POOL.filter(c => tick[c]).sort((a, b) => tick[b].qv - tick[a].qv).slice(0, 26); } catch (e) { if (/budget/.test(e.message)) throw e; } }
-  if (!pool.includes("BTC")) pool.push("BTC");
-  try { const f = await usdPhp(ctx); if (f.php > 30 && f.php < 120) S.usdphp = f.php; } catch {}
+  // 23 Nov 2026: a source that answers 429/403 is dropped for the day at once (no waiting and retrying), the next source takes over for every coin,
+  // and the work is saved coin by coin — if the hour's request limit runs out Max carries on next hour instead of counting a failure.
+  ctx.fast = true; S.cryptoPartial = false;
+  const today = pD(Date.now());
+  let W = S.cryptoWork; if (!W || W.day !== today) W = S.cryptoWork = {day: today, U: {}, live: {}, dead: [], skip: [], src: null, pool: null, tick: {}};
+  const order = [...new Set([...(S.cryptoSrc && CRYPTO_SOURCES.includes(S.cryptoSrc) ? [S.cryptoSrc] : []), ...CRYPTO_SOURCES])].filter(x => !(ctx.skip || []).includes(x));
+  const dead = new Set(W.dead), BAD = /answered (403|418|429|451|5\d\d)|fetch failed|network|timed out/i;
+  const room = () => ctx.n < ctx.max - 1;
+  const get = async (c, n, min, must) => {
+    const errs = [];
+    for (const s of order) {
+      if (dead.has(s)) { errs.push([s, "refused earlier today"]); continue; }
+      if (!room()) throw new Error("step budget used up (will continue next hour)");
+      try { await pSleep(ctx.gap ?? 120); const k = await cryptoCandles(ctx, s, c, n); if (k.closed.length >= min) return {k, s, errs}; errs.push([s, "too little data"]); }
+      catch (e) { if (/budget/.test(e.message)) throw e; errs.push([s, cleanText(String(e.message), 40)]); if (BAD.test(e.message)) { dead.add(s); W.dead = [...dead]; } }
+      if (!must && !BAD.test(errs[errs.length - 1][1])) return null;       // a coin this source simply doesn't list: skip it
+    }
+    throw new Error("no source gave " + c + " — " + errs.map(([s, m]) => CRYPTO_NAMES[s] + ": " + m).join("; "));
+  };
+  const partial = () => { S.cryptoPartial = true; return `crypto: ${Object.keys(W.U).length} of ${(W.pool || []).length || "?"} coins so far (${W.src ? CRYPTO_NAMES[W.src] : "no source yet"}), continuing next hour`; };
+  try {
+    if (!W.U.BTC) { const r = await get("BTC", 160, 101, true); W.U.BTC = r.k.closed; W.live.BTC = r.k.live; W.src = r.s; W.tried = r.errs.map(([s, m]) => s + ": " + m); S.cryptoSrc = W.src; S.cryptoTried = W.tried; }
+    if (!W.pool) {
+      W.pool = CRYPTO_POOL.slice(0, 26);
+      if (W.src === "binance") { try { const tick = await bnTickers(ctx, [...CRYPTO_POOL, "PAXG"]); W.tick = Object.fromEntries(Object.entries(tick).map(([k, v]) => [k, v.last])); W.pool = CRYPTO_POOL.filter(c => tick[c]).sort((a, b) => tick[b].qv - tick[a].qv).slice(0, 26); } catch (e) { if (/budget/.test(e.message)) throw e; } }
+      if (!W.pool.includes("BTC")) W.pool.push("BTC");
+    }
+    for (const c of W.pool) {
+      if (c === "BTC" || W.U[c] || W.skip.includes(c)) continue;
+      const held = S.books.crypto_swing.positions.some(p => p.sym === c);
+      try { const r = await get(c, 60, 21, held); if (r) { W.U[c] = r.k.closed; W.live[c] = r.k.live; } else W.skip.push(c); }
+      catch (e) { if (/budget/.test(e.message)) throw e; if (held) throw new Error("no price for " + c + ", which Max holds (" + cleanText(String(e.message), 80) + ")"); W.skip.push(c); }
+    }
+    if (!W.U.PAXG) { const g = await get("PAXG", 240, 201, true); W.U.PAXG = g.k.closed; W.live.PAXG = g.k.live; }
+  } catch (e) { if (/budget/.test(e.message)) return partial(); S.cryptoWork = null; throw e; }
+  S.cryptoSrc = W.src; S.cryptoTried = W.tried || [];
+  try { if (room()) { const f = await usdPhp(ctx); if (f.php > 30 && f.php < 120) S.usdphp = f.php; } } catch {}
   if (!S.fxSet) {           // first real run: size the dollar books with today's rate
     for (const k of ["crypto_swing", "btc_trend", "gold_trend", ...RB]) { const B = S.books[k]; if (B && !B.trades.length && !B.positions.length) { B.start = B.startPhp / S.usdphp; B.cash = B.start; if (RB.has(k)) B.value = B.start; } }
     S.fxSet = true; S.usdphp0 = S.usdphp;
   }
-  const U = {BTC: btc.closed}, live = {BTC: btc.live};
-  // one coin at a time, a short pause between asks; if the main source refuses a coin, the backups are asked for that coin only
-  const backups = [...order.filter(x => x !== src && !(ctx.skip || []).includes(x))], dead = new Set();
-  const coin = async (c, n, min, needed) => {
-    try { await pSleep(ctx.gap ?? 150); const k = await cryptoCandles(ctx, src, c, n); if (k.closed.length >= min) return k; throw new Error(src + ": too little data"); }
-    catch (e) { if (/budget/.test(e.message) || !needed) throw e; let last = e; const all = [CRYPTO_NAMES[src] + ": " + cleanText(String(e.message), 40)];
-      for (const b of backups) { if (dead.has(b)) { all.push(CRYPTO_NAMES[b] + ": skipped, refused earlier"); continue; }
-        try { const k = await cryptoCandles(ctx, b, c, n); if (k.closed.length >= min) return k; all.push(CRYPTO_NAMES[b] + ": too little data"); }
-        catch (e2) { if (/budget/.test(e2.message)) throw e2; last = e2; all.push(CRYPTO_NAMES[b] + ": " + cleanText(String(e2.message), 40)); if (/answered (403|429)/.test(e2.message)) dead.add(b); } }
-      throw new Error("no source gave " + c + " — " + all.join("; ")); } };
-  for (const c of pool) { if (c === "BTC") continue;
-    const held = S.books.crypto_swing.positions.some(p => p.sym === c);       // backups only for coins Max holds (a coin a source doesn't list is just skipped)
-    try { const k = await coin(c, 60, 21, held); U[c] = k.closed; live[c] = k.live; }
-    catch (e) { if (/budget/.test(e.message)) throw e; if (S.books.crypto_swing.positions.some(p => p.sym === c)) throw new Error("no price for " + c + ", which Max holds (" + cleanText(String(e.message), 50) + ")"); }   // a coin no source lists is skipped
-  }
-  const g = await coin("PAXG", 240, 201, true), gold = g.closed, upto = pAdd(pD(Date.now()), -1); live.PAXG = g.live;
-  for (const [k, v] of Object.entries(tick)) if (v.last > 0) live[k] = v.last;
+  const U = {...W.U}, live = {...W.live}, gold = U.PAXG; delete U.PAXG;
+  const upto = pAdd(today, -1);
+  for (const [k, v] of Object.entries(W.tick || {})) if (v > 0) live[k] = v;
   cryptoSwing(S, U, upto, live, now);
   trendBook(S, "btc_trend", U.BTC, upto, live, now, {sym: "BTC", sma: 100, target: 0.40, calm: "In 2011–2026 this rule avoided most of Bitcoin's big crashes (worst drop −35% instead of −92%)."});
   trendBook(S, "gold_trend", gold, upto, live, now, {sym: "PAXG", sma: 200, target: 0.12, calm: "In 2000–2026 this cut gold's worst drop from −44% to −34%."});
   S.bench.btc = live.BTC; S.bench.btc0 = S.bench.btc0 || live.BTC; S.bench.gold = live.PAXG; S.bench.gold0 = S.bench.gold0 || live.PAXG;
-  return `crypto: ${Object.keys(U).length} coins from ${src}, ${ctx.n} requests`;
+  S.cryptoWork = null;
+  return `crypto: ${Object.keys(U).length} coins from ${CRYPTO_NAMES[W.src]}${dead.size ? " (" + [...dead].map(x => CRYPTO_NAMES[x]).join(", ") + " refused, spares used)" : ""}, ${ctx.n} requests`;
 }
 // ---- PSE dividend top-10: highest cash-dividend yield of the last 12 months (≥3%, ≥₱5M traded a day, price ≥₱1); re-check every 3 months; 25% safety stop ----
 async function pseStep(env, S, ctx, today) {
@@ -3430,7 +3434,7 @@ async function pseStep(env, S, ctx, today) {
   const syms = [...new Set([...B.positions.map(p => p.sym), ...B.pending.map(o => o.sym), ...(B.topup || []).map(t => t.sym), "AETF"])];
   // Prices: PSE Edge (main) → Max's own saved bars when PSE Edge fails → TradingView adds a finished day PSE Edge doesn't have yet
   // (PSE Edge is sometimes late) → Phisix gives a last price to value holdings when nothing else answered.
-  const prices = {}, used = {edge: 0, saved: 0, tradingview: 0, phisix: 0}, edgeFail = [], H = S.pseHist = S.pseHist || {};
+  const prices = {}, used = {edge: 0, saved: 0, tradingview: 0, yahoo: 0, phisix: 0}, edgeFail = [], H = S.pseHist = S.pseHist || {};
   for (const s of syms) {
     try { prices[s] = Object.fromEntries((await pseDaily(ctx, s, 25)).map(x => [x.d, x])); used.edge++; }
     catch (e) { if (/budget/.test(e.message)) throw e; edgeFail.push(s); if (H[s] && H[s].length) { prices[s] = Object.fromEntries(H[s].map(x => [x.d, x])); used.saved++; } }
@@ -3440,6 +3444,12 @@ async function pseStep(env, S, ctx, today) {
     for (const [s, bar] of Object.entries(tv)) { const have = prices[s] = prices[s] || {}; const last = Object.keys(have).sort().pop() || "";
       if (bar.d > last) { have[bar.d] = {...bar, src: "tradingview"}; used.tradingview++; } }
   } catch (e) { if (/budget/.test(e.message)) throw e; S.pseSrcErr = cleanText(String(e.message), 80); }
+  // backup 3 (23 Nov 2026): Yahoo Finance's daily bars (symbol.PS) for the stocks PSE Edge did not answer for
+  for (const s of edgeFail.slice(0, 8)) {
+    try { const bars = await yahooPse(ctx, s); const have = prices[s] = prices[s] || {}; const last = Object.keys(have).sort().pop() || "";
+      for (const b of bars) if (b.d > last && b.d <= today) { have[b.d] = {...b, src: "yahoo"}; used.yahoo = (used.yahoo || 0) + 1; } }
+    catch (e) { if (/budget/.test(e.message)) throw e; }
+  }
   const lastOnly = {};
   for (const s of B.positions.map(p => p.sym)) if (!prices[s] || !Object.keys(prices[s]).length) { try { lastOnly[s] = await phisixPrice(ctx, s); used.phisix++; } catch (e) { if (/budget/.test(e.message)) throw e; } }
   for (const s of syms) if (prices[s]) H[s] = Object.values(prices[s]).sort((a, b) => a.d < b.d ? -1 : 1).slice(-30).map(({d, o, c, v}) => ({d, o, c, v}));
@@ -3681,7 +3691,7 @@ async function backgroundStep(env, when) {
   if (!job && S.step.invest !== today && fails("invest") < 3) job = "invest";
   if (!job) job = await otherJob(env, t);
   try {
-    if (job === "crypto") { out.push(await paperCryptoStep(S, ctx, now)); S.step.crypto = today; }
+    if (job === "crypto") { out.push(await paperCryptoStep(S, ctx, now)); if (!S.cryptoPartial) S.step.crypto = today; }
     else if (job === "pse") { S.step.pseHour = hourKey; out.push(await pseStep(env, S, ctx, today)); S.step.pse = today; S.step.pseData = S.books.pse_dividend.last_day || null; }
     else if (job === "scan") out.push(await pseScanStep(env, S, ctx, today));
     else if (job === "etf") { out.push(await etfStep(env, S, ctx, today)); S.step.etf = today; }
@@ -4345,7 +4355,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {deepReviewRun, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {paperCryptoStep, deepCleanup, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -4790,14 +4800,6 @@ CONFIDENCE: <high, medium or low, and why in a few words>`;
       if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
       const s = await brainStudy(env, {maxUnits: 4, ms: 24000}); let v = 0; try { v = await brainVerify(env, 1); } catch {}
       return json({...s, checked: v, status: await brainStatus(env)}, 200, origin, env);
-    }
-    if (url.pathname === "/api/brain/deep" && request.method === "POST") {
-      if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
-      let body = {}; try { body = await request.json(); } catch {}
-      const st = await deepState(env);
-      if (body.action === "pause" || body.action === "start") { st.on = body.action === "start"; await srvSetting(env, "max_deepreview", JSON.stringify(st)); }
-      let did = 0; if (body.action === "now") { st.on = true; await srvSetting(env, "max_deepreview", JSON.stringify(st)); did = await deepReviewRun(env, 2); }
-      return json({ok: true, reviewed: did, status: await brainStatus(env)}, 200, origin, env);
     }
     if (url.pathname === "/api/brain/resolve" && request.method === "POST") {
       const db = env.MAX_MEMORY && auth.ok ? await brainDb(env) : null; if (!db) return json({error: "Not signed in."}, 401, origin, env);
