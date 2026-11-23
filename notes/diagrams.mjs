@@ -725,3 +725,55 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["igc-dates"] = svg(400, 250, s);
 }
+
+// 39. IGF Code structure
+{
+  let s = frame(400, 308);
+  s += txt(200, 26, "IGF Code structure", { a: "middle", b: true, s: 12 });
+  const box = (y, h, title, sub, c) => {
+    let o = `<rect x="14" y="${y}" width="372" height="${h}" rx="6" fill="${c}" fill-opacity="0.1" stroke="${c}"/>`;
+    o += txt(24, y + 16, title, { b: true, s: 10.5, c });
+    sub.forEach((t, i) => { o += txt(24, y + 31 + i * 13, t, { s: 9 }); });
+    return o;
+  };
+  s += box(38, 58, "Part A: General", ["Ch 2 General (application, definitions, alternative design)", "Ch 3 Goal and functional requirements", "Ch 4 General requirements (risk assessment, explosion limits)"], A);
+  s += box(104, 98, "Part A-1: Natural gas as fuel", ["Ch 5 Ship design and arrangement   Ch 6 Fuel containment system", "Ch 7 Material and pipe design   Ch 8 Bunkering", "Ch 9 Fuel supply to consumers   Ch 10 Power generation", "Ch 11 Fire safety   Ch 12 Explosion prevention", "Ch 13 Ventilation   Ch 14 Electrical   Ch 15 Control and safety"], G);
+  s += box(210, 28, "Part B-1: Ch 16 Manufacture, workmanship and testing", [], Y);
+  s += box(246, 24, "Part C-1: Ch 17 Drills   Ch 18 Operation", [], R);
+  s += box(274, 24, "Part D: Ch 19 Training", [], L);
+  DIAGRAMS["igf-structure"] = svg(400, 308, s);
+}
+
+// 40. IGF Code gas detection thresholds
+{
+  let s = frame(400, 190);
+  s += txt(200, 26, "Gas detection set points (15.8)", { a: "middle", b: true, s: 12 });
+  const bar = (y, label, a, b) => {
+    let o = txt(14, y - 8, label, { s: 9.5, b: true });
+    o += `<rect x="14" y="${y}" width="372" height="16" rx="3" fill="#2a2d4a"/>`;
+    o += `<rect x="14" y="${y}" width="${372 * a / 100}" height="16" rx="3" fill="${Y}" fill-opacity="0.55"/>`;
+    o += `<rect x="${14 + 372 * a / 100}" y="${y}" width="${372 * (b - a) / 100}" height="16" fill="${R}" fill-opacity="0.55"/>`;
+    o += txt(14 + 372 * a / 100 - 4, y + 30, `${a}% LEL alarm`, { a: "end", s: 9, c: Y });
+    o += txt(14 + 372 * b / 100 - 40, y + 30, `${b}% LEL safety system`, { a: "start", s: 9, c: R });
+    return o;
+  };
+  s += bar(58, "Standard spaces (15.8.6)", 20, 40);
+  s += bar(122, "Ventilated ducts around gas pipes in machinery spaces (15.8.7)", 30, 60);
+  s += txt(200, 182, "Safety system acts on two detectors", { a: "middle", s: 9, c: L });
+  DIAGRAMS["igf-gas-detection"] = svg(400, 190, s);
+}
+
+// 41. IGF Code key dates
+{
+  let s = frame(400, 232);
+  s += txt(200, 26, "IGF Code: key dates", { a: "middle", b: true, s: 12 });
+  const rows = [["11 Jun 2015", "MSC.391(95) adopts the Code", A], ["1 Jan 2017", "Code takes effect", G], ["1 Jan 2020", "MSC.422(98): paragraph 11.3", T], ["1 Jan 2024", "MSC.458(101) and MSC.475(102)", T], ["1 Jan 2026", "MSC.551(108): fire safety, bunkering, zones, more", Y], ["1 Jan 2028", "MSC.567(109): suction wells, zones, ventilation", Y], ["1 Jul 2028", "Draft: gases or low-flashpoint fuels (pending)", R]];
+  rows.forEach(([d, t, c], i) => {
+    const y = 40 + i * 27;
+    s += `<circle cx="34" cy="${y + 10}" r="5" fill="${c}"/>`;
+    if (i < 6) s += line(34, y + 15, 34, y + 31, L, 1);
+    s += txt(48, y + 14, d, { b: true, s: 10, c });
+    s += txt(128, y + 14, t, { s: 9 });
+  });
+  DIAGRAMS["igf-dates"] = svg(400, 232, s);
+}
