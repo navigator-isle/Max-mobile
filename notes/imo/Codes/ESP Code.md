@@ -12,7 +12,7 @@ tags: [esp, survey, bulk-carrier, oil-tanker, solas-xi-1, imo, code]
 | Made mandatory by | SOLAS regulation XI-1/2 |
 | Structure | Annex A (bulk carriers) · Annex B (oil tankers), each in Parts A and B |
 | Consolidated text | Res. MSC.461(101), "completely revised", in force 1 Jan 2021 |
-| Latest amendment | MSC.553(108), in force 1 Jan 2026 (thickness measurement firms) |
+| Latest amendments | MSC.553(108), in force 1 Jan 2026 (thickness measurement firms) · MSC.584(111), adopted at MSC 111 (May 2026), expected in force 1 Jan 2028 (remote inspection techniques) |
 | Bulk carrier survey cycle | Renewal every 5 years · annual · intermediate |
 
 ## What is the ESP Code
@@ -34,6 +34,7 @@ tags: [esp, survey, bulk-carrier, oil-tanker, solas-xi-1, imo, code]
 | MSC.461(101) | 14 Jun 2019 | 1 Jan 2021 | Completely revised (consolidated) |
 | MSC.483(103) | 13 May 2021 | 1 Jan 2023 | Annex B, Part A: Annex 2 |
 | MSC.553(108) | 23 May 2024 | 1 Jan 2026 | Approval and certification of firms doing thickness measurement |
+| MSC.584(111) | MSC 111, 13–22 May 2026 | 1 Jan 2028 (expected; deemed accepted 1 Jul 2027 unless objections) | Remote inspection techniques (RIT) in ESP surveys |
 
 Entry into force of amendments follows the SOLAS tacit acceptance procedure.
 
@@ -87,10 +88,29 @@ Entry into force of amendments follows the SOLAS tacit acceptance procedure.
 | Documents on board | The **survey report file** and supporting documents, kept on board for the ship's lifetime |
 | Reporting | The Condition Evaluation Report must include an English translation and be endorsed by the Administration or recognized organization |
 
+## Remote inspection techniques (MSC.584(111))
+
+- Adopted unanimously at **MSC 111** (13 to 22 May 2026) to permit the use of **remote inspection techniques (RIT)** in ESP Code surveys. The guidelines MSC.1/Circ.1700 were approved alongside.
+- Expected in force **1 Jan 2028**: deemed accepted 1 Jul 2027 unless objections are communicated to the Secretary-General before then.
+- Applies to periodical surveys that commence on or after 1 Jan 2028 when RIT is used, whatever the ship's construction date.
+- RIT can serve as an alternative means of access for close-up surveys and related thickness measurements.
+
+| Condition | Detail |
+|---|---|
+| System | Assessed and certified against Appendix 4 of MSC.1/Circ.1700, with a Statement of Capability (SoC) |
+| Firm | Approved, using a certified system with a valid SoC, within its limits |
+| Survey programme | Includes an RIT inspection plan and a copy of the SoC |
+| Limits | Depend on the ship's condition history, defect records and the company's performance; flag Administrations may add restrictions from the third special survey onward |
+| Thickness measurement | Still taken alongside close-up surveys; alternative arrangements if RIT limitations prevent its use |
+| Checks | Random confirmatory surveys validate RIT results |
+| Report | The RIT firm submits a detailed report with labelled videos and photos |
+
 > **Key Point:** The ship keeps the survey report file and supporting documents on board for life. Prepare safe access and the owner's inspection records before surveys. Thickness measurement must be done by a certified firm. Substantial corrosion means wastage over 75% of the allowable margin.
 
 ## Sources (checked 23 Nov 2026)
 
 - Resolution A.1049(27), 2011 ESP Code (IMO): https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/AssemblyDocuments/A.1049(27).pdf
 - ESP Code amendment status (Deutsche Flagge): https://www.deutsche-flagge.de/de/redaktion/dokumente/interpretationen/solas/xi-1/esp-code-amendment-status.pdf
+- Report of MSC 111, MSC.584(111) (IMO via MPA Singapore): https://www.mpa.gov.sg/api/media/e783b0c8-e1f3-44bf-8462-d2357ff91654/MSC-111-22---Report-Of-The-Maritime-Safety-Committee-On-Its-111Th-Session-(Secretariat).pdf
+- Cyprus Shipping News, RIT conditions: https://cyprusshippingnews.com/2026/10/15/new-imo-esp-code-framework-for-remote-inspection-techniques/
 - Resolution MSC.553(108) (IMO): https://wwwcdn.imo.org/localresources/en/KnowledgeCentre/IndexofIMOResolutions/MSCResolutions/MSC.553(108).pdf
