@@ -1198,3 +1198,44 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 258, "ConOps is the base document at every step", { a: "middle", s: 9.5, c: L });
   DIAGRAMS["mass-approval"] = svg(400, 270, s);
 }
+
+// 67. NOx survey flow
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "NOx certification route", { a: "middle", b: true, s: 12 });
+  const st = [["Pre-certification survey (test-bed)", "EIAPP Certificate · Technical File", A], ["Initial survey on board", "Engine matches its Technical File", A], ["Renewal, annual, intermediate", "With the IAPP survey cycle", G], ["Verification method (6.2, 6.3, 6.4)", "Parameter check · simplified · direct", Y]];
+  st.forEach(([a, b, c], i) => {
+    const y = 42 + i * 54;
+    s += `<rect x="30" y="${y}" width="340" height="44" rx="6" fill="#1d2040" stroke="${c}"/>` + txt(44, y + 19, a, { b: true, s: 10.5 }) + txt(44, y + 36, b, { s: 9.5, c: L });
+    if (i < 3) s += arrow(200, y + 44, 200, y + 54, L);
+  });
+  DIAGRAMS["nox-survey"] = svg(400, 270, s);
+}
+
+// 68. NOx tiers at 720 rpm
+{
+  let s = frame(400, 220);
+  s += txt(200, 26, "NOx limit at 720 rpm (g/kWh)", { a: "middle", b: true, s: 12 });
+  const d = [["Tier I", 12.1, Y], ["Tier II", 9.7, A], ["Tier III", 2.4, G]];
+  d.forEach(([n, v, c], i) => {
+    const y = 50 + i * 46, w = v * 22;
+    s += txt(24, y + 22, n, { b: true, s: 10.5 }) + `<rect x="90" y="${y}" width="${w}" height="32" rx="4" fill="${c}" fill-opacity="0.55" stroke="${c}"/>` + txt(90 + w + 8, y + 21, v.toFixed(1), { b: true, s: 11 });
+  });
+  s += txt(200, 204, "Tier III: inside NOx ECAs only", { a: "middle", s: 9.5, c: L });
+  DIAGRAMS["nox-tiers"] = svg(400, 220, s);
+}
+
+// 69. NOx cycles
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "Test cycle weighting factors", { a: "middle", b: true, s: 12 });
+  const c = [["E2 / E3 (100 · 75 · 50 · 25% power)", [0.2, 0.5, 0.15, 0.15], A], ["D2 (100 · 75 · 50 · 25 · 10% power)", [0.05, 0.25, 0.3, 0.3, 0.1], G]];
+  c.forEach(([t, w, col], i) => {
+    const y = 46 + i * 100;
+    s += txt(24, y, t, { s: 10, b: true });
+    let x = 24;
+    w.forEach((v) => { const ww = v * 352; s += `<rect x="${x}" y="${y + 10}" width="${ww - 2}" height="36" rx="3" fill="${col}" fill-opacity="0.5" stroke="${col}"/>` + txt(x + (ww - 2) / 2, y + 33, String(v), { a: "middle", s: ww < 30 ? 7 : 9.5, b: true }); x += ww; });
+  });
+  s += txt(200, 262, "Weights add up to 1.0 per cycle", { a: "middle", s: 9, c: L });
+  DIAGRAMS["nox-cycles"] = svg(400, 280, s);
+}
