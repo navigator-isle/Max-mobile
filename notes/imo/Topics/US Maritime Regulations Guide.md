@@ -7,7 +7,7 @@ tags: [usa, opa-90, vgp, vida, eca, sewage, ballast-water, uscg, cfr, notice-of-
 ## At a glance
 | Topic | Law and regulation | Enforced by |
 |---|---|---|
-| Oil spill liability | **OPA 90**, 33 U.S.C. 2701 ff. Limits and financial responsibility in **33 CFR 138**. Response plans in **33 CFR 155** subpart D | USCG |
+| Oil spill liability | [[OPA 90]], 33 U.S.C. 2701 ff., with **33 CFR 138, 153 and 155** | USCG |
 | Other discharges (ballast, graywater, bilge and more) | **Vessel General Permit 2013**, now being replaced by **VIDA** (EPA standards, USCG rules) | EPA, USCG |
 | Air emissions | **MARPOL Annex VI** and the North American and US Caribbean Sea **ECAs**. Engines under **40 CFR 1042 and 1043** | EPA, USCG |
 | Sewage | Clean Water Act **section 312**. EPA standards in **40 CFR 140**. USCG design rules in **33 CFR 159** | USCG |
@@ -25,74 +25,7 @@ tags: [usa, opa-90, vgp, vida, eca, sewage, ballast-water, uscg, cfr, notice-of-
 | **U.S.C.** | The statutes the CFR rests on | 33 U.S.C. 2701 ff. (OPA 90) |
 
 ## Oil Pollution Act 1990 (OPA 90)
-
-### Who pays
-- The **responsible party** for a vessel is "any person owning, operating, or demise chartering the vessel" (33 U.S.C. 2701(32))
-- It is liable for **removal costs** and **damages** when oil is discharged, or there is a substantial threat of discharge, into navigable waters, the shoreline or the EEZ (2702)
-- A **tank vessel** is one built or adapted to carry, or that carries, oil or hazardous material in bulk as cargo or cargo residue
-
-| Damage that can be claimed | Who may claim |
-|---|---|
-| **Natural resources**, including assessment costs | A US, State, tribal or foreign trustee |
-| **Real or personal property** | The owner or lessee |
-| **Subsistence use** | Anyone who uses the resource |
-| **Lost taxes, royalties, rents, fees** | Government |
-| **Lost profits or earning capacity** | Any claimant |
-| **Cost of public services** | State or local government |
-
-### Defences (2703)
-The responsible party is **not liable** if it proves that the discharge was caused **solely** by:
-- an **act of God**
-- an **act of war**
-- an **act or omission of a third party**, but **not** its own employee or agent, and not a third party in a contractual relationship with it
-- or a combination of these
-
-For the third-party defence it must also show **due care** and **precautions against foreseeable acts** of that third party.
-
-The defence is **lost** if the party fails to report the incident, fails to cooperate with the response, or ignores a government order.
-
-### Limits of liability (33 CFR 138.230, as printed in the 2025 CFR)
-| Vessel | Limit, whichever is greater |
-|---|---|
-| Tank vessel, **single hull**, over 3,000 GT | **$4,000 per GT** or **$29,591,300** |
-| Tank vessel, **not single hull**, over 3,000 GT | **$2,500 per GT** or **$21,521,000** |
-| Tank vessel, single hull, 3,000 GT or less | **$4,000 per GT** or **$8,070,400** |
-| Tank vessel, not single hull, 3,000 GT or less | **$2,500 per GT** or **$5,380,300** |
-| **Any other vessel** (also edible-oil tankers and oil spill response vessels) | **$1,300 per GT** or **$1,076,000** |
-
-- The limit covers total liability **plus removal costs** per incident
-- The figures are raised for inflation. The statute's own base figures were lower: $3,000 and $1,900 per GT for tankers, $950 per GT for other vessels
-- **The limit does not apply** if the incident was proximately caused by:
-  - **gross negligence or wilful misconduct**
-  - **violation of an applicable federal safety, construction or operating regulation**
-  - by the responsible party, its agent, employee or a contractor
-- **It also does not apply** if the party fails to report, fails to cooperate, or ignores an order without good cause (2704(c))
-
-### Certificate of Financial Responsibility, COFR (33 CFR 138)
-| Who needs one | Rule |
-|---|---|
-| Vessels over **300 GT** using US navigable waters, ports or places under US jurisdiction | Yes |
-| **Tank vessels over 100 GT** doing the same | Yes |
-| Vessels of **any size** transshipping or lightering oil in the EEZ for a US place | Yes |
-| Public vessels | Not covered |
-| A barge over 300 GT that carries no oil or hazardous substance as cargo or fuel | Not covered |
-
-- The COFR operator applies at least **21 days** before the certificate is needed
-- Changes are reported in writing within **5 business days**
-- A **Fleet** certificate covers the largest unmanned non-tank barge. A **Master** certificate covers the largest tank vessel and the largest non-tank vessel
-- A US **agent for service of process** is named (138.130)
-
-### Vessel response plans (33 CFR 155 subpart D)
-- The plan covers **all US areas** where the vessel handles, stores or carries oil, including offshore transit areas
-- Written in **English**, and in a language the crew with plan duties understands
-- **11 sections:** general information, notification, shipboard mitigation, shore-based response, contacts, training, exercises, plan review and update, on-board notification checklist (unmanned barges only), a geographic appendix for each Captain of the Port zone, and a vessel-specific appendix
-- A **qualified individual** and an alternate are named. Each holds a **full current copy** of the plan
-- The vessel carries an English copy of the specified sections and the **USCG approval letter**. An electronic copy is allowed
-- The plan agrees with the National Contingency Plan (40 CFR 300) and the Area Contingency Plans
-- **Annual review** within **1 month** of the anniversary of approval, recorded on the changes page
-- **Resubmit** the whole plan **6 months** before the approval period ends
-- **Revisions** for significant changes go in at least **30 days** before operation. Phone list changes need no prior approval
-- A deficiency notice can be answered by a petition within the compliance period or **7 days**, whichever is less. An appeal of non-approval is due within **21 days**
+Liability, defences, limits, COFR, claims, double hull and response plans are in [[OPA 90]].
 
 ## Vessel discharges: VGP and VIDA
 
@@ -207,8 +140,7 @@ One of **five** methods must be used by a vessel with ballast tanks operating in
 
 ## Not included (not verified against the original text)
 - The **2026 status** of the Coast Guard VIDA rule. No proposed or final rule was found, and the Coast Guard's own page is dated (it expected a rule in 2022). Check before relying on this
-- **COFR amounts** (138.100), the guarantor forms (138.110), fees, and penalties for sailing without a COFR
-- **Penalties** under OPA 90, the Clean Water Act, APPS and the ballast rules
+- **Penalties** under the Clean Water Act, APPS and the ballast rules
 - The ballast water **reporting form**, the time before arrival, the **record-keeping period**, and exemptions (151.2060 to 151.2070). Their text could not be retrieved
 - **Small vessel** and Great Lakes ballast rules, and state rules such as **California** and **Washington**
 - **MARPOL Annex IV** inside the US (cruise ship rules in Alaska) and the **Annex V** garbage rules
@@ -220,13 +152,6 @@ One of **five** methods must be used by a vessel with ballast tanks operating in
 - **46 CFR** manning, inspection and licensing rules
 
 ## Sources (checked 23 Nov 2026)
-- 33 U.S.C. 2701 Definitions: https://www.law.cornell.edu/uscode/text/33/2701
-- 33 U.S.C. 2702 Liability: https://www.law.cornell.edu/uscode/text/33/2702
-- 33 U.S.C. 2703 Defenses: https://www.law.cornell.edu/uscode/text/33/2703
-- 33 U.S.C. 2704 Limits on liability: https://www.law.cornell.edu/uscode/text/33/2704
-- 33 CFR 138.230 limits of liability (2025 CFR): https://www.govinfo.gov/content/pkg/CFR-2025-title33-vol2/pdf/CFR-2025-title33-vol2-sec138-230.pdf
-- 33 CFR 138.20 and 138.80 (COFR): https://www.law.cornell.edu/cfr/text/33/138.20 and https://www.law.cornell.edu/cfr/text/33/138.80
-- 33 CFR 155.1030 and 155.1070 (response plans): https://www.law.cornell.edu/cfr/text/33/155.1030 and https://www.law.cornell.edu/cfr/text/33/155.1070
 - EPA, Vessel Incidental Discharge National Standards of Performance, 89 FR 82074 (9 Oct 2024): https://www.govinfo.gov/content/pkg/FR-2024-10-09/html/2024-22013.htm
 - USCG, role in implementing VIDA: https://news.uscg.mil/maritime-commons/Article/3932088/the-coast-guards-role-in-implementing-the-vessel-incidental-discharge-act
 - USCG, VIDA page (interim rules): https://www.dco.uscg.mil/Our-Organization/Assistant-Commandant-for-Prevention-Policy-CG-5P/Commercial-Regulations-standards-CG-5PS/Office-of-Operating-and-Environmental-Standards/Environmental-Standards/VIDA/
