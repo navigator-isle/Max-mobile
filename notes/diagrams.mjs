@@ -1463,3 +1463,19 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 312, "300 GT may be used in place of 24 m (Reg I/1)", { a: "middle", s: 9, c: L });
   DIAGRAMS["tor-chapters"] = svg(400, 324, s);
 }
+
+// 86. Nuclear liability flow
+{
+  let s = frame(400, 300);
+  s += txt(200, 26, "Nuclear 1971: who is liable?", { a: "middle", b: true, s: 12 });
+  const bx = (x, y, w, h, a, b, c) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="#1d2040" stroke="${c}"/>` + txt(x + w / 2, y + 22, a, { a: "middle", b: true, s: 10.5 }) + (b ? txt(x + w / 2, y + 40, b, { a: "middle", s: 9, c: L }) : "");
+  s += bx(90, 40, 220, 52, "Nuclear incident at sea", "During maritime carriage of nuclear material", R);
+  s += arrow(200, 92, 200, 110, L);
+  s += bx(60, 110, 280, 52, "Is the installation operator liable?", "Paris 1960, Vienna 1963, or equally favourable national law", A);
+  s += arrow(130, 162, 90, 190, G) + arrow(270, 162, 310, 190, R);
+  s += txt(95, 180, "Yes", { a: "end", s: 9.5, c: G, b: true }) + txt(305, 180, "No", { s: 9.5, c: R, b: true });
+  s += bx(16, 190, 180, 70, "Operator alone liable", "Shipowner and carrier exonerated (Art 1)", G);
+  s += bx(204, 190, 180, 70, "Other law applies", "Maritime or national law as usual", L);
+  s += txt(200, 284, "Exceptions: intentional damage (Art 2(2)) · nuclear ship operator (Art 3)", { a: "middle", s: 9, c: Y });
+  DIAGRAMS["nuclear-flow"] = svg(400, 300, s);
+}
