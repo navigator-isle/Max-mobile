@@ -471,3 +471,39 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 214, "Renewal: may start at the 4th annual and finish by the 5th anniversary", { a: "middle", s: 9.5, c: L });
   DIAGRAMS["esp-cycle"] = svg(400, 230, s);
 }
+
+// 26. FSS Code Chapter 2: international shore connection (Table 2.1)
+{
+  let s = frame(400, 280);
+  s += txt(200, 26, "International shore connection (FSS Ch 2)", { a: "middle", b: true, s: 12 });
+  const cx = 130, cy = 136, k = 0.62; // 178 mm -> 110 px
+  const R1 = 89 * k * 1.0, R2 = 32 * k * 1.0, Rb = 66 * k * 1.0;
+  const sc = 1.0;
+  s += `<circle cx="${cx}" cy="${cy}" r="${R1 * 1.4}" fill="#2a2d4a" stroke="${T}" stroke-width="1.6"/>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${Rb * 1.4}" fill="none" stroke="${Y}" stroke-width="1" stroke-dasharray="4 3"/>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${R2 * 1.4}" fill="${BG}" stroke="${T}" stroke-width="1.4"/>`;
+  [45, 135, 225, 315].forEach(a => {
+    const x = cx + Rb * 1.4 * Math.sin(a * Math.PI / 180), y = cy - Rb * 1.4 * Math.cos(a * Math.PI / 180);
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="${BG}" stroke="${G}" stroke-width="1.4"/>`;
+  });
+  s += line(cx - R1 * 1.4, cy + R1 * 1.4 + 12, cx + R1 * 1.4, cy + R1 * 1.4 + 12, A, 1.2) + txt(cx, cy + R1 * 1.4 + 25, "OD 178 mm", { a: "middle", s: 9.5, c: A });
+  s += txt(250, 64, "Flange dimensions", { b: true, s: 10.5 });
+  const rows = [["Outside diameter", "178 mm", A], ["Inside diameter", "64 mm", T], ["Bolt circle diameter", "132 mm", Y], ["Slots", "4 × 19 mm, equally spaced", G], ["Flange thickness", "at least 14.5 mm", T], ["Bolts", "4 × 16 mm dia., 50 mm long", T], ["Rating", "1.0 N/mm²", T]];
+  rows.forEach(([a, b, c], i) => { s += txt(250, 84 + i * 26, a, { s: 9, c: L }) + txt(250, 97 + i * 26, b, { s: 10, c }); });
+  s += txt(200, 264, "Carried with a gasket, four bolts, four nuts and eight washers", { a: "middle", s: 9, c: L });
+  DIAGRAMS["fss-shore-connection"] = svg(400, 280, s);
+}
+
+// 27. FSS Code: 17 chapters (later additions highlighted)
+{
+  let s = frame(400, 320);
+  s += txt(200, 26, "FSS Code: 17 chapters", { a: "middle", b: true, s: 12 });
+  s += txt(200, 40, "Chapters 1–15 from 2000 · 16 and 17 added later", { a: "middle", s: 9.5, c: L });
+  const ch = ["General", "International shore connections", "Personnel protection", "Fire extinguishers", "Fixed gas fire-extinguishing", "Fixed foam", "Water-spraying and water-mist", "Sprinkler, detection and alarm", "Fixed detection and alarm", "Sample extraction smoke detection", "Low-location lighting", "Fixed emergency fire pumps", "Means of escape", "Fixed deck foam", "Inert gas systems", "Fixed hydrocarbon gas detection", "Helicopter facility foam"];
+  ch.forEach((t, i) => {
+    const y = 52 + i * 15.6, c = i >= 15 ? Y : A;
+    s += txt(36, y + 10, `${i + 1}`, { a: "end", b: true, c, s: 10 });
+    s += `<rect x="44" y="${y}" width="340" height="13" rx="3" fill="${c}" fill-opacity="${i >= 15 ? 0.25 : 0.12}"/>` + txt(52, y + 10, t, { s: 9.5 });
+  });
+  DIAGRAMS["fss-chapters"] = svg(400, 320, s);
+}
