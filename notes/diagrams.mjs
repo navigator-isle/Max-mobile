@@ -2283,3 +2283,27 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 232, "Accidental exposure only. Non-chemical illness: IMGS", { a: "middle", s: 8.5, c: L });
   DIAGRAMS["med-mfag"] = svg(400, 250, s);
 }
+
+// 157-158. UNCLOS
+{
+  let s = frame(400, 270);
+  s += txt(200, 24, "Maritime zones (distance from baselines)", { a: "middle", b: true, s: 12 });
+  s += `<rect x="14" y="40" width="372" height="40" rx="4" fill="#3a2f1a"/>` + txt(30, 64, "Land · internal waters", { s: 9, c: Y });
+  const z = [["Territorial sea", "to 12 nm", "Sovereignty. Innocent passage", 38, A], ["Contiguous zone", "to 24 nm", "Control to prevent breaches of laws", 38, "#9be564"], ["EEZ", "to 200 nm", "Sovereign rights over resources", 78, G], ["High seas", "beyond", "Open to all States", 70, "#c792ea"]];
+  let x = 14; const tot = 14 + 372;
+  const W = [84, 84, 108, 96]; let cx = 14;
+  z.forEach((r, i) => { const w = W[i]; s += `<rect x="${cx}" y="96" width="${w}" height="62" rx="4" fill="${r[4]}" fill-opacity=".28" stroke="${r[4]}"/>` + txt(cx + w / 2, 114, r[0], { a: "middle", b: true, s: 8.5, c: r[4] }) + txt(cx + w / 2, 130, r[1], { a: "middle", s: 8.5 }); cx += w; });
+  s += txt(200, 182, "Continental shelf: 200 nm, or edge of margin", { a: "middle", s: 9, c: Y });
+  s += txt(200, 197, "Limits: 350 nm, or 100 nm beyond the 2,500 m isobath", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["unclos-zones"] = svg(400, 272, s);
+}
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "Ship pollution: who enforces", { a: "middle", b: true, s: 12 });
+  const b = [["Flag State", "Makes laws, ensures compliance, prosecutes (Arts 211, 217)", G], ["Port State", "Investigates ships in port, stops substandard ships (Arts 218–219)", A], ["Coastal State", "Proceedings for violations in its territorial sea or EEZ (Art 220)", Y]];
+  b.forEach((r, i) => { const y = 40 + i * 54; s += `<rect x="14" y="${y}" width="372" height="46" rx="8" fill="#1d2040" stroke="${r[2]}"/>` + txt(28, y + 19, r[0], { b: true, s: 10.5, c: r[2] }); const w = r[1].split(" (")[0]; s += txt(28, y + 36, r[1].length > 72 ? r[1].slice(0, 70) + "…" : r[1], { s: 8, c: L }); });
+  s += txt(200, 214, "Foreign ship beyond the territorial sea: monetary penalties only (Art 230)", { a: "middle", s: 8.5, c: Y });
+  s += txt(200, 232, "Flag State proceedings within 6 months stop the coastal State's (Art 228)", { a: "middle", s: 8.5, c: L });
+  s += txt(200, 250, "States are liable for unlawful enforcement (Art 232)", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["unclos-pollution"] = svg(400, 262, s);
+}
