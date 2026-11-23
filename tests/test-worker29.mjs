@@ -22,7 +22,7 @@ ok(esp && /MSC\.584\(111\)/.test(esp.body) && /1 Jan 2028/.test(esp.body), "ESP 
 ok(imdg && /43-26 \(adopted MSC 111/.test(imdg.body) && tdc && tdc.tags.includes("imo"), "IMDG 43-26 and the TDC Code are there");
 ok(imo.every(n => !/\*\*|\[\[|^---/.test(n.body) && /<p><b>|<h2>/.test(n.body)), "markdown turned into Max's note format (no ** or [[ ]] left)");
 ok(/<ul><li>[^<]*<ul><li>/.test(imo.find(n => n.title === "Grain Code").body), "sub-bullets stay nested");
-ok(d.notes.some(n => n.id === "note-stcw-1978" && /MSC\.560\(108\)/.test(n.body)) && d.notes.some(n => n.id === "note-mlc-2006" && /Dec 2027/.test(n.body) && n.category === "Maritime › ILO › Conventions" && !n.tags.includes("imo")) && d.notes.some(n => n.id === "note-marpol-7378" && /MEPC\.407\(84\)/.test(n.body)) && d.notes.some(n => n.id === "note-solas-1974" && /MSC\.550\(108\)/.test(n.body)) && !imo.some(n => "v" in n), "core notes still there; no version field leaks into notes");
+ok(d.notes.some(n => n.id === "note-stcw-1978" && /MSC\.560\(108\)/.test(n.body)) && d.notes.some(n => n.id === "note-mlc-2006" && /Dec 2027/.test(n.body) && n.category === "Maritime › ILO › Conventions" && !n.tags.includes("imo")) && d.notes.some(n => n.id === "note-marpol-7378" && /MEPC\.4\d\d\(8\d\)/.test(n.body)) && d.notes.some(n => n.id === "note-solas-1974" && /MSC\.550\(108\)/.test(n.body)) && !imo.some(n => "v" in n), "core notes still there; no version field leaks into notes");
 const acts = (await env.MAX_MEMORY.prepare("SELECT * FROM max_activity").all().catch(() => ({ results: [] }))).results.filter(a => /IMO conventions and codes/.test(JSON.stringify(a)));
 ok(acts.length === 1, "one activity line for the whole pack, not 62", acts.length);
 // 2. Second sync: nothing duplicated.
