@@ -980,3 +980,50 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   });
   DIAGRAMS["ip-flow"] = svg(400, 250, s);
 }
+
+// 53. IS Code GZ curve criteria
+{
+  let s = frame(400, 318);
+  s += txt(200, 26, "IS Code 2.2: righting lever (GZ) criteria", { a: "middle", b: true, s: 12 });
+  const x0 = 50, y0 = 168, sx = 5.0, sy = 100;
+  const X = (d) => x0 + d * sx, Y_ = (m) => y0 - m * sy;
+  const gz = (d) => 0.0185 * d * Math.exp(-d / 38) * 3.2;
+  const pts = (a, b) => { let p = []; for (let d = a; d <= b; d += 1) p.push(`${X(d)},${Y_(gz(d))}`); return p; };
+  s += `<polygon points="${X(0)},${y0} ${pts(0, 30).join(" ")} ${X(30)},${y0}" fill="${A}" fill-opacity="0.3"/>`;
+  s += `<polygon points="${X(30)},${y0} ${pts(30, 40).join(" ")} ${X(40)},${y0}" fill="${Y}" fill-opacity="0.4"/>`;
+  s += line(x0, y0, x0 + 66 * sx, y0, L, 1.2) + line(x0, y0, x0, 46, L, 1.2);
+  s += `<polyline points="${pts(0, 66).join(" ")}" fill="none" stroke="${G}" stroke-width="2.2"/>`;
+  s += `<line x1="${X(30)}" y1="${y0}" x2="${X(30)}" y2="${Y_(0.2)}" stroke="${R}" stroke-width="1.5" stroke-dasharray="3 2"/>`;
+  s += `<line x1="${x0}" y1="${Y_(0.2)}" x2="${X(30)}" y2="${Y_(0.2)}" stroke="${R}" stroke-width="1" stroke-dasharray="3 2"/>`;
+  [0, 30, 40].forEach((d) => { s += txt(X(d), y0 + 13, d + "°", { a: "middle", s: 9, c: L }); });
+  s += txt(x0 - 6, 50, "GZ", { a: "end", s: 8.5, c: L });
+  s += txt(X(66), y0 + 13, "heel", { a: "end", s: 8.5, c: L });
+  s += txt(X(15), Y_(0.07), "area to 30°", { a: "middle", s: 8.5, c: T });
+  const lg = [["Area 0 to 30°: at least 0.055 m·rad", T], ["Area 0 to 40°: at least 0.09 m·rad", A], ["Area 30° to 40°: at least 0.03 m·rad", Y], ["GZ at 30° or more: at least 0.20 m", R], ["Maximum GZ at 25° or more", G], ["Initial GM at least 0.15 m", T]];
+  lg.forEach(([a, c], i) => { s += `<rect x="30" y="${198 + i * 14 - 8}" width="8" height="8" rx="2" fill="${c}"/>` + txt(46, 198 + i * 14, a, { s: 9 }); });
+  s += txt(200, 308, "Free surface is deducted; 40° or the downflooding angle, if less", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["is-gz-criteria"] = svg(400, 318, s);
+}
+
+// 54. IS Code weather criterion
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "IS Code 2.3: weather criterion", { a: "middle", b: true, s: 12 });
+  const x0 = 40, y0 = 190, sx = 4.8, sy = 120;
+  const X = (d) => x0 + d * sx, Y_ = (m) => y0 - m * sy;
+  const gz = (d) => 0.0185 * d * Math.exp(-d / 40) * 3.6;
+  s += line(x0, y0, x0 + 66 * sx, y0, L, 1.2) + line(x0, y0, x0, 48, L, 1.2);
+  let p = []; for (let d = 0; d <= 66; d += 1) p.push(`${X(d)},${Y_(gz(d))}`);
+  s += `<polyline points="${p.join(" ")}" fill="none" stroke="${G}" stroke-width="2.2"/>`;
+  s += `<line x1="${x0}" y1="${Y_(0.25)}" x2="${X(60)}" y2="${Y_(0.25)}" stroke="${Y}" stroke-width="1.5"/>`;
+  s += `<line x1="${x0}" y1="${Y_(0.375)}" x2="${X(60)}" y2="${Y_(0.375)}" stroke="${R}" stroke-width="1.5"/>`;
+  s += txt(X(60) + 4, Y_(0.25) + 3, "lw1", { s: 9, c: Y, b: true }) + txt(X(60) + 4, Y_(0.375) + 3, "lw2", { s: 9, c: R, b: true });
+  const f = (lv) => { for (let d = 1; d < 60; d += 0.1) if (gz(d) >= lv) return d; };
+  const p0 = f(0.25);
+  s += `<line x1="${X(p0)}" y1="${y0}" x2="${X(p0)}" y2="${Y_(0.25)}" stroke="${Y}" stroke-dasharray="3 2"/>`;
+  s += txt(X(p0), y0 + 13, "φ0", { a: "middle", s: 9.5, c: Y, b: true });
+  s += txt(200, 224, "Steady wind lever lw1 at 504 Pa; gust lever lw2 = 1.5 x lw1", { a: "middle", s: 9, c: T });
+  s += txt(200, 238, "Heel under steady wind φ0: at most 16° or 80% of deck-edge immersion angle", { a: "middle", s: 9, c: L });
+  s += txt(200, 252, "Area b must be at least area a (after rolling to windward by φ1)", { a: "middle", s: 9, c: L });
+  DIAGRAMS["is-weather"] = svg(400, 270, s);
+}
