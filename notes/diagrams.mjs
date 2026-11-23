@@ -2253,3 +2253,33 @@ const ship = (x, y, rot, col = T, k = 0.55) => `<g transform="translate(${x} ${y
   s += txt(200, 218, "Replaced the old Deratting Certificates", { a: "middle", s: 8.5, c: Y });
   DIAGRAMS["ihr-certs"] = svg(400, 230, s);
 }
+
+// 154-156. Medical
+{
+  let s = frame(400, 260);
+  s += txt(200, 26, "Medical certificate validity", { a: "middle", b: true, s: 12 });
+  const b = [["Standard", 2, G], ["Under age 18", 1, Y], ["Colour vision", 6, A]];
+  b.forEach((r, i) => { const y = 52 + i * 52, w = r[1] * 36; s += txt(16, y + 18, r[0], { s: 10 }) + `<rect x="110" y="${y}" width="${w}" height="26" rx="5" fill="${r[2]}" fill-opacity=".85"/>` + txt(110 + w + 8, y + 18, r[1] + (r[1] === 1 ? " year" : " years"), { b: true, s: 10, c: r[2] }); });
+  s += txt(200, 224, "Expires at sea: valid to next port with a practitioner,", { a: "middle", s: 8.5, c: L });
+  s += txt(200, 238, "for no more than 3 months", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["med-validity"] = svg(400, 250, s);
+}
+{
+  let s = frame(400, 270);
+  s += txt(200, 26, "Who gives care on board", { a: "middle", b: true, s: 12 });
+  s += `<rect x="14" y="40" width="372" height="50" rx="8" fill="#1d2040" stroke="${G}"/>` + txt(28, 60, "100+ persons, international voyage over 3 days", { b: true, s: 10, c: G }) + txt(28, 78, "A qualified medical doctor is carried", { s: 9 });
+  s += `<rect x="14" y="102" width="372" height="62" rx="8" fill="#1d2040" stroke="${A}"/>` + txt(28, 122, "All other ships", { b: true, s: 10, c: A }) + txt(28, 140, "At least one seafarer in charge of medical care,", { s: 9 }) + txt(28, 154, "or one able to give first aid. Trained to STCW", { s: 9 });
+  s += `<rect x="14" y="176" width="372" height="40" rx="8" fill="#1d2040" stroke="${Y}"/>` + txt(28, 200, "Every ship: medicine chest, equipment, medical guide", { b: true, s: 9.5, c: Y });
+  s += txt(200, 240, "Plus radio or satellite medical advice for ships at sea", { a: "middle", s: 9, c: L });
+  s += txt(200, 258, "and treatment ashore where reasonably practicable", { a: "middle", s: 9, c: L });
+  DIAGRAMS["med-care"] = svg(400, 272, s);
+}
+{
+  let s = frame(400, 250);
+  s += txt(200, 26, "MFAG: three steps", { a: "middle", b: true, s: 12 });
+  const st = [["1", "Start here", "Emergency action and diagnosis", R], ["2", "20 tables", "Short instructions for specific situations", Y], ["3", "Appendices", "Detail, list of medicines, chemicals by UN number", G]];
+  st.forEach((r, i) => { const y = 42 + i * 52; s += `<rect x="14" y="${y}" width="372" height="44" rx="8" fill="#1d2040" stroke="${r[3]}"/>` + txt(30, y + 29, r[0], { b: true, s: 16, c: r[3] }) + txt(54, y + 19, r[1], { b: true, s: 10 }) + txt(54, y + 35, r[2], { s: 8.5, c: L }); });
+  s += txt(200, 214, "Priority: airway, breathing, circulation, then decontamination", { a: "middle", s: 8.5, c: Y });
+  s += txt(200, 232, "Accidental exposure only. Non-chemical illness: IMGS", { a: "middle", s: 8.5, c: L });
+  DIAGRAMS["med-mfag"] = svg(400, 250, s);
+}
