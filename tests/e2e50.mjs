@@ -14,7 +14,7 @@ const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push
 await p.goto(ORIGIN + "/"); await p.waitForTimeout(1200);
 ok(await p.locator("#dockBrain").isVisible() && await p.locator("#dockNotes").isVisible() && await p.locator("#ovRail button").count() === 5, "home: Brain bottom-left, Notes bottom-right, overview icon rail on the left");
 const bx1 = await p.locator("#dockBrain").boundingBox(), bx2 = await p.locator("#dockNotes").boundingBox(), vp = p.viewportSize();
-ok(bx1.x < 40 && bx2.x + bx2.width > vp.width - 40 && bx1.y > vp.height - 120, "…Brain on the left, Notes on the right, both at the bottom", JSON.stringify([bx1, bx2, vp]));
+ok(bx1.x < 40 && bx2.x + bx2.width > vp.width - 40 && bx1.y < 160 && bx2.y < 160, "…Brain on the upper left, Notes on the upper right", JSON.stringify([bx1, bx2, vp]));
 await p.click("#dockNotes"); await p.waitForTimeout(500);
 ok(await p.locator("#hubTiles").isVisible() && /1/.test(await p.locator("#hubN_journal").textContent()) && /3/.test(await p.locator("#hubN_notes").textContent()), "notes hub shows three tiles with counts (3 notes, 1 journal entry)", await p.locator("#hubTiles").textContent());
 const tree = await p.locator("#noteList").textContent();
