@@ -93,7 +93,7 @@ y = await yt();
 ok(y && /^l/.test(y.id) && /🎵 Music desk/.test(await p.evaluate(() => document.getElementById("noteRefs").textContent)), "asked in his own words (no music words), Max picks music, it plays, and the 🎵 Music desk gets the credit", JSON.stringify(y));
 await say("stop the music");
 // ---- smarter brain: deep thinking + second-AI check, shown on the phone ----
-await say("Explain why SOLAS requires monthly lifeboat drills and compare it with MARPOL Annex I");
+await say("Explain why lifeboat drills are held every month and compare that with what oil pollution rules cover");
 const chips = await p.evaluate(() => [...document.querySelectorAll("#noteRefs .desk-chip")].map(x => x.textContent));
 ok(chips.includes("🧠 Deep thinking") && chips.includes("✓ Double-checked · 1 note"), "a hard question shows 🧠 Deep thinking and ✓ Double-checked", JSON.stringify(chips));
 await p.click("#noteRefs button.desk-chip"); await p.waitForTimeout(200);
