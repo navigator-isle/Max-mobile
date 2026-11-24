@@ -1,4 +1,5 @@
 [
+ "CHANGED Home layout: Brain (top left), the five overview icons (middle) and Notes (top right) are now in one row at the top, so nothing covers the chat. Only the chat box is at the bottom",
  "NEW Overview pane: a slim icon rail on the left of the home screen (Paper trading, Investments, Security, Apps, Websites). Swipe right, or tap an icon, to see all five at a glance; tap one for the details. A red dot on the shield means Security found an error. “Max improves” is no longer shown on the home screen",
  "NEW Redesign: futuristic glass look. Notes (bottom right) and Brain (bottom left) are now round symbol buttons on the home screen, and the old side panels are gone — their content is now cards on the home screen",
  "NEW Notes hub: Notes, Journal and To-do in one place. Journal entries take any attachment, photos, video, Word, Excel, PDF, and a 📍 Place tag; Max can use them as his second brain. To-do list for everything you must do",
