@@ -29,6 +29,7 @@ const notes = JSON.stringify([{ id: "n1", title: "Ballast water", category: "Mar
 await ctx.addInitScript(([base, n]) => { window.__spoken = []; Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { speak(u) { window.__spoken.push(u.text); u.onend && setTimeout(() => u.onend(), 5); }, cancel() {}, getVoices() { return []; } } }); window.SpeechSynthesisUtterance = function (t) { this.text = t; };
   if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); localStorage.setItem("jarvis_api_base_v2", base); localStorage.setItem("max_pass", "pw"); localStorage.setItem("max_notes_migrated_v1", "1"); localStorage.setItem("max_notes_v3", n); localStorage.setItem("max_tree_open", JSON.stringify(["Maritime", "Maritime › BWM"])); } }, [B, notes]);
 const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message)); p.on("dialog", d => d.accept());
+const ovTap = async s => { await p.evaluate(() => document.querySelector("#ovRail [data-ov]").click()); await p.waitForTimeout(450); await p.click(s); };
 await p.goto(B + "/"); await p.waitForTimeout(1200);
 const vis = s => p.locator(s).isVisible(), txt = s => p.locator(s).first().textContent();
 const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
@@ -42,7 +43,7 @@ const tg = await txt("#tileGuide");
 ok(/Investments/.test(tg) && !/Best rates/.test(tg) && /₱400,000 is now/.test(tg) && /₱400,586/.test(tg) && /MP2/.test(tg) && /best 7\.12%/.test(tg), "investments card: virtual value and %, each account with its best rate", tg);
 ok(await vis("#dockNotes") && await vis("#dockBrain"), "Notes and Brain are the two buttons at the bottom");
 // paper full view
-await p.click("#tilePaper"); await p.waitForTimeout(800);
+await ovTap("#tilePaper"); await p.waitForTimeout(800);
 const heads = await p.locator("#dashFullBody .pv-sec > h3, #dashFullBody .pv-h h3").allTextContents();
 ok(JSON.stringify(heads) === JSON.stringify(["Overview", "Positions and sell levels", "Trading journal", "Strategy"]) && await p.locator("#dashFullBody .ptabs").count() === 0, "paper: Overview → Positions → Trading journal → Strategy (no tabs)", JSON.stringify(heads));
 const ov = await txt("#dashFullBody .pv-sec");
@@ -65,7 +66,7 @@ await strat.first().locator("summary").click();
 ok(/dividend yield/.test(await strat.first().textContent()), "tap → the PSE rules");
 await p.click("#dashFullClose").catch(async () => { await p.keyboard.press("Escape"); }); await p.waitForTimeout(300);
 // investments full view
-await p.waitForTimeout(300); await p.click("#tileGuide"); await p.waitForTimeout(800);
+await p.waitForTimeout(300); await ovTap("#tileGuide"); await p.waitForTimeout(800);
 const inv = await txt("#dashFullBody");
 ok(/₱400,000 virtual money/.test(inv) && /Investment value/.test(inv) && /Best rates/.test(inv) && /MP2, SSS & Pag-IBIG/.test(inv), "investments: overview, investment value, and the rate lists kept", inv.slice(0, 200));
 await p.locator("#dashFullBody .pv-strat", { hasText: "High-yield savings" }).locator("summary").click();
@@ -76,16 +77,16 @@ await p.waitForTimeout(300);
 ok(/1 with errors/.test(await txt("#tileSites")) && /Hobby Isle/.test(await txt("#tileSites")) && /2 errors/.test(await txt("#tileSites")), "websites card: errors per website", await txt("#tileSites"));
 ok(/1 with errors/.test(await txt("#tileApps")) && /Passage Planner/.test(await txt("#tileApps")) && /No errors/.test(await txt("#tileApps")), "apps card: errors per app", await txt("#tileApps"));
 ok(/Security/.test(await txt("#tileStatus")) && /No errors/.test(await txt("#tileStatus")), "security card: errors only (none now)", await txt("#tileStatus"));
-await p.click("#tileSites"); await p.waitForTimeout(600); await p.click("#dashFullBody .st-item summary"); await p.waitForTimeout(200);
+await ovTap("#tileSites"); await p.waitForTimeout(600); await p.click("#dashFullBody .st-item summary"); await p.waitForTimeout(200);
 const site = await txt("#dashFullBody .st-item");
 ok(/Day\s*38\s*61/.test(site) && /Week\s*244\s*402/.test(site) && /Month\s*1,021\s*1,730/.test(site) && /meta description/.test(site), "a website: overview, its errors, visitors per day / week / month", site);
 await p.click("#dashFullClose").catch(async () => { await p.keyboard.press("Escape"); }); await p.waitForTimeout(300);
-await p.waitForTimeout(300); await p.click("#tileApps"); await p.waitForTimeout(600);
+await p.waitForTimeout(300); await ovTap("#tileApps"); await p.waitForTimeout(600);
 await p.locator("#dashFullBody .st-item", { hasText: "Passage Planner" }).locator("summary").click();
 ok(/Google Play/.test(await p.locator("#dashFullBody .st-item", { hasText: "Passage Planner" }).textContent()) && /build failed/.test(await txt("#dashFullBody")), "an app: overview and status");
 await p.click("#dashFullClose").catch(async () => { await p.keyboard.press("Escape"); }); await p.waitForTimeout(300);
 health = { ...health, emails: "last 2026-11-22T09:45Z “Max weekly summary” failed: Google: insufficient permission; 0/1 recent sends OK" };
-await p.waitForTimeout(300); await p.click("#tileStatus"); await p.waitForTimeout(300); await p.click('[data-dash="status-refresh"]'); await p.waitForTimeout(900);
+await p.waitForTimeout(300); await ovTap("#tileStatus"); await p.waitForTimeout(300); await p.click('[data-dash="status-refresh"]'); await p.waitForTimeout(900);
 ok(/1 error/.test(await txt("#dashFullBody")) && /email didn’t go out/.test(await txt("#dashFullBody")), "security: a failed email shows as an error", (await txt("#dashFullBody")).slice(0, 200));
 await p.click("#dashFullClose").catch(async () => { await p.keyboard.press("Escape"); }); await p.waitForTimeout(300);
 // notes

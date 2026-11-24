@@ -30,6 +30,7 @@ const ctx = await b.newContext({ ...devices["Pixel 7"] });
 await ctx.addInitScript(([s, m]) => { if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); } (new Function("return " + m)())(); },
   [{ jarvis_api_base_v2: WK, max_pass: "pw", max_notes_migrated_v1: "1" }, mock.toString()]);
 const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message));
+const ovTap = async s => { await p.evaluate(() => document.querySelector("#ovRail [data-ov]").click()); await p.waitForTimeout(450); await p.click(s); };
 const reqs = [];
 const data = { nc: { open: [{ text: "Paper trading hasn't checked crypto since #", status: "corrective", first: "2026-11-20", days: 3, repeats: 1, action: "Max rotates sources" }], closed: [{ text: "Old error", closedAt: "2026-11-22" }], repeats: 1 },
   audit: { day: "2026-11-23", days: 7, done: 40, failed: 3, newNc: ["X"], closed: ["Y"], repeats: ["Z"], open: [], verdict: "Not satisfactory: 1 error(s) came back after being closed." },
@@ -43,7 +44,7 @@ await p.goto(ORIGIN + "/"); await p.waitForTimeout(1500);
 await p.evaluate(() => window.maxOpenDrawer("L")); await p.waitForTimeout(800);
 const tile = await p.locator("#tileImprove").textContent();
 ok(/1/.test(tile) && /open finding/.test(tile) && /1 rule learned/.test(tile) && /came back after closing/.test(tile), "the card tile shows open findings, rules and repeats", tile);
-await p.click("#tileImprove"); await p.waitForTimeout(800);
+await p.evaluate(() => window.maxShowFull("improve")); await p.waitForTimeout(800);
 let body = await p.locator("#dashFullBody").textContent();
 ok(/Not satisfactory/.test(body) && /REPEAT/.test(body) && /Paper trading hasn't checked crypto/.test(body) && /Say the report is due within 5 days/.test(body), "audit verdict, REPEAT flag and learned rule are shown", body.slice(0, 300));
 ok(/Crypto/.test(body) && /42% right of 12/.test(body) && /poor, treat as noise/.test(body) && /too early \(3 of 10 results\)/.test(body), "decision journal shows the score per area and says too early when under 10", body);
