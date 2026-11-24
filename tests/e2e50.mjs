@@ -12,7 +12,7 @@ await ctx.addInitScript(([n]) => { if (!sessionStorage.getItem("s")) { sessionSt
   [[mk("a", "Cargo Gear", "Maritime › Topics", "<p>gear</p>"), mk("b", "Ship Stability", "Maritime › Topics", "<p>stability</p>"), mk("c", "Loose note", "Unsorted", "<p>x</p>"), mk("j1", "Mon entry", "Journal", "<p>Long day at sea. 📍 <a href=\"https://www.openstreetmap.org/?mlat=14.79&mlon=120.27\">Subic Bay</a></p>")]]);
 const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message));
 await p.goto(ORIGIN + "/"); await p.waitForTimeout(1200);
-ok(await p.locator("#dockBrain").isVisible() && await p.locator("#dockNotes").isVisible() && await p.locator("#homeCards").count() === 1, "home: Brain bottom-left, Notes bottom-right, dashboard cards on home");
+ok(await p.locator("#dockBrain").isVisible() && await p.locator("#dockNotes").isVisible() && await p.locator("#ovRail button").count() === 5, "home: Brain bottom-left, Notes bottom-right, overview icon rail on the left");
 const bx1 = await p.locator("#dockBrain").boundingBox(), bx2 = await p.locator("#dockNotes").boundingBox(), vp = p.viewportSize();
 ok(bx1.x < 40 && bx2.x + bx2.width > vp.width - 40 && bx1.y > vp.height - 120, "…Brain on the left, Notes on the right, both at the bottom", JSON.stringify([bx1, bx2, vp]));
 await p.click("#dockNotes"); await p.waitForTimeout(500);
