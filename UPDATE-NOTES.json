@@ -1,4 +1,8 @@
 [
+ "NEW Answers from notes only: for regulation questions (SOLAS, MARPOL, STCW, MLC, ISM, MARINA…) Max answers only from your verified notes, with the note's name and an exact quote that the server checks. If it isn't in your notes he says so instead of guessing. Say “search the web” to skip this",
+ "NEW Free AI meter (Security screen): each free AI shows OK, Resting (with minutes left) or Failing, today's answers, failures, limit hits and the last problem. An alert appears when the main AI (Gemini) is out of quota",
+ "NEW Hidden errors now count: the app reports errors it used to swallow silently, and the daily check lists the real ones under the Max app on the Security screen. This already found and fixed a bug: the Maritime folder set-up failed every time Max started",
+ "CHANGED Overview: Paper trading and Investments now show every row in one glance",
  "CHANGED Home layout: Brain (top left), the five overview icons (middle) and Notes (top right) are now in one row at the top, so nothing covers the chat. Only the chat box is at the bottom",
  "NEW Overview pane: a slim icon rail on the left of the home screen (Paper trading, Investments, Security, Apps, Websites). Swipe right, or tap an icon, to see all five at a glance; tap one for the details. A red dot on the shield means Security found an error. “Max improves” is no longer shown on the home screen",
  "NEW Redesign: futuristic glass look. Notes (bottom right) and Brain (bottom left) are now round symbol buttons on the home screen, and the old side panels are gone — their content is now cards on the home screen",

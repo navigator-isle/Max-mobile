@@ -1,0 +1,56 @@
+// Phone: hidden errors are reported to the server; Security shows the free AI meter (24 Nov 2026).
+if (!process.env.SHOT_DIR) process.env.SHOT_DIR = (await import("node:os")).tmpdir();
+import http from "node:http"; import fs from "node:fs"; import path from "node:path"; import { createRequire } from "node:module";
+const require = createRequire(process.env.PW_REQUIRE || import.meta.url); const { chromium, devices } = require("playwright");
+const [, , pagePath, workerPath] = process.argv;
+let cfCalls = 0; const seen = [], days = [];
+let brainAsked = [];
+globalThis.fetch = async (u, o = {}) => { const url = String(u);
+  if (url.includes("generativelanguage")) { const q = JSON.parse(o.body).contents.at(-1).parts[0].text; brainAsked.push(q);
+    const action = /where should i put my money/i.test(q) ? { type: "home_dash", details: { name: "guide" } } : null;
+    return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ reply: action ? "Here." : "Answer to: " + q, action }) }] } }] })); }
+  return new Response("{}", { status: 404 }); };
+const worker = (await import(workerPath)).default;
+const ORIGIN = "http://127.0.0.1:8076", WK = "http://127.0.0.1:8875";
+let env = { GEMINI_API_KEY: "k", ALLOWED_ORIGIN: ORIGIN, MAX_PASSCODE: "pw" };
+const sW = http.createServer(async (req, res) => { const c = []; for await (const x of req) c.push(x);
+  const r = await worker.fetch(new Request(WK + req.url, { method: req.method, headers: req.headers, body: ["GET", "HEAD", "OPTIONS"].includes(req.method) ? undefined : Buffer.concat(c) }), env);
+  res.writeHead(r.status, Object.fromEntries(r.headers)); res.end(Buffer.from(await r.arrayBuffer())); }).listen(8875);
+const dir = path.dirname(pagePath);
+const sP = http.createServer((q, r) => { const f = q.url.split("?")[0].endsWith("sw.js") ? "sw.js" : "index.html"; r.writeHead(200, { "Content-Type": f === "sw.js" ? "text/javascript" : "text/html" }); r.end(fs.readFileSync(path.join(dir, f))); }).listen(8076);
+let pass = 0, fail = 0; const ok = (c, l, x = "") => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + l + (c ? "" : "  → " + x)); };
+const b = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}), args: ["--no-sandbox"] });
+const mock = () => { window.__spoken = []; window.__q = []; window.__opened = [];
+  class R { start() { if (this.continuous) return; const t = window.__q.shift(); setTimeout(() => { if (t) this.onresult && this.onresult({ results: [[{ transcript: t }]] }); else this.onerror && this.onerror({ error: "no-speech" }); this.onend && this.onend(); }, 60); } stop() {} abort() {} }
+  window.webkitSpeechRecognition = R; window.SpeechRecognition = R;
+  Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { speak(u) { window.__spoken.push(u.text); u.onstart && u.onstart(); setTimeout(() => u.onend && u.onend(), 15); }, cancel() {}, getVoices() { return []; } } });
+  window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+  window.open = (u) => { window.__opened.push(u); return {}; }; };
+const ctx = await b.newContext({ ...devices["Pixel 7"] });
+await ctx.addInitScript(([s, m]) => { if (!sessionStorage.getItem("s")) { sessionStorage.setItem("s", 1); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); } (new Function("return " + m)())(); },
+  [{ jarvis_api_base_v2: WK, max_pass: "pw", max_notes_migrated_v1: "1" }, mock.toString()]);
+const p = await ctx.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message));
+const ovTap = async s => { await p.evaluate(() => document.querySelector("#ovRail [data-ov]").click()); await p.waitForTimeout(450); await p.click(s); };
+const quietPosts = [];
+await p.route("**/api/quiet", async r => { quietPosts.push(JSON.parse(r.request().postData() || "{}")); return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: '{"ok":true}' }); });
+await p.route("**/health**", async r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ version: "max-worker-2026-11-24a", google: "linked", database: "ready", paperTrading: "running — last step ok", emails: "ok", guard: "all fine",
+  aiMeter: { summary: "2 of 3 AIs fine", alerts: ["Gemini (Max's main brain) is out of quota or busy — back in about 12 min; Max is using backup AIs"], list: [
+    { name: "gemini", label: "Gemini (main brain)", status: "resting", restMin: 12, ok: 20, fail: 6, limitHits: 4, lastErr: "429 quota exceeded", studyCalls: 33, studyCap: 40 },
+    { name: "groq", label: "Groq", status: "ok", restMin: 0, ok: 14, fail: 0, limitHits: 0, lastErr: "" },
+    { name: "cloudflare", label: "Cloudflare AI", status: "idle", restMin: 0, ok: 0, fail: 0, limitHits: 0, lastErr: "" }] } }) }));
+await p.goto(ORIGIN + "/"); await p.waitForTimeout(1500);
+// hidden errors
+await p.evaluate(() => { window.maxQuiet(new TypeError("Cannot read properties of undefined (reading 'a')"), "unitTest"); window.maxQuiet(new DOMException("x", "AbortError"), "ignored"); window.maxQuiet(new Error("Failed to fetch"), "offlineNoise"); });
+const qlog = await p.evaluate(() => window.__maxQuietLog); ok(qlog.filter(x => x.w !== "unitTest").length === 0, "starting Max hides no errors (a real one — the maritime folders set-up — was found and fixed this way)", JSON.stringify(qlog));
+ok(qlog.some(x => x.w === "unitTest") && !qlog.some(x => /ignored|offlineNoise/.test(x.w)), "a swallowed error is counted; aborts and offline noise are not", JSON.stringify(qlog));
+ok(await p.evaluate(() => window.maxQuiet(new Error("boom"), "w", "fallback") === "fallback"), "maxQuiet hands back the fallback value so promise chains keep working");
+await p.evaluate(() => window.maxQuietFlush()); await p.waitForTimeout(500);
+const items = quietPosts.flatMap(x => x.items || []);
+ok(items.some(i => i.w === "unitTest" && /Cannot read/.test(i.m)) && !items.some(i => /Abort|ignored|offlineNoise/.test(i.w + i.m)), "the error is sent to Max's server for the Security screen", JSON.stringify(items));
+// Security: free AI meter
+await ovTap("#tileStatus"); await p.waitForTimeout(900);
+const body = await p.locator("#dashFullBody").textContent();
+ok(/Free AI meter/.test(body) && /Gemini \(main brain\)/.test(body) && /Resting 12 min/.test(body) && /Not used today/.test(body) && /6 failed/.test(body) && /4 limit hits/.test(body) && /study 33\/40/.test(body) && /429 quota exceeded/.test(body), "Security shows each AI: OK, resting with minutes left, failures, limit hits", body.slice(0, 400));
+ok(/out of quota or busy/.test(body), "an alert says the main AI is out of quota");
+ok(errs.length === 0, "no script errors", errs.join("|"));
+await b.close(); sW.close(); sP.close(); console.log(pass + " passed, " + fail + " failed"); process.exit(fail ? 1 : 0);

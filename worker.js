@@ -44,6 +44,48 @@ function asGemini(text, model, wantJson) {
   if (wantJson || /^\s*\{/.test(t) || /\{\s*"reply"\s*:/.test(t)) { const m = t.match(/\{[\s\S]*\}/); if (m) t = m[0]; }
   return {ok: true, status: 200, model, backup: true, data: {candidates: [{content: {parts: [{text: t}]}}]}};
 }
+// ---------- Free AI meter (24 Nov 2026, Mark): which AI is running out or failing ----------
+const AI_KEY = "max_aihealth_v1";
+const aiDelta = new Map(); let aiFlushAt = 0;
+function aiNote(env, name, ok, status = 0, err = "") {
+  try {
+    const d = aiDelta.get(name) || {ok: 0, fail: 0, r429: 0, lastOk: 0, lastFail: 0, lastErr: ""}, now = Date.now();
+    if (ok) { d.ok++; d.lastOk = now; } else { d.fail++; d.lastFail = now; if (status === 429) d.r429++; d.lastErr = cleanText((status ? status + " " : "") + String(err || ""), 90); }
+    aiDelta.set(name, d);
+    if (env && env.MAX_MEMORY && now - aiFlushAt > 15000) { aiFlushAt = now; aiFlush(env).catch(() => {}); }
+  } catch {}
+}
+async function aiFlush(env) {
+  if (!env.MAX_MEMORY) return null;
+  const day = new Date().toISOString().slice(0, 10);
+  let S = {}; try { S = JSON.parse(await srvSetting(env, AI_KEY) || "{}") || {}; } catch {}
+  if (S.day !== day) S = {day, p: {}};
+  for (const [n, d] of aiDelta) {
+    const c = S.p[n] || (S.p[n] = {ok: 0, fail: 0, r429: 0, lastOk: 0, lastFail: 0, lastErr: ""});
+    c.ok += d.ok; c.fail += d.fail; c.r429 += d.r429; c.lastOk = Math.max(c.lastOk, d.lastOk); if (d.lastFail >= c.lastFail) { c.lastFail = d.lastFail; if (d.lastErr) c.lastErr = d.lastErr; }
+  }
+  if (aiDelta.size) { aiDelta.clear(); await srvSetting(env, AI_KEY, JSON.stringify(S)); }
+  return S;
+}
+async function aiMeter(env, now = Date.now()) {
+  const S = (await aiFlush(env).catch(() => null)) || {p: {}}, use = env.MAX_MEMORY ? await brainUsage(env).catch(() => null) : null;
+  const restMin = names => { const left = names.map(m => Math.max(skipUntil.get(m) || 0, backupSkip.get(m) || 0) - now); return left.length && left.every(x => x > 0) ? Math.ceil(Math.min(...left) / 60e3) : 0; };
+  const list = [];
+  const add = (name, label, models, extra) => { const st = (S.p || {})[name] || {ok: 0, fail: 0, r429: 0, lastOk: 0, lastFail: 0, lastErr: ""};
+    const rest = Math.max(restMin(models), (backupSkip.get("p:" + name) || 0) > now ? Math.ceil((backupSkip.get("p:" + name) - now) / 60e3) : 0);
+    const total = st.ok + st.fail, failing = !rest && st.fail >= 3 && st.fail >= st.ok;
+    list.push({name, label, status: rest ? "resting" : failing ? "failing" : total ? "ok" : "idle", restMin: rest, ok: st.ok, fail: st.fail, limitHits: st.r429, lastErr: st.lastErr || "", lastOk: st.lastOk || 0, ...(extra || {})}); };
+  if (env.GEMINI_API_KEY) add("gemini", "Gemini (main brain)", modelChain(env), use ? {studyCalls: use.gem, studyCap: BRAIN_GEMINI_CAP} : {});
+  if (env.GROQ_API_KEY) add("groq", "Groq", GROQ_MODELS);
+  if (env.AI && typeof env.AI.run === "function") add("cloudflare", "Cloudflare AI", WAI_MODELS);
+  for (const [n, l, k] of [["openrouter", "OpenRouter", env.OPENROUTER_API_KEY], ["cerebras", "Cerebras", env.CEREBRAS_API_KEY], ["mistral", "Mistral", env.MISTRAL_API_KEY]]) if (k) add(n, l, []);
+  const out = list.filter(x => x.status === "resting" || x.status === "failing"), main = list.find(x => x.name === "gemini");
+  const alerts = [];
+  if (main && (main.status === "resting" || main.status === "failing")) alerts.push(`Gemini (Max's main brain) is ${main.status === "resting" ? "out of quota or busy — back in about " + main.restMin + " min; Max is using backup AIs" : "failing (" + (main.lastErr || "no answer") + ")"}`);
+  else if (list.length > 1 && out.length >= Math.ceil(list.length / 2)) alerts.push(`${out.length} of ${list.length} free AIs are resting or failing`);
+  if (main && main.studyCap && main.studyCalls >= main.studyCap * 0.8) alerts.push(`Gemini study quota is ${Math.round(100 * main.studyCalls / main.studyCap)}% used today`);
+  return {day: S.day || new Date(now).toISOString().slice(0, 10), list, alerts, summary: list.length ? `${list.length - out.length} of ${list.length} AIs fine` : "no AI configured"};
+}
 async function backupBrain(env, payload) {
   const req = textOnly(payload); if (!req) return null;
   const now = Date.now();
@@ -54,7 +96,8 @@ async function backupBrain(env, payload) {
       let res = await fetch("https://api.groq.com/openai/v1/chat/completions", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + env.GROQ_API_KEY}, body: JSON.stringify(body)});
       if (res.status === 400 && req.wantJson) { delete body.response_format; res = await fetch("https://api.groq.com/openai/v1/chat/completions", {method: "POST", headers: {"Content-Type": "application/json", Authorization: "Bearer " + env.GROQ_API_KEY}, body: JSON.stringify(body)}); }
       const d = await res.json().catch(() => ({}));
-      if (res.ok && d.choices?.[0]?.message?.content) return asGemini(d.choices[0].message.content, "groq:" + m, req.wantJson);
+      if (res.ok && d.choices?.[0]?.message?.content) { aiNote(env, "groq", true); return asGemini(d.choices[0].message.content, "groq:" + m, req.wantJson); }
+      aiNote(env, "groq", false, res.status, d?.error?.message || "");
       if ([401, 403].includes(res.status)) break;
       backupSkip.set(m, now + (res.status === 429 ? 10 * 60e3 : 30 * 60e3));
     } catch { /* try the next one */ }
@@ -64,9 +107,10 @@ async function backupBrain(env, payload) {
     try {
       const r = await env.AI.run(m, {messages: req.messages, max_tokens: Math.min(req.maxTokens, 4096), temperature: req.temperature});
       const text = typeof r === "string" ? r : r?.response ?? r?.choices?.[0]?.message?.content ?? r?.output_text ?? "";
-      if (text) return asGemini(typeof text === "string" ? text : JSON.stringify(text), "workers-ai:" + m, req.wantJson);
+      if (text) { aiNote(env, "cloudflare", true); return asGemini(typeof text === "string" ? text : JSON.stringify(text), "workers-ai:" + m, req.wantJson); }
+      aiNote(env, "cloudflare", false, 0, "empty answer");
       backupSkip.set(m, now + 30 * 60e3);
-    } catch (e) { backupSkip.set(m, now + (/capacity|3040|429|neurons|limit/i.test(String(e?.message)) ? 15 * 60e3 : 60 * 60e3)); }
+    } catch (e) { aiNote(env, "cloudflare", false, /429|limit|capacity/i.test(String(e?.message)) ? 429 : 0, e?.message); backupSkip.set(m, now + (/capacity|3040|429|neurons|limit/i.test(String(e?.message)) ? 15 * 60e3 : 60 * 60e3)); }
   }
   return null;
 }
@@ -94,12 +138,13 @@ async function gemini(env, payload, opts = {}) {
       // A one-off hiccup (server busy, dropped connection) gets one quick retry on the same model.
       if (res.status >= 500) { await new Promise(r => setTimeout(r, 600)); res = await send(m); }
     } catch {
-      try { await new Promise(r => setTimeout(r, 600)); res = await send(m); } catch { networkError = true; continue; }
+      try { await new Promise(r => setTimeout(r, 600)); res = await send(m); } catch { networkError = true; aiNote(env, "gemini", false, 0, "network error"); continue; }
     }
     const data = await res.json().catch(() => ({}));
-    if (res.ok) { lastGood = m; skipUntil.delete(m); return {ok:true, status:200, data, model:m}; }
+    if (res.ok) { lastGood = m; skipUntil.delete(m); aiNote(env, "gemini", true); return {ok:true, status:200, data, model:m}; }
     last = {ok:false, status:res.status, data, model:m};
     const msg = String(data?.error?.message || "");
+    aiNote(env, "gemini", false, res.status, msg);
     const modelProblem = [403, 404, 429].includes(res.status) || (res.status === 400 && /model|no longer available|not found|deprecated|retired|not supported for/i.test(msg) && !/tool|search/i.test(msg));
     if (modelProblem) { skipUntil.set(m, now + (res.status === 429 ? 10 * 60e3 : 60 * 60e3)); continue; }
     if (res.status >= 500) { skipUntil.set(m, now + 3 * 60e3); continue; } // busy even after a retry: rest it a few minutes
@@ -130,7 +175,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-23c";
+const WORKER_VERSION = "max-worker-2026-11-24a";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -545,9 +590,9 @@ async function brainAsk(env, system, prompt, tokens = 4096, avoid = "") {
   for (let i = 0; i < P.length; i++) {
     const p = P[(start + i) % P.length]; let r = null;
     try { r = await p.run(req); } catch { r = null; }
-    if (r && r.text) { use.calls[p.name] = (use.calls[p.name] || 0) + 1; if (p.gem) use.gem++; let t = String(r.text).replace(/<think>[\s\S]*?<\/think>/g, "").replace(/```(?:json)?/g, ""); const m = t.match(/\{[\s\S]*\}/);
-      try { return {data: JSON.parse(m ? m[0] : t), model: p.name + ":" + String(r.model || "").replace(/^.*\//, "")}; } catch { use.fails[p.name] = (use.fails[p.name] || 0) + 1; continue; } }
-    use.fails[p.name] = (use.fails[p.name] || 0) + 1;
+    if (r && r.text) { aiNote(env, p.name, true); use.calls[p.name] = (use.calls[p.name] || 0) + 1; if (p.gem) use.gem++; let t = String(r.text).replace(/<think>[\s\S]*?<\/think>/g, "").replace(/```(?:json)?/g, ""); const m = t.match(/\{[\s\S]*\}/);
+      try { return {data: JSON.parse(m ? m[0] : t), model: p.name + ":" + String(r.model || "").replace(/^.*\//, "")}; } catch { aiNote(env, p.name, false, 0, "unreadable answer"); use.fails[p.name] = (use.fails[p.name] || 0) + 1; continue; } }
+    aiNote(env, p.name, false, 0, "no answer"); use.fails[p.name] = (use.fails[p.name] || 0) + 1;
   }
   return {error: "no free AI answered"};
 }
@@ -2042,6 +2087,7 @@ async function guardRun(env, opts = {}) {
     } catch (e) { report.builds.push({repo, error: cleanText(String(e.message), 100)}); }
   }
   // 3) Max himself: brains, the paper trader, Google connection, failures in the activity log.
+  try { if (env.MAX_MEMORY) { const qp = quietProblems(await quietLoad(env), t0); problems.push(...qp); if (qp.length) report.max.push("The app hid " + qp.length + " error type" + (qp.length > 1 ? "s" : "") + " that now show here"); } } catch {}
   try { const e = await embedTexts(env, ["guard check"], "doc"); report.max.push("Gemini key working (" + e.model + ")"); }
   catch (e) { problems.push("Gemini (Max's main brain) isn't answering: " + cleanText(String(e.message), 80)); }
   const resting = [...skipUntil].filter(([, t]) => t > Date.now()).map(([m]) => m);
@@ -2275,6 +2321,27 @@ async function callsPrompt(env) {
 // ---- two-AI check on high-stakes answers (23 Nov 2026, Mark) ----
 // Regulations, money and anything irreversible: a second AI answers on its own, then the two answers are compared. A disagreement is shown, never hidden.
 const HIGH_STAKES = /\b(solas|marpol|stcw|mlc|isps|ism code|imo|convention|regulations?|cfr|deadline|penalt(?:y|ies)|fines?|legal|illegal|certificates?|survey|detention|invest(?:ing|ment)?|stocks?|crypto|loans?|interest rate|insurance|tax(?:es)?|mp2|uitf|how much (?:should|can)|should i (?:buy|sell|pay|invest|send|delete|cancel)|delete|erase|transfer|wire|cancel)\b|[₱$]\s?\d/i;
+
+// ---------- Answers from notes only (24 Nov 2026, Mark) ----------
+// For regulation questions Max answers only from Mark's verified notes: an exact quote and the note's name, checked in code.
+// If the notes do not cover it, he says so instead of guessing.
+const REG_QUESTION = /\b(solas|marpol|stcw|mlc|isps|ism|colregs?|load ?line|tonnage|ilo|imo|iacs|marina|regulations?|conventions?|annex(?:es)?|resolutions?|circulars?|msc\.|mepc|psc|port state|flag state|certificates? (?:valid|validity|required)|requirements?|minimum (?:manning|rest|age)|hours of rest|code)\b/i;
+const REG_SKIP = /\b(search the web|google|online|internet|latest news|from the web|ignore (?:my )?notes)\b/i;
+const NOTE_NOT_FOUND = "That isn't in your verified notes, so I won't guess. Rules and numbers must be exact. Add or open the right note, or ask me to research it and check it with you first.";
+const normQ = t => String(t || "").toLowerCase().replace(/[*_`#>\[\]()]/g, "").replace(/[\u2018\u2019\u201c\u201d]/g, "'").replace(/\s+/g, " ").trim();
+async function notesOnly(env, question, notesText) {
+  const text = String(notesText || "");
+  const titles = [...text.matchAll(/^\[(.+?) · [^\]]*\]/gm)].map(m => m[1]);
+  if (!titles.length || text.length < 80) return {reply: NOTE_NOT_FOUND, notInNotes: true, why: "no note"};
+  const r = await brainAsk(env, "You answer ONLY from the NOTES the person wrote. Never use outside knowledge. Reply {\"found\":true|false,\"answer\":\"at most 120 words, plain simple English\",\"quote\":\"ONE sentence copied EXACTLY, character for character, from the note that supports the answer\",\"note\":\"the exact title in [brackets] of that note\"}. If the notes do not clearly answer the question, reply {\"found\":false}.",
+    `QUESTION: ${cleanText(question, 600)}\n\nNOTES:\n${text.slice(0, 14000)}`, 900);
+  if (!r?.data) return null;
+  const d = r.data, quote = String(d.quote || "").trim(), note = String(d.note || "").trim();
+  if (d.found !== true || !d.answer) return {reply: NOTE_NOT_FOUND, notInNotes: true, why: "not found"};
+  const title = titles.find(t => t.toLowerCase() === note.toLowerCase()) || titles.find(t => note && (t.toLowerCase().includes(note.toLowerCase()) || note.toLowerCase().includes(t.toLowerCase())));
+  if (quote.length < 20 || !title || !normQ(text).includes(normQ(quote))) return {reply: NOTE_NOT_FOUND, notInNotes: true, why: "quote not in notes"};
+  return {reply: cleanText(String(d.answer), 900) + `\n\n📌 From your note “${title}”:\n> ${quote}`, fromNotes: {note: title, quote, verified: true}};
+}
 const TWOAI_KEY = "max_twoai_v1";
 async function twoAiCheck(env, question, answer, notesText, usedModel = "gemini") {
   const q = cleanText(question, 600), a = cleanText(answer, 1500);
@@ -2291,6 +2358,36 @@ async function twoAiCheck(env, question, answer, notesText, usedModel = "gemini"
     : `I'm not sure about this one. A second AI and I answered on our own and did not agree, so I won't pick one for you.\n\n**What I said:** ${answer}\n\n**Second AI (${by}):** ${other}\n\n**Where we differ:** ${diffs.length ? diffs.join("; ") : "see the two answers"}\n\nCheck your notes or the official source before you act on this.`;
   return {reply, agree: judge.data.agree, by, differences: diffs};
 }
+
+// ---------- Hidden errors (24 Nov 2026, Mark) ----------
+// The app used to swallow ~140 errors silently. Now every swallowed error is counted here and the daily check lists the real ones.
+const QUIET_KEY = "max_quiet_v1";
+const QUIET_SEVERE = /ReferenceError|is not a function|is not defined|Cannot read|Cannot set/i;
+async function quietLoad(env) { try { return JSON.parse((env.MAX_MEMORY && await srvSetting(env, QUIET_KEY)) || "{}") || {}; } catch { return {}; } }
+async function quietAdd(env, items, now = Date.now()) {
+  const Q = await quietLoad(env);
+  for (const it of (Array.isArray(items) ? items : []).slice(0, 40)) {
+    const w = cleanText(String(it?.w || "?"), 60), m = cleanText(String(it?.m || ""), 140), key = (w + "|" + m).slice(0, 180);
+    const n = Math.max(1, Math.min(500, Number(it?.n) || 1));
+    const q = Q[key] || (Q[key] = {w, m, n: 0, first: now, recent: []});
+    q.n += n; q.last = now; q.recent = [...(q.recent || []), ...Array(Math.min(n, 5)).fill(now)].slice(-30);
+  }
+  for (const [k, q] of Object.entries(Q)) q.recent = (q.recent || []).filter(t => now - t < 36 * 3600e3);
+  const keys = Object.keys(Q).sort((a, b) => (Q[b].last || 0) - (Q[a].last || 0));
+  for (const k of keys.slice(80)) delete Q[k];
+  for (const k of keys.slice(0, 80)) if (now - (Q[k].last || 0) > 14 * 864e5) delete Q[k];
+  await srvSetting(env, QUIET_KEY, JSON.stringify(Q));
+  return Q;
+}
+function quietProblems(Q, now = Date.now()) {
+  const out = [];
+  for (const q of Object.values(Q || {})) {
+    const day = (q.recent || []).filter(t => now - t < 26 * 3600e3).length;
+    if (day >= 3 || (day >= 1 && QUIET_SEVERE.test(q.m))) out.push(`Max app: "${q.w}" failed ${day}× today — ${q.m || "no message"}`);
+  }
+  return out.slice(0, 8);
+}
+
 // ---------- Code backup (works without GitHub) ----------
 // build.mjs packs all of Max's code into site/_src/max-code.zip; it ships with the app but is never public.
 async function codeBackup(env) {
@@ -4380,6 +4477,7 @@ async function homeRoutes(request, env, url, origin) {
     }
     if (url.pathname === "/api/home/status" && request.method === "GET") {
       const rep = env.MAX_MEMORY ? await setting(env, "max_srv_status_report", {sites: [], apps: []}) : {sites: [], apps: []};
+      try { const qp = env.MAX_MEMORY ? quietProblems(await quietLoad(env)) : []; if (qp.length && Array.isArray(rep.apps)) { const me = rep.apps.find(a => /^max$/i.test(a?.name || a?.app || "")); if (me) me.errors = [...new Set([...(me.errors || []), ...qp])]; } } catch {}
       return json({...rep, summary: statusSummary(rep), note: rep.at ? undefined : "Max checks your websites and apps once a day (from about 10 am Manila) — the first report is on its way."}, 200, origin, env);
     }
     if (url.pathname === "/api/home/guide" && request.method === "GET") {
@@ -4584,7 +4682,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {callsSync, callsRates, callsScore, callsPrompt, twoAiCheck, HIGH_STAKES, ncIntake, deckLogDay, weeklyAudit, examGrade, stopStartContinue, improveDaily, improveWeekly, improveStatus, rulesPrompt, paperCryptoStep, deepCleanup, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {callsSync, quietAdd, quietLoad, notesOnly, REG_QUESTION, quietProblems, aiNote, aiMeter, aiFlush, callsRates, callsScore, callsPrompt, twoAiCheck, HIGH_STAKES, ncIntake, deckLogDay, weeklyAudit, examGrade, stopStartContinue, improveDaily, improveWeekly, improveStatus, rulesPrompt, paperCryptoStep, deepCleanup, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -4613,7 +4711,7 @@ export default {
       const resting = [...skipUntil, ...backupSkip].filter(([, t]) => t > Date.now()).map(([m, t]) => m + " (back in " + Math.ceil((t - Date.now()) / 60e3) + " min)");
       const health = {ok:true, service:"Max backend", model:modelFor(env), models:modelChain(env),
         brainChain: [...(env.ANTHROPIC_API_KEY ? [cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE] : []), ...modelChain(env), ...(env.GROQ_API_KEY ? GROQ_MODELS.map(m => "groq:" + m) : []), ...(env.AI ? WAI_MODELS.map(m => "workers-ai:" + m) : [])],
-        resting, departments: DEPT_IDS.map(id => DEPTS[id].icon + " " + DEPTS[id].name),
+        aiMeter: await aiMeter(env).catch(() => null), resting, departments: DEPT_IDS.map(id => DEPTS[id].icon + " " + DEPTS[id].name),
         lastTrigger: await (async () => { try { return env.MAX_MEMORY ? JSON.parse(await srvSetting(env, "max_srv_last_cron") || "null") : null; } catch { return null; } })(),
         app: env.ASSETS ? "served by this Worker" : "not attached (GitHub Pages only)",
         codeBackup: await (async () => { const c = await codeBackup(env); return c ? c.files + " files, built " + c.built : "not attached"; })(),
@@ -4930,8 +5028,14 @@ export default {
           }
         }
       }
+      let grounded = null;
+      if (!chosen && !body.coach && !cutOff && REG_QUESTION.test(message) && !REG_SKIP.test(message) && !/^(hi|hello|thanks?)\b/i.test(message.trim())) {
+        try { grounded = await notesOnly(env, message, notesText); } catch { grounded = null; }
+        if (grounded) { reply = grounded.reply; check = null; }
+        else reply += "\n\n⚠ I could not check this against your notes just now, so treat it as unverified.";
+      }
       let twoAi = null;
-      if (!check && !chosen && !body.coach && !cutOff && reply.length > 40 && HIGH_STAKES.test(message)) {
+      if (!check && !chosen && !grounded && !body.coach && !cutOff && reply.length > 40 && HIGH_STAKES.test(message)) {
         try { twoAi = await twoAiCheck(env, message, reply, notesText, usedModel); if (twoAi) reply = twoAi.reply; } catch {}
       }
       { const act = chosen;
@@ -4944,7 +5048,7 @@ export default {
       // which brain answered: the first choice ("main") or a backup — the app shows it under the answer
       const modelRole = !usedModel ? "" : (c && c.text) || usedModel === modelChain(env, diff.hard)[0] ? "main" : "backup";
       return json({reply, action: chosen, ...(many.length > 1 ? {actions: many} : {}), coachNotes: body.coach ? (parsed.coach_notes || []).map(x => cleanText(String(x), 300)).filter(Boolean).slice(0, 5) : [], model:usedModel, modelRole, dept: {id: route.id, name: deskOut ? deskOut.name : "Max", icon: deskOut ? deskOut.icon : "", how: route.how},
-        brain: {mode: diff.hard ? "deep" : "fast", why: diff.why}, check, ...(twoAi ? {twoAi: {agree: twoAi.agree, by: twoAi.by, differences: twoAi.differences}} : {}), ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
+        brain: {mode: diff.hard ? "deep" : "fast", why: diff.why}, check, ...(grounded ? {fromNotes: grounded.fromNotes || null, notInNotes: !!grounded.notInNotes} : {}), ...(twoAi ? {twoAi: {agree: twoAi.agree, by: twoAi.by, differences: twoAi.differences}} : {}), ...(claudeNote ? {claudeProblem: claudeNote} : {}), savedMemory, autoSaved, memoriesUsed:allMemories.length,
         notesUsed: Array.isArray(parsed.used_notes) ? [...new Set(parsed.used_notes.map(t => cleanText(String(t), 200)).filter(t => knownTitles.some(k => k.toLowerCase() === t.toLowerCase())))].slice(0, 4)
           : [...fromPhone.items.map(n => n.title), ...notesUsed.map(n => n.title || "Untitled")].slice(0, 3),
         truncated: cutOff, conversationSaved: !!db}, 200, origin, env);
@@ -5024,6 +5128,15 @@ CONFIDENCE: <high, medium or low, and why in a few words>`;
       if (!draftMode && bodyLen < plainText(old).length * 0.6) return json({error: "The new version came out much shorter than your note, so I didn't use it. Try asking for the change in smaller steps."}, 422, origin, env);
       if (plainText(html).length < 200) return json({error: "I couldn't write enough about that. Try a more specific topic."}, 422, origin, env);
       return json({html, title: title || (draftMode ? cleanText(topic, 80) : oldTitle), folder, changes: cleanText((/CHANGES:\s*(.+)/i.exec(head) || [])[1] || "", 400), sources, searched: sources.length > 0}, 200, origin, env);
+    }
+    if (url.pathname === "/api/quiet" && request.method === "POST") {
+      if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
+      let body = {}; try { body = await request.json(); } catch {}
+      const Q = await quietAdd(env, body.items); return json({ok: true, kinds: Object.keys(Q).length}, 200, origin, env);
+    }
+    if (url.pathname === "/api/quiet" && request.method === "GET") {
+      if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
+      const Q = await quietLoad(env); return json({items: Object.values(Q).sort((a, b) => (b.last || 0) - (a.last || 0)).slice(0, 30), problems: quietProblems(Q)}, 200, origin, env);
     }
     if (url.pathname === "/api/improve" && request.method === "GET") {
       if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);

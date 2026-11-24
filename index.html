@@ -599,7 +599,7 @@ body.on-home.has-dash .ov-rail{display:flex}
 .ov-pane{position:fixed;top:0;bottom:0;left:0;width:min(88vw,380px);z-index:41;transform:translateX(-105%);transition:transform .28s ease;background:linear-gradient(180deg,rgba(11,26,44,.97),rgba(6,14,26,.98));border-right:1px solid rgba(80,200,255,.25);box-shadow:0 0 40px rgba(0,0,0,.6);overflow-y:auto;padding:16px 12px 24px;display:flex;flex-direction:column;gap:10px}
 .ov-pane.open{transform:none}
 .ov-head{display:flex;flex-direction:column;gap:2px;padding:4px 6px 6px;color:#e8f3ff;font-size:1.15rem}
-.ov-pane .tile{flex:0 0 auto;aspect-ratio:auto;min-height:0!important;max-height:170px;overflow:hidden;border-radius:18px;padding:12px 14px;background:linear-gradient(160deg,rgba(20,44,68,.8),rgba(10,24,40,.8));border:1px solid rgba(80,200,255,.18)}
+.ov-pane .tile{flex:0 0 auto;aspect-ratio:auto;min-height:0!important;max-height:none;width:auto;height:auto;overflow:visible;border-radius:16px;padding:9px 13px;background:linear-gradient(160deg,rgba(20,44,68,.8),rgba(10,24,40,.8));border:1px solid rgba(80,200,255,.18)}
 .ov-pane .tile.alert{border-color:rgba(255,107,138,.55);box-shadow:0 0 22px rgba(255,107,138,.14)}
 .ov-pane .tile-top{align-items:center}.ov-pane .tile-top span{display:flex;align-items:center;gap:8px;color:#7fd8ff}
 .ov-pane .tile-top span .ov-nm{color:#e8f3ff}
@@ -615,6 +615,19 @@ body.on-home.has-dash .home-top .ov-rail,body.has-dash .home-top .ov-rail{displa
 .home-top .dock-badge{top:-2px;right:-2px}
 .home-dock .type-row{margin-left:0}
 @media (max-width:360px){.home-top .ov-rail button{width:32px;height:32px}.home-top .dock-btn{width:46px;height:46px}}
+
+/* overview: every row visible, tight, so Paper trading and Investments read in one glance (24 Nov 2026) */
+.ov-pane{gap:7px;padding:12px 10px 16px}
+.ov-head{padding:0 6px 2px;font-size:1.05rem;flex-direction:row;align-items:baseline;justify-content:space-between}
+.ov-pane .tile .tile-top{margin:0 0 2px}.ov-pane .tile .tile-top span{font-size:.95rem}
+.ov-pane .tile .tile-label{margin:0;font-size:.74rem;line-height:1.2}
+.ov-pane .tile .tile-total{margin:0 0 3px;line-height:1.15}.ov-pane .tile .tile-total b{font-size:1.45rem}.ov-pane .tile .tile-total span{font-size:.9rem}
+.ov-pane .tile .tile-rows{gap:0}
+.ov-pane .tile .tile-row{padding:1px 0;line-height:1.25;font-size:.86rem}
+.ov-pane .tile .tile-row br{display:none}
+.ov-pane .tile .tile-best{margin-left:6px;font-size:.7rem}
+.ov-pane .tile .big,.ov-pane .tile .tile-big{font-size:1.15rem;margin:0}
+.ov-pane .tile>div:not(.tile-top):not(.tile-rows):not(.tile-total):not(.tile-label){font-size:.9rem}
 </style></head>
 <body>
 <div id="movedNote" hidden style="background:#3a2a05;color:#ffe9a8;padding:8px 12px;font:13px system-ui;text-align:center">Max now lives on Cloudflare: <a style="color:#ffd76a" href="https://max-app-axv.pages.dev/">max-app-axv.pages.dev</a> — open it and add it to your home screen.</div>
@@ -1141,23 +1154,23 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const notesIdb=()=>new Promise((res,rej)=>{try{const r=indexedDB.open(NOTES_IDB,1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});
  const idbSet=v=>notesIdb().then(db=>new Promise((res,rej)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,'notes');t.oncomplete=()=>res(true);t.onerror=()=>rej(t.error)}));
  const idbGet=()=>notesIdb().then(db=>new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get('notes');q.onsuccess=()=>res(q.result||'[]');q.onerror=()=>rej(q.error)}));
- let notesInIdb=false;try{notesInIdb=localStorage.getItem(NOTES_FLAG)==='1'}catch{}
+ let notesInIdb=false;try{notesInIdb=localStorage.getItem(NOTES_FLAG)==='1'}catch(_q){maxQuiet(_q,'normNote')}
  function rawLoad(){if(notesInIdb)return noteCache||notePending||[];try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}catch{return []}}   // quick storage is read fresh each time, as before
  function rawSave(items){
   if(notesInIdb&&!noteCache){notePending=items;return}            // still loading from large storage: merged when it arrives
   const s=JSON.stringify(items);
-  if(!notesInIdb){try{if(s.length<LS_MAX){localStorage.setItem(KEY,s);return}}catch(e){}}
+  if(!notesInIdb){try{if(s.length<LS_MAX){localStorage.setItem(KEY,s);return}}catch(e){maxQuiet(e,'rawSave')}}
   noteCache=items;
-  notesInIdb=true;try{localStorage.setItem(NOTES_FLAG,'1')}catch{}
-  idbSet(s).then(()=>{try{localStorage.removeItem(KEY)}catch{}}).catch(e=>{console.warn('Max: could not save notes',e);try{toast('Phone storage is full — notes are safe in the cloud database.')}catch{}});
+  notesInIdb=true;try{localStorage.setItem(NOTES_FLAG,'1')}catch(_q){maxQuiet(_q,'rawSave')}
+  idbSet(s).then(()=>{try{localStorage.removeItem(KEY)}catch(_q){maxQuiet(_q,'rawSave')}}).catch(e=>{console.warn('Max: could not save notes',e);try{toast('Phone storage is full — notes are safe in the cloud database.')}catch(_q){maxQuiet(_q,'rawSave')}});
  }
- const notesReady=!notesInIdb?Promise.resolve():idbGet().then(str=>{let v=[];try{v=JSON.parse(str)}catch{}if(!Array.isArray(v))v=[];
+ const notesReady=!notesInIdb?Promise.resolve():idbGet().then(str=>{let v=[];try{v=JSON.parse(str)}catch(_q){maxQuiet(_q,'rawSave')}if(!Array.isArray(v))v=[];
    const m=new Map(v.map(n=>[n&&n.id,n]));(notePending||[]).forEach(n=>{const o=n&&m.get(n.id);if(n&&(!o||(Number(n.updatedAt)||0)>=(Number(o.updatedAt)||0)))m.set(n.id,n)});
-   const had=!!notePending;notePending=null;noteCache=[...m.values()];if(had)rawSave(noteCache);try{if(typeof screen!=='undefined'&&screen==='notes')renderList()}catch{}}).catch(e=>{console.warn('Max notes storage',e);noteCache=notePending||[];notePending=null});
+   const had=!!notePending;notePending=null;noteCache=[...m.values()];if(had)rawSave(noteCache);try{if(typeof screen!=='undefined'&&screen==='notes')renderList()}catch(_q){maxQuiet(_q,'rawSave')}}).catch(e=>{console.warn('Max notes storage',e);noteCache=notePending||[];notePending=null});
  window.maxNotesReady=()=>notesReady;
  const loadAll=()=>rawLoad().map(normNote).filter(Boolean);
  const getNotes=()=>loadAll().filter(n=>!n.deleted);
- const putNotes=items=>{rawSave(items);scheduleSync();try{scheduleIndex()}catch{}try{hubRefresh()}catch{}};
+ const putNotes=items=>{rawSave(items);scheduleSync();try{scheduleIndex()}catch(_q){maxQuiet(_q,'rawSave')}try{hubRefresh()}catch(_q){maxQuiet(_q,'rawSave')}};
  const escHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const plain=html=>{const d=document.createElement('div');d.innerHTML=html||'';return (d.innerText||d.textContent||'').replace(/\s+/g,' ').trim()};
  const newId=()=>'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
@@ -1165,7 +1178,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // Older notes saved by the previous Notes screen (max_notes_v1) are copied in once, so nothing looks lost.
  function migrateOldNotes(){
   if(localStorage.getItem('max_notes_migrated_v1'))return;
-  let old=[];try{old=JSON.parse(localStorage.getItem('max_notes_v1')||'[]')}catch{}
+  let old=[];try{old=JSON.parse(localStorage.getItem('max_notes_v1')||'[]')}catch(_q){maxQuiet(_q,'migrateOldNotes')}
   if(Array.isArray(old)&&old.length){
    const all=loadAll(),ids=new Set(all.map(n=>n.id));
    old.forEach(o=>{if(!o||ids.has(o.id))return;const n=normNote({...o,body:escHtml(o.body||'').replace(/\n/g,'<br>')});if(n)all.push(n)});
@@ -1179,12 +1192,35 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function workerBase(){return window.maxWorker()}
  function refreshConnectionLabel(){
   const labels={checking:'Connecting…',online:'Connected',memory:'Connected · memory on',needpass:'Connected · passcode needed',needlogin:'Sign in needed',offline:'Offline',local:'Local mode'};
-  let w=0;try{w=(JSON.parse(localStorage.getItem('max_outbox')||'[]')||[]).length}catch{}
+  let w=0;try{w=(JSON.parse(localStorage.getItem('max_outbox')||'[]')||[]).length}catch(_q){maxQuiet(_q,'refreshConnectionLabel')}
   $('globalStatus').textContent=(labels[cloud.memory?'memory':cloud.state]||'Local mode')+(w?' · '+w+' waiting':'');
  }
+
+ // ---------- hidden errors (24 Nov 2026, Mark): nothing is swallowed silently any more ----------
+ // Every caught-and-ignored error is counted and sent to Max's server; the daily check lists the real ones on the Security screen.
+ const QUIET_IGNORE=/AbortError|NotAllowedError|NotSupportedError|Failed to fetch|Load failed|NetworkError|aborted|timed out|timeout|offline|ResizeObserver/i;
+ const quietMap=new Map();let quietTimer=0;
+ function maxQuiet(e,where,ret){
+  try{
+   const m=String((e&&(e.name&&e.name!=='Error'?e.name+': ':'')+(e.message||e))||e||'').slice(0,140);
+   if(!QUIET_IGNORE.test(m)&&!QUIET_IGNORE.test(String(e&&e.name||''))){
+    const k=where+'|'+m,q=quietMap.get(k)||{w:where,m,n:0};q.n++;quietMap.set(k,q);
+    (window.__maxQuietLog=window.__maxQuietLog||[]).push({w:where,m});if(window.__maxQuietLog.length>50)window.__maxQuietLog.shift();
+    if(!quietTimer)quietTimer=setTimeout(quietFlush,20000);
+   }
+  }catch(_){}
+  return ret;
+ }
+ async function quietFlush(){
+  quietTimer=0;if(!quietMap.size)return;
+  const items=[...quietMap.values()].slice(0,40);quietMap.clear();
+  try{if(workerBase()&&navigator.onLine!==false)await fetchJson(workerBase()+'/api/quiet',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items})},12000)}catch(_){}
+ }
+ window.maxQuiet=maxQuiet;window.maxQuietFlush=quietFlush;
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')quietFlush()});
  async function fetchJson(url,opts={},ms=15000){
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),ms);
-  try{const r=await fetch(url,{...opts,signal:ctl.signal});const data=await r.json().catch(()=>({}));return {r,data}}
+  try{const r=await fetch(url,{...opts,signal:ctl.signal});const data=await r.json().catch(_q=>maxQuiet(_q,'fetchJson',{}));return {r,data}}
   catch(e){const err=new Error(e.name==='AbortError'?'No answer from the Worker (timed out). Check your internet connection.':e.message);err.offline=true;throw err}
   finally{clearTimeout(timer)}
  }
@@ -1200,7 +1236,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(!r.ok||!data.ok)throw new Error(data.error||('HTTP '+r.status));
    cloud.health=data;
    const signedIn=data.session==='accepted';
-   if(data.session==='wrong'){try{localStorage.removeItem('max_session')}catch{}}
+   if(data.session==='wrong'){try{localStorage.removeItem('max_session')}catch(_q){maxQuiet(_q,'checkCloud')}}
    cloud.state=data.login==='google'&&!signedIn?'needlogin':data.passcodeRequired&&data.passcode!=='accepted'&&!signedIn?'needpass':'online';
    cloud.memory=(data.passcode==='accepted'||signedIn)&&data.database==='ready';
    cloud.google=data.google||'not set up';cloud.signedIn=signedIn;
@@ -1220,10 +1256,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   st.textContent='Ready. Sign in once with your Google account to connect Calendar and Tasks.';inBtn.hidden=false;
  }
  $('googleSignIn').onclick=()=>{location.href=workerBase()+'/auth/google/start?return='+encodeURIComponent(location.origin+location.pathname)};
- $('googleSignOut').onclick=async()=>{try{await fetchJson(workerBase()+'/api/session',{method:'DELETE'})}catch{}try{localStorage.removeItem('max_session')}catch{}await checkCloud()};
+ $('googleSignOut').onclick=async()=>{try{await fetchJson(workerBase()+'/api/session',{method:'DELETE'})}catch(_q){maxQuiet(_q,'renderGoogle')}try{localStorage.removeItem('max_session')}catch(_q){maxQuiet(_q,'renderGoogle')}await checkCloud()};
  $('googleDisconnect').onclick=async()=>{
   if(!confirm('Disconnect Google? Max will stop using your Calendar and Tasks, and the passcode will work again.'))return;
-  try{const {r,data}=await postJson('/api/google/disconnect',{});if(!r.ok)throw new Error(data.error);try{localStorage.removeItem('max_session')}catch{}await checkCloud();alert('Google disconnected. Enter the passcode to keep using Max.')}
+  try{const {r,data}=await postJson('/api/google/disconnect',{});if(!r.ok)throw new Error(data.error);try{localStorage.removeItem('max_session')}catch(_q){maxQuiet(_q,'renderGoogle')}await checkCloud();alert('Google disconnected. Enter the passcode to keep using Max.')}
   catch(e){alert('Could not disconnect: '+e.message)}
  };
 
@@ -1237,39 +1273,39 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function collectSettings(){
   let meta=syncMeta();const first=!meta;meta=meta||{};const out=[];
   for(const k of SYNC_KEYS){
-   let raw=null;try{raw=localStorage.getItem(k)}catch{}
+   let raw=null;try{raw=localStorage.getItem(k)}catch(_q){maxQuiet(_q,'collectSettings')}
    if(raw==null)continue;
    const h=strHash(raw);
    if(!meta[k])meta[k]={h,u:first?0:Date.now()};      // first sync on a device: let the other device's data win
    else if(meta[k].h!==h)meta[k]={h,u:Date.now()};    // changed here since last sync
    out.push({key:k,value:raw,updated:meta[k].u});
   }
-  try{localStorage.setItem(SYNC_META,JSON.stringify(meta))}catch{}
+  try{localStorage.setItem(SYNC_META,JSON.stringify(meta))}catch(_q){maxQuiet(_q,'collectSettings')}
   return out;
  }
  function applySettings(list){
   const meta=syncMeta()||{},changed=[];
   for(const x of list){
    if(!SYNC_KEYS.includes(x.key)||typeof x.value!=='string')continue;
-   let raw=null;try{raw=localStorage.getItem(x.key)}catch{}
+   let raw=null;try{raw=localStorage.getItem(x.key)}catch(_q){maxQuiet(_q,'applySettings')}
    const mine=meta[x.key];
    if(raw===x.value){meta[x.key]={h:strHash(raw),u:Math.max(mine?.u||0,x.updated)};continue}
    if(mine&&raw!=null&&mine.u>x.updated)continue;      // my change is newer — it goes up next sync
    try{localStorage.setItem(x.key,x.value)}catch{continue}
    meta[x.key]={h:strHash(x.value),u:x.updated};changed.push(x.key);
   }
-  try{localStorage.setItem(SYNC_META,JSON.stringify(meta))}catch{}
+  try{localStorage.setItem(SYNC_META,JSON.stringify(meta))}catch(_q){maxQuiet(_q,'applySettings')}
   if(changed.length){
    if(screen==='projects'&&typeof renderProjects==='function')renderProjects();
    if(screen==='crew'&&typeof renderCrew==='function')renderCrew();
   }
   return changed;
  }
- setInterval(()=>{if(document.visibilityState==='visible'&&cloud.memory&&navigator.onLine!==false)syncNotes().catch(()=>{})},60000);
+ setInterval(()=>{if(document.visibilityState==='visible'&&cloud.memory&&navigator.onLine!==false)syncNotes().catch(_q=>{maxQuiet(_q,'applySettings')})},60000);
 
  // ---------- notes cloud sync ----------
  let syncTimer=null,syncing=false;
- function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNotes().catch(()=>{}),1500)}
+ function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNotes().catch(_q=>{maxQuiet(_q,'scheduleSync')}),1500)}
  window.maxSyncNow=()=>syncNotes();
  async function syncNotes(){
   if(!cloud.memory||syncing)return false;
@@ -1279,14 +1315,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    const settings=collectSettings();
    // Only what changed since the last sync goes up and comes back (saves data at sea); a full sync once a day keeps everything in line.
    const lsN=k=>Number(localStorage.getItem(k)||0),since=lsN('max_sync_since'),delta=since>0&&Date.now()-lsN('max_sync_full')<864e5,lastOk=lsN('max_last_sync');
-   let seen={};try{seen=JSON.parse(localStorage.getItem('max_sync_seen')||'{}')}catch{}
+   let seen={};try{seen=JSON.parse(localStorage.getItem('max_sync_seen')||'{}')}catch(_q){maxQuiet(_q,'syncNotes')}
    const all=loadAll(),up=delta?all.filter(n=>n.updatedAt>lastOk-600000&&seen[n.id]!==n.updatedAt):all;   // notes that just came from the server don't go back up
    const {r,data}=await fetchJson(workerBase()+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes:up,settings,since:delta?since:0})},delta?20000:60000);
    if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
    const merged=new Map(loadAll().map(n=>[n.id,n]));
    (data.notes||[]).map(normNote).filter(Boolean).forEach(s=>{const l=merged.get(s.id);if(!l||s.updatedAt>l.updatedAt)merged.set(s.id,s)});
    rawSave([...merged.values()]);
-   try{const sn=data.full===false?seen:{};(data.notes||[]).forEach(x=>{if(x&&x.id)sn[x.id]=Number(x.updatedAt)||0});up.forEach(x=>{sn[x.id]=x.updatedAt});localStorage.setItem('max_sync_seen',JSON.stringify(sn))}catch{}   // what the server already has
+   try{const sn=data.full===false?seen:{};(data.notes||[]).forEach(x=>{if(x&&x.id)sn[x.id]=Number(x.updatedAt)||0});up.forEach(x=>{sn[x.id]=x.updatedAt});localStorage.setItem('max_sync_seen',JSON.stringify(sn))}catch(_q){maxQuiet(_q,'syncNotes')}   // what the server already has
    localStorage.setItem('max_last_sync',String(Date.now()));
    if(Number(data.serverTime)>0)localStorage.setItem('max_sync_since',String(data.serverTime));if(data.full!==false)localStorage.setItem('max_sync_full',String(Date.now()));
    if(Array.isArray(data.settings))applySettings(data.settings);
@@ -1318,7 +1354,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // A full copy of Max's code, so he can be rebuilt on Cloudflare even if GitHub is gone. Save it to Google Drive.
  async function downloadCode(){
   const base=apiBase()||window.maxWorker();
-  try{const r=await fetch(base+'/api/backup/code');if(!r.ok){let m='';try{m=(await r.json()).error}catch{}if(r.status===404&&!m)m='this needs the next update of Max’s server — your weekly Gmail backup and the backup kit in Drive have your work';return 'Could not get the code backup'+(m?': '+m:' ('+r.status+')')}
+  try{const r=await fetch(base+'/api/backup/code');if(!r.ok){let m='';try{m=(await r.json()).error}catch(_q){maxQuiet(_q,'downloadCode')}if(r.status===404&&!m)m='this needs the next update of Max’s server — your weekly Gmail backup and the backup kit in Drive have your work';return 'Could not get the code backup'+(m?': '+m:' ('+r.status+')')}
    const b=await r.blob(),name=(/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition')||'')||[])[1]||'max-code.zip';
    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
    return 'Saved '+name+' ('+Math.round(b.size/1024)+' KB). Keep it in Google Drive — it rebuilds Max without GitHub.'}
@@ -1328,9 +1364,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
 
  // ---------- one-tap server update (max-updater Worker; no laptop, no GitHub) ----------
  const UPD_KEY='max_updater_url';
- const updaterBase=()=>{let u='';try{u=localStorage.getItem(UPD_KEY)||''}catch{}if(u)return u.trim().replace(/\/+$/,'');const w=window.maxWorker();return /max-ai-backend\./.test(w)?w.replace('max-ai-backend.','max-updater.'):''};
+ const updaterBase=()=>{let u='';try{u=localStorage.getItem(UPD_KEY)||''}catch(_q){maxQuiet(_q,'downloadCode')}if(u)return u.trim().replace(/\/+$/,'');const w=window.maxWorker();return /max-ai-backend\./.test(w)?w.replace('max-ai-backend.','max-updater.'):''};
  const liveVersion=async()=>{try{const {data}=await fetchJson(window.maxWorker()+'/health?t='+Date.now(),{method:'GET'},10000);return data&&data.version||''}catch{return ''}};
- async function updCall(path,body){const r=await fetch(updaterBase()+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Update-Pass':window.maxPass()},body:body?JSON.stringify(body):undefined});let d={};try{d=await r.json()}catch{}if(!r.ok)throw new Error(d.error||('updater said '+r.status));return d}
+ async function updCall(path,body){const r=await fetch(updaterBase()+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Update-Pass':window.maxPass()},body:body?JSON.stringify(body):undefined});let d={};try{d=await r.json()}catch(_q){maxQuiet(_q,'updCall')}if(!r.ok)throw new Error(d.error||('updater said '+r.status));return d}
  let updAvail=null;
  async function updCheck(){
   const out=$('updResult');$('updInstall').disabled=true;
@@ -1348,15 +1384,15 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    out.textContent='Installing… (about 30 seconds — keep this screen open)';
    const d=await updCall('/deploy',{});
    let now='';for(let i=0;i<10;i++){await new Promise(r=>setTimeout(r,3000));now=await liveVersion();if(now===d.installed)break}
-   if(now===d.installed){out.textContent='✅ Max’s server is now '+now+'.'+(d.notes&&d.notes.length?'\n• '+d.notes.join('\n• '):'');try{speak('Update installed. I am now running the new version.')}catch{}return}
+   if(now===d.installed){out.textContent='✅ Max’s server is now '+now+'.'+(d.notes&&d.notes.length?'\n• '+d.notes.join('\n• '):'');try{speak('Update installed. I am now running the new version.')}catch(_q){maxQuiet(_q,'updInstall')}return}
    if(d.previous){out.textContent='The new version did not start properly ('+(now||'no answer')+'). Going back to the previous version…';await updCall('/rollback',{version_id:d.previous});await new Promise(r=>setTimeout(r,4000));out.textContent='The new version did not start, so Max was put back to the previous version ('+(await liveVersion()||'checking')+'). Nothing is lost. Send this message to Claude.'}
    else out.textContent='The new version did not start ('+(now||'no answer')+'). Open Cloudflare → Workers → max-ai-backend → Deployments → Rollback.';
   }catch(e){out.textContent='Update failed, nothing was changed: '+(e.message||e)}
   finally{$('updCheck').disabled=false}
  }
  $('updCheck').onclick=updCheck;$('updInstall').onclick=updInstall;
- $('updaterUrl').onchange=()=>{try{const v=$('updaterUrl').value.trim();v?localStorage.setItem(UPD_KEY,v):localStorage.removeItem(UPD_KEY)}catch{}};
- $('backupInput').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const t=await restoreBackup(f);status(t);try{speak(t)}catch{}};
+ $('updaterUrl').onchange=()=>{try{const v=$('updaterUrl').value.trim();v?localStorage.setItem(UPD_KEY,v):localStorage.removeItem(UPD_KEY)}catch(_q){maxQuiet(_q,'updInstall')}};
+ $('backupInput').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const t=await restoreBackup(f);status(t);try{speak(t)}catch(_q){maxQuiet(_q,'updInstall')}};
 
  // ---------- long-term memory list (in ⚙ settings) ----------
  async function renderMemory(){
@@ -1386,7 +1422,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // Memories saved in the old hidden screen (jarvis_mem_v2) are uploaded once when cloud memory first works.
  async function migrateOldMemories(){
   if(!cloud.memory||localStorage.getItem('max_mem_migrated_v2'))return;
-  let old=[];try{old=JSON.parse(localStorage.getItem('jarvis_mem_v2')||'[]')}catch{}
+  let old=[];try{old=JSON.parse(localStorage.getItem('jarvis_mem_v2')||'[]')}catch(_q){maxQuiet(_q,'migrateOldMemories')}
   try{for(const t of (Array.isArray(old)?old:[]))if(typeof t==='string'&&t.trim())await addMemory(t.trim(),'old-device-memory');localStorage.setItem('max_mem_migrated_v2','1')}
   catch(e){console.warn('Old memory upload failed; will retry next start',e)}
  }
@@ -1453,7 +1489,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const KB_KEY='max_keyboard';
  function setKeyboard(on,remember=true,goHome=true){
   keyboardOn=!!on;$('typeRow').hidden=!keyboardOn;
-  if(remember){try{localStorage.setItem(KB_KEY,keyboardOn?'on':'off')}catch{}}
+  if(remember){try{localStorage.setItem(KB_KEY,keyboardOn?'on':'off')}catch(_q){maxQuiet(_q,'setKeyboard')}}
   if(goHome&&keyboardOn&&screen!=='home'&&!wideScreen.matches)setSection('home');
  }
  try{setKeyboard(localStorage.getItem(KB_KEY)!=='off',false,false)}catch{setKeyboard(true,false,false)}
@@ -1619,7 +1655,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    });
   };
   draw(buildTree(found),list);
-  try{hubRefresh()}catch{}
+  try{hubRefresh()}catch(_q){maxQuiet(_q,'renderList')}
  }
  $('newFolder').onclick=()=>{$('newFolderRow').hidden=false;$('newFolderName').value=selFolder?selFolder+' › ':'';$('newFolderName').focus()};
  const addFolder=()=>{const v=splitPath($('newFolderName').value).join(' › ');$('newFolderRow').hidden=true;if(!v)return;const l=jget(FOLDERS,[]);if(!l.includes(v))l.push(v);jset(FOLDERS,l);const o=openSet();splitPath(v).forEach((_,i,a)=>o.add(a.slice(0,i+1).join(' › ')));jset(TREE_OPEN,[...o]);selFolder=v;renderList();status('Folder “'+v.split(' › ').pop()+'” added. ✎ makes a note inside it.')};
@@ -1721,7 +1757,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const dayLabel=t=>{const d=new Date(t),n=new Date();if(d.toDateString()===n.toDateString())return 'today';if(d.toDateString()===new Date(Date.now()-864e5).toDateString())return 'yesterday';return d.toLocaleDateString([],{month:'short',day:'numeric'})};
  // ---- journal: notes filed in the "Journal" folder; pictures, videos, files and a place are attached with the normal note tools ----
  function journalNew(){const d=new Date(),t=d.toLocaleDateString([],{weekday:'short',day:'numeric',month:'short',year:'numeric'})+' · '+d.toTimeString().slice(0,5);
-  selFolder='Journal';createNewNote(t);$('editorCategory').value='Journal';try{metaSummary()}catch{}}
+  selFolder='Journal';createNewNote(t);$('editorCategory').value='Journal';try{metaSummary()}catch(_q){maxQuiet(_q,'journalNew')}}
  $('jNew').onclick=journalNew;
  function renderJournal(){
   const box=$('jList');box.replaceChildren();const items=getNotes().filter(isJ).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
@@ -1779,7 +1815,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function placeInsert(){
   let name='',lat=null,lon=null;
   try{const pos=await new Promise((ok,no)=>navigator.geolocation?navigator.geolocation.getCurrentPosition(ok,no,{timeout:8000,maximumAge:60000}):no(new Error('no location')));lat=+pos.coords.latitude.toFixed(5);lon=+pos.coords.longitude.toFixed(5);
-   try{const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat='+lat+'&lon='+lon,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(4000)});if(r.ok){const j=await r.json();name=j.display_name?String(j.display_name).split(',').slice(0,3).join(',').trim():''}}catch{}}catch{}
+   try{const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&lat='+lat+'&lon='+lon,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(4000)});if(r.ok){const j=await r.json();name=j.display_name?String(j.display_name).split(',').slice(0,3).join(',').trim():''}}catch(_q){maxQuiet(_q,'placeInsert')}}catch(_q){maxQuiet(_q,'placeInsert')}
   if(!name){name=(window.prompt('Where is this? Type the place name',name)||'').trim();if(!name)return}
   const url=lat!=null?'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=16/'+lat+'/'+lon:'https://www.openstreetmap.org/search?query='+encodeURIComponent(name);
   restoreRange();$('editorBody').focus();document.execCommand('insertHTML',false,'<p>📍 <a href="'+escHtml(url)+'">'+escHtml(name)+'</a>'+(lat!=null?' ('+lat+', '+lon+')':'')+'</p>');dirty=true}
@@ -1824,7 +1860,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     [from,...jget(FOLDERS,[]).map(pathOf).filter(p=>underPath(p,from))].forEach(p=>folderAdd(sw(p)));nf++}
    putNotes([...all,...copies])}
   return (c.mode==='copy'?'Copied ':'Moved ')+nn+' note'+(nn===1?'':'s')+(nf?' and '+nf+' folder'+(nf===1?'':'s'):'')+' to '+(dest||'the top level')+'.'}
- try{hubRefresh()}catch{}
+ try{hubRefresh()}catch(_q){maxQuiet(_q,'doPaste')}
  // ---------- attachments inside a note (22 Nov 2026, Mark): pictures, videos, files, folders, web links — shown under the note and read by Max ----------
  const attKind=(m,name)=>m==='link'?'Web link':/^image\//.test(m)?'Picture':/^video\//.test(m)?'Video':/^audio\//.test(m)?'Recording':m==='application/pdf'?'PDF':/\.(docx?|dot)$/i.test(name)?'Word':/\.(xlsx?|xlsm|xlsb|ods|csv)$/i.test(name)?'Excel':/\.(pptx?|pps)$/i.test(name)?'PowerPoint':'File';
  const noteAtts=n=>Array.isArray(n?.analysis?.attachments)?n.analysis.attachments:[];
@@ -1838,11 +1874,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!L.length){const p=document.createElement('p');p.className='muted small';p.textContent='No attachments yet.';box.append(p);return}
   for(const a of L){const card=document.createElement('div');card.className='att-card';
    const head=document.createElement('div');head.className='att-head';const k=document.createElement('span');k.className='att-kind';k.textContent=attKind(a.mime,a.name);const nm=document.createElement('b');nm.textContent=a.name||a.url||'Attachment';head.append(k,nm);card.append(head);
-   if(a.mediaId&&/^(image|video)\//.test(a.mime||'')){const blob=await mediaBlob(a.mediaId).catch(()=>null);if(blob){const el=document.createElement(/^video/.test(a.mime)?'video':'img');el.className='att-media';el.src=URL.createObjectURL(blob);if(el.tagName==='VIDEO'){el.controls=true;el.playsInline=true;el.preload='metadata'}else el.alt=a.summary||a.name||'Picture';card.append(el)}}
+   if(a.mediaId&&/^(image|video)\//.test(a.mime||'')){const blob=await mediaBlob(a.mediaId).catch(_q=>maxQuiet(_q,'renderNoteAtts',null));if(blob){const el=document.createElement(/^video/.test(a.mime)?'video':'img');el.className='att-media';el.src=URL.createObjectURL(blob);if(el.tagName==='VIDEO'){el.controls=true;el.playsInline=true;el.preload='metadata'}else el.alt=a.summary||a.name||'Picture';card.append(el)}}
    if(a.summary){const s=document.createElement('p');s.className='small';s.textContent=a.summary;card.append(s)}
    if((a.points||[]).length){const ul=document.createElement('ul');ul.className='dash-list small';a.points.slice(0,6).forEach(x=>{const li=document.createElement('li');li.textContent=x;ul.append(li)});card.append(ul)}
    const acts=document.createElement('div');acts.className='att-acts';
-   const open=document.createElement('button');open.className='small-btn';open.textContent='Open';open.onclick=async()=>{if(a.url){window.open(a.url,'_blank','noopener');return}const blob=a.mediaId?await mediaBlob(a.mediaId).catch(()=>null):null;if(!blob){status('This file is still on your other phone — it shows here once it reaches Max’s database.');return}const u=URL.createObjectURL(blob),x=document.createElement('a');x.href=u;x.download=a.name||'file';x.target='_blank';document.body.append(x);x.click();x.remove()};
+   const open=document.createElement('button');open.className='small-btn';open.textContent='Open';open.onclick=async()=>{if(a.url){window.open(a.url,'_blank','noopener');return}const blob=a.mediaId?await mediaBlob(a.mediaId).catch(_q=>maxQuiet(_q,'renderNoteAtts',null)):null;if(!blob){status('This file is still on your other phone — it shows here once it reaches Max’s database.');return}const u=URL.createObjectURL(blob),x=document.createElement('a');x.href=u;x.download=a.name||'file';x.target='_blank';document.body.append(x);x.click();x.remove()};
    const del=document.createElement('button');del.className='small-btn';del.textContent='Remove';del.onclick=()=>{if(!confirm('Remove “'+(a.name||'this attachment')+'” from the note?'))return;const n2=getNotes().find(x=>x.id===activeNoteId);saveNoteAtts(activeNoteId,noteAtts(n2).filter(x=>x.id!==a.id));renderNoteAtts()};
    acts.append(open,del);card.append(acts);box.append(card)}
  }
@@ -1855,7 +1891,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   for(const [i,e] of list.entries()){const f=e.file;status('Reading '+(i+1)+' of '+list.length+': '+f.name+'…');
    try{const {att,mime,localText}=await maxReadFile(f);
     const mediaId='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-    let blob=f;if(/^image\//.test(mime)&&mime!=='image/heic'){try{blob=await shrinkForNote(f)}catch{}}
+    let blob=f;if(/^image\//.test(mime)&&mime!=='image/heic'){try{blob=await shrinkForNote(f)}catch(_q){maxQuiet(_q,'addNoteFiles')}}
     let kept=false;if(blob.size<=25e6){await mediaPut({id:mediaId,blob,mime:blob.type||f.type||mime,name:f.name,synced:false,at:Date.now()});mediaUpload(mediaId);kept=true}
     const n=getNotes().find(x=>x.id===id);
     saveNoteAtts(id,[...noteAtts(n),{id:mediaId,name:e.rel&&e.rel!==f.name?e.rel:f.name,mime:mime==='office'?(f.type||'application/octet-stream'):mime,size:f.size,mediaId:kept?mediaId:null,summary:att.summary||'',points:(att.points||[]).slice(0,8),text:String(localText||att.text||'').slice(0,4000),at:Date.now()}]);ok++;
@@ -1939,7 +1975,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(n.category&&cat!==n.category)n.filedByMax=false;
   n.title=$('editorTitle').value.trim()||$('editorBody').innerText.split('\n')[0].slice(0,80)||'Untitled note';n.category=cat||'Unsorted';n.tags=$('editorTags').value.split(',').map(x=>x.trim()).filter(Boolean);n.body=body;n.updatedAt=Date.now();
   putNotes(notes);dirty=false;$('editorPageHeading').textContent=n.title;renderList();if(!$('noteRead').hidden)setReading(true);status(cloud.memory?'Note saved. Syncing…':'Note saved on this phone.');
-  if(n.category==='Unsorted'&&workerBase())analyze(n,{quiet:true}).catch(()=>{}); // Max files it into a topic
+  if(n.category==='Unsorted'&&workerBase())analyze(n,{quiet:true}).catch(_q=>{maxQuiet(_q,'saveCurrent')}); // Max files it into a topic
   return n;
  }
  // Analysis also suggests a topic. Unsorted notes are filed there automatically (you can change it any time).
@@ -2017,19 +2053,19 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const mediaAllRecs=()=>idbReq('readonly',st=>st.getAll());
  const mediaUrls=new Map();
  async function mediaBlob(id){
-  const rec=await mediaGet(id).catch(()=>null);
+  const rec=await mediaGet(id).catch(_q=>maxQuiet(_q,'mediaBlob',null));
   if(rec&&rec.blob)return rec.blob;
   if(!workerBase()||isOffline())return null;
-  try{const r=await fetch(workerBase()+'/api/media?id='+encodeURIComponent(id));if(!r.ok)return null;const blob=await r.blob();mediaPut({id,blob,mime:blob.type,synced:true,at:Date.now()}).catch(()=>{});return blob}catch{return null}
+  try{const r=await fetch(workerBase()+'/api/media?id='+encodeURIComponent(id));if(!r.ok)return null;const blob=await r.blob();mediaPut({id,blob,mime:blob.type,synced:true,at:Date.now()}).catch(_q=>{maxQuiet(_q,'mediaBlob')});return blob}catch{return null}
  }
  const blobB64=b=>new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]||'');fr.onerror=()=>rej(fr.error);fr.readAsDataURL(b)});
  async function mediaUpload(id){
-  const rec=await mediaGet(id).catch(()=>null);if(!rec||!rec.blob||rec.synced||!workerBase()||isOffline())return false;
+  const rec=await mediaGet(id).catch(_q=>maxQuiet(_q,'mediaUpload',null));if(!rec||!rec.blob||rec.synced||!workerBase()||isOffline())return false;
   const CH=1_300_000,total=Math.max(1,Math.ceil(rec.blob.size/CH));
   try{for(let i=0;i<total;i++){const data=await blobB64(rec.blob.slice(i*CH,(i+1)*CH));const {r}=await postJson('/api/media',{id,idx:i,total,mime:rec.mime,name:rec.name||'',data},60000);if(!r.ok)return false}
    await mediaPut({...rec,synced:true});return true}catch{return false}
  }
- async function mediaUploadPending(){try{for(const r of await mediaAllRecs())if(!r.synced)await mediaUpload(r.id)}catch{}}
+ async function mediaUploadPending(){try{for(const r of await mediaAllRecs())if(!r.synced)await mediaUpload(r.id)}catch(_q){maxQuiet(_q,'mediaUploadPending')}}
  setTimeout(mediaUploadPending,15000);
  // Show the picture / video inside a figure (editor or reading view). The stored note only keeps the figure and caption.
  // Built-in drawn diagrams (made by Max's own code from DIAGRAMS; never from outside text).
@@ -2181,14 +2217,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function seedMaritime(force){
   if(!force&&localStorage.getItem('max_struct_maritime_v1'))return 0;
   const have=jget(FOLDERS,[]),add=MARITIME_TREE.filter(f=>!have.includes(f));
-  jset(FOLDERS,[...have,...add]);try{localStorage.setItem('max_struct_maritime_v1','1')}catch{}
+  jset(FOLDERS,[...have,...add]);try{localStorage.setItem('max_struct_maritime_v1','1')}catch(_q){maxQuiet(_q,'seedMaritime')}
   return add.length;
  }
  setTimeout(()=>{if(seedMaritime()&&screen==='notes')renderList()},0);
  $('editorDictate').onclick=()=>{
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){status('Dictation is not supported in this browser. Try Chrome.');return}
   endConversation(null);
-  if(recognition)try{recognition.abort()}catch{}
+  if(recognition)try{recognition.abort()}catch(_q){maxQuiet(_q,'seedMaritime')}
   recognition=new SR();recognition.lang=listenLang();recognition.interimResults=false;
   recognition.onresult=e=>{$('editorBody').focus();document.execCommand('insertText',false,e.results[0][0].transcript+' ');dirty=true};
   recognition.onerror=e=>status('Dictation error: '+e.error);
@@ -2358,7 +2394,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function printNote(n){
   const f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0;right:0;bottom:0';
   f.srcdoc='<!doctype html><meta charset="utf-8"><title>'+escHtml(n.title)+'</title><style>body{font:15px/1.6 system-ui,sans-serif;color:#111;margin:32px}h1{font-size:24px}small{color:#555}</style><h1>'+escHtml(n.title)+'</h1><small>'+escHtml(n.category)+'</small><hr>'+n.body+(noteAtts(n).length?'<h3>Attachments</h3><ul>'+noteAtts(n).map(a=>'<li><b>'+escHtml(a.name||a.url||'')+'</b>'+(a.summary?' — '+escHtml(a.summary):'')+'</li>').join('')+'</ul>':'')+(n.analysis?.summary?'<h3>Max’s summary</h3><p>'+escHtml(n.analysis.summary)+'</p>':'');
-  f.onload=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch{}setTimeout(()=>f.remove(),60000)};
+  f.onload=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(_q){maxQuiet(_q,'printNote')}setTimeout(()=>f.remove(),60000)};
   document.body.append(f);
  }
  const currentNote=()=>activeNoteId&&getNotes().find(n=>n.id===activeNoteId);
@@ -2369,7 +2405,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- research: Max looks it up, you approve before it goes into your notes ----------
  const RES_KEY='max_research_draft';
  let draft=null;try{draft=JSON.parse(localStorage.getItem(RES_KEY)||'null')}catch{draft=null}
- const saveDraft=()=>{try{draft?localStorage.setItem(RES_KEY,JSON.stringify(draft)):localStorage.removeItem(RES_KEY)}catch{}};
+ const saveDraft=()=>{try{draft?localStorage.setItem(RES_KEY,JSON.stringify(draft)):localStorage.removeItem(RES_KEY)}catch(_q){maxQuiet(_q,'printNote')}};
  function renderResearch(){
   const has=!!(draft&&Array.isArray(draft.points)&&draft.points.length);
   $('resDraft').hidden=!has;$('resEmpty').hidden=has||!$('resLoading').hidden;
@@ -2564,7 +2600,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const OB_KEY='max_offline_brain',OB_MODELS=['gemma-4-E2B-it-q4f16_1-MLC','gemma-4-E2B-it-q4f32_1-MLC'];
  let obEngine=null,obLoading=null;
  const obLib=()=>import('./web-llm.js');
- async function obChromeAI(){try{if(self.LanguageModel&&typeof LanguageModel.availability==='function')return (await LanguageModel.availability())==='available'}catch{}return false}
+ async function obChromeAI(){try{if(self.LanguageModel&&typeof LanguageModel.availability==='function')return (await LanguageModel.availability())==='available'}catch(_q){maxQuiet(_q,'obChromeAI')}return false}
  async function obPickModel(){
   if(!navigator.gpu)throw new Error('Chrome on this phone has no WebGPU (update Chrome)');
   const a=await navigator.gpu.requestAdapter();if(!a)throw new Error('Chrome can’t use this phone’s graphics chip');
@@ -2578,7 +2614,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  async function obAsk(system,user){
   const e=await obGet();if(!e)return null;
-  if(e==='chrome'){const s=await LanguageModel.create({initialPrompts:[{role:'system',content:system}]});try{return String(await s.prompt(user)).trim()}finally{try{s.destroy()}catch{}}}
+  if(e==='chrome'){const s=await LanguageModel.create({initialPrompts:[{role:'system',content:system}]});try{return String(await s.prompt(user)).trim()}finally{try{s.destroy()}catch(_q){maxQuiet(_q,'obAsk')}}}
   const r=await e.chat.completions.create({messages:[{role:'system',content:system},{role:'user',content:user}],temperature:0.2,max_tokens:450});
   return String(r.choices?.[0]?.message?.content||'').replace(/<think>[\s\S]*?<\/think>/g,'').trim();
  }
@@ -2587,11 +2623,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(isOffline())return 'I need internet once to download the offline brain (about 3 GB). Ask me again when you have Wi-Fi.';
   if(navigator.connection?.type==='cellular'&&force!=='anyway')return 'You’re on mobile data. The offline brain is about 3 GB — better on Wi-Fi. Say “download offline brain anyway” if you’re sure.';
   let model;try{model=await obPickModel()}catch(e){return (await obChromeAI())?'I can’t run Gemma here ('+e.message+'), but Chrome’s own built-in AI works on this phone, so I’ll use that when offline.':'This phone can’t run the offline brain: '+e.message+'. Offline note search still works.'}
-  try{await navigator.storage?.persist?.()}catch{}
+  try{await navigator.storage?.persist?.()}catch(_q){maxQuiet(_q,'offlineBrainSetup')}
   setSection('display');$('dispTitle').textContent='Downloading Max’s offline brain';$('dispSub').textContent='Gemma 4 (Google) · about 3 GB, once · keep Max open';$('dispBody').replaceChildren();
   const bar=document.createElement('progress');bar.max=1;bar.value=0;bar.style.width='100%';const line=document.createElement('p');$('dispBody').append(bar,line);
   try{
-   const lib=await obLib();try{await caches.open('max-offline-lib').then(c=>c.add('./web-llm.js'))}catch{}
+   const lib=await obLib();try{await caches.open('max-offline-lib').then(c=>c.add('./web-llm.js'))}catch(_q){maxQuiet(_q,'offlineBrainSetup')}
    obEngine=await lib.CreateMLCEngine(model,{initProgressCallback:p=>{bar.value=p.progress||0;line.textContent=String(p.text||'').replace(/\[.*?\]\s*/,'')}});
    jset(OB_KEY,{model,ready:true,at:Date.now()});
    const test=await obAsk('Reply in one short sentence.','Say: offline brain ready.');
@@ -2601,8 +2637,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  async function offlineBrainRemove(){
   const st=obState();if(!st)return 'There’s no offline brain on this phone.';
-  try{if(obEngine&&obEngine.unload)await obEngine.unload()}catch{}obEngine=null;obLoading=null;
-  try{const lib=await obLib();await lib.deleteModelAllInfoInCache(st.model)}catch{}
+  try{if(obEngine&&obEngine.unload)await obEngine.unload()}catch(_q){maxQuiet(_q,'offlineBrainRemove')}obEngine=null;obLoading=null;
+  try{const lib=await obLib();await lib.deleteModelAllInfoInCache(st.model)}catch(_q){maxQuiet(_q,'offlineBrainRemove')}
   jset(OB_KEY,null);return 'Removed the offline brain from this phone. Offline note search still works.';
  }
  const OB_SYS='You are Max, the personal assistant of Mark Jun, a Filipino ship officer (not a native English speaker). You are running OFFLINE on his phone with no internet. Answer in short, simple English. When the note parts below answer the question, use ONLY them and name the note. Never invent regulation numbers, dates or figures that are not in the notes. If the notes do not answer it, say so in one line and give your best short general answer, marked as unchecked.';
@@ -2648,14 +2684,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!n||!a||n.split(' ').length>14||['add_event','add_task','undo_last','list_schedule','edit_research','research','project_request','list_requests','merge_request','confirm_merge','cancel_merge','log_sale','sales_summary','project_stats','display','projects_overview','attach_file','save_attachment','discard_attachment','show_attachment','read_link','new_skill','forget_skill','watch_topic','unwatch_topic','verify_note','merge_duplicates','check_email','read_email','draft_email','send_email','cancel_email','confirm_yes','confirm_no','choose_pick','edit_event','delete_event','modify_email','market_quote','market_chart','watchlist_add','watchlist_remove','price_alert','convert_currency','set_currencies','new_routine','start_routine','routine_step','delete_routine','coach_talk','coach_checkin','coach_end','passage_distance','passage_eta','play_update','play_notes','play_build','build_status','trading_emails','site_audit','seo_ideas','content_draft','walk_through','walk_step','improve_skill','make_skill','weather','set_weather_place','set_personality','whatsapp_draft'].includes(a.type))return; // these depend on the details each time
   const list=learned().filter(l=>l.p!==n);
   list.unshift({p:n,a:{type:a.type,query:NO_QUERY.has(a.type)?'':(a.query||'')},at:Date.now()});
-  try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch{}
+  try{localStorage.setItem(LEARN_KEY,JSON.stringify(list.slice(0,100)))}catch(_q){maxQuiet(_q,'learn')}
  }
  function renderLearned(){
   const box=$('learnedList');box.replaceChildren();const list=learned();
   if(!list.length){box.textContent='Nothing yet. Ask Max for things in your own words and he’ll learn them.';return}
   const label={open_project:'open a project',check_projects:'check my projects',show_projects:'show my projects',list_passage_plans:'my passage plans',list_schedule:'read my schedule',read_note:'read a note',show_keyboard:'show keyboard',hide_keyboard:'hide keyboard',show_notes:'open notes',open_note:'open a note',new_note:'new note',research:'research',show_research:'show research',edit_research:'change research',approve_research:'approve research',reject_research:'reject research',save_answer:'save answer to notes',organize_notes:'organize notes',open_settings:'settings',go_home:'back to talking',export_notes:'export notes',open_menu:'menu'};
   list.forEach(l=>{const row=document.createElement('div');row.className='mem-row';const s=document.createElement('span');s.textContent='“'+l.p+'” → '+(label[l.a.type]||l.a.type)+(l.a.query?' ('+l.a.query+')':'');
-   const del=document.createElement('button');del.className='home-mic danger-btn';del.textContent='Forget';del.onclick=()=>{try{localStorage.setItem(LEARN_KEY,JSON.stringify(learned().filter(x=>x.p!==l.p)))}catch{}renderLearned()};row.append(s,del);box.append(row)});
+   const del=document.createElement('button');del.className='home-mic danger-btn';del.textContent='Forget';del.onclick=()=>{try{localStorage.setItem(LEARN_KEY,JSON.stringify(learned().filter(x=>x.p!==l.p)))}catch(_q){maxQuiet(_q,'renderLearned')}renderLearned()};row.append(s,del);box.append(row)});
  }
  const QUESTION=/^(what|how|why|when|who|whom|which|where|is|are|does|do|did|can|could|should|would|will|ano|paano|bakit|kailan|sino|saan|ilan)\b/;
  function stripQuery(s){return s.replace(/^(?:about|on|for|regarding|related to|tungkol sa|sa|the|my|a|an|some)\s+/g,'').replace(/^(?:about|on|for|regarding|the|my)\s+/,'').replace(/\s+(?:in|from|on)\s+(?:my|the)\s+(?:notes?|second brain)$/,'').replace(/\s+(?:notes?|note)$/,'').trim()}
@@ -2918,7 +2954,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    const t=raw.replace(/^\s*(max,?\s*)?(can you |could you |please |pakita mo |)?(display|show( me)?|put|bring up|pull up|ipakita|i display)\s+/i,'').trim();
    if(t&&!/^(the )?(notes?|research|projects?|settings?|menu|keyboard)( screen)?$/i.test(t.replace(/\b(on|to) (the |my |your )?(screen|display)\b/ig,'').trim()))return {type:'display',query:t};
   }
-  if(screen==='display'&&has(/\b(search|look it up on|check) (the )?(web|internet|online)( too| also| as well)?\b/)){let q='';try{q=localStorage.getItem(DISPLAY_KEY)||''}catch{}if(q)return {type:'research',query:q}}
+  if(screen==='display'&&has(/\b(search|look it up on|check) (the )?(web|internet|online)( too| also| as well)?\b/)){let q='';try{q=localStorage.getItem(DISPLAY_KEY)||''}catch(_q){maxQuiet(_q,'line2934')}if(q)return {type:'research',query:q}}
   if(has(/\b(passage plans?|saved routes?|my routes?|voyage plans?)\b/)&&!has(/\b(add|change|update|fix)\b/))return {type:'list_passage_plans'};
   if(has(/\b(apps?|sites?|websites?|projects?)\b/)&&has(/\b(up|online|working|down|running|alive|ok(ay)?|status|check)\b/)&&!has(/\b(add|change|make|fix|update|build)\b/))return {type:'check_projects'};
   if(has(/^(show|list|open|see|what are|pakita)( me)?( all)? (my )?(projects|apps|websites|sites)$/)||n==='my projects'||n==='projects')return {type:'show_projects'};
@@ -2998,8 +3034,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const MOVED_URLS={'https://navigator-isle.github.io/Max-mobile/':'https://max-app-axv.pages.dev/','https://navigator-isle.github.io/':'https://passage-planner-6pm.pages.dev/','https://navigator-isle.github.io':'https://passage-planner-6pm.pages.dev/'};
  function projects(){try{const v=JSON.parse(localStorage.getItem(PROJ_KEY)||'null');if(!(Array.isArray(v)&&v.length))return DEFAULT_PROJECTS;
   let moved=false;const out=v.map(p=>p&&MOVED_URLS[p.url]?(moved=true,{...p,url:MOVED_URLS[p.url]}):p);if(moved)saveProjects(out);return out}catch{return DEFAULT_PROJECTS}}
- const saveProjects=l=>{try{localStorage.setItem(PROJ_KEY,JSON.stringify(l))}catch{}scheduleSync()};
- setTimeout(()=>{try{projects()}catch{}},1200);setTimeout(()=>{try{projects()}catch{}},9000); // move old GitHub addresses (also after the first sync)
+ const saveProjects=l=>{try{localStorage.setItem(PROJ_KEY,JSON.stringify(l))}catch(_q){maxQuiet(_q,'projects')}scheduleSync()};
+ setTimeout(()=>{try{projects()}catch(_q){maxQuiet(_q,'projects')}},1200);setTimeout(()=>{try{projects()}catch(_q){maxQuiet(_q,'projects')}},9000); // move old GitHub addresses (also after the first sync)
  const projKind=p=>/claude\.ai\//.test(p.url)?'Inside Claude':p.repo?'Website · GitHub':'Website';
  const projStatus={};
  let ghInfo=null,pendingMerge=null;
@@ -3057,14 +3093,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function openProject(p){
   // Max himself: never open a second copy (two copies fight over the microphone).
-  try{if(p.id==='max'||new URL(p.url,location.href).pathname.replace(/\/index\.html$/,'/')===location.pathname.replace(/\/index\.html$/,'/')){setSection('home');return 'I’m already here, Mark.'}}catch{}
+  try{if(p.id==='max'||new URL(p.url,location.href).pathname.replace(/\/index\.html$/,'/')===location.pathname.replace(/\/index\.html$/,'/')){setSection('home');return 'I’m already here, Mark.'}}catch(_q){maxQuiet(_q,'openProject')}
   const w=window.open(p.url,'_blank');
   const box=$('noteRefs');box.replaceChildren();
   const a=document.createElement('a');a.className='open-chip';a.href=p.url;a.target='_blank';a.rel='noopener';a.textContent='Open '+p.name+' ↗';box.append(a);box.hidden=false;
   return w?'Opening '+p.name+'.':'Here’s '+p.name+' — tap the button to open it.';
  }
  function readPassagePlans(){
-  let plans=[];try{plans=JSON.parse(localStorage.getItem('pp2_plans')||'[]')}catch{}
+  let plans=[];try{plans=JSON.parse(localStorage.getItem('pp2_plans')||'[]')}catch(_q){maxQuiet(_q,'readPassagePlans')}
   if(!Array.isArray(plans)||!plans.length)return 'I can’t see any saved passage plans on this phone. I can only read them when Passage Planner was used in this same browser, not the Play Store app.';
   const l=plans.slice().sort((a,b)=>(b.saved||0)-(a.saved||0));
   return 'You have '+l.length+' saved passage plan'+(l.length===1?'':'s')+': '+l.slice(0,6).map(p=>(p.name||'Unnamed')+(p.title?', '+p.title:'')+(p.nm?', '+Math.round(p.nm).toLocaleString()+' nautical miles':'')).join('; ')+'.';
@@ -3252,7 +3288,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(/^(my )?(projects?|apps?|sites?|websites?)( overview| status| report| summary)?$/i.test(q))return await projectsOverview({});
   const found=rankNotes(q,5);
   if(found.length){
-   try{localStorage.setItem(DISPLAY_KEY,q)}catch{}
+   try{localStorage.setItem(DISPLAY_KEY,q)}catch(_q){maxQuiet(_q,'displayThing')}
    showDisplay(q.charAt(0).toUpperCase()+q.slice(1),'From your notes — '+found.length+' note'+(found.length===1?'':'s')+'. Say “search the web too” for more.',
     found.map(n=>({badge:n.source==='research'?'RESEARCH ✓':'MY NOTE',badgeClass:n.source==='research'?'badge-res':'badge-note',meta:n.category||'',title:n.title||'Untitled',html:n.body,buttons:[['Open note',()=>loadNote(n.id)]]})));
    lastNote={id:found[0].id,at:Date.now()};
@@ -3419,8 +3455,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- attachments: send Max a photo, screenshot, PDF or text file ----------
  const ATT_KEY='max_pending_attachment';
  let pendingAttach=null,attachURL='';
- try{pendingAttach=JSON.parse(localStorage.getItem(ATT_KEY)||'null')}catch{}
- const saveAttach=()=>{try{pendingAttach?localStorage.setItem(ATT_KEY,JSON.stringify(pendingAttach)):localStorage.removeItem(ATT_KEY)}catch{}};
+ try{pendingAttach=JSON.parse(localStorage.getItem(ATT_KEY)||'null')}catch(_q){maxQuiet(_q,'officeToText')}
+ const saveAttach=()=>{try{pendingAttach?localStorage.setItem(ATT_KEY,JSON.stringify(pendingAttach)):localStorage.removeItem(ATT_KEY)}catch(_q){maxQuiet(_q,'officeToText')}};
  const fullDate=d=>{try{return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}catch{return d}};
  const attachFresh=()=>!!(pendingAttach&&Date.now()-(pendingAttach.at||0)<60*60e3);
  const fileToB64=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).replace(/^data:[^,]*,/,''));r.onerror=()=>no(new Error('Could not read the file.'));r.readAsDataURL(f)});
@@ -3493,7 +3529,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function gotAttachment(att,preview,noFile){
   pendingAttach={...att,preview:preview||'',at:Date.now()};saveAttach();
   // 11 Nov 2026 (Mark): file every file and link straight into the library — into the note on the same subject if there is one
-  let filed='';if(!noFile&&jget('max_autofile',true)!==false){try{filed=' '+autoFileAttachment()}catch{}}
+  let filed='';if(!noFile&&jget('max_autofile',true)!==false){try{filed=' '+autoFileAttachment()}catch(_q){maxQuiet(_q,'gotAttachment')}}
   renderAttachment();
   if(filed.trim()){const d0=pendingAttach.dates[0];return (pendingAttach.say||pendingAttach.summary||'Here’s what’s in it.')+(d0&&!/\d{4}-\d\d-\d\d|\b(expir|due|deadline)/i.test(pendingAttach.say||'')?' '+d0.what+': '+fullDate(d0.date)+'.':'')+filed}
   const d=pendingAttach.dates[0];
@@ -3611,7 +3647,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function importOne(f,cat,rel){
   const {att,mime,localText}=await maxReadFile(f);
   let fig='';
-  if(mime.startsWith('image/')&&mime!=='image/heic'){try{const blob=await shrinkForNote(f),id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);await mediaPut({id,blob,mime:blob.type||f.type,name:f.name,synced:false,at:Date.now()});fig='<figure class="note-media" data-media="'+id+'" data-kind="image"><figcaption>📷 '+escHtml(att.summary||f.name)+'</figcaption></figure>';mediaUpload(id)}catch{}}
+  if(mime.startsWith('image/')&&mime!=='image/heic'){try{const blob=await shrinkForNote(f),id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);await mediaPut({id,blob,mime:blob.type||f.type,name:f.name,synced:false,at:Date.now()});fig='<figure class="note-media" data-media="'+id+'" data-kind="image"><figcaption>📷 '+escHtml(att.summary||f.name)+'</figcaption></figure>';mediaUpload(id)}catch(_q){maxQuiet(_q,'importOne')}}
   const title=f.name.replace(/\.[^.]+$/,'').replace(/_+/g,' ').trim()||att.title||'Untitled';
   const full=localText||att.text||'';
   const body=fig+'<p><i>📁 From your folder: '+escHtml(rel)+' · '+localDate(new Date())+'</i></p>'+(att.title&&att.title!==title?'<p><b>'+escHtml(att.title)+'</b></p>':'')+(att.summary?'<p>'+escHtml(att.summary)+'</p>':'')+
@@ -3637,7 +3673,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     if(!resp)res={status:'fail',err:'the file was lost — add it again'};
     else{const blob=await resp.blob();try{res=await importOne(new File([blob],it.name,{type:it.type||blob.type||typeOf(it.name)}),impCategory(it.base??job.base,it.rel),it.rel)}
      catch(e){if(e.offline){paused='Paused — no internet. I’ll continue when we’re back online.';break}res={status:e.skip?'skip':'fail',err:String(e.message||e).slice(0,160)}}}
-    const j2=jget(IMP_KEY,null);if(!j2)break;const x=j2.items.find(i=>i.key===it.key);if(x)Object.assign(x,res);jset(IMP_KEY,j2);c.delete(it.key).catch(()=>{});
+    const j2=jget(IMP_KEY,null);if(!j2)break;const x=j2.items.find(i=>i.key===it.key);if(x)Object.assign(x,res);jset(IMP_KEY,j2);c.delete(it.key).catch(_q=>{maxQuiet(_q,'importRun')});
    }
   }finally{impRunning=false}
   const job=jget(IMP_KEY,null);if(!job)return;impRender();
@@ -3646,7 +3682,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   jset('max_import_last',{at:Date.now(),base:job.base,done:ok,problems:bad.map(i=>i.rel+': '+i.err).slice(0,30)});jset(IMP_KEY,null);
   const msg='Finished: '+ok+' file'+(ok===1?'':'s')+' added to '+(pathOf(job.base)||'your notes')+(bad.length?'. '+bad.length+' couldn’t be read: '+bad.slice(0,3).map(i=>i.name).join(', ')+(bad.length>3?'…':''):'')+'. Ask me anything about them.';
   if(impShowing())$('dispTitle').textContent='Done ✓';
-  status(msg);setSub('',msg);try{speak(msg)}catch{}
+  status(msg);setSub('',msg);try{speak(msg)}catch(_q){maxQuiet(_q,'importRun')}
   if(screen==='notes')renderList();
  }
  addEventListener('online',()=>setTimeout(()=>{if(jget(IMP_KEY,null))importRun()},3000));
@@ -3783,7 +3819,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function cancelEmail(){
   if(!pendingDraft)return 'There’s no draft to discard.';
   const id=pendingDraft.id;pendingDraft=null;
-  try{await fetchJson(workerBase()+'/api/gmail/draft?id='+encodeURIComponent(id),{method:'DELETE'},20000)}catch{}
+  try{await fetchJson(workerBase()+'/api/gmail/draft?id='+encodeURIComponent(id),{method:'DELETE'},20000)}catch(_q){maxQuiet(_q,'cancelEmail')}
   setSection('home');return 'Okay, I won’t send it. The draft is deleted.';
  }
  const draftShowing=()=>!!(pendingDraft&&Date.now()-pendingDraft.at<30*60e3&&screen==='display'&&/^Draft email/.test($('dispTitle').textContent));
@@ -3889,7 +3925,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
       if(rr.ok&&dd.verified!==false)gone++;else bad.push(g.first.title)}catch{bad.push(g.first.title)}
     }
     // look again: is anything left?
-    let left=0;try{const {r:r2,data:d2}=await fetchJson(workerBase()+'/api/calendar/find?'+q,{},25000);if(r2.ok){const keys=new Set(list.map(g=>g.key));left=(d2.events||[]).filter(e=>keys.has(e.series||e.id)).length}}catch{}
+    let left=0;try{const {r:r2,data:d2}=await fetchJson(workerBase()+'/api/calendar/find?'+q,{},25000);if(r2.ok){const keys=new Set(list.map(g=>g.key));left=(d2.events||[]).filter(e=>keys.has(e.series||e.id)).length}}catch(_q){maxQuiet(_q,'deleteEvents')}
     lastChange={kind:'deleted_many',events:list.map(g=>g.first),at:Date.now()};
     showDisplay('Deleted','',[{badge:'CALENDAR',title:gone+' deleted',lines:list.slice(0,8).map(line)}]);
     if(!gone)return 'I couldn’t delete them, so nothing was changed. Please try again.';
@@ -3947,7 +3983,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(ch.kind==='edit'){const b=ch.before;
    const {r,data}=await fetchJson(workerBase()+'/api/calendar/event',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:b.id,title:b.title,start:b.allDay?b.start:localIso(b.start),end:b.allDay?b.end:localIso(b.end),allDay:b.allDay,...(b.reminders?{reminders:b.reminders.length?b.reminders:[10]}:{}),tz:tzName()})},20000);
    return r.ok?'Undone — “'+b.title+'” is back to '+evWhen(b)+'.':'I couldn’t undo it. '+(data.error||'');}
-  if(ch.kind==='deleted_many'){let ok=0;for(const e of ch.events){try{const {r}=await postJson('/api/calendar/event',{title:e.title,start:e.allDay?e.start:localIso(e.start),end:e.allDay?e.end:localIso(e.end),allDay:e.allDay,durationMinutes:e.allDay?undefined:Math.max(5,Math.round((new Date(e.end)-new Date(e.start))/60000)),reminders:e.reminders&&e.reminders.length?e.reminders:undefined,reminderMinutes:e.reminders&&e.reminders.length?e.reminders[0]:10,location:e.location||'',notes:e.notes||'',tz:tzName()},20000);if(r.ok)ok++}catch{}}return 'Put back '+ok+' of '+ch.events.length+'.'}
+  if(ch.kind==='deleted_many'){let ok=0;for(const e of ch.events){try{const {r}=await postJson('/api/calendar/event',{title:e.title,start:e.allDay?e.start:localIso(e.start),end:e.allDay?e.end:localIso(e.end),allDay:e.allDay,durationMinutes:e.allDay?undefined:Math.max(5,Math.round((new Date(e.end)-new Date(e.start))/60000)),reminders:e.reminders&&e.reminders.length?e.reminders:undefined,reminderMinutes:e.reminders&&e.reminders.length?e.reminders[0]:10,location:e.location||'',notes:e.notes||'',tz:tzName()},20000);if(r.ok)ok++}catch(_q){maxQuiet(_q,'undoChangeInner')}}return 'Put back '+ok+' of '+ch.events.length+'.'}
   const e=ch.event;
   const {r,data}=await postJson('/api/calendar/event',{title:e.title,start:e.allDay?e.start:localIso(e.start),end:e.allDay?e.end:localIso(e.end),allDay:e.allDay,durationMinutes:e.allDay?undefined:Math.max(5,Math.round((new Date(e.end)-new Date(e.start))/60000)),reminders:e.reminders&&e.reminders.length?e.reminders:undefined,reminderMinutes:e.reminders&&e.reminders.length?e.reminders[0]:10,location:e.location||'',notes:e.notes||'',tz:tzName()},20000);
   return r.ok?'Put back — “'+e.title+'” '+evWhen(e)+'.':'I couldn’t put it back. '+(data.error||'');
@@ -4285,13 +4321,13 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function planner(){
   if(ppReady)return ppReady;
   // Keep your Passage Planner settings exactly as they were: snapshot them, restore after it has loaded.
-  const snap={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('pp2_'))snap[k]=localStorage.getItem(k)}}catch{}
-  const restore=()=>{try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('pp2_')&&!(k in snap))localStorage.removeItem(k)}for(const [k,v] of Object.entries(snap))if(localStorage.getItem(k)!==v)localStorage.setItem(k,v)}catch{}};
+  const snap={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('pp2_'))snap[k]=localStorage.getItem(k)}}catch(_q){maxQuiet(_q,'planner')}
+  const restore=()=>{try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('pp2_')&&!(k in snap))localStorage.removeItem(k)}for(const [k,v] of Object.entries(snap))if(localStorage.getItem(k)!==v)localStorage.setItem(k,v)}catch(_q){maxQuiet(_q,'planner')}};
   ppReady=new Promise((ok,no)=>{
    ppFrame=document.createElement('iframe');ppFrame.src=ppUrl();ppFrame.setAttribute('aria-hidden','true');ppFrame.tabIndex=-1;
    ppFrame.style.cssText='position:fixed;width:1px;height:1px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none';
    document.body.append(ppFrame);
-   const t0=Date.now(),poll=()=>{let w=null;try{w=ppFrame.contentWindow;if(w&&typeof w.searchPorts==='function'&&typeof w.mpDist==='function'&&w.searchPorts('Manila').length){try{w.Storage.prototype.setItem=function(){};w.Storage.prototype.removeItem=function(){};w.Storage.prototype.clear=function(){}}catch{}setTimeout(()=>{restore();ok(w)},300);setTimeout(restore,3000);return}}catch(e){/* still starting */}
+   const t0=Date.now(),poll=()=>{let w=null;try{w=ppFrame.contentWindow;if(w&&typeof w.searchPorts==='function'&&typeof w.mpDist==='function'&&w.searchPorts('Manila').length){try{w.Storage.prototype.setItem=function(){};w.Storage.prototype.removeItem=function(){};w.Storage.prototype.clear=function(){}}catch(_q){maxQuiet(_q,'planner')}setTimeout(()=>{restore();ok(w)},300);setTimeout(restore,3000);return}}catch(e){/* still starting */}
     if(Date.now()-t0>30000){restore();no(new Error('Passage Planner didn’t load (no internet, or it moved).'));return}setTimeout(poll,300)};
    ppFrame.onload=poll;setTimeout(poll,1500);
   }).catch(e=>{ppReady=null;if(ppFrame){ppFrame.remove();ppFrame=null}throw e});
@@ -4463,12 +4499,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const CAL_CACHE='max_cache_calendar';
  async function prefetchOffline(){
   if(isOffline()||!/^linked/.test(cloud.google||''))return;
-  try{await listSchedule('week')}catch{}
+  try{await listSchedule('week')}catch(_q){maxQuiet(_q,'prefetchOffline')}
  }
 
  // ================= MAX'S CREW: Secretary, Researcher, Librarian — and skill cards you teach him =================
- const jget=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}};
- const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}if(SYNC_KEYS.includes(k))scheduleSync()};
+ function jget(k,d){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v??d}catch{return d}}   // function declarations: seedMaritime() calls these at start-up, before the crew section runs
+ function jset(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(_q){maxQuiet(_q,'jset')}if(SYNC_KEYS.includes(k))scheduleSync()}
  // ---------- Home dashboard: live paper trading + investment guide, folded until he taps (asked 9 Nov 2026) ----------
  const DASH_KEY='max_dash_open',MONEY_KEY='max_money_profile';
  const dashE=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -4482,14 +4518,14 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const {r,data}=await fetchJson(workerBase()+'/api/home/paper',{method:'GET'},30000);
   if(r.status===404)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
   if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
-  dashPaperData=data;dashPaperAt=Date.now();try{localStorage.setItem('max_cache_paper',JSON.stringify(data))}catch{}return data;
+  dashPaperData=data;dashPaperAt=Date.now();try{localStorage.setItem('max_cache_paper',JSON.stringify(data))}catch(_q){maxQuiet(_q,'loadPaper')}return data;
  }
  async function loadGuide(force){
   if(!force&&dashGuideData&&Date.now()-dashGuideAt<30*60e3)return dashGuideData;
   const {r,data}=await fetchJson(workerBase()+'/api/home/guide',{method:'GET'},30000);
   if(r.status===404)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
   if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
-  dashGuideData=data;dashGuideAt=Date.now();try{localStorage.setItem('max_cache_guide',JSON.stringify(data))}catch{}return data;
+  dashGuideData=data;dashGuideAt=Date.now();try{localStorage.setItem('max_cache_guide',JSON.stringify(data))}catch(_q){maxQuiet(_q,'loadGuide')}return data;
  }
  function paperHtml(d){
   const main=d.books.filter(b=>b.weight>0),watch=d.books.filter(b=>!(b.weight>0));
@@ -4696,7 +4732,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const {r,data}=await fetchJson(workerBase()+'/api/home/status',{method:'GET'},30000);
   if(r.status===404)throw new Error('This needs the newest Max server (⚙ → Update Max’s server).');
   if(!r.ok)throw new Error(data.error||'HTTP '+r.status);
-  dashStatusData=data;dashStatusAt=Date.now();try{localStorage.setItem('max_cache_status',JSON.stringify(data))}catch{}return data;
+  dashStatusData=data;dashStatusAt=Date.now();try{localStorage.setItem('max_cache_status',JSON.stringify(data))}catch(_q){maxQuiet(_q,'loadStatus')}return data;
  }
  const okMark=ok=>ok?'<span class="up">✓</span>':'<span class="down">!</span>';
  const issueList=a=>(a||[]).length?'<ul class="dash-list">'+a.slice(0,8).map(x=>'<li>'+dashE(x)+'</li>').join('')+'</ul>':'<div class="small up">No problems found.</div>';
@@ -4705,7 +4741,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  let dashOpen=null;
  // Notes summary (from the notes on this phone) and Max's status (from the public status page)
  async function loadNotesSum(){
-  let N=[];try{N=rawLoad()}catch{}N=(Array.isArray(N)?N:[]).filter(n=>n&&!n.deleted);
+  let N=[];try{N=rawLoad()}catch(_q){maxQuiet(_q,'loadNotesSum')}N=(Array.isArray(N)?N:[]).filter(n=>n&&!n.deleted);
   const day=Date.now()-864e5,top={};for(const n of N){const c=String(n.category||'No folder').split(/\s*›\s*/)[0]||'No folder';top[c]=(top[c]||0)+1}
   return {count:N.length,today:N.filter(n=>(n.updatedAt||0)>day).length,folders:Object.entries(top).sort((x,y)=>y[1]-x[1]),recent:[...N].sort((x,y)=>(y.updatedAt||0)-(x.updatedAt||0)).slice(0,8).map(n=>({title:n.title,category:n.category,at:n.updatedAt}))};
  }
@@ -4778,6 +4814,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(cryptoStale(h))a.push('Crypto prices are more than 2 days old — Max keeps retrying other sources');
   if(/failed|no message id/.test(String(h.emails||'')))a.push('The last email didn’t go out: '+String(h.emails).replace(/^last [^“]*/,''));
   if(h.google!==undefined&&!/^linked/.test(String(h.google)))a.push('Google (calendar, Gmail) is not linked');
+  if(h.aiMeter&&Array.isArray(h.aiMeter.alerts))h.aiMeter.alerts.forEach(x=>a.push(x));
   if(h.database&&!/^(bound|ready)/.test(String(h.database)))a.push('The database is not connected');
   return a}
  const hShort=s=>String(s||'–').replace(/max-worker-\d{4}-\d\d-/,'').replace(/(\d{4}-\d\d-\d\dT\d\d:\d\d)(?::[\d.]+)?Z/g,(m,x)=>new Date(x+':00Z').toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}));
@@ -4786,7 +4823,12 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return '<section class="pv-sec"><h3>Overview</h3><div class="pv-total"><b class="'+(a.length?'down':'up')+'">'+(a.length?a.length+' error'+(a.length>1?'s':''):'No errors')+'</b><span class="muted small">'+(a.length?'Max retries by himself; the ones that need you say so.':'Nothing needs you right now.')+'</span></div>'+
    (a.length?'<ul class="dash-list">'+a.map(x=>'<li class="small down">'+dashE(x)+'</li>').join('')+'</ul>':'')+
    '<table class="pv-tbl"><tbody>'+row('Google (calendar, Gmail)',/^linked/.test(String(h.google)))+row('Database',/^(bound|ready)/.test(String(h.database)))+row('Paper trading',!/failed/.test(String(h.paperTrading))&&!cryptoStale(h))+row('Emails',!/failed|no message id/.test(String(h.emails||'')))+row('Guard',!/[1-9]\d* problem/.test(String(h.guard)))+row('Hourly clock',!(h.lastTrigger&&h.lastTrigger.at&&Date.now()-Date.parse(h.lastTrigger.at)>2.5*3600e3))+'</tbody></table>'+
-   '<div class="muted small">Server '+dashE(hShort(h.version))+'</div></section><div class="dash-actions"><button class="small-btn" data-dash="status-refresh">Check again</button></div>'};
+   '<div class="muted small">Server '+dashE(hShort(h.version))+'</div></section>'+aiMeterSec(h.aiMeter)+'<div class="dash-actions"><button class="small-btn" data-dash="status-refresh">Check again</button></div>'};
+ // Free AI meter: which AI is fine, resting (out of quota or busy) or failing — so you know before an answer goes wrong
+ const aiMeterSec=m=>{if(!m||!Array.isArray(m.list)||!m.list.length)return '';
+  const badge=x=>x.status==='resting'?'<span class="err-badge">Resting '+x.restMin+' min</span>':x.status==='failing'?'<span class="err-badge">Failing</span>':x.status==='idle'?'<span class="muted small">Not used today</span>':'<span class="ok-badge">OK</span>';
+  return '<section class="pv-sec"><h3>Free AI meter</h3><div class="muted small">'+dashE(m.summary||'')+' · counts are for today. “Resting” means the AI hit its limit or is busy; Max uses the next one.</div><table class="pv-tbl"><tbody>'+
+   m.list.map(x=>'<tr><td><b>'+dashE(x.label)+'</b><div class="muted small">'+x.ok+' answered · '+x.fail+' failed'+(x.limitHits?' · '+x.limitHits+' limit hit'+(x.limitHits>1?'s':''):'')+(x.studyCap?' · study '+x.studyCalls+'/'+x.studyCap:'')+(x.lastErr&&(x.fail||x.status!=='ok')?'<br>last problem: '+dashE(x.lastErr):'')+'</div></td><td>'+badge(x)+'</td></tr>').join('')+'</tbody></table></section>'};
  const cryptoStale=h=>{const m=String(h.paperTrading||'').match(/crypto checked (\d{4}-\d\d-\d\d)/);return m&&Date.now()-Date.parse(m[1]+'T00:00:00Z')>2.5*864e5};
  // the six dashboards: where each card lives, how it loads, its short card and its full overview
  const dashData={};
@@ -4812,17 +4854,17 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   for(const k of Object.keys(DASH)){
    if(which&&which!==k)continue;const D=DASH[k],t=$(D.tid);if(!t)continue;
    let d=null,offline='';try{d=await D.load(force)}catch(e){d=D.cache?jget(D.cache,null):null;offline=d?'Offline — saved copy.':e.message}
-   if(!d){t.innerHTML='<div class="tile-top"><span>'+D.name+'</span></div><div class="muted small">'+dashE(offline)+'</div>';try{ovIconize(k,t)}catch{};continue}
-   dashData[k]=d;t.innerHTML=D.tile(d)+(offline?'<div class="muted small">saved copy</div>':'');try{ovIconize(k,t)}catch{}
-   if(k==='status'){t.classList.toggle('alert',healthAlerts(d).length>0);try{ovRail()}catch{}}
-   try{dockUpdate(k,d)}catch{}
+   if(!d){t.innerHTML='<div class="tile-top"><span>'+D.name+'</span></div><div class="muted small">'+dashE(offline)+'</div>';try{ovIconize(k,t)}catch(_q){maxQuiet(_q,'renderDash')};continue}
+   dashData[k]=d;t.innerHTML=D.tile(d)+(offline?'<div class="muted small">saved copy</div>':'');try{ovIconize(k,t)}catch(_q){maxQuiet(_q,'renderDash')}
+   if(k==='status'){t.classList.toggle('alert',healthAlerts(d).length>0);try{ovRail()}catch(_q){maxQuiet(_q,'renderDash')}}
+   try{dockUpdate(k,d)}catch(_q){maxQuiet(_q,'renderDash')}
    if(dashOpen===k){$('dashFullBody').innerHTML=(offline?'<div class="muted small">'+dashE(offline)+'</div>':'')+D.full(d);if(k==='paper')toJournal()}}
  }
  let drawerOpen=null;
- function closeDrawer(){try{ovClose()}catch{};['drawerL','drawerR'].forEach(i=>$(i)&&$(i).classList.remove('open'));if($('drawerShade'))$('drawerShade').hidden=true;drawerOpen=null}
+ function closeDrawer(){try{ovClose()}catch(_q){maxQuiet(_q,'closeDrawer')};['drawerL','drawerR'].forEach(i=>$(i)&&$(i).classList.remove('open'));if($('drawerShade'))$('drawerShade').hidden=true;drawerOpen=null}
  function openDrawer(side,focus){closeDrawer();const d=$(side==='R'?'drawerR':'drawerL');if(!d)return;d.classList.add('open');$('drawerShade').hidden=false;drawerOpen=side==='R'?'R':'L';
   Object.keys(DASH).filter(k=>DASH[k].side===drawerOpen).forEach(k=>renderDash(k));
-  if(focus&&DASH[focus]){const t=$(DASH[focus].tid);if(t)try{t.scrollIntoView({block:'nearest'})}catch{}}}
+  if(focus&&DASH[focus]){const t=$(DASH[focus].tid);if(t)try{t.scrollIntoView({block:'nearest'})}catch(_q){maxQuiet(_q,'openDrawer')}}}
  function showFull(k){if(!DASH[k])k='paper';closeDrawer();dashOpen=k;const o=$('dashFull'),D=DASH[k];$('dashFullTitle').textContent=D.title;$('dashFullInfoBox').textContent=D.info;$('dashFullInfoBox').hidden=true;$('dashFullInfo').setAttribute('aria-expanded','false');
   $('dashFullBody').innerHTML='<div class="muted small">Loading…</div>';o.hidden=false;document.body.classList.add('dash-full-open');
   const d=dashData[k]||(k==='paper'?dashPaperData:k==='guide'?dashGuideData:k==='sites'||k==='apps'?dashStatusData:null);if(d){$('dashFullBody').innerHTML=D.full(d);if(k==='paper')toJournal()}renderDash(k)}
@@ -4839,7 +4881,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*0.6)return;
    if(drawerOpen){if((drawerOpen==='L'&&dx<0)||(drawerOpen==='R'&&dx>0))closeDrawer();return}
    if(s.inField||screen!=='home'||dashOpen||!document.body.classList.contains('has-dash'))return;
-   let busy=false;try{busy=modalOpen()||!$('quickMenu').hidden}catch{}if(busy)return;
+   let busy=false;try{busy=modalOpen()||!$('quickMenu').hidden}catch(_q){maxQuiet(_q,'initDash')}if(busy)return;
    if(dx>0)ovOpen();
    },{passive:true});
   $('dashFullClose').addEventListener('click',closeFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(dashOpen)closeFull();else if(drawerOpen)closeDrawer()}});
@@ -4873,11 +4915,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const ovSvg=k=>'<svg class="ov-ic" viewBox="0 0 24 24" aria-hidden="true">'+OV_IC[k]+'</svg>';
  function ovIconize(k,t){const sp=t.querySelector('.tile-top span');if(!sp||!OV_IC[k])return;const nm=sp.textContent.replace(/^[^A-Za-z]+/,'');sp.innerHTML=ovSvg(k)+'<span class="ov-nm">'+dashE(nm)+'</span>'}
  function ovRail(){document.querySelectorAll('#ovRail [data-ov]').forEach(b=>{if(!b.firstChild)b.innerHTML=ovSvg(b.dataset.ov)});const st=$('tileStatus');const bad=st&&st.classList.contains('alert');const b=document.querySelector('#ovRail [data-ov="status"]');if(b)b.classList.toggle('alert',!!bad)}
- function ovOpen(){try{if(modalOpen())return}catch{}closeDrawer();$('ovPane').classList.add('open');$('ovPane').setAttribute('aria-hidden','false');$('ovShade').hidden=false;drawerOpen='L';['paper','guide','status','apps','sites'].forEach(k=>renderDash(k))}
+ function ovOpen(){try{if(modalOpen())return}catch(_q){maxQuiet(_q,'ovOpen')}closeDrawer();$('ovPane').classList.add('open');$('ovPane').setAttribute('aria-hidden','false');$('ovShade').hidden=false;drawerOpen='L';['paper','guide','status','apps','sites'].forEach(k=>renderDash(k))}
  function ovClose(){const p=$('ovPane');if(!p)return;p.classList.remove('open');p.setAttribute('aria-hidden','true');$('ovShade').hidden=true}
  document.querySelectorAll('#ovRail [data-ov]').forEach(b=>b.addEventListener('click',()=>ovOpen()));
  $('ovShade').addEventListener('click',()=>closeDrawer());
- ovRail();['paper','guide','status','apps','sites'].forEach(k=>{try{ovIconize(k,$(DASH[k].tid))}catch{}});
+ ovRail();['paper','guide','status','apps','sites'].forEach(k=>{try{ovIconize(k,$(DASH[k].tid))}catch(_q){maxQuiet(_q,'ovClose')}});
  // ---------- redesign (23 Nov 2026, Mark): Brain bottom-left, Notes bottom-right; the old side panels are cards on the home screen ----------
  function dockUpdate(k,d){
   if(k==='brain'){const b=$('dockBrainBadge');if(d&&d.total){const pct=Math.round(d.studied/d.total*100);b.textContent=pct+'%';b.hidden=false;$('dockBrain').classList.toggle('alert',(d.checks||[]).length>0)}}
@@ -5030,7 +5072,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  async function setWeatherPlace(d){
   const place=String(d?.location||'').trim();if(!place)return 'Which place should I use for your weather?';
-  if(/^(here|my location|current location|where i am)$/i.test(place)){jset(WX_PLACE,null);try{localStorage.removeItem(WX_PLACE)}catch{}return 'Okay — I’ll use your phone’s location for the weather.'}
+  if(/^(here|my location|current location|where i am)$/i.test(place)){jset(WX_PLACE,null);try{localStorage.removeItem(WX_PLACE)}catch(_q){maxQuiet(_q,'setWeatherPlace')}return 'Okay — I’ll use your phone’s location for the weather.'}
   try{const w=await getWeather({name:place});jset(WX_PLACE,{name:w.place,lat:w.lat,lon:w.lon});return 'Done. Your weather place is now '+w.place+(w.country?', '+w.country:'')+'. It will be in your morning briefing too.'}
   catch(e){return e.plain?e.message:'I couldn’t check that place right now.'}
  }
@@ -5061,7 +5103,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const text=String(d?.text||d?.instruction||'').trim().slice(0,1500);if(!text)return 'What should the message say?';
   const num=String(d?.to||'').replace(/[^\d+]/g,'').replace(/^\+/,'').replace(/^0(?=9\d{9}$)/,'63');
   const who=String(d?.to||'').trim(),link='https://wa.me/'+(num.length>=8?num:'')+'?text='+encodeURIComponent(text);
-  showDisplay('WhatsApp message',who&&num.length<8?'For '+who+' — pick the chat in WhatsApp':who?'To '+who:'Pick the chat in WhatsApp',[{badge:'DRAFT',badgeClass:'badge-draft',title:who?'To '+who:'Message',html:'<p>'+escHtml(text).replace(/\n/g,'<br>')+'</p>',lines:['WhatsApp opens with this filled in — you tap send.'],buttons:[['Open WhatsApp',()=>{window.open(link,'_blank')}],['Copy text',()=>{navigator.clipboard?.writeText(text).catch(()=>{})}]]}]);
+  showDisplay('WhatsApp message',who&&num.length<8?'For '+who+' — pick the chat in WhatsApp':who?'To '+who:'Pick the chat in WhatsApp',[{badge:'DRAFT',badgeClass:'badge-draft',title:who?'To '+who:'Message',html:'<p>'+escHtml(text).replace(/\n/g,'<br>')+'</p>',lines:['WhatsApp opens with this filled in — you tap send.'],buttons:[['Open WhatsApp',()=>{window.open(link,'_blank')}],['Copy text',()=>{navigator.clipboard?.writeText(text).catch(_q=>{maxQuiet(_q,'whatsappDraft')})}]]}]);
   lastWhatsApp={link,at:Date.now()};
   return 'Here’s the message'+(who?' for '+who:'')+': “'+text+'”. Tap Open WhatsApp, '+(num.length>=8?'then send.':'pick the chat, then send.');
  }
@@ -5070,10 +5112,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   setSection('display');$('dispTitle').textContent='Preparing your briefing…';$('dispSub').textContent='';$('dispBody').replaceChildren();
   const tasks=[checkProjects().catch(()=>''),loadStats(false).catch(()=>false)];
   const sched=/^linked/.test(cloud.google||'')?listSchedule('today').catch(()=>''):Promise.resolve('');
-  const mail=gmailOn()?cachedPost('/api/gmail/inbox',{query:'in:inbox is:unread newer_than:1d',max:10},10*60e3,30000).then(x=>x.r.ok?x.data:null).catch(()=>null):Promise.resolve(null);
-  const mkt=getQuotes(watchlist().slice(0,10).map(x=>({symbol:x.symbol,kind:x.kind}))).catch(()=>null);
-  const trP=Promise.race([traderSummary(false).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),12000))]);
-  const wxPlace=jget(WX_PLACE,null),wxP=wxPlace?Promise.race([getWeather(wxPlace).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),15000))]):Promise.resolve(null);
+  const mail=gmailOn()?cachedPost('/api/gmail/inbox',{query:'in:inbox is:unread newer_than:1d',max:10},10*60e3,30000).then(x=>x.r.ok?x.data:null).catch(_q=>maxQuiet(_q,'briefing',null)):Promise.resolve(null);
+  const mkt=getQuotes(watchlist().slice(0,10).map(x=>({symbol:x.symbol,kind:x.kind}))).catch(_q=>maxQuiet(_q,'briefing',null));
+  const trP=Promise.race([traderSummary(false).catch(_q=>maxQuiet(_q,'briefing',null)),new Promise(r=>setTimeout(()=>r(null),12000))]);
+  const wxPlace=jget(WX_PLACE,null),wxP=wxPlace?Promise.race([getWeather(wxPlace).catch(_q=>maxQuiet(_q,'briefing',null)),new Promise(r=>setTimeout(()=>r(null),15000))]):Promise.resolve(null);
   const [schedText,,mailData,mktData]=await Promise.all([Promise.race([sched,new Promise(r=>setTimeout(()=>r(''),15000))]),Promise.race([Promise.all(tasks),new Promise(r=>setTimeout(r,15000))]),Promise.race([mail,new Promise(r=>setTimeout(()=>r(null),20000))]),Promise.race([mkt,new Promise(r=>setTimeout(()=>r(null),20000))])]);
   const wx=await wxP,tr=await trP;
   const mktFired=mktData?checkAlerts(mktData):[];
@@ -5098,7 +5140,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   showDisplay(hi+', Mark',new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}),cards);
   jset('max_last_brief',todayKey());
   const due=watch.filter(t=>!t.lastChecked||Date.now()-t.lastChecked>7*864e5);
-  if(due.length)setTimeout(()=>checkWatch(false).then(t=>{if(t&&/found/.test(t))setSub('',t)}).catch(()=>{}),500);
+  if(due.length)setTimeout(()=>checkWatch(false).then(t=>{if(t&&/found/.test(t))setSub('',t)}).catch(_q=>{maxQuiet(_q,'briefing')}),500);
   return hi+'. '+(schedText&&!/clear/.test(schedText)?schedText+' ':'')+
    (wx?'Weather in '+wx.place+': '+wxLine(wx,0)+'. ':'')+
    (dl.length?dl.length+' deadline'+(dl.length===1?'':'s')+' in the next 30 days, first: '+dl[0].what+', '+whenText(dl[0].date)+'. ':'No deadlines in the next 30 days. ')+
@@ -5318,7 +5360,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  // ---------- search by meaning (free embeddings, stored on this phone) ----------
  const VEC_KEY='max_vec';let vecIndex=null,vecBusy=false,vecTimer=null;const qVecCache=new Map();
- function vecLoad(){if(!vecIndex){try{vecIndex=JSON.parse(localStorage.getItem(VEC_KEY)||'null')}catch{}vecIndex=vecIndex||{model:'',items:{}}}return vecIndex}
+ function vecLoad(){if(!vecIndex){try{vecIndex=JSON.parse(localStorage.getItem(VEC_KEY)||'null')}catch(_q){maxQuiet(_q,'vecLoad')}vecIndex=vecIndex||{model:'',items:{}}}return vecIndex}
  function vecSave(){try{localStorage.setItem(VEC_KEY,JSON.stringify(vecIndex))}catch{const ks=Object.keys(vecIndex.items);ks.slice(0,Math.floor(ks.length/4)).forEach(k=>delete vecIndex.items[k])}}
  const vecDecode=b=>{const s=atob(b),v=new Float32Array(s.length);let m=0;for(let i=0;i<s.length;i++){let x=s.charCodeAt(i);if(x>127)x-=256;v[i]=x;m+=x*x}m=Math.sqrt(m)||1;for(let i=0;i<v.length;i++)v[i]/=m;return v};
  const dot=(a,b)=>{let s=0;for(let i=0;i<Math.min(a.length,b.length);i++)s+=a[i]*b[i];return s};
@@ -5329,7 +5371,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const parts=html.split(/(?=<p><(?:b|strong)>)|(?=<hr\b)|(?=<h[1-4]\b)/i).map(h=>plain(h).trim()).filter(Boolean),out=[];let cur='';
   for(const p of parts){if((cur+'\n'+p).length>1500&&cur){out.push(cur);cur=p}else cur=cur?cur+'\n'+p:p}if(cur)out.push(cur);
   return out.slice(0,24).map(c=>(n.title||'')+' — '+c.slice(0,1800))}
- function scheduleIndex(){clearTimeout(vecTimer);vecTimer=setTimeout(()=>indexNotes().catch(()=>{}),4000)}
+ function scheduleIndex(){clearTimeout(vecTimer);vecTimer=setTimeout(()=>indexNotes().catch(_q=>{maxQuiet(_q,'scheduleIndex')}),4000)}
  async function indexNotes(){
   if(vecBusy||!workerBase()||navigator.onLine===false)return;vecBusy=true;
   try{
@@ -5368,7 +5410,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const notes=getNotes().filter(n=>![SKILL_CAT,SALES_CAT].includes(n.category)&&plain(n.body).length>40);
   if(notes.length<2)return 'Librarian: you need at least two notes before I can compare them.';
   setSection('display');$('dispTitle').textContent='Librarian is comparing your notes…';$('dispSub').textContent='Looking for notes that disagree.';$('dispBody').replaceChildren();
-  await indexNotes().catch(()=>{});
+  await indexNotes().catch(_q=>{maxQuiet(_q,'checkConflicts')});
   const V=vecLoad(),vec=notes.map(n=>V.items[n.id]?vecDecode(V.items[n.id].v):null),pairs=[];
   const words=n=>new Set(norm(plain(n.body)+' '+n.title).split(' ').filter(w=>w.length>3)),W=notes.map(words);
   for(let i=0;i<notes.length;i++)for(let j=i+1;j<notes.length;j++){
@@ -5599,7 +5641,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function undoLast(){
   if(!lastCreated||Date.now()-lastCreated.at>30*60e3)return 'There’s nothing recent for me to undo.';
   const it=lastCreated;
-  if(it.batch&&it.batch.length>1){let ok=0;for(const b of it.batch){try{const {r}=await fetchJson(workerBase()+(b.kind==='event'?'/api/calendar/event?id=':'/api/tasks?id=')+encodeURIComponent(b.id),{method:'DELETE'},20000);if(r.ok)ok++}catch{}}lastCreated=null;return 'Removed '+ok+' of '+it.batch.length+' things I just added.'}
+  if(it.batch&&it.batch.length>1){let ok=0;for(const b of it.batch){try{const {r}=await fetchJson(workerBase()+(b.kind==='event'?'/api/calendar/event?id=':'/api/tasks?id=')+encodeURIComponent(b.id),{method:'DELETE'},20000);if(r.ok)ok++}catch(_q){maxQuiet(_q,'undoLast')}}lastCreated=null;return 'Removed '+ok+' of '+it.batch.length+' things I just added.'}
   const {r,data}=await fetchJson(workerBase()+(it.kind==='event'?'/api/calendar/event?id=':'/api/tasks?id=')+encodeURIComponent(it.id),{method:'DELETE'},20000);
   if(!r.ok)return 'I couldn’t remove it. '+(data.error||'');
   lastCreated=null;
@@ -5611,7 +5653,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // Songs play in a small YouTube player (YouTube's rules: it stays visible). Radio keeps playing with the screen off.
  // The music turns down by itself while Max listens or speaks, and comes back after.
  const MUSIC={mode:'',list:[],i:0,q:'',playing:false,vol:70,yt:null,ytReady:null,audio:null,ducked:false,title:'',startedAt:0};
- const MUSIC_VOL='max_music_vol';try{MUSIC.vol=Math.min(100,Math.max(5,Number(localStorage.getItem(MUSIC_VOL))||70))}catch{}
+ const MUSIC_VOL='max_music_vol';try{MUSIC.vol=Math.min(100,Math.max(5,Number(localStorage.getItem(MUSIC_VOL))||70))}catch(_q){maxQuiet(_q,'undoLast')}
  function musicBar(){
   let bar=$('musicBar');if(bar)return bar;
   bar=document.createElement('div');bar.id='musicBar';bar.hidden=true;
@@ -5637,7 +5679,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   bar.querySelectorAll('.music-link').forEach(a=>a.href=a.dataset.base+encodeURIComponent(MUSIC.q||''));
   document.body.classList.toggle('music-on',!!MUSIC.mode);
   if('mediaSession' in navigator&&MUSIC.mode)try{navigator.mediaSession.metadata=new MediaMetadata({title:cur.title||cur.name||MUSIC.q,artist:cur.channel||(MUSIC.mode==='radio'?'Internet radio':'Max'),album:'Max · '+MUSIC.q});
-   navigator.mediaSession.setActionHandler('play',()=>musicControl({op:'resume'}));navigator.mediaSession.setActionHandler('pause',()=>musicTalkButton());try{navigator.mediaSession.setActionHandler('previoustrack',()=>{if(MUSIC.mode==='local'){MUSIC.i=Math.max(0,MUSIC.i-1);musicStartLocal()}})}catch{}navigator.mediaSession.setActionHandler('nexttrack',()=>musicControl({op:'next'}))}catch{}
+   navigator.mediaSession.setActionHandler('play',()=>musicControl({op:'resume'}));navigator.mediaSession.setActionHandler('pause',()=>musicTalkButton());try{navigator.mediaSession.setActionHandler('previoustrack',()=>{if(MUSIC.mode==='local'){MUSIC.i=Math.max(0,MUSIC.i-1);musicStartLocal()}})}catch(_q){maxQuiet(_q,'musicShow')}navigator.mediaSession.setActionHandler('nexttrack',()=>musicControl({op:'next'}))}catch(_q){maxQuiet(_q,'musicShow')}
  }
  function ytApi(){
   if(window.YT&&window.YT.Player)return Promise.resolve();
@@ -5648,7 +5690,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   return MUSIC.ytReady;
  }
  const musicLevel=()=>MUSIC.ducked?Math.max(3,Math.round(MUSIC.vol*0.2)):MUSIC.vol;
- function musicApplyVol(){const v=musicLevel();try{MUSIC.yt&&MUSIC.yt.setVolume&&MUSIC.yt.setVolume(v)}catch{}if(MUSIC.audio)MUSIC.audio.volume=v/100}
+ function musicApplyVol(){const v=musicLevel();try{MUSIC.yt&&MUSIC.yt.setVolume&&MUSIC.yt.setVolume(v)}catch(_q){maxQuiet(_q,'musicApplyVol')}if(MUSIC.audio)MUSIC.audio.volume=v/100}
  function musicDuck(on){if(MUSIC.ducked===on)return;MUSIC.ducked=on;if(MUSIC.mode)musicApplyVol()}
  async function musicStartVideo(){
   const v=MUSIC.list[MUSIC.i];if(!v)return false;
@@ -5658,7 +5700,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(MUSIC.yt&&MUSIC.yt.loadVideoById){MUSIC.yt.loadVideoById(v.id);musicApplyVol();return true}
   await new Promise(res=>{
    MUSIC.yt=new YT.Player('musicVideo',{width:'100%',height:'200',videoId:v.id,playerVars:{autoplay:1,playsinline:1,rel:0,modestbranding:1},
-    events:{onReady:e=>{musicApplyVol();try{e.target.playVideo()}catch{}res()},
+    events:{onReady:e=>{musicApplyVol();try{e.target.playVideo()}catch(_q){maxQuiet(_q,'musicStartVideo')}res()},
      onStateChange:e=>{if(e.data===1){MUSIC.playing=true;musicShow()}else if(e.data===2){MUSIC.playing=false;musicShow()}else if(e.data===0){musicNext(true)}},
      onError:()=>{musicNext(true)}}});
    setTimeout(res,8000);
@@ -5667,7 +5709,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function musicStartRadio(){
   const st=MUSIC.list[MUSIC.i];if(!st)return false;
-  try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch{}
+  try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch(_q){maxQuiet(_q,'musicStartRadio')}
   if(MUSIC.audio)MUSIC.audio.pause();
   const a=new Audio();a.preload='none';a.src=st.url;MUSIC.audio=a;MUSIC.mode='radio';musicApplyVol();
   a.onplaying=()=>{MUSIC.playing=true;musicShow()};a.onpause=()=>{MUSIC.playing=false;musicShow()};
@@ -5697,7 +5739,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   MUSIC.list=data.videos||[];
   try{await musicStartVideo()}catch(e){
    // The YouTube player didn't load: fall back to radio so he still gets music.
-   const rr=await fetchJson(base+'/api/music?q='+encodeURIComponent(q)+'&mode=radio',{},15000).catch(()=>null);
+   const rr=await fetchJson(base+'/api/music?q='+encodeURIComponent(q)+'&mode=radio',{},15000).catch(_q=>maxQuiet(_q,'playMusic',null));
    if(rr&&rr.r.ok&&rr.data.stations?.length){MUSIC.list=rr.data.stations;MUSIC.i=0;musicStartRadio();return 'YouTube didn’t load ('+e.message+'), so here’s '+(MUSIC.list[0].name||'radio')+' instead.'}
    MUSIC.mode='';musicShow();return 'Sorry, '+e.message+'. Try “play '+q+' radio”.';
   }
@@ -5719,11 +5761,11 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!MUSIC.mode&&op!=='what')return 'Nothing is playing right now. Say “play” and what you’d like.';
   const cur=MUSIC.list[MUSIC.i]||{};
   switch(op){
-   case 'pause':MUSIC.held=false;try{MUSIC.yt&&MUSIC.yt.pauseVideo&&MUSIC.yt.pauseVideo()}catch{}if(MUSIC.audio)MUSIC.audio.pause();MUSIC.playing=false;musicShow();return 'Paused.';
-   case 'resume':try{MUSIC.mode==='video'&&MUSIC.yt&&MUSIC.yt.playVideo&&MUSIC.yt.playVideo()}catch{}if(MUSIC.audio)MUSIC.audio.play().catch(()=>{});musicShow();return 'Playing.';
-   case 'stop':try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch{}if(MUSIC.audio){MUSIC.audio.pause();if(MUSIC.audio._url)URL.revokeObjectURL(MUSIC.audio._url);MUSIC.audio.src='';MUSIC.audio=null}MUSIC.mode='';MUSIC.playing=false;MUSIC.held=false;musicShow();setTimeout(()=>{try{hfResume()}catch{}},800);return 'Music off.';
+   case 'pause':MUSIC.held=false;try{MUSIC.yt&&MUSIC.yt.pauseVideo&&MUSIC.yt.pauseVideo()}catch(_q){maxQuiet(_q,'musicControl')}if(MUSIC.audio)MUSIC.audio.pause();MUSIC.playing=false;musicShow();return 'Paused.';
+   case 'resume':try{MUSIC.mode==='video'&&MUSIC.yt&&MUSIC.yt.playVideo&&MUSIC.yt.playVideo()}catch(_q){maxQuiet(_q,'musicControl')}if(MUSIC.audio)MUSIC.audio.play().catch(_q=>{maxQuiet(_q,'musicControl')});musicShow();return 'Playing.';
+   case 'stop':try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch(_q){maxQuiet(_q,'musicControl')}if(MUSIC.audio){MUSIC.audio.pause();if(MUSIC.audio._url)URL.revokeObjectURL(MUSIC.audio._url);MUSIC.audio.src='';MUSIC.audio=null}MUSIC.mode='';MUSIC.playing=false;MUSIC.held=false;musicShow();setTimeout(()=>{try{hfResume()}catch(_q){maxQuiet(_q,'musicControl')}},800);return 'Music off.';
    case 'next':return await musicNext(false);
-   case 'louder':case 'softer':MUSIC.vol=Math.min(100,Math.max(5,MUSIC.vol+(op==='louder'?15:-15)));try{localStorage.setItem(MUSIC_VOL,MUSIC.vol)}catch{}musicApplyVol();return 'Volume '+MUSIC.vol+'%.';
+   case 'louder':case 'softer':MUSIC.vol=Math.min(100,Math.max(5,MUSIC.vol+(op==='louder'?15:-15)));try{localStorage.setItem(MUSIC_VOL,MUSIC.vol)}catch(_q){maxQuiet(_q,'musicControl')}musicApplyVol();return 'Volume '+MUSIC.vol+'%.';
    case 'what':return MUSIC.mode?(MUSIC.mode==='local'?'This is '+(cur.title||'your song')+(cur.artist?' by '+cur.artist:'')+', from My songs.':MUSIC.mode==='radio'?'This is '+(cur.name||'a radio station')+(cur.tags?' — '+cur.tags.split(',').slice(0,3).join(', '):'')+'.':'This is '+(cur.title||MUSIC.q)+(cur.channel?' by '+cur.channel:'')+'.'):'Nothing is playing.';
   }
   return 'Say pause, play, next, louder, softer or stop.';
@@ -5742,7 +5784,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function addSongs(files){
   files=[...(files||[])].filter(f=>/^audio\//.test(f.type)||/\.(mp3|m4a|aac|ogg|opus|wav|flac)$/i.test(f.name));
   if(!files.length)return 'No songs were chosen. Pick music files (MP3, M4A…) from your phone.';
-  try{navigator.storage&&navigator.storage.persist&&await navigator.storage.persist()}catch{}
+  try{navigator.storage&&navigator.storage.persist&&await navigator.storage.persist()}catch(_q){maxQuiet(_q,'addSongs')}
   const list=mySongs(),have=new Set(list.map(x=>x.id));let added=0,skipped=0,mb=0;
   for(const f of files){const m=songMeta(f);if(have.has(m.id)){skipped++;continue}
    try{await mstore('readwrite',st=>st.put({id:m.id,blob:f}));list.push(m);have.add(m.id);added++;mb+=f.size/1048576}
@@ -5750,7 +5792,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   jset(MYSONGS,list);
   return 'Added '+added+' song'+(added===1?'':'s')+' ('+Math.round(mb)+' MB) to My songs'+(skipped?' — '+skipped+' already there':'')+'. Say “play my music” anytime — no ads, works offline.';
  }
- async function removeSong(id){try{await mstore('readwrite',st=>st.delete(id))}catch{}jset(MYSONGS,mySongs().filter(x=>x.id!==id))}
+ async function removeSong(id){try{await mstore('readwrite',st=>st.delete(id))}catch(_q){maxQuiet(_q,'removeSong')}jset(MYSONGS,mySongs().filter(x=>x.id!==id))}
  function pickSongs(){
   let inp=$('songPicker');
   if(!inp){inp=document.createElement('input');inp.type='file';inp.id='songPicker';inp.accept='audio/*,.mp3,.m4a,.aac,.ogg,.opus,.wav,.flac';inp.multiple=true;inp.hidden=true;document.body.append(inp);
@@ -5768,9 +5810,9 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const shuffled=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
  async function musicStartLocal(){
   const sg=MUSIC.list[MUSIC.i];if(!sg)return false;
-  try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch{}
+  try{MUSIC.yt&&MUSIC.yt.stopVideo&&MUSIC.yt.stopVideo()}catch(_q){maxQuiet(_q,'musicStartLocal')}
   if(MUSIC.audio){MUSIC.audio.pause();if(MUSIC.audio._url)URL.revokeObjectURL(MUSIC.audio._url)}
-  let rec=null;try{rec=await mstore('readonly',st=>st.get(sg.id))}catch{}
+  let rec=null;try{rec=await mstore('readonly',st=>st.get(sg.id))}catch(_q){maxQuiet(_q,'musicStartLocal')}
   if(!rec||!rec.blob){jset(MYSONGS,mySongs().filter(x=>x.id!==sg.id));return musicNext(true).then(()=>true)}
   const a=new Audio(),url=URL.createObjectURL(rec.blob);a._url=url;a.src=url;MUSIC.audio=a;MUSIC.mode='local';musicApplyVol();
   a.onplaying=()=>{MUSIC.playing=true;musicShow()};a.onpause=()=>{MUSIC.playing=false;musicShow()};
@@ -5800,16 +5842,16 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // While you talk the music PAUSES (not just quieter); it comes back the moment the conversation ends.
  function musicHold(on){
   if(!MUSIC.mode)return;
-  if(on){if(MUSIC.held||!MUSIC.playing)return;MUSIC.held=true;try{MUSIC.yt&&MUSIC.yt.pauseVideo&&MUSIC.yt.pauseVideo()}catch{}if(MUSIC.audio)MUSIC.audio.pause();return}
+  if(on){if(MUSIC.held||!MUSIC.playing)return;MUSIC.held=true;try{MUSIC.yt&&MUSIC.yt.pauseVideo&&MUSIC.yt.pauseVideo()}catch(_q){maxQuiet(_q,'musicHold')}if(MUSIC.audio)MUSIC.audio.pause();return}
   if(!MUSIC.held)return;MUSIC.held=false;
-  try{MUSIC.mode==='video'&&MUSIC.yt&&MUSIC.yt.playVideo&&MUSIC.yt.playVideo()}catch{}if(MUSIC.audio)MUSIC.audio.play().catch(()=>{});
+  try{MUSIC.mode==='video'&&MUSIC.yt&&MUSIC.yt.playVideo&&MUSIC.yt.playVideo()}catch(_q){maxQuiet(_q,'musicHold')}if(MUSIC.audio)MUSIC.audio.play().catch(_q=>{maxQuiet(_q,'musicHold')});
  }
  function musicTalkCheck(){
   const o=$('maxOrb');if(!o||!MUSIC.mode)return;
   const busy=convo||o.classList.contains('listening')||o.classList.contains('speaking')||o.classList.contains('processing');
   if(busy)musicHold(true);else if(MUSIC.held){clearTimeout(MUSIC.holdT);MUSIC.holdT=setTimeout(()=>{const o2=$('maxOrb');if(!convo&&!o2.classList.contains('speaking')&&!o2.classList.contains('listening')&&!o2.classList.contains('processing'))musicHold(false)},600)}
  }
- try{const orbEl=$('maxOrb');if(orbEl)new MutationObserver(musicTalkCheck).observe(orbEl,{attributes:true,attributeFilter:['class']});setInterval(()=>{if(MUSIC.held)musicTalkCheck()},800)}catch{}
+ try{const orbEl=$('maxOrb');if(orbEl)new MutationObserver(musicTalkCheck).observe(orbEl,{attributes:true,attributeFilter:['class']});setInterval(()=>{if(MUSIC.held)musicTalkCheck()},800)}catch(_q){maxQuiet(_q,'musicTalkCheck')}
  // Earphone / lock-screen pause = "Max, listen": pause the song and listen; it resumes after.
  // ---------- 🛒 Deal Finder: best real price from legit stores (Lazada/LazMall, Shopee Mall, Zalora, official stores) ----------
  // He names a product; Max searches the web (Google Search through his server), compares only official/mall sellers,
@@ -5847,7 +5889,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   // Option 1 method: open each store's own product page and read the price of the exact version (not the search snippet)
   status('🛒 Reading the price on each store’s own page…');
   const links=[...new Set([...(dr.sources||[]).map(x=>x.url),...points.join(' ').match(/https:\/\/[^\s)\]>"']+/g)||[]].filter(Boolean))].slice(0,8);
-  let checks=[];if(links.length){try{const c=await postJson('/api/deal/check',{product:q,urls:links},60000);if(c.r.ok)checks=c.data.results||[]}catch{}}
+  let checks=[];if(links.length){try{const c=await postJson('/api/deal/check',{product:q,urls:links},60000);if(c.r.ok)checks=c.data.results||[]}catch(_q){maxQuiet(_q,'findDeal')}}
   const okc=checks.filter(c=>c.confirmed&&c.price).sort((a,b)=>a.price-b.price);
   const low=okc.length?okc[0].price:v.low;
   const all=dealsAll();const it=all.items[key]||{q,history:[],watch:false};
@@ -5895,8 +5937,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    if(all.lastRun===day)return;all.lastRun=day;jset(DEALS,all);
    const due=Object.values(all.items).filter(it=>it.watch&&(!it.history[0]||Date.now()-it.history[0].at>20*3600e3)).slice(0,2);
    for(const it of due){const before=it.history.find(h=>h.low)?.low;await findDeal({product:it.q});const now=dealsAll().items[dealKey(it.q)]?.history[0]?.low;
-    if(before&&now&&now<before){const t='🛒 Price drop: '+it.q+' is now ₱'+now.toLocaleString()+' (was ₱'+before.toLocaleString()+').';status(t);try{toast(t)}catch{}}}
-  }catch{}
+    if(before&&now&&now<before){const t='🛒 Price drop: '+it.q+' is now ₱'+now.toLocaleString()+' (was ₱'+before.toLocaleString()+').';status(t);try{toast(t)}catch(_q){maxQuiet(_q,'dealWatchRun')}}}
+  }catch(_q){maxQuiet(_q,'dealWatchRun')}
  }
  setTimeout(dealWatchRun,20000);
  function musicTalkButton(){if(!MUSIC.mode)return;if(MUSIC.playing&&(hf.on||convo)){musicHold(true);startConversation();return}musicControl({op:'pause'})}
@@ -5926,7 +5968,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   const base=workerBase();if(!base||isOffline())return;
   const list=jget(ACT_KEY,[]),todo=list.filter(x=>x.pending).slice(0,30);if(!todo.length)return;
   try{const {r}=await postJson('/api/activity',{items:todo.map(({pending,...x})=>x)},10000);
-   if(r.ok){const sent=new Set(todo.map(x=>x.at+'|'+x.text));jset(ACT_KEY,jget(ACT_KEY,[]).map(x=>sent.has(x.at+'|'+x.text)?{...x,pending:false}:x))}}catch{}
+   if(r.ok){const sent=new Set(todo.map(x=>x.at+'|'+x.text));jset(ACT_KEY,jget(ACT_KEY,[]).map(x=>sent.has(x.at+'|'+x.text)?{...x,pending:false}:x))}}catch(_q){maxQuiet(_q,'actFlush')}
  }
  setTimeout(actFlush,8000);
  async function activityScreen(d){
@@ -5987,7 +6029,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  async function agentsInfo(fresh){
   const c=jget(AG_KEY,null);if(!fresh&&c&&Date.now()-c.at<10*60e3)return c.data;
   if(!workerBase()||isOffline())return c?.data||null;
-  try{const {r,data}=await fetchJson(workerBase()+'/api/agents',{},15000);if(r.ok){jset(AG_KEY,{at:Date.now(),data});return data}}catch{}
+  try{const {r,data}=await fetchJson(workerBase()+'/api/agents',{},15000);if(r.ok){jset(AG_KEY,{at:Date.now(),data});return data}}catch(_q){maxQuiet(_q,'agentsInfo')}
   return c?.data||null;
  }
  function showReport(rep){
@@ -6020,7 +6062,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  // ---------- fact-check results on a note (from the Notes agent's daily check) ----------
  const NC_KEY='max_cache_notechecks';
  async function noteChecks(){const c=jget(NC_KEY,null);if(c&&Date.now()-c.at<15*60e3)return c.data;if(!workerBase()||isOffline()||!cloud.memory)return c?.data||{};
-  try{const {r,data}=await fetchJson(workerBase()+'/api/notes/checks',{},12000);if(r.ok){jset(NC_KEY,{at:Date.now(),data:data.checks||{}});return data.checks||{}}}catch{}return c?.data||{}}
+  try{const {r,data}=await fetchJson(workerBase()+'/api/notes/checks',{},12000);if(r.ok){jset(NC_KEY,{at:Date.now(),data:data.checks||{}});return data.checks||{}}}catch(_q){maxQuiet(_q,'noteChecks')}return c?.data||{}}
  async function showNoteCheck(id){
   const box=$('readCheck');if(!box)return;box.hidden=true;box.replaceChildren();if(!id)return;
   const c=(await noteChecks())[id];if(!c||activeNoteId!==id)return;
@@ -6031,7 +6073,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   for(const i of c.issues||[]){const p=document.createElement('div');p.className='rc-issue';p.textContent='• '+(i.problem||i.claim)+(i.correct?' → '+i.correct:'')+(i.source?' ('+i.source+')':'');box.append(p)}
   if(c.fixed&&!c.fixed.undone&&(c.fixed.changes||[]).length){const p=document.createElement('div');p.className='rc-head';p.textContent='✓ Max corrected this note on '+new Date(c.fixed.at).toLocaleDateString()+' ('+c.fixed.changes.length+' change'+(c.fixed.changes.length>1?'s':'')+'):';box.append(p);
    for(const x of c.fixed.changes){const d=document.createElement('div');d.className='rc-issue';d.textContent='• '+x.from+' → '+x.to;box.append(d)}
-   const b=document.createElement('button');b.className='chip';b.textContent='Undo Max’s correction';b.onclick=async()=>{b.disabled=true;try{const {r,data}=await postJson('/api/notes/undo-fix',{id},20000);if(!r.ok)throw new Error(data.error||r.status);jset(NC_KEY,null);await syncNotes().catch(()=>{});const s='Undone — the note is back to your version.';setSub('',s);speak(s)}catch(e){b.disabled=false;setSub('','I couldn’t undo it. '+(e.message||e))}};box.append(b)}
+   const b=document.createElement('button');b.className='chip';b.textContent='Undo Max’s correction';b.onclick=async()=>{b.disabled=true;try{const {r,data}=await postJson('/api/notes/undo-fix',{id},20000);if(!r.ok)throw new Error(data.error||r.status);jset(NC_KEY,null);await syncNotes().catch(_q=>{maxQuiet(_q,'showNoteCheck')});const s='Undone — the note is back to your version.';setSub('',s);speak(s)}catch(e){b.disabled=false;setSub('','I couldn’t undo it. '+(e.message||e))}};box.append(b)}
   for(const s of (c.sources||[]).slice(0,3)){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.className='ext-link';a.textContent=s.title||s.url;const d=document.createElement('div');d.append(a);box.append(d)}
   box.hidden=false;
  }
@@ -6223,7 +6265,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
     const title=(lastYou?.text||'Max’s answer').replace(/[?.!]+$/,'').slice(0,80);
     const n={id:newId(),title,category:'Unsorted',tags:[],body:'<p>'+escHtml(lastMax.text).replace(/\n/g,'<br>')+'</p>'+(lastYou?'<blockquote>You asked: '+escHtml(lastYou.text)+'</blockquote>':''),source:'max',createdAt:Date.now(),updatedAt:Date.now(),deleted:false};
     const all=loadAll();all.push(n);putNotes(all);
-    if(workerBase())analyze(n,{quiet:true}).catch(()=>{});
+    if(workerBase())analyze(n,{quiet:true}).catch(_q=>{maxQuiet(_q,'line6239')});
     return 'Saved to your notes. I’ll file it under the right topic.';
    }
    case 'organize_notes':setSection('notes');return 'Librarian: '+await organizeAll();
@@ -6257,7 +6299,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function stopSpeech(){
   speakToken++;clearTimeout(speakGuard);bargeStop();
   const f=pendingDone;pendingDone=null;
-  if('speechSynthesis' in window)try{window.speechSynthesis.cancel()}catch{}
+  if('speechSynthesis' in window)try{window.speechSynthesis.cancel()}catch(_q){maxQuiet(_q,'stopSpeech')}
   stopSpeakingLook();f&&f();
  }
  function speak(text,onDone){
@@ -6282,7 +6324,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  if('speechSynthesis' in window){
   // Keep the older voice list loader working too (it used to be replaced here).
-  const onVoices=()=>{voicesReady=true;try{if(typeof loadVoices==='function')loadVoices()}catch{}};
+  const onVoices=()=>{voicesReady=true;try{if(typeof loadVoices==='function')loadVoices()}catch(_q){maxQuiet(_q,'speak')}};
   window.speechSynthesis.onvoiceschanged=onVoices;
  }
  function cleanMaxText(text){
@@ -6366,7 +6408,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  }
  function endConversation(msg){
   convo=false;listenToken++;misses=0;setTalkButton();
-  if(recognition)try{recognition.abort()}catch{}
+  if(recognition)try{recognition.abort()}catch(_q){maxQuiet(_q,'endConversation')}
   $('maxOrb').classList.remove('listening');
   if(msg)status(msg);
   hfResume();
@@ -6388,8 +6430,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(!m||!n)return m||n;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
  function hearTerms(){
   const t=new Set();
-  try{projects().forEach(p=>{if(p.name)t.add(p.name);(p.aliases||[]).forEach(a=>{if(a.split(' ').length<=3)t.add(a)})})}catch{}
-  try{getNotes().slice(0,300).forEach(n=>{const w=String(n.title||'').replace(/^Skill:\s*/,'');if(w&&w.split(/\s+/).length<=4&&w.length>=5)t.add(w)})}catch{}
+  try{projects().forEach(p=>{if(p.name)t.add(p.name);(p.aliases||[]).forEach(a=>{if(a.split(' ').length<=3)t.add(a)})})}catch(_q){maxQuiet(_q,'hearTerms')}
+  try{getNotes().slice(0,300).forEach(n=>{const w=String(n.title||'').replace(/^Skill:\s*/,'');if(w&&w.split(/\s+/).length<=4&&w.length>=5)t.add(w)})}catch(_q){maxQuiet(_q,'hearTerms')}
   return [...t].filter(x=>skel(x).length>=6);
  }
  function fixHearing(text){
@@ -6441,7 +6483,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(!convo)return;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const token=++listenToken;
-  if(recognition)try{recognition.abort()}catch{}
+  if(recognition)try{recognition.abort()}catch(_q){maxQuiet(_q,'listenOnce')}
   recognition=new SR();recognition.lang=listenLang();recognition.interimResults=false;recognition.maxAlternatives=5;
   let heard=false,fatal=false;
   const take=async q=>{
@@ -6510,8 +6552,8 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  const bargeOn=()=>jget('max_barge',true)!==false;
  const spokenWords=t=>norm(t).split(' ').filter(Boolean);
  function isEcho(heard,said){const h=spokenWords(heard),s=new Set(spokenWords(said));if(!h.length)return true;const hit=h.filter(w=>s.has(w)).length;return hit/h.length>=0.6}
- function chime(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;hf.ac=hf.ac||new C();const a=hf.ac,o=a.createOscillator(),g=a.createGain();o.frequency.value=880;g.gain.setValueAtTime(0.0001,a.currentTime);g.gain.exponentialRampToValueAtTime(0.15,a.currentTime+0.02);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.25);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+0.3)}catch{}}
- async function keepAwake(on){try{if(on&&'wakeLock' in navigator&&document.visibilityState==='visible'){if(!hf.lock||hf.lock.released)hf.lock=await navigator.wakeLock.request('screen')}else if(!on&&hf.lock){await hf.lock.release();hf.lock=null}}catch{}}
+ function chime(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;hf.ac=hf.ac||new C();const a=hf.ac,o=a.createOscillator(),g=a.createGain();o.frequency.value=880;g.gain.setValueAtTime(0.0001,a.currentTime);g.gain.exponentialRampToValueAtTime(0.15,a.currentTime+0.02);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.25);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+0.3)}catch(_q){maxQuiet(_q,'chime')}}
+ async function keepAwake(on){try{if(on&&'wakeLock' in navigator&&document.visibilityState==='visible'){if(!hf.lock||hf.lock.released)hf.lock=await navigator.wakeLock.request('screen')}else if(!on&&hf.lock){await hf.lock.release();hf.lock=null}}catch(_q){maxQuiet(_q,'keepAwake')}}
  function handsFree(on){
   if(on&&!SRc())return 'Hands-free needs voice input, which this browser doesn’t have. Try Chrome.';
   hf.on=!!on;jset('max_handsfree',hf.on);hf.fails=0;
@@ -6520,7 +6562,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
   if(hf.on){keepAwake(true);setTimeout(hfResume,1200);return 'I’m always listening now. Say “Max” and your question anytime while my screen is open — I’ll keep the screen awake. Say “hands-free off” to stop.'}
   hfPause();keepAwake(false);status('Ready');return 'Hands-free is off. Tap the circle when you need me.';
  }
- function hfPause(){hf.token++;clearTimeout(hf.timer);if(hf.rec){const r=hf.rec;hf.rec=null;try{r.abort()}catch{}}if($('maxOrb'))$('maxOrb').classList.remove('waiting')}
+ function hfPause(){hf.token++;clearTimeout(hf.timer);if(hf.rec){const r=hf.rec;hf.rec=null;try{r.abort()}catch(_q){maxQuiet(_q,'hfPause')}}if($('maxOrb'))$('maxOrb').classList.remove('waiting')}
  function hfResume(){
   if(!hf.on)return;clearTimeout(hf.timer);
   hf.timer=setTimeout(()=>{
@@ -6567,10 +6609,10 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
    }
   };
   rec.onerror=()=>{};
-  rec.onend=()=>{if(barge!==me||me.tok!==speakToken)return;if(++me.starts>6)return;setTimeout(()=>{if(barge===me&&me.tok===speakToken)try{rec.start()}catch{}},250)};
-  setTimeout(()=>{if(barge===me)try{rec.start()}catch{}},300);
+  rec.onend=()=>{if(barge!==me||me.tok!==speakToken)return;if(++me.starts>6)return;setTimeout(()=>{if(barge===me&&me.tok===speakToken)try{rec.start()}catch(_q){maxQuiet(_q,'bargeStart')}},250)};
+  setTimeout(()=>{if(barge===me)try{rec.start()}catch(_q){maxQuiet(_q,'bargeStart')}},300);
  }
- function bargeStop(){if(barge){const r=barge.rec;barge=null;try{r.abort()}catch{}}}
+ function bargeStop(){if(barge){const r=barge.rec;barge=null;try{r.abort()}catch(_q){maxQuiet(_q,'bargeStop')}}}
  function interrupt(said){
   bargeStop();bargeQ=said&&spokenWords(said).length>=3?said:null;
   const wasConvo=convo;stopSpeech();$('maxOrb').classList.remove('speaking');status('Listening…');
@@ -6624,7 +6666,7 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  function greet(){
   if(greetingDone)return;greetingDone=true;
   let msg='Good day. I’m Max. I’m ready when you are.';
-  try{if(jget('max_last_headline','')!==todayKey()){msg=headline();jset('max_last_headline',todayKey())}}catch{}
+  try{if(jget('max_last_headline','')!==todayKey()){msg=headline();jset('max_last_headline',todayKey())}}catch(_q){maxQuiet(_q,'greet')}
   setSub('',msg);speak(msg);
  }
  function armGreeting(){
@@ -6651,23 +6693,23 @@ renderChat();$('voiceState').textContent=voiceOn?'Replies enabled':'Replies mute
  step('greeting',armGreeting);
  step('circle',()=>requestAnimationFrame(orbLoop));
  // Works offline: the app itself is kept on the phone, notes are already stored here.
- step('meaning-index',()=>{setTimeout(()=>{if(workerBase())indexNotes().catch(()=>{})},8000)});
+ step('meaning-index',()=>{setTimeout(()=>{if(workerBase())indexNotes().catch(_q=>{maxQuiet(_q,'step')})},8000)});
  // 18e: Max listens by himself from the start (standby), unless Mark turned it off here. Automated test browsers have no microphone, so they keep the old default unless a test asks for it.
- step('handsfree',()=>{let on=jget('max_handsfree',null);if(on===null){let auto=false;try{auto=!!SRc()&&(localStorage.getItem('max_hf_auto')==='1'||!navigator.webdriver)}catch{}on=auto}if(on)handsFree(true)});
- step('offline',()=>{if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{})});
- step('shared',()=>{setTimeout(()=>takeShared().catch(()=>{}),800)});
+ step('handsfree',()=>{let on=jget('max_handsfree',null);if(on===null){let auto=false;try{auto=!!SRc()&&(localStorage.getItem('max_hf_auto')==='1'||!navigator.webdriver)}catch(_q){maxQuiet(_q,'step')}on=auto}if(on)handsFree(true)});
+ step('offline',()=>{if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(_q=>{maxQuiet(_q,'step')})});
+ step('shared',()=>{setTimeout(()=>takeShared().catch(_q=>{maxQuiet(_q,'step')}),800)});
  // Self-update: when a new version of Max is published, he reloads himself the next time you come back to him (never mid-conversation).
  step('auto-update',()=>{
   if(location.protocol==='file:')return;
   const digest=async()=>{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const b=await r.arrayBuffer();const h=await crypto.subtle.digest('SHA-256',b);return [...new Uint8Array(h)].slice(0,8).map(x=>x.toString(16).padStart(2,'0')).join('')};
   let base=null,ready=false;
   const busy=()=>convo||$('maxOrb').classList.contains('speaking')||$('maxOrb').classList.contains('processing')||screen==='editor'||routineActive()||confirmFresh()||!!pendingDraft;
-  const check=async()=>{try{const d=await digest();if(!base){base=d;return}if(d!==base){ready=true;tryReload()}}catch{}};
-  const tryReload=()=>{if(ready&&!busy()){try{sessionStorage.setItem('max_updated','1')}catch{}location.reload()}};
+  const check=async()=>{try{const d=await digest();if(!base){base=d;return}if(d!==base){ready=true;tryReload()}}catch(_q){maxQuiet(_q,'step')}};
+  const tryReload=()=>{if(ready&&!busy()){try{sessionStorage.setItem('max_updated','1')}catch(_q){maxQuiet(_q,'step')}location.reload()}};
   setTimeout(check,8000);setInterval(check,20*60e3);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(ready)tryReload();else check()}});
   setInterval(()=>{if(ready&&document.visibilityState==='visible')tryReload()},60e3);
-  try{if(sessionStorage.getItem('max_updated')){sessionStorage.removeItem('max_updated');setTimeout(()=>{const t='I’ve updated myself to the newest version.';$('homeStatus').textContent=t.toUpperCase()},1500)}}catch{}
+  try{if(sessionStorage.getItem('max_updated')){sessionStorage.removeItem('max_updated');setTimeout(()=>{const t='I’ve updated myself to the newest version.';$('homeStatus').textContent=t.toUpperCase()},1500)}}catch(_q){maxQuiet(_q,'step')}
  });
  window.addEventListener('offline',()=>{cloud.state='offline';cloud.memory=false;refreshConnectionLabel();status('Offline — your notes and commands still work')});
  if(!window.__maxErrors.length)status('Ready');
