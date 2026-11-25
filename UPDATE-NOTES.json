@@ -1,4 +1,7 @@
 [
+ "FIXED Gemini quota: when Gemini is out of its free quota Max no longer asks it again and again (it asked 126 times in one day). Resting is saved in the database, grows longer each time, and a daily limit rests until Google's reset. Groq and Cloudflare AI answer meanwhile",
+ "FIXED OpenRouter and Cloudflare AI: a free model that fails is put aside and the next one is tried; a rejected key rests 6 hours; answers with extra words or a trailing comma are now read; study questions use Gemini last so chat keeps its quota",
+ "NEW Max learns from problems: the Security screen shows 'Known problems' with what happened, what fixed it and what you do. Ask Max about a problem and he knows how it was solved before. Fifteen lessons so far, including the ones from this week",
  "NEW Answers from notes only: for regulation questions (SOLAS, MARPOL, STCW, MLC, ISM, MARINA…) Max answers only from your verified notes, with the note's name and an exact quote that the server checks. If it isn't in your notes he says so instead of guessing. Say “search the web” to skip this",
  "NEW Free AI meter (Security screen): each free AI shows OK, Resting (with minutes left) or Failing, today's answers, failures, limit hits and the last problem. An alert appears when the main AI (Gemini) is out of quota",
  "NEW Hidden errors now count: the app reports errors it used to swallow silently, and the daily check lists the real ones under the Max app on the Security screen. This already found and fixed a bug: the Maritime folder set-up failed every time Max started",
