@@ -37,7 +37,9 @@ await p.route("**/health**", async r => r.fulfill({ status: 200, contentType: "a
   aiMeter: { summary: "2 of 3 AIs fine", alerts: ["Gemini (Max's main brain) is out of quota or busy — back in about 12 min; Max is using backup AIs"], list: [
     { name: "gemini", label: "Gemini (main brain)", status: "resting", restMin: 12, ok: 20, fail: 6, limitHits: 4, lastErr: "429 quota exceeded", studyCalls: 33, studyCap: 40 },
     { name: "groq", label: "Groq", status: "ok", restMin: 0, ok: 14, fail: 0, limitHits: 0, lastErr: "" },
-    { name: "cloudflare", label: "Cloudflare AI", status: "idle", restMin: 0, ok: 0, fail: 0, limitHits: 0, lastErr: "" }] } }) }));
+    { name: "cloudflare", label: "Cloudflare AI", status: "idle", restMin: 0, ok: 0, fail: 0, limitHits: 0, lastErr: "" }] },
+  lessons: [{ id: "gemini-quota", kind: "ai", title: "Gemini ran out of its free quota", cause: "Google's free plan allows only so many questions a day.", fix: "Max now remembers that a model is resting and stops asking.", you: "Nothing.", hits: ["429 quota exceeded"] }],
+  lessonsAll: [{ id: "gemini-quota", kind: "ai", title: "Gemini ran out of its free quota", fix: "x" }, { id: "startup-order", kind: "app", title: "A helper was used before it existed", fix: "y" }] }) }));
 await p.goto(ORIGIN + "/"); await p.waitForTimeout(1500);
 // hidden errors
 await p.evaluate(() => { window.maxQuiet(new TypeError("Cannot read properties of undefined (reading 'a')"), "unitTest"); window.maxQuiet(new DOMException("x", "AbortError"), "ignored"); window.maxQuiet(new Error("Failed to fetch"), "offlineNoise"); });
@@ -52,5 +54,6 @@ await ovTap("#tileStatus"); await p.waitForTimeout(900);
 const body = await p.locator("#dashFullBody").textContent();
 ok(/Free AI meter/.test(body) && /Gemini \(main brain\)/.test(body) && /Resting 12 min/.test(body) && /Not used today/.test(body) && /6 failed/.test(body) && /4 limit hits/.test(body) && /study 33\/40/.test(body) && /429 quota exceeded/.test(body), "Security shows each AI: OK, resting with minutes left, failures, limit hits", body.slice(0, 400));
 ok(/out of quota or busy/.test(body), "an alert says the main AI is out of quota");
+ok(/Known problems/.test(body) && /Max has seen these before/.test(body) && /What happened: Google's free plan/.test(body) && /What fixed it: Max now remembers/.test(body) && /What you do: Nothing/.test(body) && /Everything Max has learned \(2\)/.test(body), "Security shows the known problem with what happened, what fixed it and what you do", body.slice(-500));
 ok(errs.length === 0, "no script errors", errs.join("|"));
 await b.close(); sW.close(); sP.close(); console.log(pass + " passed, " + fail + " failed"); process.exit(fail ? 1 : 0);

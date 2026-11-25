@@ -69,6 +69,7 @@ run "Max improves himself (register, audit, examiner, stop/start/continue)" test
 run "Decision journal score; two-AI check" tests/test-worker40.mjs "$TMP/worker.mjs"
 run "Two-AI check inside a chat" tests/test-worker41.mjs "$TMP/worker.mjs"
 run "Notes-only answers, hidden errors, AI meter" tests/test-worker42.mjs "$TMP/worker.mjs"
+run "Gemini quota, AI failures, lessons" tests/test-worker43.mjs "$TMP/worker.mjs"
 run "Phone: Max brain card" tests/e2e47.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: Max improves card" tests/e2e49.mjs "$PWD/index.html" "$TMP/worker.mjs"
 run "Phone: notes hub, journal, to-do, copy/move/paste" tests/e2e50.mjs "$PWD/index.html"

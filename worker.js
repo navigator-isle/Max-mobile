@@ -25,6 +25,42 @@ let lastGood = "";
 const GROQ_MODELS = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"]; // llama-3.3-70b: retired on Groq (live test Nov 2026)
 const WAI_MODELS = ["@cf/zai-org/glm-4.7-flash", "@cf/google/gemma-4-26b-a4b-it", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"];
 const backupSkip = new Map();
+
+// ---------- resting that survives restarts (25 Nov 2026, Mark) ----------
+// Problem: "resting" lived only in one server instance's memory. Every fresh instance asked a dead AI again, and when ALL Gemini models rested
+// Max asked them all anyway — 126 limit hits in one day. Now: rest is shared (database), grows each time it fails again, a daily quota rests until
+// Google's reset, and Max does not ask a resting AI at all (one probe now and then).
+const REST_KEY = "max_rest_v1", restN = new Map(), restKind = new Map(); let restAt = 0, probeAt = 0;
+const restMap = k => k[0] === "g" ? skipUntil : backupSkip;
+const nextQuotaReset = (now = Date.now()) => { const d = new Date(now), t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 8, 5); return t > now + 30 * 60e3 ? t : t + 864e5; }; // Google resets free quotas at midnight Pacific
+async function restLoad(env, force) {
+  if (!env.MAX_MEMORY || (!force && Date.now() - restAt < 20000)) return; restAt = Date.now();
+  try { const S = JSON.parse(await srvSetting(env, REST_KEY) || "{}") || {}, now = Date.now();
+    for (const [k, v] of Object.entries(S)) { if (!v) continue; restN.set(k, v.n || 1); restKind.set(k, v.kind || "short"); if (v.until > now) { const m = restMap(k); if ((m.get(k.slice(2)) || 0) < v.until) m.set(k.slice(2), v.until); } } } catch {}
+}
+async function restSet(env, key, baseMs, kind = "short", cap = 6 * 3600e3) {
+  const n = Math.min(10, (restN.get(key) || 0) + 1); restN.set(key, n); restKind.set(key, kind);
+  const ms = kind === "daily" ? Math.max(30 * 60e3, nextQuotaReset() - Date.now()) : kind === "exact" ? baseMs : Math.min(cap, baseMs * 2 ** (n - 1)), until = Date.now() + ms;
+  restMap(key).set(key.slice(2), until);
+  if (env.MAX_MEMORY) try { const S = JSON.parse(await srvSetting(env, REST_KEY) || "{}") || {}, now = Date.now(); S[key] = {until, n, kind};
+    for (const k of Object.keys(S)) if ((S[k].until || 0) < now - 6 * 3600e3) delete S[k]; await srvSetting(env, REST_KEY, JSON.stringify(S)); } catch {}
+  return ms;
+}
+async function restClear(env, key) {
+  if (!restN.has(key) && !(restMap(key).get(key.slice(2)) > 0)) return;
+  restN.delete(key); restKind.delete(key); restMap(key).delete(key.slice(2));
+  if (env.MAX_MEMORY) try { const S = JSON.parse(await srvSetting(env, REST_KEY) || "{}") || {}; if (S[key]) { delete S[key]; await srvSetting(env, REST_KEY, JSON.stringify(S)); } } catch {}
+}
+// What Google's "429" really means: a per-minute limit (it says how long to wait), a daily limit, or just "too busy".
+function quotaWait(data) {
+  const e = data?.error || {}, det = Array.isArray(e.details) ? e.details : [];
+  const delay = det.map(d => String(d?.retryDelay || "")).find(x => /^\d+(\.\d+)?s$/.test(x));
+  const daily = det.some(d => (d?.violations || []).some(v => /PerDay/i.test(String(v?.quotaId || "")))) || /per day|daily|PerDay/i.test(String(e.message || ""));
+  if (daily) return {kind: "daily", ms: 0};
+  if (delay) return {kind: "exact", ms: Math.min(15 * 60e3, Math.max(5000, parseFloat(delay) * 1000 + 2000))};
+  return {kind: "short", ms: 10 * 60e3};
+}
+const provErr = new Map();       // the real reason a provider failed (shown in the AI meter)
 function textOnly(payload) {
   if (payload.tools && payload.tools.length) return null;
   const msgs = [];
@@ -43,6 +79,67 @@ function asGemini(text, model, wantJson) {
   t = t.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   if (wantJson || /^\s*\{/.test(t) || /\{\s*"reply"\s*:/.test(t)) { const m = t.match(/\{[\s\S]*\}/); if (m) t = m[0]; }
   return {ok: true, status: 200, model, backup: true, data: {candidates: [{content: {parts: [{text: t}]}}]}};
+}
+
+// ---------- What Max has learned from past problems (25 Nov 2026, Mark) ----------
+// Each lesson = a problem seen before, why it happened, how it was fixed, and how it is prevented now. Max matches new errors against them,
+// shows the fix on the Security screen, remembers them when he answers about problems, and the weekly audit can call a return a REPEAT.
+// kind "ai" = runtime problems with the free AIs; "app" = problems in Max's own app; "code" = lessons for anyone (or Max) who changes his code.
+const LESSONS = [
+  {id: "gemini-quota", kind: "ai", match: /429|exceeded your current quota|resource.?exhausted|per.?day|quota/i, name: /gemini|google/i,
+    title: "Gemini ran out of its free quota", cause: "Google's free plan allows only so many questions a day for each model. Max kept asking every Gemini model again on every request, even when all were out, and each fresh server copy forgot they were resting (126 limit hits in one day, 25 Nov 2026).",
+    fix: "Resting is now saved in the database so every server copy knows. It grows longer each time the same model fails again, a daily limit rests until Google's reset, and while all Gemini models rest Max does not ask them at all (one probe every 2 minutes unless it is a daily limit). Groq and Cloudflare AI answer meanwhile, and study questions use Gemini last.",
+    you: "Nothing. If it happens every day, add billing in Google AI Studio or reduce how much Max studies."},
+  {id: "provider-rate-limit", kind: "ai", match: /429|rate.?limit|too many requests|per.?day|free-models/i,
+    title: "An AI's free limit was reached", cause: "Free AIs allow only so many questions a minute or a day.", fix: "Max rests that AI for 10 minutes, doubling each time it fails again (up to 6 hours), and asks the next AI.", you: "Nothing."},
+  {id: "gemini-model-gone", kind: "ai", match: /404|no longer available|not found|deprecated|retired|is not supported/i, name: /gemini/i,
+    title: "A Gemini model name was retired", cause: "Google retires old model names. Asking for one gives a 404 on every call.",
+    fix: "Max puts that model aside for an hour (longer each time) and uses the next in his list.", you: "Update the model list in the server (modelChain) when a name is retired, then press Update Max's server."},
+  {id: "groq-model-retired", kind: "ai", match: /decommission|retired|model_not_found|does not exist|not found|404/i, name: /groq/i,
+    title: "A Groq model was retired", cause: "Groq removed llama-3.3-70b in Nov 2026; asking for it failed every time.",
+    fix: "The model list was updated (gpt-oss-120b, qwen, gpt-oss-20b) and a failing model is put aside for 30 minutes, longer each time.", you: "Nothing, unless all listed models are retired. Then update GROQ_MODELS."},
+  {id: "provider-auth", kind: "ai", match: /401|402|403|unauthor|invalid.*key|credit|payment|forbidden|api key/i, name: /openrouter|groq|cerebras|mistral|gemini/i,
+    title: "An AI rejected Max's key or has no credit", cause: "The key is wrong, expired, restricted, or the account needs credit.",
+    fix: "Max stops asking that AI for 6 hours (instead of every question) and the AI meter shows the reason.", you: "Check the key for that AI in Cloudflare (Settings → Variables). Replace it, or remove the key so Max stops using that AI."},
+  {id: "openrouter-free-model", kind: "ai", match: /404|no endpoints|not available|provider returned|empty answer|overloaded|\b5\d\d\b/i, name: /openrouter/i,
+    title: "OpenRouter's free model was unavailable", cause: "OpenRouter's free models come and go and Max kept asking the same one (11 failures, 0 answers, 25 Nov 2026). The model list was also cached for 6 hours even after a failed listing.",
+    fix: "A model that fails is put aside for 3 hours and the next free model is tried at once; a failed model list is retried in 30 minutes.", you: "Nothing. OpenRouter's free plan also has a small daily limit, so it may rest later in the day."},
+  {id: "answer-unreadable", kind: "ai", match: /unreadable|not valid json|cut off before/i,
+    title: "An AI's answer was not readable JSON", cause: "Some free AIs add words around the JSON or stop before it finishes (answer too long). Cloudflare AI did this 4 times on 25 Nov 2026.",
+    fix: "Max now reads JSON even with extra words, code fences or a trailing comma. A cut-off answer is named as such. An AI that is unreadable twice in a row rests for 20 minutes and the next AI is asked.", you: "Nothing."},
+  {id: "cloudflare-capacity", kind: "ai", match: /capacity|3040|neurons|limit/i, name: /cloudflare/i,
+    title: "Cloudflare AI is at capacity or out of its free daily allowance", cause: "Cloudflare's free AI has a daily allowance and sometimes no capacity.", fix: "Max rests it 15 minutes (longer each time) and uses another AI.", you: "Nothing."},
+  {id: "startup-order", kind: "app", match: /before initialization|is not defined/i,
+    title: "A helper was used before it existed at start-up", cause: "The Maritime folder set-up ran at start and called jget before its line had run. It failed silently on every start (found by the new hidden-error reports, 24 Nov 2026).",
+    fix: "jget and jset became function declarations, which are available from the first line.", you: "Nothing.", prevent: "Anything needed at start-up must be a function declaration (hoisted), not a const defined later."},
+  {id: "hidden-errors", kind: "app", match: /^Max app:/i,
+    title: "The app hid an error", cause: "About 140 places swallowed errors silently, so real failures never reached Security.", fix: "Every swallowed error is now counted and sent to the server; real ones show under the Max app.", you: "Read the line — it names the place in the code. Tell Max or me."},
+  {id: "same-ai-checks-itself", kind: "code", match: /same ai|checks itself/i,
+    title: "The second-opinion AI was the same AI", cause: "Gemini is also a study provider, so it answered the check as well.", fix: "brainAsk has an avoid option so the checker is from a different company.", you: "", prevent: "A check must always avoid the provider that gave the first answer."},
+  {id: "duplicate-name", kind: "code", match: /has already been declared/i,
+    title: "A name was declared twice", cause: "A new helper reused a name that already existed (jget).", fix: "Renamed the new helper (sget).", you: "", prevent: "Search for a name before adding it (grep)."},
+  {id: "overwritten-test", kind: "code", match: /overwritten test|test file/i,
+    title: "A new test replaced an existing test", cause: "A test was saved under a number that was already in use (e2e48).", fix: "Restored it from git and renumbered the new one.", you: "", prevent: "Run ls tests and pick the next free number. Never overwrite a test file."},
+  {id: "css-in-js", kind: "code", match: /invalid or unexpected token/i,
+    title: "CSS was inserted inside a JavaScript string", cause: "Searching for the last </style> hit one inside a script string.", fix: "Insert CSS before the </style> that comes just before <body>.", you: "", prevent: "Run node --check on the script after every edit to index.html."},
+  {id: "tests-overlap", kind: "code", match: /EADDRINUSE|address already in use/i,
+    title: "Two test runs at the same time", cause: "A second run started while the first still used the same ports.", fix: "Wait for one run to finish before starting another.", you: "", prevent: "Never start a second tests/run.sh while one is running."},
+];
+const lessonPublic = l => ({id: l.id, kind: l.kind, title: l.title, cause: l.cause, fix: l.fix, you: l.you || "", prevent: l.prevent || ""});
+function lessonFor(text, name = "") {
+  const t = String(text || ""), n = String(name || "");
+  return LESSONS.find(l => l.match.test(t) && (!l.name || l.name.test(n + " " + t))) || null;
+}
+// Problems seen now (AI meter, hidden app errors, alerts) → the lessons that explain them.
+function lessonsMatched(items) {
+  const seen = new Map();
+  for (const it of items || []) { const l = lessonFor(it.text, it.name); if (!l) continue; const e = seen.get(l.id) || {...lessonPublic(l), hits: []}; if (e.hits.length < 3) e.hits.push(cleanText(it.text, 140)); seen.set(l.id, e); }
+  return [...seen.values()];
+}
+function lessonsForPrompt(message) {
+  if (!/\b(error|problem|fail(?:ing|ed|s)?|quota|broken|not working|doesn'?t work|bug|fix(?:ed)?|repair|why|again|repeat|resting|crash|slow)\b/i.test(String(message || ""))) return "";
+  return "\nKNOWN PROBLEMS AND HOW THEY WERE SOLVED (use these when the person asks about a problem; do not repeat a mistake they describe; say if a problem looks like one of these):\n" +
+    LESSONS.map(l => `- ${l.title}: ${l.fix}${l.prevent ? " Prevent: " + l.prevent : ""}`).join("\n") + "\n";
 }
 // ---------- Free AI meter (24 Nov 2026, Mark): which AI is running out or failing ----------
 const AI_KEY = "max_aihealth_v1";
@@ -73,8 +170,8 @@ async function aiMeter(env, now = Date.now()) {
   const list = [];
   const add = (name, label, models, extra) => { const st = (S.p || {})[name] || {ok: 0, fail: 0, r429: 0, lastOk: 0, lastFail: 0, lastErr: ""};
     const rest = Math.max(restMin(models), (backupSkip.get("p:" + name) || 0) > now ? Math.ceil((backupSkip.get("p:" + name) - now) / 60e3) : 0);
-    const total = st.ok + st.fail, failing = !rest && st.fail >= 3 && st.fail >= st.ok;
-    list.push({name, label, status: rest ? "resting" : failing ? "failing" : total ? "ok" : "idle", restMin: rest, ok: st.ok, fail: st.fail, limitHits: st.r429, lastErr: st.lastErr || "", lastOk: st.lastOk || 0, ...(extra || {})}); };
+    const total = st.ok + st.fail, kind = restKind.get("b:p:" + name) || restKind.get("g:" + (models[0] || "")) || "", failing = !rest && st.fail >= 3 && st.fail >= st.ok, le = lessonFor(st.lastErr, name);
+    list.push({name, label, status: rest ? "resting" : failing ? "failing" : total ? "ok" : "idle", restMin: rest, restKind: rest ? kind : "", lesson: le && (rest || failing) ? le.id : "", ok: st.ok, fail: st.fail, limitHits: st.r429, lastErr: st.lastErr || "", lastOk: st.lastOk || 0, ...(extra || {})}); };
   if (env.GEMINI_API_KEY) add("gemini", "Gemini (main brain)", modelChain(env), use ? {studyCalls: use.gem, studyCap: BRAIN_GEMINI_CAP} : {});
   if (env.GROQ_API_KEY) add("groq", "Groq", GROQ_MODELS);
   if (env.AI && typeof env.AI.run === "function") add("cloudflare", "Cloudflare AI", WAI_MODELS);
@@ -88,6 +185,7 @@ async function aiMeter(env, now = Date.now()) {
 }
 async function backupBrain(env, payload) {
   const req = textOnly(payload); if (!req) return null;
+  await restLoad(env);
   const now = Date.now();
   if (env.GROQ_API_KEY) for (const m of GROQ_MODELS) {
     if (backupSkip.get(m) > now) continue;
@@ -99,7 +197,7 @@ async function backupBrain(env, payload) {
       if (res.ok && d.choices?.[0]?.message?.content) { aiNote(env, "groq", true); return asGemini(d.choices[0].message.content, "groq:" + m, req.wantJson); }
       aiNote(env, "groq", false, res.status, d?.error?.message || "");
       if ([401, 403].includes(res.status)) break;
-      backupSkip.set(m, now + (res.status === 429 ? 10 * 60e3 : 30 * 60e3));
+      await restSet(env, "b:" + m, res.status === 429 ? 10 * 60e3 : 30 * 60e3);
     } catch { /* try the next one */ }
   }
   if (env.AI && typeof env.AI.run === "function") for (const m of WAI_MODELS) {
@@ -109,14 +207,19 @@ async function backupBrain(env, payload) {
       const text = typeof r === "string" ? r : r?.response ?? r?.choices?.[0]?.message?.content ?? r?.output_text ?? "";
       if (text) { aiNote(env, "cloudflare", true); return asGemini(typeof text === "string" ? text : JSON.stringify(text), "workers-ai:" + m, req.wantJson); }
       aiNote(env, "cloudflare", false, 0, "empty answer");
-      backupSkip.set(m, now + 30 * 60e3);
-    } catch (e) { aiNote(env, "cloudflare", false, /429|limit|capacity/i.test(String(e?.message)) ? 429 : 0, e?.message); backupSkip.set(m, now + (/capacity|3040|429|neurons|limit/i.test(String(e?.message)) ? 15 * 60e3 : 60 * 60e3)); }
+      await restSet(env, "b:" + m, 30 * 60e3);
+    } catch (e) { aiNote(env, "cloudflare", false, /429|limit|capacity/i.test(String(e?.message)) ? 429 : 0, e?.message); await restSet(env, "b:" + m, /capacity|3040|429|neurons|limit/i.test(String(e?.message)) ? 15 * 60e3 : 60 * 60e3); }
   }
   return null;
 }
 async function gemini(env, payload, opts = {}) {
+  await restLoad(env);
   const chain = modelChain(env, opts.deep), now = Date.now();
-  const usable = chain.filter(m => !(skipUntil.get(m) > now));
+  let usable = chain.filter(m => !(skipUntil.get(m) > now));
+  if (!usable.length) {   // every Gemini model is resting: do NOT ask them all again (that burned the daily quota). A daily quota is left alone; otherwise one probe every 2 minutes.
+    const daily = chain.every(m => restKind.get("g:" + m) === "daily");
+    if (!daily && now - probeAt > 120000) { probeAt = now; usable = [chain[0]]; }
+  }
   let last = null, networkError = false;
   const noThink = new Set();
   const bodyFor = m => opts.deep && !noThink.has(m) ? {...payload, generationConfig: {...(payload.generationConfig || {}), thinkingConfig: thinkingFor(m)}} : payload;
@@ -131,7 +234,7 @@ async function gemini(env, payload, opts = {}) {
     }
     return r;
   };
-  for (const m of usable.length ? usable : chain) {
+  for (const m of usable) {
     let res;
     try {
       res = await send(m);
@@ -141,13 +244,13 @@ async function gemini(env, payload, opts = {}) {
       try { await new Promise(r => setTimeout(r, 600)); res = await send(m); } catch { networkError = true; aiNote(env, "gemini", false, 0, "network error"); continue; }
     }
     const data = await res.json().catch(() => ({}));
-    if (res.ok) { lastGood = m; skipUntil.delete(m); aiNote(env, "gemini", true); return {ok:true, status:200, data, model:m}; }
+    if (res.ok) { lastGood = m; await restClear(env, "g:" + m); aiNote(env, "gemini", true); return {ok:true, status:200, data, model:m}; }
     last = {ok:false, status:res.status, data, model:m};
     const msg = String(data?.error?.message || "");
     aiNote(env, "gemini", false, res.status, msg);
     const modelProblem = [403, 404, 429].includes(res.status) || (res.status === 400 && /model|no longer available|not found|deprecated|retired|not supported for/i.test(msg) && !/tool|search/i.test(msg));
-    if (modelProblem) { skipUntil.set(m, now + (res.status === 429 ? 10 * 60e3 : 60 * 60e3)); continue; }
-    if (res.status >= 500) { skipUntil.set(m, now + 3 * 60e3); continue; } // busy even after a retry: rest it a few minutes
+    if (modelProblem) { if (res.status === 429) { const q = quotaWait(data); await restSet(env, "g:" + m, q.ms || 10 * 60e3, q.kind); } else await restSet(env, "g:" + m, 60 * 60e3, "short", 24 * 3600e3); continue; }
+    if (res.status >= 500) { await restSet(env, "g:" + m, 3 * 60e3, "short", 30 * 60e3); continue; } // busy even after a retry: rest it a few minutes
     break; // a problem with the request itself: another model would fail the same way
   }
   // Every Gemini model is out (daily limit, busy or unreachable): try the free backups for text work.
@@ -156,6 +259,7 @@ async function gemini(env, payload, opts = {}) {
     if (b) return b;
   }
   if (!last && networkError) throw new Error("network");
+  if (!last) { const left = Math.max(0, ...chain.map(m => (skipUntil.get(m) || 0) - Date.now())); return {ok: false, status: 429, data: {error: {message: "Every Gemini model is resting (quota). Back in about " + Math.ceil(left / 60e3) + " min."}}, model: null, resting: true}; }
   return last;
 }
 // Claude (optional). Returns null if Claude is not set up or fails, so the caller uses Gemini.
@@ -175,7 +279,7 @@ async function claude(env, system, history, message, maxTokens) {
     return {text: (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n").trim(), cutOff: data.stop_reason === "max_tokens", model: data.model || cleanText(env.CLAUDE_MODEL, 80) || DEFAULT_CLAUDE};
   } catch { return {failed: "Could not reach Claude"}; }
 }
-const WORKER_VERSION = "max-worker-2026-11-24a";
+const WORKER_VERSION = "max-worker-2026-11-25a";
 // Max's own pages: the phone app now also lives on this Worker (same address), so its own origin is always allowed.
 const originOk = (origin, env) => !!origin && (origin === (env.ALLOWED_ORIGIN || "").trim() || origin === env.SELF_ORIGIN);
 function corsHeaders(origin, env) {
@@ -539,37 +643,48 @@ async function oaiRun(base, key, model, req, extra) {
   const d = await res.json().catch(() => ({}));
   const text = d.choices?.[0]?.message?.content;
   if (res.ok && text) return {text, model};
-  return {fail: res.status};
+  return {fail: res.status, err: cleanText(String(d?.error?.message || d?.message || (res.ok ? "empty answer" : "")), 110)};
 }
-const modelCache = {};
+const modelCache = {}, modelBad = new Map();
+// Model that fails with 400/404/5xx or gives nothing is put aside for 3 hours so the next one is tried (OpenRouter's free models come and go).
+const badModel = (name, m) => { const b = modelBad.get(name) || new Map(); b.set(m, Date.now() + 3 * 3600e3); modelBad.set(name, b); };
 async function pickModel(name, base, key, prefer, onlyFree) {
-  const c = modelCache[name]; if (c && c.at > Date.now() - 6 * 3600e3) return c.model;
-  let model = null;
-  try {
-    const r = await fetch(base + "/models", {headers: {Authorization: "Bearer " + key}, signal: AbortSignal.timeout(15000)}); const d = await r.json();
-    const ids = (d.data || []).map(m => String(m.id || "")).filter(id => id && (!onlyFree || /:free$/.test(id)));
-    for (const re of prefer) { model = ids.find(id => re.test(id)); if (model) break; }
-    model = model || ids[0] || null;
-  } catch {}
-  modelCache[name] = {at: Date.now(), model}; return model;
+  let c = modelCache[name];
+  if (!c || c.at < Date.now() - 6 * 3600e3) {
+    let ids = [];
+    try { const r = await fetch(base + "/models", {headers: {Authorization: "Bearer " + key}, signal: AbortSignal.timeout(15000)}); const d = await r.json();
+      ids = (d.data || []).map(m => String(m.id || "")).filter(id => id && (!onlyFree || /:free$/.test(id))); } catch {}
+    c = modelCache[name] = {at: ids.length ? Date.now() : Date.now() - 5.5 * 3600e3, ids};   // a failed listing is retried in 30 minutes, not 6 hours
+  }
+  const bad = modelBad.get(name) || new Map(), good = id => !(bad.get(id) > Date.now());
+  for (const re of prefer) { const m = c.ids.find(id => re.test(id) && good(id)); if (m) return m; }
+  return c.ids.find(good) || null;
 }
 // Every free AI Max can use for studying. A provider appears only when its key is set (Gemini, Groq, Cloudflare already are).
 function brainProviders(env) {
   const P = [], skipped = n => backupSkip.get("p:" + n) > Date.now(), rest = (n, ms) => backupSkip.set("p:" + n, Date.now() + ms);
   if (env.GROQ_API_KEY) P.push({name: "groq", run: async req => {
-    for (const m of GROQ_MODELS) { if (backupSkip.get(m) > Date.now()) continue; const r = await oaiRun("https://api.groq.com/openai/v1", env.GROQ_API_KEY, m, req).catch(() => ({fail: 0}));
-      if (r.text) return r; backupSkip.set(m, Date.now() + (r.fail === 429 ? 10 * 60e3 : 30 * 60e3)); if ([401, 403].includes(r.fail)) break; } return null; }});
+    for (const m of GROQ_MODELS) { if (backupSkip.get(m) > Date.now()) continue; const r = await oaiRun("https://api.groq.com/openai/v1", env.GROQ_API_KEY, m, req).catch(e => ({fail: 0, err: String(e?.message || e)}));
+      if (r.text) { await restClear(env, "b:" + m); return r; } provErr.set("groq", {status: r.fail, msg: r.err}); await restSet(env, "b:" + m, r.fail === 429 ? 10 * 60e3 : 30 * 60e3); if ([401, 403].includes(r.fail)) break; } return null; }});
   if (env.AI && typeof env.AI.run === "function") P.push({name: "cloudflare", run: async req => {
     for (const m of WAI_MODELS) { if (backupSkip.get(m) > Date.now()) continue;
-      try { const r = await env.AI.run(m, {messages: req.messages, max_tokens: Math.min(req.maxTokens, 4096), temperature: req.temperature}); const t = typeof r === "string" ? r : r?.response ?? r?.choices?.[0]?.message?.content ?? ""; if (t) return {text: typeof t === "string" ? t : JSON.stringify(t), model: m}; backupSkip.set(m, Date.now() + 30 * 60e3); }
-      catch (e) { backupSkip.set(m, Date.now() + (/capacity|3040|429|neurons|limit/i.test(String(e?.message)) ? 15 * 60e3 : 60 * 60e3)); } } return null; }});
+      try { const r = await env.AI.run(m, {messages: req.messages, max_tokens: Math.min(req.maxTokens, 4096), temperature: req.temperature}); const t = typeof r === "string" ? r : r?.response ?? r?.choices?.[0]?.message?.content ?? ""; if (t) return {text: typeof t === "string" ? t : JSON.stringify(t), model: m}; provErr.set("cloudflare", {status: 0, msg: "empty answer"}); await restSet(env, "b:" + m, 30 * 60e3); }
+      catch (e) { provErr.set("cloudflare", {status: /429|limit|capacity|neurons|3040/i.test(String(e?.message)) ? 429 : 0, msg: String(e?.message || e)}); await restSet(env, "b:" + m, /capacity|3040|429|neurons|limit/i.test(String(e?.message)) ? 15 * 60e3 : 60 * 60e3); } } return null; }});
   const extra = [["openrouter", "https://openrouter.ai/api/v1", env.OPENROUTER_API_KEY, [/deepseek/i, /gpt-oss-120b/i, /llama-3\.3-70b/i, /qwen/i], true],
     ["cerebras", "https://api.cerebras.ai/v1", env.CEREBRAS_API_KEY, [/gpt-oss-120b/i, /qwen/i, /llama/i], false],
     ["mistral", "https://api.mistral.ai/v1", env.MISTRAL_API_KEY, [/mistral-small/i, /mistral-large/i], false]];
   for (const [name, base, key, prefer, free] of extra) if (key) P.push({name, run: async req => {
-    const m = await pickModel(name, base, key, prefer, free); if (!m) { rest(name, 30 * 60e3); return null; }
-    const r = await oaiRun(base, key, m, req, name === "openrouter" ? {"HTTP-Referer": "https://max-app-axv.pages.dev", "X-Title": "Max"} : null).catch(() => ({fail: 0}));
-    if (r.text) return r; rest(name, r.fail === 429 ? 10 * 60e3 : 30 * 60e3); return null; }});
+    for (let tries = 0; tries < 2; tries++) {
+      const m = await pickModel(name, base, key, prefer, free);
+      if (!m) { provErr.set(name, {status: 0, msg: "no model available from " + name}); await restSet(env, "b:p:" + name, 30 * 60e3); return null; }
+      const r = await oaiRun(base, key, m, req, name === "openrouter" ? {"HTTP-Referer": "https://max-app-axv.pages.dev", "X-Title": "Max"} : null).catch(e => ({fail: 0, err: String(e?.message || e)}));
+      if (r.text) { await restClear(env, "b:p:" + name); return r; }
+      provErr.set(name, {status: r.fail, msg: (r.err || "no answer") + " [" + String(m).replace(/^.*\//, "") + "]"});
+      if ([401, 402, 403].includes(r.fail)) { await restSet(env, "b:p:" + name, 6 * 3600e3, "auth"); return null; }   // key rejected or no credit: not worth asking again for hours
+      if (r.fail === 429) { await restSet(env, "b:p:" + name, 10 * 60e3); return null; }
+      badModel(name, m);                                                                                          // this model is the problem: try the next one
+    }
+    await restSet(env, "b:p:" + name, 30 * 60e3); return null; }});
   if (env.GEMINI_API_KEY) P.push({name: "gemini", gem: true, run: async req => {
     const g = await gemini(env, {contents: [{role: "user", parts: [{text: req.messages.at(-1).content}]}], systemInstruction: {parts: [{text: req.messages[0].content}]}, generationConfig: {temperature: req.temperature, maxOutputTokens: req.maxTokens, responseMimeType: "application/json"}}).catch(() => null);
     const t = g && g.ok ? (g.data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("") : ""; return t ? {text: t, model: g.model} : null; }});
@@ -580,19 +695,38 @@ async function brainUsage(env) {
   if (!brainUse || brainUse.day !== day) { const s = jparse(await srvSetting(env, "max_brain_usage"), {}); brainUse = s.day === day ? s : {day, calls: {}, fails: {}, gem: 0}; }
   return brainUse;
 }
-// One study question: the free AIs take turns (so the quota is spread); Gemini is last and capped per day so chat keeps its quota.
+// Read an AI's JSON answer even when it adds words around it, uses code fences or ends with a trailing comma. Tells "cut off" from "not JSON".
+function extractJson(raw) {
+  const t = String(raw || "").replace(/<think>[\s\S]*?<\/think>/g, "").replace(/```(?:json)?/gi, "").trim();
+  try { return {data: JSON.parse(t)}; } catch {}
+  const st = t.indexOf("{"); if (st < 0) return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let i = st; i < t.length; i++) { const c = t[i];
+    if (inStr) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true; else if (c === "{") depth++; else if (c === "}" && --depth === 0) { const seg = t.slice(st, i + 1);
+      try { return {data: JSON.parse(seg)}; } catch { try { return {data: JSON.parse(seg.replace(/,\s*([}\]])/g, "$1"))}; } catch { return null; } } } }
+  return {cut: true};   // the answer stopped before the JSON finished (hit the length limit)
+}
+const unreadN = new Map();
+// One study question: the free AIs take turns (so the quota is spread). Gemini is LAST and capped per day, so chat keeps its quota.
 async function brainAsk(env, system, prompt, tokens = 4096, avoid = "") {
+  await restLoad(env);
   const use = await brainUsage(env), req = {messages: [{role: "system", content: system + "\nReply with one valid JSON object only — no code fences, no text around it."}, {role: "user", content: prompt}], wantJson: true, maxTokens: tokens, temperature: 0.2};
   let P = brainProviders(env); if (use.gem >= BRAIN_GEMINI_CAP) P = P.filter(p => !p.gem);
   if (avoid) P = P.filter(p => !(p.gem && /gemini/i.test(avoid)) && !(avoid.toLowerCase().startsWith(p.name)));   // a check must come from a different AI than the one that answered
   if (!P.length) return {error: "no free AI is available right now"};
-  const start = brainRot++ % P.length;
-  for (let i = 0; i < P.length; i++) {
-    const p = P[(start + i) % P.length]; let r = null;
-    try { r = await p.run(req); } catch { r = null; }
-    if (r && r.text) { aiNote(env, p.name, true); use.calls[p.name] = (use.calls[p.name] || 0) + 1; if (p.gem) use.gem++; let t = String(r.text).replace(/<think>[\s\S]*?<\/think>/g, "").replace(/```(?:json)?/g, ""); const m = t.match(/\{[\s\S]*\}/);
-      try { return {data: JSON.parse(m ? m[0] : t), model: p.name + ":" + String(r.model || "").replace(/^.*\//, "")}; } catch { aiNote(env, p.name, false, 0, "unreadable answer"); use.fails[p.name] = (use.fails[p.name] || 0) + 1; continue; } }
-    aiNote(env, p.name, false, 0, "no answer"); use.fails[p.name] = (use.fails[p.name] || 0) + 1;
+  const free = P.filter(p => !p.gem), start = free.length ? brainRot++ % free.length : 0;
+  const order = [...free.slice(start), ...free.slice(0, start), ...P.filter(p => p.gem)];
+  for (const p of order) {
+    let r = null; provErr.delete(p.name);
+    try { r = await p.run(req); } catch (e) { r = null; provErr.set(p.name, {status: 0, msg: String(e?.message || e)}); }
+    if (r && r.text) { aiNote(env, p.name, true); use.calls[p.name] = (use.calls[p.name] || 0) + 1; if (p.gem) use.gem++;
+      const j = extractJson(r.text);
+      if (j && j.data) { unreadN.delete(p.name); return {data: j.data, model: p.name + ":" + String(r.model || "").replace(/^.*\//, "")}; }
+      aiNote(env, p.name, false, 0, j && j.cut ? "answer cut off before it finished" : "answer was not valid JSON"); use.fails[p.name] = (use.fails[p.name] || 0) + 1;
+      const n = (unreadN.get(p.name) || 0) + 1; unreadN.set(p.name, n); if (n >= 2) { unreadN.delete(p.name); await restSet(env, "b:p:" + p.name, 20 * 60e3); }   // unreadable twice in a row: rest it
+      continue; }
+    const pe = provErr.get(p.name); aiNote(env, p.name, false, pe?.status || 0, pe?.msg || "no answer"); use.fails[p.name] = (use.fails[p.name] || 0) + 1;
   }
   return {error: "no free AI answered"};
 }
@@ -2087,7 +2221,8 @@ async function guardRun(env, opts = {}) {
     } catch (e) { report.builds.push({repo, error: cleanText(String(e.message), 100)}); }
   }
   // 3) Max himself: brains, the paper trader, Google connection, failures in the activity log.
-  try { if (env.MAX_MEMORY) { const qp = quietProblems(await quietLoad(env), t0); problems.push(...qp); if (qp.length) report.max.push("The app hid " + qp.length + " error type" + (qp.length > 1 ? "s" : "") + " that now show here"); } } catch {}
+  try { if (env.MAX_MEMORY) { const qp = quietProblems(await quietLoad(env), t0); problems.push(...qp);
+    for (const l of lessonsMatched(qp.map(t => ({text: t, name: "max"})))) report.max.push("Known problem: " + l.title + " — " + l.fix); if (qp.length) report.max.push("The app hid " + qp.length + " error type" + (qp.length > 1 ? "s" : "") + " that now show here"); } } catch {}
   try { const e = await embedTexts(env, ["guard check"], "doc"); report.max.push("Gemini key working (" + e.model + ")"); }
   catch (e) { problems.push("Gemini (Max's main brain) isn't answering: " + cleanText(String(e.message), 80)); }
   const resting = [...skipUntil].filter(([, t]) => t > Date.now()).map(([m]) => m);
@@ -4682,7 +4817,7 @@ Current text:\n${current || "(empty)"}\n\nHis instruction: ${instruction}\nRetur
   } catch (e) { return json({error: String(e.message || e).slice(0, 300)}, 502, origin, env); }
   return json({error: "Not found."}, 404, origin, env);
 }
-export const __test = {callsSync, quietAdd, quietLoad, notesOnly, REG_QUESTION, quietProblems, aiNote, aiMeter, aiFlush, callsRates, callsScore, callsPrompt, twoAiCheck, HIGH_STAKES, ncIntake, deckLogDay, weeklyAudit, examGrade, stopStartContinue, improveDaily, improveWeekly, improveStatus, rulesPrompt, paperCryptoStep, deepCleanup, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
+export const __test = {callsSync, skipUntil, backupSkip, modelChain, quietAdd, quietLoad, notesOnly, lessonFor, lessonsMatched, lessonsForPrompt, LESSONS, extractJson, restSet, restClear, restLoad, quotaWait, nextQuotaReset, gemini, brainAsk, REG_QUESTION, quietProblems, aiNote, aiMeter, aiFlush, callsRates, callsScore, callsPrompt, twoAiCheck, HIGH_STAKES, ncIntake, deckLogDay, weeklyAudit, examGrade, stopStartContinue, improveDaily, improveWeekly, improveStatus, rulesPrompt, paperCryptoStep, deepCleanup, brainStudy, brainStatus, brainVerify, brainExam, brainRecall, brainDb, brainCron, renderReport, vCredit, srvSetting, shortSym, gmailSend, paperSendEmail, paperNew, sundaySummary, agentsCron, WEEKLY_AUTO, investGuide, GUIDE_SEED, paperLoad, paperTotals, paperEmailText, paperView, backgroundStep, divRows, divAmount, cryptoSwing, trendBook, pseStep, pseScanStep, notesLiveStep, investNotesSync, investAlert, siteStatus, appStatus, withLiveBox, relevantNotes, invGuideLines, mdToNoteHtml, applyNoteFixes, notesDailyCheck, cryptoCandles, CRYPTO_SOURCES, usdPhp, tvPse, phisixPrice, paperCryptoStep, firstOk, fxRates, fxOnDate, cryptoSpotUsd, pseQuoteBackup, fxStep, copyStep, etfStep, paperMigrate, rbMove, PBOOK, PCAT, investStep, investView, vPick, vCap, vTermDays};
 export default {
   // Hourly: email any new paper-trading updates to you (see traderNotify).
   async scheduled(event, env, ctx) {
@@ -4764,6 +4899,10 @@ export default {
         try { const v = await findVideos("lofi hip hop"); health.musicYouTube = v.length ? "working — " + v.length + " songs, e.g. " + (v[0].title || v[0].id).slice(0, 50) + (v.every(x => x.title) ? "" : " (titles missing)") : "not working: no results " + JSON.stringify(findVideos.last || {}).slice(0, 200); } catch (e) { health.musicYouTube = "not working: " + String(e.message || e).slice(0, 100); }
         try { const st = await findRadio("jazz"); health.musicRadio = st.length ? "working — " + st.length + " stations, e.g. " + st[0].name.slice(0, 40) : "not working: no stations"; } catch (e) { health.musicRadio = "not working: " + String(e.message || e).slice(0, 100); }
       }
+      try {
+        const q = env.MAX_MEMORY ? quietProblems(await quietLoad(env)) : [], items = [...(health.aiMeter?.list || []).filter(x => x.status === "resting" || x.status === "failing" || x.lastErr).map(x => ({text: x.lastErr || (x.status === "resting" ? "429 quota" : "failing"), name: x.name})), ...(health.aiMeter?.alerts || []).map(t => ({text: t, name: /gemini/i.test(t) ? "gemini" : ""})), ...q.map(t => ({text: t, name: "max"}))];
+        health.lessons = lessonsMatched(items); health.lessonsAll = LESSONS.map(l => ({id: l.id, kind: l.kind, title: l.title, fix: l.fix}));
+      } catch { health.lessons = []; }
       return json(health, 200, origin, env);
     }
     if (origin && env.ALLOWED_ORIGIN && !originOk(origin, env)) {
@@ -4958,7 +5097,7 @@ export default {
         `HIS COACHING FILE (goals, facts and progress he told you before):\n${coach.file || "(empty — this is your first session: greet him, then ask at most 3 short questions to learn his situation and goal, one at a time)"}\n` +
         `When he tells you something worth keeping for this coaching (a goal, a fact about his situation, a result, a session done), add it to "coach_notes" as short dated-free lines in third person, e.g. "Goal: 10 push-ups a day by December". Otherwise "coach_notes" is empty.`;
       const system = style + `\nCurrent time: ${cleanText(body.now, 40) || when(Date.now())}${body.tz ? " (" + cleanText(body.tz, 60) + ")" : ""}.` +
-        (db ? await rulesPrompt(env) + await callsPrompt(env) : "") + (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote + deskNote + (persona ? "\n" + persona : "");
+        (db ? await rulesPrompt(env) + await callsPrompt(env) : "") + lessonsForPrompt(message) + (memoryText ? "\nLong-term memory (things you know about the user):\n- " + memoryText : "\nNo saved memories were shared for this request.") + memoryNote + deskNote + (persona ? "\n" + persona : "");
       const contents = [...history, {role:"user", parts:[{text:message}]}];
       const jsonMode = !!(db || actionsOn), nowText = cleanText(body.now, 40) || when(Date.now());
       // "Double-check that" / "are you sure?" → a second AI checks his last answer.
@@ -5128,6 +5267,10 @@ CONFIDENCE: <high, medium or low, and why in a few words>`;
       if (!draftMode && bodyLen < plainText(old).length * 0.6) return json({error: "The new version came out much shorter than your note, so I didn't use it. Try asking for the change in smaller steps."}, 422, origin, env);
       if (plainText(html).length < 200) return json({error: "I couldn't write enough about that. Try a more specific topic."}, 422, origin, env);
       return json({html, title: title || (draftMode ? cleanText(topic, 80) : oldTitle), folder, changes: cleanText((/CHANGES:\s*(.+)/i.exec(head) || [])[1] || "", 400), sources, searched: sources.length > 0}, 200, origin, env);
+    }
+    if (url.pathname === "/api/lessons" && request.method === "GET") {
+      if (!auth.ok) return json({error: "Not signed in."}, 401, origin, env);
+      return json({lessons: LESSONS.map(lessonPublic)}, 200, origin, env);
     }
     if (url.pathname === "/api/quiet" && request.method === "POST") {
       if (!env.MAX_MEMORY || !auth.ok) return json({error: "Not signed in."}, 401, origin, env);
